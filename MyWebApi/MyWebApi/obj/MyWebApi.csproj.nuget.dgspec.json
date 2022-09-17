@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Study\\MyWebApi\\MyWebApi\\MyWebApi.csproj": {}
+    "C:\\BlackLion\\MyWebApi\\MyWebApi\\MyWebApi.csproj": {}
   },
   "projects": {
-    "C:\\Study\\MyWebApi\\MyWebApi\\MyWebApi.csproj": {
+    "C:\\BlackLion\\MyWebApi\\MyWebApi\\MyWebApi.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Study\\MyWebApi\\MyWebApi\\MyWebApi.csproj",
+        "projectUniqueName": "C:\\BlackLion\\MyWebApi\\MyWebApi\\MyWebApi.csproj",
         "projectName": "MyWebApi",
-        "projectPath": "C:\\Study\\MyWebApi\\MyWebApi\\MyWebApi.csproj",
+        "projectPath": "C:\\BlackLion\\MyWebApi\\MyWebApi\\MyWebApi.csproj",
         "packagesPath": "C:\\Users\\crazy\\.nuget\\packages\\",
-        "outputPath": "C:\\Study\\MyWebApi\\MyWebApi\\obj\\",
+        "outputPath": "C:\\BlackLion\\MyWebApi\\MyWebApi\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\crazy\\AppData\\Roaming\\NuGet\\NuGet.Config",
