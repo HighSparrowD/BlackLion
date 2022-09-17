@@ -42,11 +42,25 @@ namespace MyWebApi.Repositories
             return await _contx.SPONSOR_ADS.Where(a => a.SponsorId == sponsorId && a.Id == adId).SingleAsync();
         }
 
-        public async Task<long> RegisterSponsorAsync(Sponsor user)
+        public async Task<long> RegisterSponsorAsync(RegisterSponsor model)
         {
             try
             {
-                await RemoveSponsorByUsernameAsync(user.Username);
+                await RemoveSponsorByUsernameAsync(model.Username);
+                await AddContactInfoAsync(new ContactInfo { SponsorId = model.Id, Email = model.Email, Facebook = model.Facebook, Instagram = model.Instagram, Tel = model.Tel });
+
+                var user = new Sponsor
+                {
+                    Id = model.Id,
+                    Username = model.Username,
+                    UserMaxAdCount = model.UserMaxAdCount,
+                    UserMaxAdViewCount = model.UserMaxAdViewCount,
+                    IsPostponed = false,
+                    IsAwaiting = false,
+                    UserAppLanguage = model.UserAppLanguage,
+                    SponsorContactInfoId = model.Id,
+                    AverageRating = null
+                };
 
                 user.IsAwaiting = false;
                 await _contx.SYSTEM_SPONSORS.AddAsync(user);

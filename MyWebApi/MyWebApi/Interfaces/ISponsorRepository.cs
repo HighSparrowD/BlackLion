@@ -19,7 +19,7 @@ namespace MyWebApi.Interfaces
         Task<Ad> GetSingleAdAsync(long sponsorId, long adId);
         Task<Sponsor> GetSingleSponsorAsync(long userId);
         Task<byte> RegisterAwaitingUserAsync(AwaitingUserRegistration user);
-        Task<long> RegisterSponsorAsync(Sponsor user);
+        Task<long> RegisterSponsorAsync(RegisterSponsor model);
         Task<long> AddAdAsync(Ad model);
         Task<long> AddEventAsync(Event model);
         Task<long> UpdateEventAsync(Event model);
