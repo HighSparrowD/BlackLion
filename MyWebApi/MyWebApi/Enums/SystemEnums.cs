@@ -60,5 +60,11 @@
             Postponed = 6,
             Ended = 7
         }
+
+        public enum NotificationReasons
+        {
+            Subscription = 1,
+            Unsubscription = 2,
+        }
     }
 }

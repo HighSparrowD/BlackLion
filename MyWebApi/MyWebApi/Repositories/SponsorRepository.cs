@@ -9,6 +9,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using static MyWebApi.Enums.SystemEnums;
+
 namespace MyWebApi.Repositories
 {
     public class SponsorRepository : ISponsorRepository
@@ -299,7 +301,7 @@ namespace MyWebApi.Repositories
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<long> RegisterEventNotification(UserNotification model)
+        public async Task<long> RegisterUserEventNotification(UserNotification model)
         {
             model.Id = (await _contx.USER_NOTIFICATIONS.CountAsync()) +1;
             await _contx.USER_NOTIFICATIONS.AddAsync(model);
@@ -317,15 +319,75 @@ namespace MyWebApi.Repositories
                 .ToListAsync();
         }
 
+        public async Task<byte> SubscribeForEvent(long userId, long eventId)
+        {
+            try
+            {
+                await _contx.USER_EVENTS.AddAsync(new UserEvent { UserId = userId, EventId = eventId });
+                await _contx.SaveChangesAsync();
+
+                var evnt = await _contx.SPONSOR_EVENTS
+                    .Where(e => e.Id == eventId)
+                    .FirstOrDefaultAsync();
+
+                var notification = new SponsorNotification
+                {
+                    SponsorId = evnt.SponsorId,
+                    NotificationReason = (int)NotificationReasons.Subscription,
+                    Description = $"User {userId} has subscribed from your event {evnt.Id}/{evnt.Name}"
+                };
+
+                await RegisterSponsorEventNotification(notification);
+
+                return 1;
+            }
+            catch { return 0; }
+        }
+
+        public async Task<byte> UnsubscribeFromEvent(long userId, long eventId)
+        {
+            try
+            {
+                var evnt = await _contx.USER_EVENTS
+                    .Where(e => e.UserId == userId && e.EventId == eventId)
+                    .Include(e => e.Event)
+                    .FirstOrDefaultAsync();
+
+                _contx.USER_EVENTS.Remove(evnt);
+                await _contx.SaveChangesAsync();
+
+                var notification = new SponsorNotification
+                {
+                    SponsorId = evnt.Event.SponsorId,
+                    NotificationReason = (int)NotificationReasons.Unsubscription,
+                    Description = $"User {userId} has unsubscribed from your event {evnt.EventId}/{evnt.Event.Name}"
+                };
+
+                await RegisterSponsorEventNotification(notification);
+
+                return 1;
+            }
+            catch { return 0; }
+        }
+
+        public async Task<long> RegisterSponsorEventNotification(SponsorNotification model)
+        {
+            model.Id = (await _contx.USER_EVENTS.CountAsync()) + 1;
+            await _contx.AddAsync(model);
+            await _contx.SaveChangesAsync();
+
+            return model.Id;
+        }
+
         private async Task NotifyAttendees(long eventId, string comment)
         {
             var attendees = await GetEventAttendees(eventId);
-            var notification = new UserNotification { Severity = (short)SystemEnums.Severities.Urgent, SectionId = (short)SystemEnums.Sections.Eventer, IsLikedBack = false, Description = comment};
+            var notification = new UserNotification { Severity = (short)Severities.Urgent, SectionId = (short)Sections.Eventer, IsLikedBack = false, Description = comment };
 
             foreach (var attendee in attendees)
             {
                 notification.UserId1 = attendee.UserId;
-                await RegisterEventNotification(notification);
+                await RegisterUserEventNotification(notification);
             }
         }
     }

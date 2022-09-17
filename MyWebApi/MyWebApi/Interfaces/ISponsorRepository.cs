@@ -31,10 +31,13 @@ namespace MyWebApi.Interfaces
         Task<Sponsor> GetSponsorInfo(long userId);
         Task<Event> GetEventInfo(long eventId);
         Task<List<User>> GetEventAttendees(long eventId);
-        Task<long> RegisterEventNotification(UserNotification model);
+        Task<long> RegisterUserEventNotification(UserNotification model);
+        Task<long> RegisterSponsorEventNotification(SponsorNotification model);
         Task<long> UpdateSponsorAsync(Sponsor model);
         Task<long> UpdateAdAsync(Ad model);
         Task<byte> RemoveSponsorAsync(long id );
         Task<byte> RemoveAdAsync(long adId, long sponsorId);
+        Task<byte> SubscribeForEvent(long userId, long eventId);
+        Task<byte> UnsubscribeFromEvent(long userId, long eventId);
     }
 }
