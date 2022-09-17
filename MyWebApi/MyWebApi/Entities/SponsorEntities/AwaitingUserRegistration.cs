@@ -1,0 +1,10 @@
+﻿namespace MyWebApi.Entities.SponsorEntities
+{
+    public class AwaitingUserRegistration
+    {
+        public string Username { get; set; }
+        public int UserMaxAdCount { get; set; }
+        public int UserMaxAdViewCount { get; set; }
+        public int UserAppLanguage { get; set; }
+    }
+}
