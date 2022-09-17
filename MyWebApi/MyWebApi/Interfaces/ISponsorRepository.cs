@@ -19,22 +19,25 @@ namespace MyWebApi.Interfaces
         Task<Ad> GetSingleAdAsync(long sponsorId, long adId);
         Task<Sponsor> GetSingleSponsorAsync(long userId);
         Task<byte> RegisterAwaitingUserAsync(AwaitingUserRegistration user);
-        Task<long> RegisterSponsorAsync(Sponsor user);
+        Task<long> RegisterSponsorAsync(RegisterSponsor model);
         Task<long> AddAdAsync(Ad model);
         Task<long> AddEventAsync(Event model);
         Task<long> UpdateEventAsync(Event model);
         Task<long> PostponeEventAsync(PostponeEvent model);
-        Task<long> CancelEventAsync(Event model);
+        Task<long> CancelEventAsync(CancelEvent cancelModel);
         Task<long> AddContactInfoAsync(ContactInfo model);
         Task<long> UpdateContactInfoAsync(ContactInfo model);
         Task<Sponsor> GetEventOwnerInfo(long eventId);
         Task<Sponsor> GetSponsorInfo(long userId);
         Task<Event> GetEventInfo(long eventId);
         Task<List<User>> GetEventAttendees(long eventId);
-        Task<long> RegisterEventNotification(UserNotification model);
+        Task<long> RegisterUserEventNotification(UserNotification model);
+        Task<long> RegisterSponsorEventNotification(SponsorNotification model);
         Task<long> UpdateSponsorAsync(Sponsor model);
         Task<long> UpdateAdAsync(Ad model);
         Task<byte> RemoveSponsorAsync(long id );
         Task<byte> RemoveAdAsync(long adId, long sponsorId);
+        Task<byte> SubscribeForEvent(long userId, long eventId);
+        Task<byte> UnsubscribeFromEvent(long userId, long eventId);
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using MyWebApi.Data;
 using MyWebApi.Entities.SponsorEntities;
 using MyWebApi.Entities.UserActionEntities;
@@ -9,6 +10,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using static MyWebApi.Enums.SystemEnums;
+
 namespace MyWebApi.Repositories
 {
     public class SponsorRepository : ISponsorRepository
@@ -40,11 +43,25 @@ namespace MyWebApi.Repositories
             return await _contx.SPONSOR_ADS.Where(a => a.SponsorId == sponsorId && a.Id == adId).SingleAsync();
         }
 
-        public async Task<long> RegisterSponsorAsync(Sponsor user)
+        public async Task<long> RegisterSponsorAsync(RegisterSponsor model)
         {
             try
             {
-                await RemoveSponsorByUsernameAsync(user.Username);
+                await RemoveSponsorByUsernameAsync(model.Username);
+                await AddContactInfoAsync(new ContactInfo { SponsorId = model.Id, Email = model.Email, Facebook = model.Facebook, Instagram = model.Instagram, Tel = model.Tel });
+
+                var user = new Sponsor
+                {
+                    Id = model.Id,
+                    Username = model.Username,
+                    UserMaxAdCount = model.UserMaxAdCount,
+                    UserMaxAdViewCount = model.UserMaxAdViewCount,
+                    IsPostponed = false,
+                    IsAwaiting = false,
+                    UserAppLanguage = model.UserAppLanguage,
+                    SponsorContactInfoId = model.Id,
+                    AverageRating = null
+                };
 
                 user.IsAwaiting = false;
                 await _contx.SYSTEM_SPONSORS.AddAsync(user);
@@ -216,7 +233,9 @@ namespace MyWebApi.Repositories
             var owner = await GetSponsorInfo(model.SponsorId);
 
             model.Id = (await _contx.SPONSOR_EVENTS.CountAsync()) + 1;
-            model.Status = (short)SystemEnums.EventStatuses.Created;
+            model.Status = (short)EventStatuses.Created;
+            model.StartDateTime = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
+
             model.Description = $"{model.Name}\n\n{model.Description}\n\n@{owner.Username}";
             await _contx.SPONSOR_EVENTS.AddAsync(model);
             await _contx.SaveChangesAsync();
@@ -226,7 +245,7 @@ namespace MyWebApi.Repositories
 
         public async Task<long> UpdateEventAsync(Event model)
         {
-            model.Status = (short)SystemEnums.EventStatuses.Updated;
+            model.Status = (short)EventStatuses.Updated;
             _contx.Update(model);
             await _contx.SaveChangesAsync();
 
@@ -239,10 +258,10 @@ namespace MyWebApi.Repositories
         {
             var currentEvent = await GetEventInfo(model.EventId);
 
-            currentEvent.StartDateTime = model.PostponeUntil;
+            currentEvent.StartDateTime = DateTime.SpecifyKind(model.PostponeUntil, DateTimeKind.Utc);
             model.Comment = model.Comment;
 
-            _contx.Update(currentEvent);
+            _contx.SPONSOR_EVENTS.Update(currentEvent);
             await _contx.SaveChangesAsync();
 
             await NotifyAttendees(model.EventId, model.Comment);
@@ -250,13 +269,15 @@ namespace MyWebApi.Repositories
             return currentEvent.Id;
         }
 
-        public async Task<long> CancelEventAsync(Event model)
+        public async Task<long> CancelEventAsync(CancelEvent cancelModel)
         {
-            model.Status = (short)SystemEnums.EventStatuses.Canceled;
+            var model = await GetEventInfo(cancelModel.EventId);
+
+            model.Status = (short)EventStatuses.Canceled;
             _contx.Update(model);
             await _contx.SaveChangesAsync();
 
-            await NotifyAttendees(model.Id, model.Comment);
+            await NotifyAttendees(model.Id, cancelModel.Comment);
 
             return model.Id;
         }
@@ -271,7 +292,7 @@ namespace MyWebApi.Repositories
 
         public async Task<long> UpdateContactInfoAsync(ContactInfo model)
         {
-            _contx.SPONSOR_CONTACTINFO.Update(model);
+            _contx.SPONSOR_CONTACT_INFO.Update(model);
             await _contx.SaveChangesAsync();
 
             return model.SponsorId;
@@ -299,7 +320,7 @@ namespace MyWebApi.Repositories
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<long> RegisterEventNotification(UserNotification model)
+        public async Task<long> RegisterUserEventNotification(UserNotification model)
         {
             model.Id = (await _contx.USER_NOTIFICATIONS.CountAsync()) +1;
             await _contx.USER_NOTIFICATIONS.AddAsync(model);
@@ -317,16 +338,81 @@ namespace MyWebApi.Repositories
                 .ToListAsync();
         }
 
+        public async Task<byte> SubscribeForEvent(long userId, long eventId)
+        {
+            try
+            {
+                await _contx.USER_EVENTS.AddAsync(new UserEvent { UserId = userId, EventId = eventId });
+                await _contx.SaveChangesAsync();
+
+                var evnt = await _contx.SPONSOR_EVENTS
+                    .Where(e => e.Id == eventId)
+                    .FirstOrDefaultAsync();
+
+                var notification = new SponsorNotification
+                {
+                    SponsorId = evnt.SponsorId,
+                    NotificationReason = (int)NotificationReasons.Subscription,
+                    Description = $"User {userId} has subscribed from your event {evnt.Id}/{evnt.Name}"
+                };
+
+                await RegisterSponsorEventNotification(notification);
+
+                return 1;
+            }
+            catch { return 0; }
+        }
+
+        public async Task<byte> UnsubscribeFromEvent(long userId, long eventId)
+        {
+            try
+            {
+                var evnt = await _contx.USER_EVENTS
+                    .Where(e => e.UserId == userId && e.EventId == eventId)
+                    .Include(e => e.Event)
+                    .FirstOrDefaultAsync();
+
+                _contx.USER_EVENTS.Remove(evnt);
+                await _contx.SaveChangesAsync();
+
+                var notification = new SponsorNotification
+                {
+                    SponsorId = evnt.Event.SponsorId,
+                    NotificationReason = (int)NotificationReasons.Unsubscription,
+                    Description = $"User {userId} has unsubscribed from your event {evnt.EventId}/{evnt.Event.Name}"
+                };
+
+                await RegisterSponsorEventNotification(notification);
+
+                return 1;
+            }
+            catch { return 0; }
+        }
+
+        public async Task<long> RegisterSponsorEventNotification(SponsorNotification model)
+        {
+            model.Id = (await _contx.SPONSOR_NOTIFICATIONS.CountAsync()) + 1;
+            await _contx.SPONSOR_NOTIFICATIONS.AddAsync(model);
+            await _contx.SaveChangesAsync();
+
+            return model.Id;
+        }
+
         private async Task NotifyAttendees(long eventId, string comment)
         {
-            var attendees = await GetEventAttendees(eventId);
-            var notification = new UserNotification { Severity = (short)SystemEnums.Severities.Urgent, SectionId = (short)SystemEnums.Sections.Eventer, IsLikedBack = false, Description = comment};
-
-            foreach (var attendee in attendees)
+            try
             {
-                notification.UserId1 = attendee.UserId;
-                await RegisterEventNotification(notification);
+                var attendees = await GetEventAttendees(eventId);
+                var notification = new UserNotification { Severity = (short)Severities.Urgent, SectionId = (short)Sections.Eventer, IsLikedBack = false, Description = comment };
+
+                foreach (var attendee in attendees)
+                {
+                    notification.UserId = null;
+                    notification.UserId1 = attendee.UserId;
+                    await RegisterUserEventNotification(notification);
+                }
             }
+            catch {  }
         }
     }
 }
