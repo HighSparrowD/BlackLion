@@ -372,8 +372,8 @@ namespace MyWebApi.Repositories
 
         public async Task<long> RegisterSponsorEventNotification(SponsorNotification model)
         {
-            model.Id = (await _contx.USER_EVENTS.CountAsync()) + 1;
-            await _contx.AddAsync(model);
+            model.Id = (await _contx.SPONSOR_NOTIFICATIONS.CountAsync()) + 1;
+            await _contx.SPONSOR_NOTIFICATIONS.AddAsync(model);
             await _contx.SaveChangesAsync();
 
             return model.Id;
