@@ -9,7 +9,7 @@ namespace MyWebApi.Entities.UserActionEntities
     {
         [Key]
         public long Id { get; set; }
-        public long UserId { get; set; }
+        public long? UserId { get; set; }
         public long UserId1 { get; set; }
         public bool IsLikedBack { get; set; }
         public short Severity { get; set; }

@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using MyWebApi.Data;
 using MyWebApi.Entities.SponsorEntities;
 using MyWebApi.Entities.UserActionEntities;
@@ -232,7 +233,9 @@ namespace MyWebApi.Repositories
             var owner = await GetSponsorInfo(model.SponsorId);
 
             model.Id = (await _contx.SPONSOR_EVENTS.CountAsync()) + 1;
-            model.Status = (short)SystemEnums.EventStatuses.Created;
+            model.Status = (short)EventStatuses.Created;
+            model.StartDateTime = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
+
             model.Description = $"{model.Name}\n\n{model.Description}\n\n@{owner.Username}";
             await _contx.SPONSOR_EVENTS.AddAsync(model);
             await _contx.SaveChangesAsync();
@@ -242,7 +245,7 @@ namespace MyWebApi.Repositories
 
         public async Task<long> UpdateEventAsync(Event model)
         {
-            model.Status = (short)SystemEnums.EventStatuses.Updated;
+            model.Status = (short)EventStatuses.Updated;
             _contx.Update(model);
             await _contx.SaveChangesAsync();
 
@@ -255,10 +258,10 @@ namespace MyWebApi.Repositories
         {
             var currentEvent = await GetEventInfo(model.EventId);
 
-            currentEvent.StartDateTime = model.PostponeUntil;
+            currentEvent.StartDateTime = DateTime.SpecifyKind(model.PostponeUntil, DateTimeKind.Utc);
             model.Comment = model.Comment;
 
-            _contx.Update(currentEvent);
+            _contx.SPONSOR_EVENTS.Update(currentEvent);
             await _contx.SaveChangesAsync();
 
             await NotifyAttendees(model.EventId, model.Comment);
@@ -266,13 +269,15 @@ namespace MyWebApi.Repositories
             return currentEvent.Id;
         }
 
-        public async Task<long> CancelEventAsync(Event model)
+        public async Task<long> CancelEventAsync(CancelEvent cancelModel)
         {
-            model.Status = (short)SystemEnums.EventStatuses.Canceled;
+            var model = await GetEventInfo(cancelModel.EventId);
+
+            model.Status = (short)EventStatuses.Canceled;
             _contx.Update(model);
             await _contx.SaveChangesAsync();
 
-            await NotifyAttendees(model.Id, model.Comment);
+            await NotifyAttendees(model.Id, cancelModel.Comment);
 
             return model.Id;
         }
@@ -287,7 +292,7 @@ namespace MyWebApi.Repositories
 
         public async Task<long> UpdateContactInfoAsync(ContactInfo model)
         {
-            _contx.SPONSOR_CONTACTINFO.Update(model);
+            _contx.SPONSOR_CONTACT_INFO.Update(model);
             await _contx.SaveChangesAsync();
 
             return model.SponsorId;
@@ -395,14 +400,19 @@ namespace MyWebApi.Repositories
 
         private async Task NotifyAttendees(long eventId, string comment)
         {
-            var attendees = await GetEventAttendees(eventId);
-            var notification = new UserNotification { Severity = (short)Severities.Urgent, SectionId = (short)Sections.Eventer, IsLikedBack = false, Description = comment };
-
-            foreach (var attendee in attendees)
+            try
             {
-                notification.UserId1 = attendee.UserId;
-                await RegisterUserEventNotification(notification);
+                var attendees = await GetEventAttendees(eventId);
+                var notification = new UserNotification { Severity = (short)Severities.Urgent, SectionId = (short)Sections.Eventer, IsLikedBack = false, Description = comment };
+
+                foreach (var attendee in attendees)
+                {
+                    notification.UserId = null;
+                    notification.UserId1 = attendee.UserId;
+                    await RegisterUserEventNotification(notification);
+                }
             }
+            catch {  }
         }
     }
 }

@@ -24,7 +24,7 @@ namespace MyWebApi.Interfaces
         Task<long> AddEventAsync(Event model);
         Task<long> UpdateEventAsync(Event model);
         Task<long> PostponeEventAsync(PostponeEvent model);
-        Task<long> CancelEventAsync(Event model);
+        Task<long> CancelEventAsync(CancelEvent cancelModel);
         Task<long> AddContactInfoAsync(ContactInfo model);
         Task<long> UpdateContactInfoAsync(ContactInfo model);
         Task<Sponsor> GetEventOwnerInfo(long eventId);

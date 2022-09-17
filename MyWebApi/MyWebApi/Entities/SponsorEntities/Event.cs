@@ -1,4 +1,6 @@
-﻿using System;
+﻿using MyWebApi.Entities.UserInfoEntities;
+using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace MyWebApi.Entities.SponsorEntities
