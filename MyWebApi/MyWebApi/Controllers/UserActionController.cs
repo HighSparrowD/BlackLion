@@ -22,14 +22,12 @@ namespace MyWebApi.Controllers
     {
         private User currentUser = Entities.UserInfoEntities.User.CreateDummyUser(); //TODO: relocate to an application 
         private readonly ILogger<UserActionController> _logger;
-        private StoreContext _context;
         private IUserRepository _repository;
 
-        public UserActionController(ILogger<UserActionController> logger, IUserRepository rep, StoreContext cont)
+        public UserActionController(ILogger<UserActionController> logger, IUserRepository rep)
         {
             _logger = logger;
             _repository = rep;
-            _context = cont;
         }
 
         [HttpGet("/CheckUserExists/{userId}")]
