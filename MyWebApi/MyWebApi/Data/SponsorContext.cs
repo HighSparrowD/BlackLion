@@ -18,6 +18,7 @@ namespace MyWebApi.Data
         public DbSet<UserEvent> USER_EVENTS { get; set; }
         public DbSet<UserNotification> USER_NOTIFICATIONS { get; set; }
         public DbSet<SponsorNotification> SPONSOR_NOTIFICATIONS { get; set; }
+        public DbSet<SponsorRating> SPONSOR_RATINGS { get; set; }
 
         public SponsorContext(DbContextOptions<SponsorContext> options) : base(options)
         {}

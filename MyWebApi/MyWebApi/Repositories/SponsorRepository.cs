@@ -414,5 +414,50 @@ namespace MyWebApi.Repositories
             }
             catch {  }
         }
+
+        public async Task<long> AddSponsorRating(SponsorRating model)
+        {
+            model.Id = (await _contx.SPONSOR_RATINGS.CountAsync()) + 1;
+            model.Comment = $"{model.UserId}\n⭐️{model.Rating} / 5⭐️\n{model.CommentTime.ToShortDateString()}\n\n{model.Comment}";
+
+            await _contx.SPONSOR_RATINGS.AddAsync(model);
+            await RegisterSponsorEventNotification(new SponsorNotification { Description = $"You have a new event comment !\n{model.Comment}", SponsorId = model.SponsorId, NotificationReason = (short)NotificationReasons.Comment});
+
+            await UpdateSponsorAverageRating(model.SponsorId);
+            return model.Id;
+        }
+
+        public async Task<long> UpdateSponsorAverageRating(long sponsorId)
+        {
+            var sponsor = await _contx.SYSTEM_SPONSORS
+                .Where(s => s.Id == sponsorId)
+                .FirstOrDefaultAsync();
+
+            var newAwerageRating = 0d;
+            var ratingsCount = 0;
+
+            await _contx.SPONSOR_RATINGS
+                .Where(s => s.SponsorId == sponsorId)
+                .ForEachAsync(r => 
+                {
+                    newAwerageRating += (double)r.Rating;
+                    ratingsCount++;
+                });
+
+            sponsor.AverageRating = (double)Math.Round(newAwerageRating / ratingsCount, 2);
+
+            _contx.SYSTEM_SPONSORS.Update(sponsor);
+            await _contx.SaveChangesAsync();
+
+            return sponsor.Id;
+        }
+
+        public async Task<List<string>> GetSponsorComments(long sponsorId)
+        {
+            return await _contx.SPONSOR_RATINGS
+                .Where(r => r.SponsorId == sponsorId)
+                .Select(r => r.Comment)
+                .ToListAsync();
+        }
     }
 }

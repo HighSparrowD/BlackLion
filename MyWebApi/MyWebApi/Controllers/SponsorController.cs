@@ -194,5 +194,17 @@ namespace MyWebApi.Controllers
         {
             return await _repository.UpdateEventAsync(model);
         }
+
+        [HttpPost("/AddSponsorRating")]
+        public async Task<long> AddSponsorRating(SponsorRating model)
+        {
+            return await _repository.AddSponsorRating(model);
+        }
+
+        [HttpGet("/GetSponsorComments/{sponsorId}")]
+        public async Task<List<string>> GetSponsorComments(long sponsorId)
+        {
+            return await _repository.GetSponsorComments(sponsorId);
+        }
     }
 }
