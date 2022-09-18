@@ -73,7 +73,7 @@ namespace MyWebApi.Controllers
         }
 
         [HttpGet("/GetCountries/{localisationId}")]
-        public async Task<List<UpdateCountry>> GetCountries(int localisationId)
+        public async Task<List<Country>> GetCountries(int localisationId)
         {
             return await _repository.GetCountries(localisationId);
         }

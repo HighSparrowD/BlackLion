@@ -14,9 +14,9 @@ namespace MyWebApi.Repositories
 {
     public class AdminRepository : IAdminRepository
     {
-        private AdminContext _contx { get; set; }
+        private UserContext _contx { get; set; }
 
-        public AdminRepository(AdminContext context)
+        public AdminRepository(UserContext context)
         {
             _contx = context;
         }
@@ -28,7 +28,7 @@ namespace MyWebApi.Repositories
             return cities.Count;
         }
 
-        public async Task<long> UploadCountries(List<UpdateCountry> countries)
+        public async Task<long> UploadCountries(List<Country> countries)
         {
             countries.ForEach(async c => await _contx.COUNTRIES.AddAsync(c));
             await _contx.SaveChangesAsync();

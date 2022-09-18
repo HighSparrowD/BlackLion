@@ -13,9 +13,9 @@ namespace MyWebApi.Repositories
 {
     public class TestRepository : ITestRepository
     {
-        public TestContext _contx { get; set; }
+        public UserContext _contx { get; set; }
 
-        public TestRepository(TestContext contx)
+        public TestRepository(UserContext contx)
         {
             _contx = contx;
         }
@@ -71,7 +71,7 @@ namespace MyWebApi.Repositories
             return cities;
         }
 
-        public async Task<List<UpdateCountry>> GetCountries(int localisationId)
+        public async Task<List<Country>> GetCountries(int localisationId)
         {
             return await _contx.COUNTRIES.Where(c => c.ClassLocalisationId == localisationId).ToListAsync();
         }

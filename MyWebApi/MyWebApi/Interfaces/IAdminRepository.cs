@@ -12,7 +12,7 @@ namespace MyWebApi.Interfaces
         Task<bool> CheckUserIsAdmin(long userId);
         Task<byte> SwitchAdminStatus(long userId);
         Task<bool?> GetAdminStatus(long userId);
-        Task<long> UploadCountries(List<UpdateCountry> countries);
+        Task<long> UploadCountries(List<Country> countries);
         Task<long> UploadCities(List<City> cities);
         Task<long> UploadLanguages(List<Language> langs);
         Task<long> UploadFeedbackReasons(List<FeedbackReason> reasons);
