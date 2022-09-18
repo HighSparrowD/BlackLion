@@ -16,9 +16,9 @@ namespace MyWebApi.Repositories
 {
     public class SponsorRepository : ISponsorRepository
     {
-        private SponsorContext _contx { get; set; }
+        private UserContext _contx { get; set; }
 
-        public SponsorRepository(SponsorContext context)
+        public SponsorRepository(UserContext context)
         {
             _contx = context;
         }

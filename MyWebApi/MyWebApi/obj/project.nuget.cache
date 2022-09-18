@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "Lum1/xlXoG9QbDTodEqeIICUEqUxaRx6f2YDcVQSseCjwg7oV1KIIos7W4aXU2Wjk2kbkvd8WFSp/VdKd1HtgQ==",
+  "dgSpecHash": "edOIB/zK6RwCGrhccP4Q9BqgvBFrzd6Nsmdh0eL0lnGzNcelrVMTk8XidbRoRg2rSjxpLVjmHr7Jw8MjZXxIdA==",
   "success": true,
-  "projectFilePath": "C:\\Users\\crazy\\Source\\Repos\\HighSparrowD\\BlackLion\\MyWebApi\\MyWebApi\\MyWebApi.csproj",
+  "projectFilePath": "C:\\Git\\BlackLion\\MyWebApi\\MyWebApi\\MyWebApi.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\crazy\\.nuget\\packages\\microsoft.aspnetcore.authentication.certificate\\6.0.6\\microsoft.aspnetcore.authentication.certificate.6.0.6.nupkg.sha512",
     "C:\\Users\\crazy\\.nuget\\packages\\microsoft.entityframeworkcore\\6.0.5\\microsoft.entityframeworkcore.6.0.5.nupkg.sha512",

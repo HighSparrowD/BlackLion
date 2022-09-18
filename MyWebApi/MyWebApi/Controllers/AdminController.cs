@@ -24,7 +24,7 @@ namespace MyWebApi.Controllers
         }
 
         [HttpPost("/UpdateCountries")]
-        public async Task<long> UpdateCountries(List<UpdateCountry> countries)
+        public async Task<long> UpdateCountries(List<Country> countries)
         {
             return await _repository.UploadCountries(countries);
         }

@@ -35,11 +35,7 @@ namespace MyWebApi
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "MyWebApi", Version = "v1" });
             });
-            services.AddDbContext<StoreContext>(options => options.UseNpgsql(_config.GetConnectionString("DefaultConnectionString")));
             services.AddDbContext<UserContext>(options => options.UseNpgsql(_config.GetConnectionString("DefaultConnectionString")));
-            services.AddDbContext<TestContext>(options => options.UseNpgsql(_config.GetConnectionString("DefaultConnectionString")));
-            services.AddDbContext<AdminContext>(options => options.UseNpgsql(_config.GetConnectionString("DefaultConnectionString")));
-            services.AddDbContext<SponsorContext>(options => options.UseNpgsql(_config.GetConnectionString("DefaultConnectionString")));
             services.AddScoped<IUserRepository, SystemUserRepository>();
             services.AddScoped<ITestRepository, TestRepository>();
             services.AddScoped<IAdminRepository, AdminRepository>();
