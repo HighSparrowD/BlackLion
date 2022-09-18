@@ -948,11 +948,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\BlackLion\\MyWebApi\\MyWebApi\\MyWebApi.csproj",
+      "projectUniqueName": "C:\\Users\\crazy\\Source\\Repos\\HighSparrowD\\BlackLion\\MyWebApi\\MyWebApi\\MyWebApi.csproj",
       "projectName": "MyWebApi",
-      "projectPath": "C:\\BlackLion\\MyWebApi\\MyWebApi\\MyWebApi.csproj",
+      "projectPath": "C:\\Users\\crazy\\Source\\Repos\\HighSparrowD\\BlackLion\\MyWebApi\\MyWebApi\\MyWebApi.csproj",
       "packagesPath": "C:\\Users\\crazy\\.nuget\\packages\\",
-      "outputPath": "C:\\BlackLion\\MyWebApi\\MyWebApi\\obj\\",
+      "outputPath": "C:\\Users\\crazy\\Source\\Repos\\HighSparrowD\\BlackLion\\MyWebApi\\MyWebApi\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\crazy\\AppData\\Roaming\\NuGet\\NuGet.Config",

@@ -39,5 +39,8 @@ namespace MyWebApi.Interfaces
         Task<byte> RemoveAdAsync(long adId, long sponsorId);
         Task<byte> SubscribeForEvent(long userId, long eventId);
         Task<byte> UnsubscribeFromEvent(long userId, long eventId);
+        Task<long> AddSponsorRating(SponsorRating model);
+        Task<long> UpdateSponsorAverageRating(long sponsorId);
+        Task<List<string>> GetSponsorComments(long sponsorId);
     }
 }

@@ -65,6 +65,8 @@
         {
             Subscription = 1,
             Unsubscription = 2,
+            Comment = 3,
+            Report = 4,
         }
     }
 }
