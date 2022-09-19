@@ -459,5 +459,46 @@ namespace MyWebApi.Repositories
                 .Select(r => r.Comment)
                 .ToListAsync();
         }
+
+        public async Task<int> AddSponorProgress(long sponsorId, double progress)
+        {
+            var model = await _contx.SPONSOR_LEVELS
+                .Where(l => l.SponsorId == sponsorId)
+                .FirstOrDefaultAsync();
+            if (model.Progress + progress >= model.Goal)
+            {
+                model.Progress = (model.Progress + progress) - model.Goal;
+                model.Level += 1;
+                model.Goal *= 1.6;
+            }
+            else
+            {
+                model.Progress += progress;
+            }
+
+            _contx.SPONSOR_LEVELS.Update(model);
+            await _contx.SaveChangesAsync();
+
+            return model.Level;
+        }
+
+        public async Task<int> UpdateSponsorLevel(long sponsorId, int level)
+        {
+            var model = await _contx.SPONSOR_LEVELS
+                .Where(l => l.SponsorId == sponsorId)
+                .FirstOrDefaultAsync();
+
+            model.Level = level;
+
+            _contx.SPONSOR_LEVELS.Update(model);
+            await _contx.SaveChangesAsync();
+
+            return model.Level;
+        }
+
+        public async Task<SponsorLevel> GetSponsorLevel(long sponsorId)
+        {
+            return await _contx.SPONSOR_LEVELS.Where(l => l.SponsorId == sponsorId).FirstOrDefaultAsync();
+        }
     }
 }

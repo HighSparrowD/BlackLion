@@ -78,5 +78,8 @@ namespace MyWebApi.Interfaces
         Task<long> RegisterUserEncounter(Encounter model);
         Task<Encounter> GetUserEncounter(long userId, long encounterId, int sectionId);
         Task<List<Encounter>> GetUserEncounters(long userId, int sectionId);
+        Task<int> AddUserTrustProgressAsync(long userId, double progress);
+        Task<int> UpdateUserTrustLevelAsync(long userId, int level);
+        Task<UserTrustLevel> GetUserTrustLevel(long userId);
     }
 }

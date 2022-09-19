@@ -42,5 +42,8 @@ namespace MyWebApi.Interfaces
         Task<long> AddSponsorRating(SponsorRating model);
         Task<long> UpdateSponsorAverageRating(long sponsorId);
         Task<List<string>> GetSponsorComments(long sponsorId);
+        Task<int> AddSponorProgress(long sponsorId, double progress);
+        Task<int> UpdateSponsorLevel(long sponsorId, int level);
+        Task<SponsorLevel> GetSponsorLevel(long sponsorId);
     }
 }

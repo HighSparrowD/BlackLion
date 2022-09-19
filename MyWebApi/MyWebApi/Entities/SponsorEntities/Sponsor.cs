@@ -19,5 +19,6 @@ namespace MyWebApi.Entities.SponsorEntities
         public virtual ContactInfo ContactInfo { get; set; }
         public virtual List<Ad> SponsorAds { get; set; }
         public virtual List<Event> SponsorEvents { get; set; }
+        public virtual SponsorLevel Level { get; set; }
     }
 }

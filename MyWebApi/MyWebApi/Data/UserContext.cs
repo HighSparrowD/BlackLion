@@ -58,6 +58,8 @@ namespace MyWebApi.Data
         public DbSet<UserEvent> USER_EVENTS { get; set; }
         public DbSet<SponsorNotification> SPONSOR_NOTIFICATIONS { get; set; }
         public DbSet<SponsorRating> SPONSOR_RATINGS { get; set; }
+        public DbSet<SponsorLevel> SPONSOR_LEVELS { get; set; }  //TODO: add to db
+        public DbSet<UserTrustLevel> USER_TRUST_LEVELS { get; set; } // TODO: add to db
 
 
 

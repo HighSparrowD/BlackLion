@@ -206,5 +206,23 @@ namespace MyWebApi.Controllers
         {
             return await _repository.GetSponsorComments(sponsorId);
         }
+
+        [HttpGet("/GetSponsorLevel/{sponsorId}")]
+        public async Task<SponsorLevel> GetSponsorLevel(long sponsorId)
+        {
+            return await _repository.GetSponsorLevel(sponsorId);
+        }
+
+        [HttpGet("/GetSponsorLevel/{sponsorId}/{progress}")]
+        public async Task<int> AddSponsorProgress(long sponsorId, double progress)
+        {
+            return await _repository.AddSponorProgress(sponsorId, progress);
+        }
+
+        [HttpGet("/GetSponsorLevel/{sponsorId}/{level}")]
+        public async Task<int> GetSponsorLevel(long sponsorId, int level)
+        {
+            return await _repository.UpdateSponsorLevel(sponsorId, level);
+        }
     }
 }
