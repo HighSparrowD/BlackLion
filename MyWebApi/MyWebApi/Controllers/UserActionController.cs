@@ -447,5 +447,23 @@ namespace MyWebApi.Controllers
         {
             return await _repository.GetUserEncounters(userId, sectionId);
         }
+
+        [HttpGet("/GetUserTrustLevel/{userId}")]
+        public async Task<UserTrustLevel> GetUserTrustLevel(long userId)
+        {
+            return await _repository.GetUserTrustLevel(userId);
+        }
+
+        [HttpGet("/AddUserTrustProgressAsync/{userId}/{progress}")]
+        public async Task<int> GetUserEncounters(long userId, double progress)
+        {
+            return await _repository.AddUserTrustProgressAsync(userId, progress);
+        }
+
+        [HttpGet("/UpdateUserTrustLevelAsync/{userId}/{sectionId}")]
+        public async Task<int> UpdateUserTrustLevelAsync(long userId, int level)
+        {
+            return await _repository.UpdateUserTrustLevelAsync(userId, level);
+        }
     }
 }

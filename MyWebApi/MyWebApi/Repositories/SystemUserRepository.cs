@@ -927,5 +927,48 @@ namespace MyWebApi.Repositories
                 .Where(r => r.UserId == senderId && r.UserId1 == recieverId)
                 .FirstOrDefault() != null;
         }
+
+        public async Task<int> AddUserTrustProgressAsync(long userId, double progress)
+        {
+            var model = await _contx.USER_TRUST_LEVELS
+                .Where(l => l.UserId == userId)
+                .FirstOrDefaultAsync();
+
+            if((model.Progress + progress) >= model.Goal)
+            {
+                model.Progress = (model.Progress + progress) - model.Goal;
+                model.Level++;
+                model.Goal *= 2 * 1.2;
+            }
+            else
+            {
+                model.Progress += progress;
+            }
+
+            _contx.USER_TRUST_LEVELS.Update(model);
+            await _contx.SaveChangesAsync();
+
+            return model.Level;
+        }
+
+        public async Task<int> UpdateUserTrustLevelAsync(long userId, int level)
+        {
+            var model = await _contx.USER_TRUST_LEVELS
+                .Where(l => l.UserId == userId)
+                .FirstOrDefaultAsync();
+
+            model.Level = level;
+
+            _contx.Update(model);
+            await _contx.SaveChangesAsync();
+            return model.Level;
+        }
+
+        public async Task<UserTrustLevel> GetUserTrustLevel(long userId)
+        {
+            return await _contx.USER_TRUST_LEVELS
+                .Where(l => l.UserId == userId)
+                .FirstOrDefaultAsync();
+        }
     }
 }
