@@ -13,12 +13,12 @@ namespace MyWebApi.Entities.SponsorEntities
         public bool IsPostponed { get; set; }
         public bool IsAwaiting { get; set; }
         public int UserAppLanguage { get; set; }
-        public long SponsorContactInfoId{ get; set; }
-        public double? AverageRating { get; set; }
+        public long SponsorContactInfoId { get; set; }
+        public long SponsorStatsId { get; set; }
         public virtual List<SponsorLanguage> Languages { get; set; }
-        public virtual ContactInfo ContactInfo { get; set; }
+        public virtual SponsorContactInfo SponsorContactInfo { get; set; }
         public virtual List<Ad> SponsorAds { get; set; }
         public virtual List<Event> SponsorEvents { get; set; }
-        public virtual SponsorLevel Level { get; set; }
+        public virtual Stats Stats { get; set; }
     }
 }

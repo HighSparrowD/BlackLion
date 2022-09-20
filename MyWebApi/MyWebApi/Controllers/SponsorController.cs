@@ -166,7 +166,7 @@ namespace MyWebApi.Controllers
         }
 
         [HttpPost("/UpdateContactInfoAsync")]
-        public async Task<long> UpdateContactInfoAsync(ContactInfo model)
+        public async Task<long> UpdateContactInfoAsync(SponsorContactInfo model)
         {
             return await _repository.UpdateContactInfoAsync(model);
         }
@@ -208,9 +208,15 @@ namespace MyWebApi.Controllers
         }
 
         [HttpGet("/GetSponsorLevel/{sponsorId}")]
-        public async Task<SponsorLevel> GetSponsorLevel(long sponsorId)
+        public async Task<int> GetSponsorLevel(long sponsorId)
         {
             return await _repository.GetSponsorLevel(sponsorId);
+        }
+
+        [HttpGet("/GetSponsorStats/{sponsorId}")]
+        public async Task<Stats> GetSponsorStats(long sponsorId)
+        {
+            return await _repository.GetSponsorStats(sponsorId);
         }
 
         [HttpGet("/GetSponsorLevel/{sponsorId}/{progress}")]

@@ -9,6 +9,7 @@ using MyWebApi.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Threading.Tasks;
 using static MyWebApi.Enums.SystemEnums;
 
@@ -48,7 +49,8 @@ namespace MyWebApi.Repositories
             try
             {
                 await RemoveSponsorByUsernameAsync(model.Username);
-                await AddContactInfoAsync(new ContactInfo { SponsorId = model.Id, Email = model.Email, Facebook = model.Facebook, Instagram = model.Instagram, Tel = model.Tel });
+                await AddContactInfoAsync(new SponsorContactInfo {Id = model.Id, SponsorId = model.Id, Email = model.Email, Facebook = model.Facebook, Instagram = model.Instagram, Tel = model.Tel });
+                await CreateSponorStats(model.SponsorId);
 
                 var user = new Sponsor
                 {
@@ -60,7 +62,7 @@ namespace MyWebApi.Repositories
                     IsAwaiting = false,
                     UserAppLanguage = model.UserAppLanguage,
                     SponsorContactInfoId = model.Id,
-                    AverageRating = null
+                    SponsorStatsId = model.Id
                 };
 
                 user.IsAwaiting = false;
@@ -282,7 +284,7 @@ namespace MyWebApi.Repositories
             return model.Id;
         }
 
-        public async Task<long> AddContactInfoAsync(ContactInfo model)
+        public async Task<long> AddContactInfoAsync(SponsorContactInfo model)
         {
             await _contx.AddAsync(model);
             await _contx.SaveChangesAsync();
@@ -290,7 +292,7 @@ namespace MyWebApi.Repositories
             return model.SponsorId;
         }
 
-        public async Task<long> UpdateContactInfoAsync(ContactInfo model)
+        public async Task<long> UpdateContactInfoAsync(SponsorContactInfo model)
         {
             _contx.SPONSOR_CONTACT_INFO.Update(model);
             await _contx.SaveChangesAsync();
@@ -308,7 +310,8 @@ namespace MyWebApi.Repositories
         {
             return await _contx.SYSTEM_SPONSORS
                 .Where(s => s.Id == userId)
-                .Include(s => s.ContactInfo)
+                .Include(s => s.SponsorContactInfo)
+                .Include(s => s.Stats)
                 .Include(s => s.Languages)
                 .FirstOrDefaultAsync();
         }
@@ -431,6 +434,7 @@ namespace MyWebApi.Repositories
         {
             var sponsor = await _contx.SYSTEM_SPONSORS
                 .Where(s => s.Id == sponsorId)
+                .Include(s => s.Stats)
                 .FirstOrDefaultAsync();
 
             var newAwerageRating = 0d;
@@ -444,7 +448,7 @@ namespace MyWebApi.Repositories
                     ratingsCount++;
                 });
 
-            sponsor.AverageRating = (double)Math.Round(newAwerageRating / ratingsCount, 2);
+            sponsor.Stats.AverageRating = (double)Math.Round(newAwerageRating / ratingsCount, 2);
 
             _contx.SYSTEM_SPONSORS.Update(sponsor);
             await _contx.SaveChangesAsync();
@@ -462,43 +466,68 @@ namespace MyWebApi.Repositories
 
         public async Task<int> AddSponorProgress(long sponsorId, double progress)
         {
-            var model = await _contx.SPONSOR_LEVELS
+            var model = await _contx.SPONSOR_STATS  
                 .Where(l => l.SponsorId == sponsorId)
                 .FirstOrDefaultAsync();
-            if (model.Progress + progress >= model.Goal)
-            {
-                model.Progress = (model.Progress + progress) - model.Goal;
-                model.Level += 1;
-                model.Goal *= 1.6;
-            }
-            else
-            {
-                model.Progress += progress;
-            }
 
-            _contx.SPONSOR_LEVELS.Update(model);
-            await _contx.SaveChangesAsync();
+            if (model != null)
+            {
+                if (model.LevelProgress + progress >= model.LevelGoal)
+                {
+                    model.LevelProgress = (model.LevelProgress + progress) - model.LevelGoal;
+                    model.Level += 1;
+                    model.LevelGoal *= 1.6;
+                }
+                else
+                {
+                    model.LevelProgress += progress;
+                }
 
-            return model.Level;
+                _contx.SPONSOR_STATS.Update(model);
+                await _contx.SaveChangesAsync();
+
+                return model.Level;
+            }
+            return -1;
         }
 
         public async Task<int> UpdateSponsorLevel(long sponsorId, int level)
         {
-            var model = await _contx.SPONSOR_LEVELS
+            var model = await _contx.SPONSOR_STATS
                 .Where(l => l.SponsorId == sponsorId)
                 .FirstOrDefaultAsync();
 
             model.Level = level;
 
-            _contx.SPONSOR_LEVELS.Update(model);
+            _contx.SPONSOR_STATS.Update(model);
             await _contx.SaveChangesAsync();
 
             return model.Level;
         }
 
-        public async Task<SponsorLevel> GetSponsorLevel(long sponsorId)
+        public async Task<int> GetSponsorLevel(long sponsorId)
         {
-            return await _contx.SPONSOR_LEVELS.Where(l => l.SponsorId == sponsorId).FirstOrDefaultAsync();
+            return (await _contx.SPONSOR_STATS.FindAsync(sponsorId)).Level;
+        }
+
+        public async Task<Stats> GetSponsorStats(long sponsorId)
+        {
+            return await _contx.SPONSOR_STATS.FindAsync(sponsorId);
+        }
+
+        public async Task<long> CreateSponorStats(long sponsorId)
+        {
+            try
+            {
+                await _contx.AddAsync(Stats.CreateDefaultStats(sponsorId));
+                await _contx.SaveChangesAsync();
+
+                return sponsorId;
+            }
+            catch
+            {
+                return -1;
+            }
         }
     }
 }

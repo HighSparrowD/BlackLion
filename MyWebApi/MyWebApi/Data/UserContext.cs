@@ -53,12 +53,12 @@ namespace MyWebApi.Data
         public DbSet<Ad> SPONSOR_ADS { get; set; }
         public DbSet<Sponsor> SYSTEM_SPONSORS { get; set; }
         public DbSet<SponsorLanguage> SPONSOR_LANGUAGES { get; set; }
-        public DbSet<ContactInfo> SPONSOR_CONTACT_INFO { get; set; }
+        public DbSet<SponsorContactInfo> SPONSOR_CONTACT_INFO { get; set; }
         public DbSet<Event> SPONSOR_EVENTS { get; set; }
         public DbSet<UserEvent> USER_EVENTS { get; set; }
         public DbSet<SponsorNotification> SPONSOR_NOTIFICATIONS { get; set; }
         public DbSet<SponsorRating> SPONSOR_RATINGS { get; set; }
-        public DbSet<SponsorLevel> SPONSOR_LEVELS { get; set; }  //TODO: add to db
+        public DbSet<Stats> SPONSOR_STATS { get; set; }
         public DbSet<UserTrustLevel> USER_TRUST_LEVELS { get; set; } // TODO: add to db
 
 

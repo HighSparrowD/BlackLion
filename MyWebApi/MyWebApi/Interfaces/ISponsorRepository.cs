@@ -25,8 +25,8 @@ namespace MyWebApi.Interfaces
         Task<long> UpdateEventAsync(Event model);
         Task<long> PostponeEventAsync(PostponeEvent model);
         Task<long> CancelEventAsync(CancelEvent cancelModel);
-        Task<long> AddContactInfoAsync(ContactInfo model);
-        Task<long> UpdateContactInfoAsync(ContactInfo model);
+        Task<long> AddContactInfoAsync(SponsorContactInfo model);
+        Task<long> UpdateContactInfoAsync(SponsorContactInfo model);
         Task<Sponsor> GetEventOwnerInfo(long eventId);
         Task<Sponsor> GetSponsorInfo(long userId);
         Task<Event> GetEventInfo(long eventId);
@@ -42,8 +42,10 @@ namespace MyWebApi.Interfaces
         Task<long> AddSponsorRating(SponsorRating model);
         Task<long> UpdateSponsorAverageRating(long sponsorId);
         Task<List<string>> GetSponsorComments(long sponsorId);
+        Task<long> CreateSponorStats(long sponsorId);
         Task<int> AddSponorProgress(long sponsorId, double progress);
         Task<int> UpdateSponsorLevel(long sponsorId, int level);
-        Task<SponsorLevel> GetSponsorLevel(long sponsorId);
+        Task<int> GetSponsorLevel(long sponsorId);
+        Task<Stats> GetSponsorStats(long sponsorId);
     }
 }

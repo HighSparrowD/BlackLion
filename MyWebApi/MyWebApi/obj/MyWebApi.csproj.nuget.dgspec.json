@@ -1,24 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "K:\\19.09\\MyWebApi\\MyWebApi\\MyWebApi.csproj": {}
+    "C:\\Git\\BlackLion\\MyWebApi\\MyWebApi\\MyWebApi.csproj": {}
   },
   "projects": {
-    "K:\\19.09\\MyWebApi\\MyWebApi\\MyWebApi.csproj": {
+    "C:\\Git\\BlackLion\\MyWebApi\\MyWebApi\\MyWebApi.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "K:\\19.09\\MyWebApi\\MyWebApi\\MyWebApi.csproj",
+        "projectUniqueName": "C:\\Git\\BlackLion\\MyWebApi\\MyWebApi\\MyWebApi.csproj",
         "projectName": "MyWebApi",
-        "projectPath": "K:\\19.09\\MyWebApi\\MyWebApi\\MyWebApi.csproj",
-        "packagesPath": "C:\\Users\\xvorr01\\.nuget\\packages\\",
-        "outputPath": "K:\\19.09\\MyWebApi\\MyWebApi\\obj\\",
+        "projectPath": "C:\\Git\\BlackLion\\MyWebApi\\MyWebApi\\MyWebApi.csproj",
+        "packagesPath": "C:\\Users\\crazy\\.nuget\\packages\\",
+        "outputPath": "C:\\Git\\BlackLion\\MyWebApi\\MyWebApi\\obj\\",
         "projectStyle": "PackageReference",
-        "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-        ],
         "configFilePaths": [
-          "C:\\Users\\xvorr01\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Users\\crazy\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -63,7 +59,8 @@
             "net47",
             "net471",
             "net472",
-            "net48"
+            "net48",
+            "net481"
           ],
           "assetTargetFallback": true,
           "warn": true,
@@ -75,7 +72,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.202\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.400\\RuntimeIdentifierGraph.json"
         }
       }
     }
