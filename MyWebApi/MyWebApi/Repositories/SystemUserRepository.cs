@@ -45,13 +45,18 @@ namespace MyWebApi.Repositories
             baseModel.UserDescription = model.GenerateUserDescription(baseModel.UserRealName, dataModel.UserAge, country, city, baseModel.UserDescription); 
 
             await _contx.SYSTEM_USERS_BASES.AddAsync(baseModel);
+            await _contx.SaveChangesAsync();
             await _contx.SYSTEM_USERS_DATA.AddAsync(dataModel);
+            await _contx.SaveChangesAsync();
             await _contx.SYSTEM_USERS_PREFERENCES.AddAsync(prefsModel);
+            await _contx.SaveChangesAsync();
             await _contx.SYSTEM_USERS.AddAsync(model);
             await _contx.SaveChangesAsync();
 
             await GenerateUserAchievementList(baseModel.Id, dataModel.LanguageId, false); //TODO: Set to false instead of wasRegistered WHEN                                                                              //Or if some users were registered before achievements were implemented
             await TopUpUserWalletBalance(model.UserId, 180, "Starting Pack"); //180 is a starting user point pack
+            await AddUserTrustLevel(model.UserId);
+            await AddUserTrustProgressAsync(model.UserId, 0.000012);
 
             return model.UserId;
         }
@@ -134,7 +139,9 @@ namespace MyWebApi.Repositories
                 .Where(u => currentUser.UserPreferences.UserGenderPrefs == u.UserDataInfo.UserGender)
                 .ToList();
             }
-            
+
+            await AddUserTrustProgressAsync(userId, 0.000003);
+
             return data;
         }
 
@@ -183,6 +190,9 @@ namespace MyWebApi.Repositories
         public async Task<bool> CheckUserHasVisitedSection(long userId, int sectionId)
         {
             var visit = await _contx.USER_VISITS.Where(v => v.UserId == userId && v.SectionId == sectionId).SingleOrDefaultAsync();
+
+            await AddUserTrustProgressAsync(userId, 0.000002);
+
             if (visit != null)
             {
                 return true;
@@ -459,15 +469,21 @@ namespace MyWebApi.Repositories
             var userAchievements = await _contx.USER_ACHIEVEMENTS.Where(u => u.UserBaseInfoId == userId).ToListAsync();
             var userPurchases = await _contx.USER_WALLET_PURCHASES.Where(u => u.UserId == userId).ToListAsync();
             var userBalances = await _contx.USER_WALLET_BALANCES.Where(u => u.UserId == userId).ToListAsync();
+            var userNotifications = await _contx.USER_NOTIFICATIONS.Where(u => u.UserId == userId).ToListAsync();
+            var userNotifications1 = await _contx.USER_NOTIFICATIONS.Where(u => u.UserId1 == userId).ToListAsync();
+            var sponsorRatings = await _contx.SPONSOR_RATINGS.Where(u => u.UserId == userId).ToListAsync();
 
-            _contx.SYSTEM_USERS.Remove(user);
-            _contx.SYSTEM_USERS_BASES.Remove(userBase);
-            _contx.SYSTEM_USERS_DATA.Remove(userData);
-            _contx.SYSTEM_USERS_PREFERENCES.Remove(userPrefs);
             _contx.USER_LOCATIONS.Remove(userLocation);
             _contx.USER_ACHIEVEMENTS.RemoveRange(userAchievements);
             _contx.USER_WALLET_BALANCES.RemoveRange(userBalances);
             _contx.USER_WALLET_PURCHASES.RemoveRange(userPurchases);
+            _contx.USER_NOTIFICATIONS.RemoveRange(userNotifications);
+            _contx.USER_NOTIFICATIONS.RemoveRange(userNotifications1);
+            _contx.SPONSOR_RATINGS.RemoveRange(sponsorRatings);
+            _contx.SYSTEM_USERS_BASES.Remove(userBase);
+            _contx.SYSTEM_USERS_PREFERENCES.Remove(userPrefs);
+            _contx.SYSTEM_USERS_DATA.Remove(userData);
+            _contx.SYSTEM_USERS.Remove(user);
 
             user.IsBusy = false;
             user.IsBanned = false;
@@ -778,12 +794,16 @@ namespace MyWebApi.Repositories
             try
             {
                 var user = await _contx.SYSTEM_USERS.Where(u => u.UserId == userId).SingleOrDefaultAsync();
-                user.IsBusy = !user.IsBusy;
+                if  (user != null)
+                {
+                    user.IsBusy = !user.IsBusy;
 
-                _contx.Update(user);
-                await _contx.SaveChangesAsync();
+                    _contx.Update(user);
+                    await _contx.SaveChangesAsync();
 
-                return (bool)user.IsBusy;
+                    return (bool)user.IsBusy;
+                }
+                return false;
             }
             catch { throw new NullReferenceException($"User {userId} was not found !"); }
         }
@@ -826,6 +846,8 @@ namespace MyWebApi.Repositories
 
             await _contx.USER_NOTIFICATIONS.AddAsync(request);
             await _contx.SaveChangesAsync();
+
+            await AddUserTrustProgressAsync((long)request.UserId, 0.000002);
 
             return request.Id;
         }
@@ -931,31 +953,33 @@ namespace MyWebApi.Repositories
         public async Task<int> AddUserTrustProgressAsync(long userId, double progress)
         {
             var model = await _contx.USER_TRUST_LEVELS
-                .Where(l => l.UserId == userId)
-                .FirstOrDefaultAsync();
+                .FindAsync(userId);
 
-            if((model.Progress + progress) >= model.Goal)
+            if (model != null)
             {
-                model.Progress = (model.Progress + progress) - model.Goal;
-                model.Level++;
-                model.Goal *= 2 * 1.2;
-            }
-            else
-            {
-                model.Progress += progress;
-            }
+                if((model.Progress + progress) >= model.Goal)
+                {
+                    model.Progress = (model.Progress + progress) - model.Goal;
+                    model.Level++;
+                    model.Goal *= 2 * 1.2;
+                }
+                else
+                {
+                    model.Progress += progress;
+                }
 
-            _contx.USER_TRUST_LEVELS.Update(model);
-            await _contx.SaveChangesAsync();
+                _contx.USER_TRUST_LEVELS.Update(model);
+                await _contx.SaveChangesAsync();
 
-            return model.Level;
+                return model.Level;
+            }
+            return -1;
         }
 
         public async Task<int> UpdateUserTrustLevelAsync(long userId, int level)
         {
             var model = await _contx.USER_TRUST_LEVELS
-                .Where(l => l.UserId == userId)
-                .FirstOrDefaultAsync();
+                .FindAsync(userId);
 
             model.Level = level;
 
@@ -967,8 +991,13 @@ namespace MyWebApi.Repositories
         public async Task<UserTrustLevel> GetUserTrustLevel(long userId)
         {
             return await _contx.USER_TRUST_LEVELS
-                .Where(l => l.UserId == userId)
-                .FirstOrDefaultAsync();
+                .FindAsync(userId);
+        }
+
+        private async Task<long> AddUserTrustLevel(long userId)
+        {
+            await _contx.USER_TRUST_LEVELS.AddAsync(UserTrustLevel.CreateDefaultTrustLevel(userId));
+            return userId;
         }
     }
 }
