@@ -7,14 +7,11 @@ namespace MyWebApi.Entities.SponsorEntities
     {
         public long Id { get; set; }
         public string Username { get; set; }
+        public int Age{ get; set; }
+        public string CodeWord{ get; set; }
         public int UserMaxAdCount { get; set; }
         public int UserMaxAdViewCount { get; set; }
-        public bool IsPostponed { get; set; }
-        public bool IsAwaiting { get; set; }
         public int UserAppLanguage { get; set; }
-        public long SponsorContactInfoId { get; set; }
-        public double AverageRating { get; set; }
-        public long SponsorId { get; set; }
         [MaxLength(255)]
         public string Tel { get; set; }
         [MaxLength(255)]

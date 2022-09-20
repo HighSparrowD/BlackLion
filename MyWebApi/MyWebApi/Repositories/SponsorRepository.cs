@@ -48,9 +48,9 @@ namespace MyWebApi.Repositories
         {
             try
             {
-                await RemoveSponsorByUsernameAsync(model.Username);
-                await AddContactInfoAsync(new SponsorContactInfo {Id = model.Id, SponsorId = model.Id, Email = model.Email, Facebook = model.Facebook, Instagram = model.Instagram, Tel = model.Tel });
-                await CreateSponorStats(model.SponsorId);
+                await RemoveSponsorByCodeWordAsync(model.CodeWord);
+                //await AddContactInfoAsync(new SponsorContactInfo {Id = model.Id, SponsorId = model.Id, Email = model.Email, Facebook = model.Facebook, Instagram = model.Instagram, Tel = model.Tel });
+                //await CreateSponorStats(model.SponsorId);
 
                 var user = new Sponsor
                 {
@@ -58,11 +58,12 @@ namespace MyWebApi.Repositories
                     Username = model.Username,
                     UserMaxAdCount = model.UserMaxAdCount,
                     UserMaxAdViewCount = model.UserMaxAdViewCount,
+                    Age = model.Age,
                     IsPostponed = false,
                     IsAwaiting = false,
                     UserAppLanguage = model.UserAppLanguage,
-                    SponsorContactInfoId = model.Id,
-                    SponsorStatsId = model.Id
+                    //SponsorContactInfoId = model.Id,
+                    //SponsorStatsId = model.Id
                 };
 
                 user.IsAwaiting = false;
@@ -105,11 +106,11 @@ namespace MyWebApi.Repositories
             catch { return 0; }
         }
 
-        public async Task<byte> RemoveSponsorByUsernameAsync(string username)
+        public async Task<byte> RemoveSponsorByCodeWordAsync(string codeWord)
         {
             try
             {
-                var user = _contx.SYSTEM_SPONSORS.Where(u => u.Username == username).SingleOrDefault();
+                var user = _contx.SYSTEM_SPONSORS.Where(u => u.CodeWord == codeWord).SingleOrDefault();
                 _contx.Remove(user);
                 await _contx.SaveChangesAsync();
                 return 1;
@@ -168,7 +169,8 @@ namespace MyWebApi.Repositories
             {
                 var sponsor = new Sponsor{
                     Id = await _contx.SYSTEM_SPONSORS.CountAsync() +1, 
-                    Username=user.Username,
+                    Username = user.Username,
+                    CodeWord = user.CodeWord,
                     UserMaxAdCount = user.UserMaxAdCount, 
                     UserMaxAdViewCount= user.UserMaxAdViewCount,
                     UserAppLanguage = user.UserAppLanguage,
@@ -310,8 +312,8 @@ namespace MyWebApi.Repositories
         {
             return await _contx.SYSTEM_SPONSORS
                 .Where(s => s.Id == userId)
-                .Include(s => s.SponsorContactInfo)
-                .Include(s => s.Stats)
+                //.Include(s => s.SponsorContactInfo)
+                //.Include(s => s.Stats)
                 .Include(s => s.Languages)
                 .FirstOrDefaultAsync();
         }
@@ -434,7 +436,7 @@ namespace MyWebApi.Repositories
         {
             var sponsor = await _contx.SYSTEM_SPONSORS
                 .Where(s => s.Id == sponsorId)
-                .Include(s => s.Stats)
+                //.Include(s => s.Stats)
                 .FirstOrDefaultAsync();
 
             var newAwerageRating = 0d;
@@ -448,7 +450,7 @@ namespace MyWebApi.Repositories
                     ratingsCount++;
                 });
 
-            sponsor.Stats.AverageRating = (double)Math.Round(newAwerageRating / ratingsCount, 2);
+            sponsor.AverageRating = (double)Math.Round(newAwerageRating / ratingsCount, 2);
 
             _contx.SYSTEM_SPONSORS.Update(sponsor);
             await _contx.SaveChangesAsync();
@@ -528,6 +530,15 @@ namespace MyWebApi.Repositories
             {
                 return -1;
             }
+        }
+
+        public async Task<bool> CheckUserKeyWordIsCorrect(long userId, string keyword)
+        {
+            try
+            {
+                return await _contx.SYSTEM_SPONSORS.Where(u => u.Id == userId && u.CodeWord == keyword).FirstOrDefaultAsync() != null;
+            }
+            catch { throw new NullReferenceException($"User {userId} does not exists!"); }
         }
     }
 }

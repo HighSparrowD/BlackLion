@@ -25,7 +25,7 @@ namespace MyWebApi.Entities.UserInfoEntities
         public virtual UserDataInfo? UserDataInfo  { get; set; }
         public virtual UserPreferences? UserPreferences { get; set; }
         public virtual List<BlackList>? UserBlackList { get; set; }
-        public virtual UserTrustLevel? TrustLevel { get; set; }
+        //public virtual UserTrustLevel? TrustLevel { get; set; }
         //public virtual List<Encounter>? UserEncounters { get; set; }
 
         public User(long userId)

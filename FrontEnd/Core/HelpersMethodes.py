@@ -26,6 +26,10 @@ def check_sponsor_is_maxed(userId):
         requests.get(f"https://localhost:44381/CheckSponsorIsMaxed/{userId}", verify=False).text))
 
 
+def check_user_keyword_is_correct(userId, keyword):
+    return bool(json.loads(requests.get(f"https://localhost:44381/CheckUserKeyWordIsCorrect/{userId}/{keyword}", verify=False).text))
+
+
 def check_user_is_admin(userId):
     return bool(
         json.loads(requests.get(f"https://localhost:44381/CheckUserIsAdmin/{userId}", verify=False).text))
@@ -91,6 +95,13 @@ def check_user_has_requests(userId):
 def get_user_request(requestId):
     try:
         return json.loads(requests.get(f"https://localhost:44381/CheckUserHasRequest/{requestId}", verify=False).text)
+    except:
+        return None
+
+
+def get_user_info(userId):
+    try:
+        return json.loads(requests.get(f"https://localhost:44381/UserInfo/{userId}", verify=False).text)
     except:
         return None
 

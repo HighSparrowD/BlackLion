@@ -57,6 +57,12 @@ namespace MyWebApi.Controllers
             return await _repository.CheckUserIsPostponed(userId);
         }
 
+        [HttpGet("/CheckUserKeyWordIsCorrect/{userId}/{keyword}")]
+        public async Task<bool> CheckUserKeyWordIsCorrect(long userId, string keyword)
+        {
+            return await _repository.CheckUserKeyWordIsCorrect(userId, keyword);
+        }
+
         [HttpGet("/GetSponsorAds/{userId}")]
         public async Task<List<Ad>> GetSponsorAds(long userId)
         {

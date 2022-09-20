@@ -13,6 +13,7 @@ namespace MyWebApi.Interfaces
         Task<bool> CheckSponsorIsMaxedAsync(long userId);
         Task<bool> CheckSponsorHasViewsLeftAsync(long userId);
         Task<bool> CheckUserIsPostponed(long userId);
+        Task<bool> CheckUserKeyWordIsCorrect(long userId, string keyword);
         Task<List<Ad>> GetSponsorAdsAsync(long sponsorId);
         Task<List<Sponsor>> GetSponsorsAsync();
         Task<Sponsor> GetAwaitingUserAsync(string username);
