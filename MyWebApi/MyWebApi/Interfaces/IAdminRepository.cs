@@ -17,5 +17,7 @@ namespace MyWebApi.Interfaces
         Task<long> UploadLanguages(List<Language> langs);
         Task<long> UploadFeedbackReasons(List<FeedbackReason> reasons);
         Task<List<Feedback>> GetFeedbacks ();
+        Task<long> DeleteUser (long userId);
+        Task<int> DeleteAllUsers ();
     }
 }

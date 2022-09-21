@@ -198,8 +198,13 @@ namespace MyWebApi.Repositories
                 return true;
             }
 
-            await _contx.USER_VISITS.AddAsync(new Visit { UserId = userId, SectionId = sectionId });
-            await _contx.SaveChangesAsync();
+            if (await CheckUserIsRegistered(userId))
+            {
+                await _contx.USER_VISITS.AddAsync(new Visit { UserId = userId, SectionId = sectionId });
+                await _contx.SaveChangesAsync();
+                return false;
+            }
+
             return false;
         }
 
@@ -460,37 +465,110 @@ namespace MyWebApi.Repositories
 
         public async Task<byte> ReRegisterUser(long userId)
         {
+            var startingUser = await _contx.SYSTEM_USERS.Where(u => u.UserId == userId).SingleOrDefaultAsync();
+            var startingUserBase = await _contx.SYSTEM_USERS_BASES.Where(u => u.Id == userId).SingleOrDefaultAsync();
+            var startingUserData = await _contx.SYSTEM_USERS_DATA.Where(u => u.Id == userId).SingleOrDefaultAsync();
+            var startingUserPrefs = await _contx.SYSTEM_USERS_PREFERENCES.Where(u => u.Id == userId).SingleOrDefaultAsync();
+
+            var userBalances = await _contx.USER_WALLET_BALANCES.Where(u => u.UserId == userId).ToListAsync();
+            if (userBalances.Count > 0 && userBalances != null)
+            {
+                _contx.USER_WALLET_BALANCES.RemoveRange(userBalances);
+                await _contx.SaveChangesAsync();
+            }
+
+            var userLocation = await _contx.USER_LOCATIONS.Where(u => u.Id == userId).SingleOrDefaultAsync();
+            if (userLocation != null)
+            {
+                _contx.USER_LOCATIONS.Remove(userLocation);
+                await _contx.SaveChangesAsync();
+            }
+
+            var userAchievements = await _contx.USER_ACHIEVEMENTS.Where(u => u.UserBaseInfoId == userId).ToListAsync();
+            if (userAchievements.Count > 0 && userAchievements != null)
+            {
+                _contx.USER_ACHIEVEMENTS.RemoveRange(userAchievements);
+                await _contx.SaveChangesAsync();
+            }
+
+
+            var userPurchases = await _contx.USER_WALLET_PURCHASES.Where(u => u.UserId == userId).ToListAsync();
+            if (userPurchases.Count > 0 && userPurchases != null )
+            {
+                _contx.USER_WALLET_PURCHASES.RemoveRange(userPurchases);
+                await _contx.SaveChangesAsync();
+            }
+
+            var userVisits = await _contx.USER_VISITS.Where(u => u.UserId == userId).ToListAsync();
+            if (userVisits.Count > 0 && userVisits != null)
+            {
+                _contx.USER_VISITS.RemoveRange(userVisits);
+                await _contx.SaveChangesAsync();
+            }
+
+            var userNotifications = await _contx.USER_NOTIFICATIONS.Where(u => u.UserId == userId).ToListAsync();
+            if (userNotifications.Count > 0 && userNotifications != null)
+            {
+                _contx.USER_NOTIFICATIONS.RemoveRange(userNotifications);
+                await _contx.SaveChangesAsync();
+            }
+
+            var userNotifications1 = await _contx.USER_NOTIFICATIONS.Where(u => u.UserId1 == userId).ToListAsync();
+            if (userNotifications1.Count > 0 && userNotifications1 != null)
+            {
+                _contx.USER_NOTIFICATIONS.RemoveRange(userNotifications1);
+                await _contx.SaveChangesAsync();
+            }
+
+            var sponsorRatings = await _contx.SPONSOR_RATINGS.Where(u => u.UserId == userId).ToListAsync();
+            if (sponsorRatings.Count > 0 && sponsorRatings != null)
+            {
+                _contx.SPONSOR_RATINGS.RemoveRange(sponsorRatings);
+                await _contx.SaveChangesAsync();
+            }
+
+            var userTrustLevel = await _contx.USER_TRUST_LEVELS.Where(u => u.Id == userId).SingleOrDefaultAsync();
+            if (userTrustLevel != null)
+            {
+                _contx.USER_TRUST_LEVELS.Remove(userTrustLevel);
+                await _contx.SaveChangesAsync();
+            }
+
+            var userBase = await _contx.SYSTEM_USERS_BASES.Where(u => u.Id == userId).SingleOrDefaultAsync();
+            if (userBase != null)
+            {
+                _contx.SYSTEM_USERS_BASES.Remove(userBase);
+            }
+
+            var userPrefs = await _contx.SYSTEM_USERS_PREFERENCES.Where(u => u.Id == userId).SingleOrDefaultAsync();
+            if (userPrefs != null)
+            {
+                _contx.SYSTEM_USERS_PREFERENCES.Remove(userPrefs);
+            }
+
+            var userData = await _contx.SYSTEM_USERS_DATA.Where(u => u.Id == userId).SingleOrDefaultAsync();
+            if (userData != null)
+            {
+                _contx.SYSTEM_USERS_DATA.Remove(userData);
+            }
 
             var user = await _contx.SYSTEM_USERS.Where(u => u.UserId == userId).SingleOrDefaultAsync();
-            var userBase = await _contx.SYSTEM_USERS_BASES.Where(u => u.Id == userId).SingleOrDefaultAsync();
-            var userData = await _contx.SYSTEM_USERS_DATA.Where(u => u.Id == userId).SingleOrDefaultAsync();
-            var userPrefs = await _contx.SYSTEM_USERS_PREFERENCES.Where(u => u.Id == userId).SingleOrDefaultAsync();
-            var userLocation = await _contx.USER_LOCATIONS.Where(u => u.Id == userId).SingleOrDefaultAsync();
-            var userAchievements = await _contx.USER_ACHIEVEMENTS.Where(u => u.UserBaseInfoId == userId).ToListAsync();
-            var userPurchases = await _contx.USER_WALLET_PURCHASES.Where(u => u.UserId == userId).ToListAsync();
-            var userBalances = await _contx.USER_WALLET_BALANCES.Where(u => u.UserId == userId).ToListAsync();
-            var userNotifications = await _contx.USER_NOTIFICATIONS.Where(u => u.UserId == userId).ToListAsync();
-            var userNotifications1 = await _contx.USER_NOTIFICATIONS.Where(u => u.UserId1 == userId).ToListAsync();
-            var sponsorRatings = await _contx.SPONSOR_RATINGS.Where(u => u.UserId == userId).ToListAsync();
-
-            _contx.USER_LOCATIONS.Remove(userLocation);
-            _contx.USER_ACHIEVEMENTS.RemoveRange(userAchievements);
-            _contx.USER_WALLET_BALANCES.RemoveRange(userBalances);
-            _contx.USER_WALLET_PURCHASES.RemoveRange(userPurchases);
-            _contx.USER_NOTIFICATIONS.RemoveRange(userNotifications);
-            _contx.USER_NOTIFICATIONS.RemoveRange(userNotifications1);
-            _contx.SPONSOR_RATINGS.RemoveRange(sponsorRatings);
-            _contx.SYSTEM_USERS_BASES.Remove(userBase);
-            _contx.SYSTEM_USERS_PREFERENCES.Remove(userPrefs);
-            _contx.SYSTEM_USERS_DATA.Remove(userData);
-            _contx.SYSTEM_USERS.Remove(user);
-
-            user.IsBusy = false;
-            user.IsBanned = false;
-            user.IsDeleted = false;
+            if (user != null)
+            {
+                _contx.SYSTEM_USERS.Remove(user);
+            }
 
             await _contx.SaveChangesAsync();
-            await RegisterUserAsync(user, userBase, userData, userPrefs, userLocation);
+
+            if (startingUser != null)
+            {
+                startingUser.IsBusy = false;
+                startingUser.IsBanned = false;
+                startingUser.IsDeleted = false;
+
+                await RegisterUserAsync(startingUser, startingUserBase, startingUserData, startingUserPrefs, userLocation);
+            }
+
             return 1;
         }
 
@@ -997,6 +1075,7 @@ namespace MyWebApi.Repositories
         private async Task<long> AddUserTrustLevel(long userId)
         {
             await _contx.USER_TRUST_LEVELS.AddAsync(UserTrustLevel.CreateDefaultTrustLevel(userId));
+            await _contx.SaveChangesAsync();
             return userId;
         }
     }
