@@ -18,8 +18,11 @@ namespace MyWebApi.Entities.SponsorEntities
         public bool IsPostponed { get; set; }
         public bool IsAwaiting { get; set; }
         public int UserAppLanguage { get; set; }
+        public int UserCountryId { get; set; }
+        public int UserCityId { get; set; }
         public long? ContactInfoId { get; set; }
         public long? StatsId { get; set; }
+        public bool HasBaseAccount { get; set; }
         public virtual List<SponsorLanguage>? SponsorLanguages { get; set; }
         [ForeignKey("ContactInfoId")]
         public virtual SponsorContactInfo? SponsorContactInfo { get; set; }
