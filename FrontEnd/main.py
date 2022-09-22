@@ -26,7 +26,7 @@ reporters = []
 shops = []
 
 
-@bot.message_handler(commands=["registration"])
+@bot.message_handler(commands=["registration"], is_multihandler=True)
 def Greet(message):
     if Helpers.check_user_is_registered(message.from_user.id):
         if not Helpers.check_user_is_busy(message.from_user.id):
@@ -47,7 +47,7 @@ def Search(message):
         create_familiator(message, message.from_user.id)
 
 
-@bot.message_handler(commands=["feedback"])
+@bot.message_handler(commands=["feedback"], is_multihandler=True)
 def Report(message):
     if not Helpers.check_user_is_busy(message.from_user.id):
         create_reporter(message)
@@ -65,28 +65,15 @@ def Sponsor_Handler(message):
         create_sponsor_handler(message)
 
 
-@bot.message_handler(commands=["switchstatus", "showstatus"])
+@bot.message_handler(commands=["switchstatus", "showstatus"], is_multihandler=True)
 def SwitchAdminStatus(message):
     if message.text == "/switchstatus":
         user_was_admin = Helpers.check_user_is_admin(message.from_user.id)
-
         msg = Helpers.switch_admin_status(message.from_user.id)
         bot.send_message(message.from_user.id, msg)
         if Helpers.check_user_is_admin(message.from_user.id):
-            for handler in sponsor_handlers:
-                if handler.current_user == message.from_user.id:
-                    bot.send_message(handler.current_user, "Switching to admin section")
-                    handler.destruct()
-                    SponsorHandlerAdmin(bot, message, admin_sponsor_handlers)
-                    return False
             show_admin_markup(bot, message.from_user.id)
         if user_was_admin:
-            for handler in admin_sponsor_handlers:
-                if handler.current_user == message.from_user.id:
-                    bot.send_message(handler.current_user, "Admin access disabled\nSwitching to an ordinary sponsor module")
-                    handler.destruct()
-                    SponsorHandler(bot, message, sponsor_handlers)
-                    return False
             go_back_to_main_menu(bot, message.from_user.id)
 
         return False

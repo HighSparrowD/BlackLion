@@ -373,7 +373,7 @@ class Registrator:
         if msg_text != "ok":
             country = self.country_convertor(msg_text)
             if country:  # TODO: Get string, separate by , and process it
-                if country not in self.chosen_langs:
+                if country not in self.pref_countries:
                     self.pref_countries.append(country)
                     add_tick_to_element(self.bot, self.current_user, self.current_inline_message_id, self.current_markup_elements,
                                         self.markup_page, str(country))
@@ -395,9 +395,6 @@ class Registrator:
                 self.bot.send_message(self.current_user,
                                       "Got it! Press OK to move to the next step or add more languages if you want ;-)",
                                       reply_markup=self.okMarkup)
-            else:
-                self.pref_countries.remove(self.country)
-                self.bot.send_message(self.current_user, "Removed", reply_markup=self.okMarkup)
             self.bot.register_next_step_handler(msg, self.location_preferences_step, chat_id=self.current_user)
 
         if self.pref_countries:
@@ -514,7 +511,7 @@ class Registrator:
                                         self.markup_page, call.data)
 
             elif call.message.text == "Which country do you live in?":
-                if int(call.data) <= len(self.countries.keys()):
+                if int(call.data) in self.countries.keys():
                     self.country = int(call.data)
                     self.bot.answer_callback_query(call.id, "Gotcha")
                     if self.previous_item:
@@ -525,7 +522,6 @@ class Registrator:
                     self.previous_item = call.data
                 else:  # call.data in self.countries.values():
                     self.bot.send_message(call.message.chat.id, "Incorrect country code")
-                    self.bot.register_next_step_handler(self.msg, self.location_step, chat_id=self.current_user)
 
             elif call.message.text == "Which city do you live in?":
                 if int(call.data) in self.cities.keys():
@@ -540,7 +536,6 @@ class Registrator:
                     self.previous_item = call.data
                 else:
                     self.bot.answer_callback_query(call.id, "Incorrect city code")
-                    self.bot.register_next_step_handler(self.msg, self.city_step, chat_id=self.current_user)
 
             elif call.message.text == "What languages are you willing to speak with people?":
                 if int(call.data) == -5:
