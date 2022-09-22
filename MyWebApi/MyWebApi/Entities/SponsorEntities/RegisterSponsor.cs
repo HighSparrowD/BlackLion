@@ -13,6 +13,8 @@ namespace MyWebApi.Entities.SponsorEntities
         public int UserMaxAdCount { get; set; }
         public int UserMaxAdViewCount { get; set; }
         public int UserAppLanguage { get; set; }
+        public int UserCountryId { get; set; }
+        public int UserCityId { get; set; }
         public List<int> Languages { get; set; }
         public List<string> LanguageLevels { get; set; }
         [MaxLength(255)]

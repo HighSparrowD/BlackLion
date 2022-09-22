@@ -9,7 +9,6 @@ using MyWebApi.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection.Metadata.Ecma335;
 using System.Threading.Tasks;
 using static MyWebApi.Enums.SystemEnums;
 
@@ -51,7 +50,7 @@ namespace MyWebApi.Repositories
                 await RemoveSponsorByCodeWordAsync(model.CodeWord);
                 var contactInfoId = await AddContactInfoAsync(new SponsorContactInfo {Id = model.Id, SponsorId = model.Id, Email = model.Email, Facebook = model.Facebook, Instagram = model.Instagram, Tel = model.Tel });
                 var statsId = await CreateSponorStats(model.Id);
-
+                var hasBaseAccount = await _contx.SYSTEM_USERS.FindAsync(model.Id) != null;
 
                 var user = new Sponsor
                 {
@@ -63,8 +62,11 @@ namespace MyWebApi.Repositories
                     IsPostponed = false,
                     IsAwaiting = false,
                     UserAppLanguage = model.UserAppLanguage,
+                    UserCountryId = model.UserCountryId,
+                    UserCityId = model.UserCityId,
                     ContactInfoId = contactInfoId,
-                    StatsId = statsId
+                    StatsId = statsId,
+                    HasBaseAccount = hasBaseAccount
                 };
 
                 user.IsAwaiting = false;
