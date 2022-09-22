@@ -1,3 +1,4 @@
+import copy
 import json
 import random
 
@@ -7,239 +8,7 @@ import requests
 from telebot.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 
 from Common.Menues import go_back_to_main_menu
-
-
-class SponsorHandlerAdmin:
-    def __init__(self, bot, message, sponsor_handlers):
-        self.bot = bot
-        self.current_user = message.from_user.id
-        Helpers.switch_user_busy_status(self.current_user)
-        self.sponsor_handlers = sponsor_handlers
-        self.sponsor_handlers.append(self)
-
-        self.chCode = None
-        self.mhCode = None
-
-        self.old_queries = []
-
-        self.data = {
-            0: "/register - Register new awaiting user",
-            1: "/viewsponsors"
-        }
-        self.dat = {}
-
-        self.admin_greet_message = "Hello! Admin access granted. List of admin commands:\n/showstatus\n/switchstatus"
-        self.admin_warning_message = "\nWARNING!\n This section id NOT debugged, please input only numbers, or registration will break!!!"
-        self.admin_laugh_message = "Well, sure i have debugged this section. Did you really think that...? Do not mind, just continue to the previous step"
-        self.checkout_message = "Wanna change smth?"
-        self.registration_success_message = "User had been successfully registered. What now, your majesty?"
-        self.upload_success_message = "Sponsors data had been successfully updated"
-        self.delete_success_message = "Sponsor had been successfully deleted"
-
-        self.markup1 = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(KeyboardButton("/register"), KeyboardButton("/viewsponsors"), KeyboardButton("/switchstatus"), KeyboardButton("/showstatus"), KeyboardButton("/exit"))
-        self.markup3 = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(KeyboardButton("Ok"), KeyboardButton("Change username"), KeyboardButton("Change ad count"), KeyboardButton("Change view count"), KeyboardButton("Change code word"), KeyboardButton("Delete Sponsor"))
-        self.markupYN = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(KeyboardButton("Yes"), KeyboardButton("No"))
-
-        self.bot.send_message(self.current_user, self.admin_greet_message, reply_markup=self.markup1)
-        self.chCode = self.bot.register_callback_query_handler("", self.admin_callback_handler, user_id=self.current_user)
-        self.eh = self.bot.register_message_handler(self.admin_exit_handler, user_id=self.current_user, commands=["exit"])
-        self.mhCode = self.bot.register_message_handler(self.admin_message_handler, user_id=self.current_user, commands=["register", "viewsponsors"])
-
-    def admin_message_handler(self, message):
-        if message.text == "/register":
-            self.dat.clear()
-            self.bot.send_message(self.current_user, "Gimme user name:")
-            self.bot.register_next_step_handler(message, self.ultimate_registration1, chat_id=self.current_user)
-
-        elif message.text == "/viewsponsors":
-            sponsors = json.loads(requests.get("https://localhost:44381/GetSponsors", verify=False).text)
-
-            if not sponsors:
-                self.bot.send_message(self.current_user, "There are no sponsors to handle", reply_markup=self.markup1)
-                return False
-
-            markup = InlineKeyboardMarkup()
-
-            for sponsor in sponsors:
-                username = self.pretiffy_username(sponsor)
-
-                markup.add(InlineKeyboardButton(username, callback_data=sponsor["id"]))
-
-            self.bot.send_message(self.current_user, "Here you go", reply_markup=markup)
-
-        elif message.text == "/exit":
-            self.bot.send_message(self.current_user, "Admin access disabled\nSwitching to an ordinary sponsor module")
-            SponsorHandler(self.bot, message, self.sponsor_handlers)
-            self.destruct()
-
-    def admin_callback_handler(self, call):
-        if call.message.id not in self.old_queries:
-            self.old_queries.append(call.message.id)
-            self.dat.clear()
-            self.dat = json.loads(requests.get(f"https://localhost:44381/GetSponsorAsync/{call.data}", verify=False).text)
-            self.bot.send_message(self.current_user, "What do you want to do with this user?", reply_markup=self.markup3)
-            self.bot.send_message(self.current_user, self.configure_sponsor_data())
-            self.bot.register_next_step_handler(call.message, self.ultimate_registration_checkout, cb=True, chat_id=self.current_user)
-
-    def admin_exit_handler(self):
-        self.destruct()
-
-    def ultimate_registration1(self, message, incorrect=False, revisit=False, cb=False):
-        if not message.text:
-            self.bot.send_message(self.current_user, "Gimme user name:")
-            self.bot.register_next_step_handler(message, self.ultimate_registration1, chat_id=self.current_user)
-            return False
-
-        if not incorrect:
-            self.dat["username"] = message.text
-
-        if revisit:
-            self.bot.send_message(self.current_user, "Changed!", reply_markup=self.markup3)
-            self.bot.register_next_step_handler(message, self.ultimate_registration_checkout, cb=cb, chat_id=self.current_user)
-            return revisit
-
-        self.bot.send_message(message.from_user.id, f"Tell me the codeword user will use to register")
-        self.bot.register_next_step_handler(message, self.ultimate_registration_codeword_step, incorrect=False, revisit=revisit, cb=cb, chat_id=self.current_user)
-
-    def ultimate_registration_codeword_step(self, message, incorrect=False, revisit=False, cb=False):
-        if not message.text:
-            self.bot.send_message(self.current_user, "Tell me the codeword user will use to register")
-            self.bot.register_next_step_handler(message, self.ultimate_registration1, chat_id=self.current_user)
-            return False
-
-        if not incorrect:
-            self.dat["codeWord"] = message.text.strip()
-
-        if revisit:
-            self.bot.send_message(self.current_user, "Changed!", reply_markup=self.markup3)
-            self.bot.register_next_step_handler(message, self.ultimate_registration_checkout, cb=cb,
-                                                chat_id=self.current_user)
-            return revisit
-
-        self.bot.send_message(message.from_user.id, f"Tell me how many ads he will be able to host?:{self.admin_warning_message}")
-        self.bot.register_next_step_handler(message, self.ultimate_registration2, incorrect=False, revisit=revisit, cb=cb,
-                                            chat_id=self.current_user)
-
-    def ultimate_registration2(self, message, incorrect=False, revisit=False, cb=False):
-        try:
-            if not incorrect:
-                self.dat["userMaxAdCount"] = int(message.text)
-            if revisit or cb:
-                self.bot.send_message(self.current_user, "Changed!", reply_markup=self.markup3)
-                self.bot.register_next_step_handler(message, self.ultimate_registration_checkout, cb=cb, chat_id=self.current_user)
-                return revisit
-
-            self.bot.send_message(message.from_user.id, f"Tell me how many times will the other users be able to see the ad?:{self.admin_warning_message}")
-            self.bot.register_next_step_handler(message, self.ultimate_registration3, chat_id=self.current_user)
-
-        except:
-            self.bot.send_message(self.current_user, self.admin_laugh_message)
-            self.bot.send_message(message.from_user.id,
-                                    f"Tell me how many ads he will be able to host?:{self.admin_warning_message}")
-            self.bot.register_next_step_handler(message, self.ultimate_registration2, incorrect=False, revisit=False, cb=cb, chat_id=self.current_user)
-            return cb
-
-    def ultimate_registration3(self, message, cb=False):
-        try:
-            self.dat["userMaxAdViewCount"] = int(message.text)
-            self.bot.send_message(self.current_user, self.checkout_message, reply_markup=self.markup3)
-            self.bot.send_message(self.current_user, self.configure_sponsor_data())
-            self.bot.register_next_step_handler(message, self.ultimate_registration_checkout, cb=cb, chat_id=self.current_user)
-        except:
-            self.bot.send_message(self.current_user, self.admin_laugh_message)
-            self.bot.send_message(message.from_user.id,
-                                    f"Tell me how many times will the other users be able to see the ad?:{self.admin_warning_message}")
-            self.bot.register_next_step_handler(message, self.ultimate_registration3, cb=cb, chat_id=self.current_user)
-            return cb
-
-    def ultimate_registration_delete(self, message, cb=False):
-        if message.text == "Yes":
-            if cb:
-                self.delete_sponsor()
-                return False
-            self.bot.send_message(self.current_user, self.delete_success_message, self.markup1)
-            return True #TODO: Implement exit command and use it here
-            # (If it is not cb => it is just registration and sponsor is not in database, thus there is no need to call an API)
-        elif message.text == "No":
-            self.bot.send_message(self.current_user, self.checkout_message)
-            self.bot.send_message(self.current_user, self.configure_sponsor_data())
-            self.bot.register_next_step_handler(message, self.ultimate_registration_checkout, cb=cb, chat_id=self.current_user)
-
-    def ultimate_registration_checkout(self, message, cb=False):
-        if message.text == "Ok":
-            if cb:
-                self.update_sponsor()
-                return cb
-            self.register_sponsor()
-        elif message.text == "Change username":
-            self.bot.send_message(self.current_user, "Gimme user name:")
-            self.bot.register_next_step_handler(message, self.ultimate_registration1, incorrect=False, revisit=True, cb=cb, chat_id=self.current_user)
-        elif message.text == "Change ad count":
-            self.bot.send_message(self.current_user, f"Tell me how many ads he will be able to host?:{self.admin_warning_message}")
-            self.bot.register_next_step_handler(message, self.ultimate_registration2, incorrect=False, revisit=True, cb=cb, chat_id=self.current_user)
-        elif message.text == "Change view count":
-            self.bot.send_message(message.from_user.id, f"Tell me how many times will the other users be able to see the ad?:{self.admin_warning_message}")
-            self.bot.register_next_step_handler(message, self.ultimate_registration3, cb=cb, chat_id=self.current_user)
-        elif message.text == "Change code word":
-            self.bot.send_message(message.from_user.id, f"Tell me a codeword user will use to register")
-            self.bot.register_next_step_handler(message, self.ultimate_registration_codeword_step, revisit=True, cb=cb, chat_id=self.current_user)
-        elif message.text == "Delete Sponsor":
-            self.bot.send_message(message.from_user.id, f"Are you sure you want to delete sponsor?:{self.admin_warning_message}", reply_markup=self.markupYN)
-            self.bot.register_next_step_handler(message, self.ultimate_registration_delete, cb=cb, chat_id=self.current_user)
-        else:
-            self.bot.send_message(self.current_user, "No such option", reply_markup=self.markup3)
-            self.bot.register_next_step_handler(message, self.ultimate_registration_checkout, chat_id=self.current_user)
-
-    def register_sponsor(self):
-        d = json.dumps(self.dat)
-
-        requests.post("https://localhost:44381/RegisterAwaitingUser", d, headers={
-            "Content-Type": "application/json"}, verify=False)
-        self.bot.send_message(self.current_user, self.registration_success_message, reply_markup=self.markup1)
-
-    def delete_sponsor(self):
-        sponsorId = self.dat["id"]
-        requests.delete(f"https://localhost:44381/RemoveSponsor/{sponsorId}", verify=False)
-        self.bot.send_message(self.current_user, self.delete_success_message, reply_markup=self.markup1)
-
-    def update_sponsor(self):
-        d = json.dumps(self.dat)
-
-        requests.post("https://localhost:44381/SponsorUpdate", d, headers={
-            "Content-Type": "application/json"}, verify=False)
-        self.bot.send_message(self.current_user, self.upload_success_message, reply_markup=self.markup1)
-
-    def configure_sponsor_data(self):
-        data = ""
-        if "id" in self.dat:
-            data += f"UserId: {self.dat['id']}\n"
-        if "username" in self.dat:
-            data += f"Username: {self.dat['username']}\n"
-        if "userMaxAdCount" in self.dat:
-            data += f"UserMaxAdCount: {self.dat['userMaxAdCount']}\n"
-        if "userMaxAdViewCount" in self.dat:
-            data += f"UserMaxAdViewCount: {self.dat['userMaxAdViewCount']}\n"
-        if "isPostponed" in self.dat:
-            data += f"IsPostponed: {self.dat['isPostponed']}\n"
-        if "isAwaiting" in self.dat:
-            data += f"IsAwaiting: {self.dat['isAwaiting']}\n"
-        return data
-
-    def pretiffy_username(self, sponsor):
-        if sponsor["isAwaiting"]:
-            return f"{sponsor['username']} ❓"
-        elif sponsor["isPostponed"]:
-            return f"{sponsor['username']} ❗️"
-        return f"{sponsor['username']} ✅"
-
-    def destruct(self):
-        self.bot.callback_query_handlers.remove(self.chCode)
-        self.bot.message_handlers.remove(self.mhCode)
-        self.bot.message_handlers.remove(self.eh)
-        self.sponsor_handlers.remove(self)
-        Coms.show_admin_markup(self.bot, self.current_user)
-        Helpers.switch_user_busy_status(self.current_user)
-        del self
+from SponsorHandlerAdmin import SponsorHandlerAdmin
 
 
 class SponsorHandler:
@@ -261,11 +30,28 @@ class SponsorHandler:
         self.chCode = None
         self.mhCode = None
 
+        self.language_levels = ["A1", "A2", "B1", "B2", "C1", "C2"]
+
         self.dat = {}
         self.user_registration_data = {}
         self.ad_data = {"photo": "", "video": ""}
 
+        self.current_inline_message_id = 0
+        self.previous_item = ''
+        self.country = 0
+        self.city = 0
+
+        self.current_markup_elements = []
+        self.markup_last_element = 0
+        self.markup_page = 1
+        self.markup_pages_count = 0
+
         self.old_queries = []
+        self.languages = {}
+        self.chosen_languages = []
+        self.chosen_languages_levels = []
+        self.countries = {}
+        self.cities = {}
         self.app_langs = {}
 
         self.markup_error_message = "No such option"
@@ -286,10 +72,12 @@ class SponsorHandler:
         self.command_list_message = "/myads - View your ads\n/createad - Create a new ad\n/exit - exit from this module"
 
         self.empty_markup = InlineKeyboardMarkup()
+        self.okMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add(KeyboardButton("Ok"))
+        self.language_levels_markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add(KeyboardButton("A1"), KeyboardButton("A2"), KeyboardButton("B1"), KeyboardButton("B2"), KeyboardButton("C1"), KeyboardButton("C2"))
         self.markup1 = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add(KeyboardButton("/register"))
         self.app_langs_markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
         self.skip_markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add(KeyboardButton("skip"))
-        self.registration_checkout_markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add(KeyboardButton("1"), KeyboardButton("2"), KeyboardButton("3"), KeyboardButton("4"), KeyboardButton("5"), KeyboardButton("6"), KeyboardButton("7"))
+        self.registration_checkout_markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add(KeyboardButton("1"), KeyboardButton("2"), KeyboardButton("3"), KeyboardButton("4"), KeyboardButton("5"), KeyboardButton("6"), KeyboardButton("7"), KeyboardButton("8"), KeyboardButton("9"), KeyboardButton("10"))
         self.markup2 = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add(KeyboardButton("/myads"), KeyboardButton("/createad"), KeyboardButton("/exit"))
         self.markupYN = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add(KeyboardButton("Yes, text only"), KeyboardButton("No, i'll send media"))
         self.markup_delete = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add(KeyboardButton("Yes"), KeyboardButton("No"))
@@ -299,7 +87,7 @@ class SponsorHandler:
 
         self.greet_message1 = "Hey! I see you are a new one here. Lets create your sponsor account!"
         self.greet_message2 = f"Welcome back dear sponsor. What are we to do this time? \n{self.action_list_message}"
-        self.registration_checkout_message = f"1. Change Username\n2.Change Age\n3. Change Tel. number\n4. Change Email\n5. Change Instagram Username\n6. Change Facebook Username\n7. Change App language\n8. Register"
+        self.registration_checkout_message = f"1. Change Username\n2.Change Age\n3. Change Tel. number\n4. Change Email\n5. Change Instagram Username\n6. Change Facebook Username\n7. Change App language\n8. Choose Location again\n9. Choose Languages again\n10. Finish Registration"
         self.greet_message3 = f"Welcome back dear sponsor. Reminding you my list of commands :-) \n{self.command_list_message}"
         self.greets = [self.greet_message2, self.greet_message3]
 
@@ -320,7 +108,7 @@ class SponsorHandler:
         else:
             self.bot.send_message(self.current_user, self.greet_message1, reply_markup=self.markup1)
             self.chCode = self.bot.register_callback_query_handler("", self.callback_handler, user_id=self.current_user)
-            self.mhCode = self.bot.register_message_handler(self.message_handler, user_id=self.current_user, commands=["register", "myads", "createad"])
+            self.mhCode = self.bot.register_message_handler(self.message_handler, user_id=self.current_user, commands=["register", "myads", "createad", "switchstatus"])
             self.eh = self.bot.register_message_handler(self.exit_handler, user_id=self.current_user, commands=["exit"])
 
             self.load_user_data()
@@ -372,6 +160,10 @@ class SponsorHandler:
 
             else:
                 self.bot.send_message(self.current_user, self.permission_error_message)
+        elif message.text == "/switchstatus":
+            self.bot.send_message(self.current_user, "Switching to admin section")
+            self.destruct()
+            SponsorHandlerAdmin(self.bot, message, self.sponsor_handlers)
 
     def registration_codeword_step(self, message):
         if Helpers.check_user_keyword_is_correct(self.current_user, message.text):
@@ -382,9 +174,13 @@ class SponsorHandler:
                     "codeWord": message.text,
                     "age": data["userDataInfo"]["userAge"],
                     "username": data["userBaseInfo"]["userName"],
-                    "userAppLanguage": data["userDataInfo"]["languageId"]
+                    "userAppLanguage": data["userDataInfo"]["languageId"],
+                    "userCountryId": data["userDataInfo"]["location"]["countryId"],
+                    "userCityId": data["userDataInfo"]["location"]["cityId"],
+                    "languages": data["userLanguages"]
                 }
 
+                self.get_localisation(self.dat["userAppLanguage"])
                 self.bot.send_message(self.current_user, "Now, lets get to a basic contact info :-). Send me your phone number", reply_markup=self.skip_markup)
                 self.bot.register_next_step_handler(message, self.registration_contact_tel_step, chat_id=self.current_user)
                 return False
@@ -397,6 +193,7 @@ class SponsorHandler:
         if not revisit:
             lang = self.app_language_converter(message.text)
             if lang:
+                self.get_localisation(lang)
                 self.dat["userAppLanguage"] = lang
                 self.return_to_registration_checkout(message)
 
@@ -417,11 +214,82 @@ class SponsorHandler:
             self.dat["username"] = message.text
 
             if not revisit:
-                self.bot.send_message(self.current_user, "How old are you?")
-                self.bot.register_next_step_handler(message, self.registration_age_step, chat_id=self.current_user)
+                Coms.reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page, self.markup_pages_count)
+                Coms.count_pages(self.cities, self.current_markup_elements, self.markup_pages_count)
+                markup = Coms.assemble_markup(self.markup_page, self.current_markup_elements, 0)
+
+                self.bot.send_message(self.current_user, "What languages do you speak?", reply_markup=markup)
+                self.bot.send_message(self.current_user, "Chose one from above, or simply type to chat", reply_markup=self.okMarkup)
+                self.bot.register_next_step_handler(message, self.registration_languages_step, chat_id=self.current_user)
                 return False
 
             self.return_to_registration_checkout(message)
+
+    def registration_languages_step(self, message, revisit):
+        msg_text = message.text.lower().strip()
+        if msg_text != "ok":
+            language = self.spoken_languages_convertor(msg_text)
+            if language:
+                if language in self.chosen_languages:
+                    Coms.remove_tick_from_element(self.bot, self.current_user, self.current_inline_message_id,
+                                                  self.current_markup_elements,
+                                                  self.markup_page, str(self.previous_item))
+                    self.chosen_languages.remove(language)
+                    self.bot.send_message(self.current_user, "Removed", reply_markup=self.okMarkup)
+                else:
+
+                    Coms.add_tick_to_element(self.bot, self.current_user, self.current_inline_message_id, self.current_markup_elements,
+                                                 self.markup_page, str(language))
+                    self.chosen_languages.append(language)
+                    self.bot.send_message(self.current_user, "Added", reply_markup=self.okMarkup)
+            else:
+                self.bot.send_message(self.current_user, "language was not recognized, try finding it in our list above")
+                self.bot.register_next_step_handler(message, self.registration_languages_step, chat_id=self.current_user)
+                return False
+
+        if self.chosen_languages:
+            self.dat["languages"] = self.chosen_languages
+
+            #if not revisit: # Redundant, user has to choose language levels after changing the country as well
+            self.previous_item = ''
+            langs = copy.copy(self.chosen_languages)
+            if len(langs) > 0:
+                index = 0
+                self.bot.send_message(self.current_user, f"Please, choose a level of {self.languages[langs[index]]}", reply_markup=self.language_levels_markup)
+                self.bot.register_next_step_handler(message, self.registration_age_step, langs=langs, index=index, chat_id=self.current_user)
+                return False
+
+            if not revisit:
+                self.bot.send_message(self.current_user, f"Something went wrong")
+                self.bot.send_message(self.current_user, f"How old are you?")
+                self.bot.register_next_step_handler(message, self.registration_age_step, chat_id=self.current_user)
+                return False
+            self.return_to_registration_checkout(message)
+
+        else:
+            self.bot.send_message(self.current_user, "You haven't chosen any languages!")
+            self.bot.register_next_step_handler(message, self.registration_languages_step, chat_id=self.current_user)
+
+    def registration_language_level_step(self, message, langs, index, revisit=False):
+        if message.text in self.language_levels:
+            self.chosen_languages.append(message.text)
+            index += 1
+        else:
+            self.bot.send_message(self.current_user, "No such option", reply_markup=self.language_levels_markup)
+            self.bot.register_next_step_handler(message, self.registration_languages_step, langs=langs, index=index, chat_id=self.current_user)
+            return False
+
+        if len(langs) >= index:
+            self.bot.send_message(self.current_user, f"Please, choose a level of {self.languages[langs[index]]}", reply_markup=self.language_levels_markup)
+            self.bot.register_next_step_handler(message, self.registration_age_step, langs=langs, index=index, chat_id=self.current_user)
+            return False
+
+        if not revisit:
+            self.bot.send_message(self.current_user, "How old are you?")
+            self.bot.register_next_step_handler(message, self.registration_age_step, chat_id=self.current_user)
+            return False
+
+        self.return_to_registration_checkout(message)
 
     def registration_age_step(self, message, revisit=False):
         try:
@@ -429,18 +297,109 @@ class SponsorHandler:
             self.dat["age"] = age
             if 100 >= age >= 16:
                 if not revisit:
-                    self.bot.send_message(self.current_user, "Now, lets get to a basic contact info :-). Send me your phone number", reply_markup=self.skip_markup)
-                    self.bot.register_next_step_handler(message, self.registration_contact_tel_step, chat_id=self.current_user)
+                    Coms.reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page,
+                                     self.markup_pages_count)
+                    Coms.count_pages(self.countries, self.current_markup_elements, self.markup_pages_count)
+                    markup = Coms.assemble_markup(self.markup_page, self.current_markup_elements, 0)
+
+                    self.previous_item = ''
+                    self.current_inline_message_id = self.bot.send_message(self.current_user, "Where are you planning to conduct events in?", reply_markup=markup).json['message_id']
+                    self.bot.register_next_step_handler(message, self.registration_country_step, chat_id=self.current_user)
                     return False
                 self.return_to_registration_checkout(message)
-                return  False
+                return False
 
             self.bot.send_message(self.current_user, "Your age is not corresponds to our age policies") #TODO: Write that policy and send it as a file
-            self.bot.register_next_step_handler(message, self.registration_contact_tel_step, chat_id=self.current_user)
+            self.bot.register_next_step_handler(message, self.registration_age_step, chat_id=self.current_user)
 
         except:
             self.bot.send_message(self.current_user, "Numbers please :-)")
-            self.bot.register_next_step_handler(message, self.registration_contact_tel_step, chat_id=self.current_user)
+            self.bot.register_next_step_handler(message, self.registration_age_step, chat_id=self.current_user)
+
+    def registration_country_step(self, message, revisit=False):
+        msg_text = message.text.lower().strip()
+        if msg_text != "ok":
+            country = self.country_convertor(msg_text)
+            if country:
+                if self.previous_item:
+                    Coms.remove_tick_from_element(self.bot, self.current_user, self.current_inline_message_id,
+                                                  self.current_markup_elements,
+                                                  self.markup_page, str(self.previous_item))
+
+                    self.bot.send_message(self.current_user, "Removed", reply_markup=self.okMarkup)
+
+
+                self.country = country
+                self.previous_item = country
+                Coms.add_tick_to_element(self.bot, self.current_user, self.current_inline_message_id, self.current_markup_elements,
+                                             self.markup_page, str(country))
+                self.bot.send_message(self.current_user, "Added", reply_markup=self.okMarkup)
+            else:
+                self.bot.send_message(self.current_user, "Country was not recognized, try finding it in our list above")
+                self.bot.register_next_step_handler(message, self.registration_country_step, chat_id=self.current_user)
+                return False
+
+        if self.country:
+            self.dat["userCountryId"] = self.country
+
+            #if not revisit: # Redundant, user has to choose city after changing the country as well
+            cities = json.loads(
+                requests.get(f"https://localhost:44381/GetCities/{self.country}/{self.dat['userAppLanguage']}",
+                             verify=False).text)
+            for city in cities:
+                self.cities[city["id"]] = city["cityName"].lower()
+
+            Coms.reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page, self.markup_pages_count)
+            Coms.count_pages(self.cities, self.current_markup_elements, self.markup_pages_count)
+            markup = Coms.assemble_markup(self.markup_page, self.current_markup_elements, 0)
+
+            self.previous_item = ''
+            self.current_inline_message_id = self.bot.send_message(self.current_user, "Which city are you planning to conduct events in?", reply_markup=markup).json['message_id']
+            self.bot.send_message(self.current_user, "Chose one from above, or simply type to chat", reply_markup=self.okMarkup)
+            self.bot.register_next_step_handler(message, self.registration_contact_tel_step, revisit=revisit, chat_id=self.current_user)
+            return False
+        else:
+            self.bot.send_message(self.current_user, "You haven't chosen a country!")
+            self.bot.register_next_step_handler(message, self.registration_city_step, chat_id=self.current_user)
+
+    def registration_city_step(self, message, revisit=False):
+        msg_text = message.text.lower().strip()
+        if msg_text != "ok":
+            city = self.city_convertor(msg_text)
+            if city:
+                if self.previous_item:
+                    Coms.remove_tick_from_element(self.bot, self.current_user, self.current_inline_message_id,
+                                                  self.current_markup_elements,
+                                                  self.markup_page, str(self.previous_item))
+
+                    self.bot.send_message(self.current_user, "Removed", reply_markup=self.okMarkup)
+
+
+                self.city = city
+                self.previous_item = city
+                Coms.add_tick_to_element(self.bot, self.current_user, self.current_inline_message_id, self.current_markup_elements,
+                                             self.markup_page, str(city))
+                self.bot.send_message(self.current_user, "Added", reply_markup=self.okMarkup)
+            else:
+                self.bot.send_message(self.current_user, "City was not recognized, try finding it in our list above")
+                self.bot.register_next_step_handler(message, self.registration_country_step, chat_id=self.current_user)
+                return False
+
+        if self.city:
+            self.dat["userCityId"] = self.city
+            if not revisit:
+                self.previous_item = ''
+                self.bot.send_message(self.current_user,
+                                      "Now, lets get to a basic contact info :-). Send me your phone number",
+                                      reply_markup=self.skip_markup)
+                self.bot.register_next_step_handler(message, self.registration_contact_tel_step,
+                                                    chat_id=self.current_user)
+                return False
+            self.return_to_registration_checkout(message)
+
+        else:
+            self.bot.send_message(self.current_user, "You haven't chosen a city!")
+            self.bot.register_next_step_handler(message, self.registration_city_step, chat_id=self.current_user)
 
     def registration_contact_tel_step(self, message, revisit=False):
         if message.text:
@@ -521,9 +480,73 @@ class SponsorHandler:
             self.bot.send_message(self.current_user, "Send me your facebook name")
             self.bot.register_next_step_handler(message, self.registration_contact_facebook_step, revisit=True, chat_id=self.current_user)
         elif message.text == "8":
+            Coms.reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page,
+                             self.markup_pages_count)
+            Coms.count_pages(self.countries, self.current_markup_elements, self.markup_pages_count)
+            markup = Coms.assemble_markup(self.markup_page, self.current_markup_elements, 0)
+
+            self.previous_item = ''
+            self.country = None
+            self.current_inline_message_id = self.bot.send_message(self.current_user, "Where are you planning to conduct events in?", reply_markup=markup).json['message_id']
+            self.bot.register_next_step_handler(message, self.registration_country_step, revisit=True, chat_id=self.current_user)
+        elif message.text == "9":
+            Coms.reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page,
+                             self.markup_pages_count)
+            Coms.count_pages(self.cities, self.current_markup_elements, self.markup_pages_count)
+            markup = Coms.assemble_markup(self.markup_page, self.current_markup_elements, 0)
+
+            self.bot.send_message(self.current_user, "What languages do you speak?", reply_markup=markup)
+            self.bot.send_message(self.current_user, "Chose one from above, or simply type to chat",
+                                  reply_markup=self.okMarkup)
+            self.bot.register_next_step_handler(message, self.registration_languages_step, chat_id=self.current_user)
+        elif message.text == "10":
             self.register_sponsor()
 
-    def exit_handler(self):
+    def create_event_status_step(self, message, revisit): #Online or Offline
+        pass
+    def create_event_name_step(self, message, revisit):
+        pass
+    def create_event_languages_step(self, message, revisit):
+        pass
+    def create_event_min_age_step(self, message, revisit):
+        pass
+    def create_event_max_age_step(self, message, revisit):
+        pass
+    def create_event_description_step(self, message, revisit):
+        pass
+    def create_event_price_step(self, message, revisit):
+        pass
+    def create_event_country_step(self, message, revisit):
+        pass
+    def create_event_city_step(self, message, revisit):
+        pass
+    def create_event_start_date_step(self, message, revisit):
+        pass
+    def create_event_has_group_step(self, message, revisit):
+        pass
+    def create_event_group_link_step(self, message, revisit):
+        pass
+    def create_event_photo_step(self, message, revisit):
+        pass
+    def create_event_bounty_step(self, message, revisit):
+        pass
+    def create_event_checkout_step(self, message, revisit):
+        pass
+    def create_event_template_step(self, message, revisit):
+        pass
+    def create_template_name_step(self, message, revisit):
+        pass
+
+    def get_localisation(self, app_language):
+        for country in json.loads(
+                requests.get(f"https://localhost:44381/GetCountries/{app_language}", verify=False).text):
+            self.countries[country["id"]] = country["countryName"].lower().strip()
+
+        for language in json.loads(
+                requests.get(f"https://localhost:44381/GetLanguages/{app_language}", verify=False).text):
+            self.languages[language["id"]] = language["languageName"].lower().strip()
+
+    def exit_handler(self, message):
         self.bot.send_message(self.current_user, "Exiting module...")
         self.destruct()
 
@@ -603,11 +626,69 @@ class SponsorHandler:
             self.bot.register_next_step_handler(message, self.delete_ad_step, cb=cb, chat_id=self.current_user)
 
     def callback_handler(self, call):
-        if call.from_user.id == self.current_user:
-            if call.message.id not in self.old_queries:
-                self.old_queries.append(call.message.id)
-                self.ad_data = json.loads(requests.get(f"https://localhost:44381/GetSponsorAd/{self.current_user}/{call.data}", verify=False).text)
-                self.ad_creating_show(call.message, cb=True)
+        if call.message.id not in self.old_queries:
+
+            if call.data == "-1" or call.data == "-2":
+                index = self.index_converter(call.data)
+                if self.markup_page + index <= self.markup_pages_count or self.markup_page + index >= 1:
+                    markup = Coms.assemble_markup(self.markup_page, self.current_markup_elements, index)
+                    self.bot.edit_message_reply_markup(chat_id=call.message.chat.id, reply_markup=markup,
+                                                       message_id=call.message.id)
+                    self.markup_page += index
+                return False
+
+            elif "/" in call.data:      #TODO: Make it work another way... maybe
+                self.bot.answer_callback_query(call.id, call.data)
+                return False
+
+            if call.message.text == "Where are you planning to conduct events in?":
+                if call.data in self.countries.keys():
+                    self.country = int(call.data)
+                    self.bot.answer_callback_query(call.id, "Gotcha")
+                    if self.previous_item:
+                        Coms.remove_tick_from_element(self.bot, self.current_user, call.message.id, self.current_markup_elements,
+                                                      self.markup_page, self.previous_item)
+                    Coms.add_tick_to_element(self.bot, self.current_user, call.message.id, self.current_markup_elements,
+                                             self.markup_page, call.data)
+                    self.previous_item = call.data
+                else:
+                    self.bot.send_message(call.message.chat.id, "Incorrect country code")
+                return False
+
+            elif call.message.text == "Which city are you planning to conduct events in?":
+                if int(call.data) in self.cities.keys():
+                    self.city = int(call.data)
+                    self.bot.answer_callback_query(call.id, "Gotcha")
+                    if self.previous_item:
+                        Coms.remove_tick_from_element(self.bot, self.current_user, call.message.id,
+                                                      self.current_markup_elements,
+                                                      self.markup_page, self.previous_item)
+                    Coms.add_tick_to_element(self.bot, self.current_user, call.message.id, self.current_markup_elements,
+                                             self.markup_page, call.data)
+                    self.previous_item = call.data
+                else:
+                    self.bot.answer_callback_query(call.id, "Incorrect city code")
+
+                return False
+            elif call.maessage.text == "What languages do you speak?":
+                if int(call.data) in self.languages.keys():
+                    if call.data in self.chosen_languages:
+                        self.chosen_languages.remove(int(call.data))
+                        Coms.remove_tick_from_element(self.bot, self.current_user, call.message.id,
+                                                      self.current_markup_elements,
+                                                      self.markup_page, self.previous_item)
+                        self.bot.answer_callback_query(call.id, "Removed")
+                    else:
+                        self.chosen_languages.append(int(call.data))
+                        Coms.add_tick_to_element(self.bot, self.current_user, call.message.id, self.current_markup_elements,
+                                                 self.markup_page, call.data)
+                        self.bot.answer_callback_query(call.id, "Added")
+                else:
+                    self.bot.answer_callback_query(call.id, "Incorrect city code")
+
+            self.old_queries.append(call.message.id)
+            self.ad_data = json.loads(requests.get(f"https://localhost:44381/GetSponsorAd/{self.current_user}/{call.data}", verify=False).text)
+            self.ad_creating_show(call.message, cb=True)
 
 
     def register_sponsor(self):
@@ -631,7 +712,21 @@ class SponsorHandler:
         self.bot.send_message(self.current_user, self.post_update_success_message, reply_markup=self.markup2)
 
     def construct_sponsor_data_message(self):
-        return f"Username: {self.dat['username']}\nAge: {self.dat['age']}\nTel. number: {self.dat['tel']}\nEmail: {self.dat['email']}\nInstagram: {self.dat['instagram']}\nFacebook: {self.dat['facebook']}"
+        data = f"Username: {self.dat['username']}" \
+               f"\nAge: {self.dat['age']}" \
+               f"\nCountry: {self.countries[self.dat['userCountryId']]}" \
+               f"\nCity: {self.cities[self.dat['userCityId']]}" \
+               f"\nTel. number: {self.dat['tel']}" \
+               f"\nEmail: {self.dat['email']}" \
+               f"\nInstagram: {self.dat['instagram']}" \
+               f"\nFacebook: {self.dat['facebook']}"
+        if self.chosen_languages:
+            i = 0
+            for lang in self.chosen_languages:
+                data += f"\n{self.languages[lang]} - {self.chosen_languages_levels[i]}"
+                i += 1
+
+        return data
 
     def create_ad(self):
         self.ad_data["Description"] = ""
@@ -641,6 +736,7 @@ class SponsorHandler:
         self.bot.send_message(self.current_user, self.post_creation_success_message, reply_markup=self.markup2)
 
     def return_to_registration_checkout(self, message):
+        self.previous_item = ''
         self.bot.send_message(self.current_user, "Done, something else?", reply_markup=self.registration_checkout_markup)
         self.bot.send_message(self.current_user, self.construct_sponsor_data_message())
         self.bot.register_next_step_handler(message, self.registration_checkout_step, chat_id=self.current_user)
@@ -648,8 +744,32 @@ class SponsorHandler:
     def app_language_converter(self, lang):
         for l in self.app_langs:
             if lang == self.app_langs[l]:
-                return l
+                return int(l)
         return None
+
+    def country_convertor(self, country):
+        for c in self.countries:
+            if country == self.countries[c]:
+                return int(c)
+        return None
+
+    def spoken_languages_convertor(self, lang):
+        for l in self.languages:
+            if lang == self.languages[l]:
+                return int(l)
+        return None
+
+    def city_convertor(self, city):
+        for c in self.cities:
+            if city == self.cities[c]:
+                return int(c)
+        return None
+
+    @staticmethod
+    def index_converter(index):
+        if index == "-1":
+            return -1
+        return 1
 
     def destruct(self):
         self.bot.callback_query_handlers.remove(self.chCode)
