@@ -236,5 +236,11 @@ namespace MyWebApi.Controllers
         {
             return await _repository.UpdateSponsorLevel(sponsorId, level);
         }
+
+        [HttpPost("/AddSponsorLanguage")]
+        public async Task<long> AddSponsorLanguage(SponsorLanguage model)
+        {
+            return await _repository.AddSponsorLanguage(model);
+        }
     }
 }

@@ -105,6 +105,9 @@ namespace MyWebApi.Data
             builder.Entity<CommunicationPreference>().HasKey(g => new { g.Id, g.ClassLocalisationId });
 
             builder.Entity<Ad>();
+
+            builder.Entity<Sponsor>().HasMany(s => s.SponsorLanguages);
+            builder.Entity<SponsorLanguage>().HasOne(s => s.Language);
         }
     }
 }

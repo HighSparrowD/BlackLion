@@ -1078,5 +1078,33 @@ namespace MyWebApi.Repositories
             await _contx.SaveChangesAsync();
             return userId;
         }
+
+        public async Task<List<Event>> GetEventList(long userId, bool IsOnline)
+        {
+            var user = await GetUserInfoAsync(userId);
+
+            var events = await _contx.SPONSOR_EVENTS
+                .Where(e => e.StartDateTime > DateTime.Now.AddDays(-1)) //Check if event starts at minimum of the day before todays date
+                .Where(e => e.IsOnline == IsOnline) // Todo: Apply some more filters
+                .Where(e => e.MaxAge >= user.UserDataInfo.UserAge && user.UserDataInfo.UserAge >= e.MinAge)
+                .Where(e => e.Languages.Any(l => user.UserDataInfo.UserLanguages.Contains((int)l)))
+                .Where(e => e.CityId == user.UserDataInfo.Location.CityId)
+                .ToListAsync();
+
+            events.ForEach(e => //Check if event has country and city, if true -> check if applies to user 
+            {
+                if (e.CountryId != null)
+                {
+                    if (e.CountryId != user.UserDataInfo.Location.CountryId)
+                        events.Remove(e);
+
+                    if (e.CityId != null)
+                        if (e.CityId != user.UserDataInfo.Location.CityId)
+                            events.Remove(e);
+                }
+            });
+    
+            return events;
+        }
     }
 }

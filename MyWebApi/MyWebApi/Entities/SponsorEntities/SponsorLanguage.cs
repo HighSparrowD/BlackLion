@@ -1,14 +1,17 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using MyWebApi.Entities.SecondaryEntities;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace MyWebApi.Entities.SponsorEntities
 {
     public class SponsorLanguage
     {
         [Key]
-        public long Id{ get; set; }
-        public long SponsorId{ get; set; }
-        public long LanguageId{ get; set; }
-        public long LanguageClassLocalisationId{ get; set; }
+        public long Id { get; set; }
+        public long SponsorId { get; set; }
+        public int LanguageId { get; set; }
+        public int LanguageClassLocalisationId { get; set; }
         public short Level{ get; set; }
+        public virtual Language Language { get; set; }
     }
 }
