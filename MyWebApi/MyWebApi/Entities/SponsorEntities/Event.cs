@@ -12,11 +12,13 @@ namespace MyWebApi.Entities.SponsorEntities
         public long SponsorId{ get; set; }
         public string Name{ get; set; }
         public short Status{ get; set; }
+        public List<int?> Languages  { get; set; }
         public short MinAge { get; set; }
         public short MaxAge { get; set; }
         public string Description { get; set; }
         public int Price { get; set; }
-        public long CityId { get; set; }
+        public int? CountryId { get; set; }
+        public int? CityId { get; set; }
         public DateTime StartDateTime { get; set; }
         public bool IsOnline { get; set; }
         public bool HasGroup { get; set; }

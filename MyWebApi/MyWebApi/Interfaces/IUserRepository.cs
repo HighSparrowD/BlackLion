@@ -8,6 +8,7 @@ using MyWebApi.Entities.ReasonEntities;
 using MyWebApi.Entities.AchievementEntities;
 using System;
 using MyWebApi.Entities.UserActionEntities;
+using MyWebApi.Entities.SponsorEntities;
 
 namespace MyWebApi.Interfaces
 {
@@ -81,5 +82,6 @@ namespace MyWebApi.Interfaces
         Task<int> AddUserTrustProgressAsync(long userId, double progress);
         Task<int> UpdateUserTrustLevelAsync(long userId, int level);
         Task<UserTrustLevel> GetUserTrustLevel(long userId);
+        Task<List<Event>> GetEventList(long userId, bool IsOnline);
     }
 }

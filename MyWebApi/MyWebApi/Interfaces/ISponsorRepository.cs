@@ -48,5 +48,6 @@ namespace MyWebApi.Interfaces
         Task<int> UpdateSponsorLevel(long sponsorId, int level);
         Task<int> GetSponsorLevel(long sponsorId);
         Task<Stats> GetSponsorStats(long sponsorId);
+        Task<long> AddSponsorLanguage(SponsorLanguage model);
     }
 }

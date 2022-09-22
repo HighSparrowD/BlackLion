@@ -49,8 +49,9 @@ namespace MyWebApi.Repositories
             try
             {
                 await RemoveSponsorByCodeWordAsync(model.CodeWord);
-                //await AddContactInfoAsync(new SponsorContactInfo {Id = model.Id, SponsorId = model.Id, Email = model.Email, Facebook = model.Facebook, Instagram = model.Instagram, Tel = model.Tel });
-                //await CreateSponorStats(model.SponsorId);
+                var contactInfoId = await AddContactInfoAsync(new SponsorContactInfo {Id = model.Id, SponsorId = model.Id, Email = model.Email, Facebook = model.Facebook, Instagram = model.Instagram, Tel = model.Tel });
+                var statsId = await CreateSponorStats(model.Id);
+
 
                 var user = new Sponsor
                 {
@@ -62,13 +63,19 @@ namespace MyWebApi.Repositories
                     IsPostponed = false,
                     IsAwaiting = false,
                     UserAppLanguage = model.UserAppLanguage,
-                    //SponsorContactInfoId = model.Id,
-                    //SponsorStatsId = model.Id
+                    ContactInfoId = contactInfoId,
+                    StatsId = statsId
                 };
 
                 user.IsAwaiting = false;
                 await _contx.SYSTEM_SPONSORS.AddAsync(user);
                 await _contx.SaveChangesAsync();
+
+                for (int i = 0; i <= model.Languages.Count - 1; i++)
+                {
+                    await AddSponsorLanguage(new SponsorLanguage { SponsorId = model.Id, LanguageClassLocalisationId = model.UserAppLanguage, LanguageId = model.Languages[i], Level = (short)(LanguageLevels)Enum.Parse(typeof(LanguageLevels), model.LanguageLevels[i]) }); ;
+                }
+
                 return user.Id;
             }
             catch { return 0; }
@@ -110,7 +117,7 @@ namespace MyWebApi.Repositories
         {
             try
             {
-                var user = _contx.SYSTEM_SPONSORS.Where(u => u.CodeWord == codeWord).SingleOrDefault();
+                var user = await _contx.SYSTEM_SPONSORS.Where(u => u.CodeWord == codeWord).FirstOrDefaultAsync();
                 _contx.Remove(user);
                 await _contx.SaveChangesAsync();
                 return 1;
@@ -312,9 +319,9 @@ namespace MyWebApi.Repositories
         {
             return await _contx.SYSTEM_SPONSORS
                 .Where(s => s.Id == userId)
-                //.Include(s => s.SponsorContactInfo)
-                //.Include(s => s.Stats)
-                .Include(s => s.Languages)
+                .Include(s => s.SponsorContactInfo)
+                .Include(s => s.Stats)
+                .Include("SponsorLanguages")
                 .FirstOrDefaultAsync();
         }
 
@@ -450,7 +457,7 @@ namespace MyWebApi.Repositories
                     ratingsCount++;
                 });
 
-            sponsor.AverageRating = (double)Math.Round(newAwerageRating / ratingsCount, 2);
+            sponsor.Stats.AverageRating = (double)Math.Round(newAwerageRating / ratingsCount, 2);
 
             _contx.SYSTEM_SPONSORS.Update(sponsor);
             await _contx.SaveChangesAsync();
@@ -539,6 +546,14 @@ namespace MyWebApi.Repositories
                 return await _contx.SYSTEM_SPONSORS.Where(u => u.Id == userId && u.CodeWord == keyword).FirstOrDefaultAsync() != null;
             }
             catch { throw new NullReferenceException($"User {userId} does not exists!"); }
+        }
+
+        public async Task<long> AddSponsorLanguage(SponsorLanguage model)
+        {
+                model.Id = (await _contx.SPONSOR_LANGUAGES.CountAsync()) +1;
+                await _contx.SPONSOR_LANGUAGES.AddAsync(model);
+                await _contx.SaveChangesAsync();
+            return model.Id;
         }
     }
 }

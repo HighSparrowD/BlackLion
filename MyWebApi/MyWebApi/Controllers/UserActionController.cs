@@ -13,6 +13,7 @@ using MyWebApi.Entities.LocationEntities;
 using MyWebApi.Entities.ReasonEntities;
 using MyWebApi.Entities.AchievementEntities;
 using MyWebApi.Entities.UserActionEntities;
+using MyWebApi.Entities.SponsorEntities;
 
 namespace MyWebApi.Controllers
 {
@@ -464,6 +465,18 @@ namespace MyWebApi.Controllers
         public async Task<int> UpdateUserTrustLevelAsync(long userId, int level)
         {
             return await _repository.UpdateUserTrustLevelAsync(userId, level);
+        }
+
+        [HttpGet("/GetOnlineEventList/{userId}")]
+        public async Task<List<Event>> GetOnlineEventList(long userId)
+        {
+            return await _repository.GetEventList(userId, true);
+        }
+
+        [HttpGet("/GetOfflineEventList/{userId}")]
+        public async Task<List<Event>> GetOfflineEventList(long userId)
+        {
+            return await _repository.GetEventList(userId, false);
         }
     }
 }
