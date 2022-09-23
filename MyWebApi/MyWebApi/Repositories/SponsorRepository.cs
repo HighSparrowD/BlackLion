@@ -557,5 +557,26 @@ namespace MyWebApi.Repositories
                 await _contx.SaveChangesAsync();
             return model.Id;
         }
+
+        public async Task<long> AddEventTeplateAsync(EventTemplate model)
+        {
+            model.Id = (await _contx.SPONSOR_EVENTS_TEMPLATES.CountAsync()) + 1;
+            await _contx.SPONSOR_EVENTS_TEMPLATES.AddAsync(model);
+            await _contx.SaveChangesAsync();
+
+            return model.Id;
+        }
+
+        public async Task<EventTemplate> GetEventTemplateByIdAsync(long id)
+        {
+            return await _contx.SPONSOR_EVENTS_TEMPLATES.FindAsync(id);
+        }
+
+        public async Task<List<EventTemplate>> GetAllEventTemplatesByUserIdAsync(long userId)
+        {
+            return await _contx.SPONSOR_EVENTS_TEMPLATES
+                .Where(t => t.SponsorId == userId)
+                .ToListAsync();
+        }
     }
 }

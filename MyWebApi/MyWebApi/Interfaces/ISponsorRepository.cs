@@ -49,5 +49,8 @@ namespace MyWebApi.Interfaces
         Task<int> GetSponsorLevel(long sponsorId);
         Task<Stats> GetSponsorStats(long sponsorId);
         Task<long> AddSponsorLanguage(SponsorLanguage model);
+        Task<long> AddEventTeplateAsync(EventTemplate model);
+        Task<EventTemplate> GetEventTemplateByIdAsync(long id);
+        Task<List<EventTemplate>> GetAllEventTemplatesByUserIdAsync(long userId);
     }
 }
