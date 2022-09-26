@@ -202,3 +202,5 @@ K:\19.09\MyWebApi\MyWebApi\obj\Debug\net6.0\refint\MyWebApi.dll
 K:\19.09\MyWebApi\MyWebApi\obj\Debug\net6.0\MyWebApi.pdb
 K:\19.09\MyWebApi\MyWebApi\obj\Debug\net6.0\MyWebApi.genruntimeconfig.cache
 K:\19.09\MyWebApi\MyWebApi\obj\Debug\net6.0\ref\MyWebApi.dll
+C:\Git\BlackLion\MyWebApi\MyWebApi\bin\Debug\net6.0\Humanizer.dll
+C:\Git\BlackLion\MyWebApi\MyWebApi\bin\Debug\net6.0\Microsoft.EntityFrameworkCore.Design.dll
