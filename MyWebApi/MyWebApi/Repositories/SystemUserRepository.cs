@@ -1116,7 +1116,7 @@ namespace MyWebApi.Repositories
 
         public async Task<bool> UpdateUserNickname(long userId, string nickname)
         {
-            var currentUser = await _contx.SYSTEM_USERS.FindAsync();
+            var currentUser = await _contx.SYSTEM_USERS.FindAsync(userId);
 
             if ((bool)currentUser.HasPremium)
             {

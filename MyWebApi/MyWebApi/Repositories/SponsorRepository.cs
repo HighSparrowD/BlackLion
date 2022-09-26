@@ -557,5 +557,61 @@ namespace MyWebApi.Repositories
                 await _contx.SaveChangesAsync();
             return model.Id;
         }
+
+        public async Task<long> AddEventTemplate(EventTemplate model)
+        {
+            model.Id = (await _contx.SPONSOR_EVENT_TEMPLATES.CountAsync()) +1;
+            await _contx.SPONSOR_EVENT_TEMPLATES.AddAsync(model);
+            await _contx.SaveChangesAsync();
+
+            return model.Id;
+        }
+
+        public async Task<EventTemplate> GetEventTemplateById(long templateId)
+        {
+            var template = await _contx.SPONSOR_EVENT_TEMPLATES.FindAsync(templateId);
+
+            if (template != null)
+                return template;
+            return null;
+
+        }
+
+        public async Task<EventTemplate> GetEventTemplateByName(string templateName)
+        {
+            var template = await _contx.SPONSOR_EVENT_TEMPLATES
+                .Where(e => e.TemplateName == templateName)
+                .FirstOrDefaultAsync();
+
+            if (template != null)
+                return template;
+            return null;
+        }
+
+        public async Task<List<EventTemplate>> GetSponsorEventTemplates(long sponsorId)
+        {
+            var templates = await _contx.SPONSOR_EVENT_TEMPLATES
+                .Where(t => t.SponsorId == sponsorId)
+                .ToListAsync();
+
+            if (templates.Count > 0)
+                return templates;
+            return null;
+        }
+
+        public async Task<bool> DeleteEventTemplate(long templateId)
+        {
+            var template = await _contx.SPONSOR_EVENT_TEMPLATES.FindAsync(templateId);
+
+            if (template != null)
+            {
+                _contx.SPONSOR_EVENT_TEMPLATES.Remove(template);
+                await _contx.SaveChangesAsync();
+
+                return true;
+            }
+
+            return false;
+        }
     }
 }
