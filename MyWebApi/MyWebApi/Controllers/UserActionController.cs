@@ -21,7 +21,7 @@ namespace MyWebApi.Controllers
     [Route("[controller]")]
     public class UserActionController : ControllerBase
     {
-        private User currentUser = Entities.UserInfoEntities.User.CreateDummyUser(); //TODO: relocate to an application 
+        //private User currentUser = Entities.UserInfoEntities.User.CreateDummyUser(); //TODO: relocate to an application 
         private readonly ILogger<UserActionController> _logger;
         private IUserRepository _repository;
 
@@ -71,12 +71,6 @@ namespace MyWebApi.Controllers
         public async Task<int> GetUserLanguagePrefs(long userId)
         {
             return await _repository.GetUserAppLanguage(userId);
-        }
-
-        [HttpGet("/GetCurrentUser")]
-        public User GetCurrentUser()
-        {
-            return currentUser;
         }
 
         [HttpGet("/UserInfo/{userId}")]
@@ -477,6 +471,18 @@ namespace MyWebApi.Controllers
         public async Task<List<Event>> GetOfflineEventList(long userId)
         {
             return await _repository.GetEventList(userId, false);
+        }
+
+        [HttpGet("/UpdateUserNickname/{userId}/{nickname}")]
+        public async Task<bool> UpdateUserNickname(long userId, string nickname)
+        {
+            return await _repository.UpdateUserNickname(userId, nickname);
+        }
+
+        [HttpGet("/GetUserNickname/{userId}")]
+        public async Task<string> GetUserNickname(long userId)
+        {
+            return await _repository.GetUserNickname(userId);
         }
     }
 }

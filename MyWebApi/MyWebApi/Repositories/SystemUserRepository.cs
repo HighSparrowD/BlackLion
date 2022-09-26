@@ -140,6 +140,13 @@ namespace MyWebApi.Repositories
                 .ToList();
             }
 
+            //Todo: Probably remove AsParallel query 
+            data.AsParallel().ForAll(u => 
+            {
+                if (u.Nickname != "" && (bool)u.HasPremium)
+                    u.UserBaseInfo.UserDescription = $"{u.Nickname}\n\n{u.UserBaseInfo.UserDescription}";
+            });
+
             await AddUserTrustProgressAsync(userId, 0.000003);
 
             return data;
@@ -1105,6 +1112,30 @@ namespace MyWebApi.Repositories
             });
     
             return events;
+        }
+
+        public async Task<bool> UpdateUserNickname(long userId, string nickname)
+        {
+            var currentUser = await _contx.SYSTEM_USERS.FindAsync();
+
+            if ((bool)currentUser.HasPremium)
+            {
+                currentUser.Nickname = nickname;
+                _contx.SYSTEM_USERS.Update(currentUser);
+                await _contx.SaveChangesAsync();
+                return true;
+            }
+
+            return false;
+        }
+
+        public async Task<string> GetUserNickname(long userId)
+        {
+            var currentUser = await _contx.SYSTEM_USERS.FindAsync(userId);
+
+            if (currentUser != null)
+                return currentUser.Nickname;
+            return "";
         }
     }
 }
