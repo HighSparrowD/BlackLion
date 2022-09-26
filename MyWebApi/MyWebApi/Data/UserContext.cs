@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using MyWebApi.Entities.AchievementEntities;
 using MyWebApi.Entities.AdminEntities;
+using MyWebApi.Entities.DailyRewardEntities;
 using MyWebApi.Entities.LocalisationEntities;
 using MyWebApi.Entities.LocationEntities;
 using MyWebApi.Entities.ReasonEntities;
@@ -60,7 +61,8 @@ namespace MyWebApi.Data
         public DbSet<SponsorNotification> SPONSOR_NOTIFICATIONS { get; set; }
         public DbSet<SponsorRating> SPONSOR_RATINGS { get; set; }
         public DbSet<Stats> SPONSOR_STATS { get; set; }
-        public DbSet<UserTrustLevel> USER_TRUST_LEVELS { get; set; } // TODO: add to db
+        public DbSet<UserTrustLevel> USER_TRUST_LEVELS { get; set; }
+        public DbSet<DailyReward> DAILY_REWARDS { get; set; }
 
 
 

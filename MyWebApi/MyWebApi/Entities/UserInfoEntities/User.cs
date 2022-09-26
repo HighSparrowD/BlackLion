@@ -20,6 +20,9 @@ namespace MyWebApi.Entities.UserInfoEntities
         public bool IsBanned { get; set; }
         public bool IsDeleted { get; set; }
         public bool? HasPremium { get; set; }
+        public bool? HadReceivedReward { get; set; }
+        public short? DailyRewardPoint { get; set; }
+        public short? BonusIndex { get; set; }
         public string? Nickname{ get; set; }
         public DateTime? PremiumExpirationDate{ get; set; }
         public virtual UserBaseInfo? UserBaseInfo { get; set; }
