@@ -83,5 +83,7 @@ namespace MyWebApi.Interfaces
         Task<int> UpdateUserTrustLevelAsync(long userId, int level);
         Task<UserTrustLevel> GetUserTrustLevel(long userId);
         Task<List<Event>> GetEventList(long userId, bool IsOnline);
+        Task<bool> UpdateUserNickname(long userId, string nickname);
+        Task<string> GetUserNickname(long userId);
     }
 }
