@@ -85,5 +85,8 @@ namespace MyWebApi.Interfaces
         Task<List<Event>> GetEventList(long userId, bool IsOnline);
         Task<bool> UpdateUserNickname(long userId, string nickname);
         Task<string> GetUserNickname(long userId);
+        Task<string> ClaimDailyReward(long userId);
+        Task<bool> CheckUserCanClaimReward(long userId);
+        Task<short> GetUserBonusIndex(long userId);
     }
 }

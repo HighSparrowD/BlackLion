@@ -42,7 +42,11 @@ namespace MyWebApi.Repositories
             var country = (await _contx.COUNTRIES.Where(c => c.Id == location.CountryId && c.ClassLocalisationId == dataModel.LanguageId).SingleOrDefaultAsync()).CountryName;
             var city = (await _contx.CITIES.Where(c => c.Id == location.CountryId && c.CountryClassLocalisationId == dataModel.LanguageId).SingleOrDefaultAsync()).CityName;
 
-            baseModel.UserDescription = model.GenerateUserDescription(baseModel.UserRealName, dataModel.UserAge, country, city, baseModel.UserDescription); 
+            baseModel.UserDescription = model.GenerateUserDescription(baseModel.UserRealName, dataModel.UserAge, country, city, baseModel.UserDescription);
+
+            model.HadReceivedReward = false;
+            model.DailyRewardPoint = 1;
+            model.BonusIndex = 1;
 
             await _contx.SYSTEM_USERS_BASES.AddAsync(baseModel);
             await _contx.SaveChangesAsync();
@@ -758,6 +762,7 @@ namespace MyWebApi.Repositories
                 .SingleOrDefaultAsync();
 
             user.HasPremium = true;
+            user.BonusIndex = 2;
             await TopUpUserWalletBalance(userId, -cost, $"Purchase premium for {dayDuration} days");
 
             if (user.PremiumExpirationDate < timeNow || user.PremiumExpirationDate == null)
@@ -1037,6 +1042,9 @@ namespace MyWebApi.Repositories
 
         public async Task<int> AddUserTrustProgressAsync(long userId, double progress)
         {
+
+            var userBonus = await GetUserBonusIndex(userId);
+
             var model = await _contx.USER_TRUST_LEVELS
                 .FindAsync(userId);
 
@@ -1044,7 +1052,7 @@ namespace MyWebApi.Repositories
             {
                 if((model.Progress + progress) >= model.Goal)
                 {
-                    model.Progress = (model.Progress + progress) - model.Goal;
+                    model.Progress = model.Progress + (progress * userBonus) - model.Goal;
                     model.Level++;
                     model.Goal *= 2 * 1.2;
                 }
@@ -1136,6 +1144,59 @@ namespace MyWebApi.Repositories
             if (currentUser != null)
                 return currentUser.Nickname;
             return "";
+        }
+
+        public async Task<string> ClaimDailyReward(long userId)
+        {
+            var user = await GetUserInfoAsync(userId);
+
+            try
+            {
+                var reward = await _contx.DAILY_REWARDS
+                    .Where(r => r.Index == user.DailyRewardPoint)
+                    .Select(r => r.PointReward)
+                    .FirstOrDefaultAsync();
+
+                await TopUpUserWalletBalance(userId, reward * (short)user.BonusIndex, "Daily reward");
+                user.HadReceivedReward = true;
+                user.DailyRewardPoint += 1;
+
+                _contx.SYSTEM_USERS.Update(user);
+                await _contx.SaveChangesAsync();
+
+                return $"You have revieved {reward}p as a daily reward"; //TODO: load first part hard-coded part of a string, from localisation based on user app language
+            }
+            catch (NullReferenceException)
+            {
+                throw new NullReferenceException($"User {userId} was not found");
+            }
+        }
+
+        public async Task<bool> CheckUserCanClaimReward(long userId)
+        {
+            var user = await GetUserInfoAsync(userId);
+
+            if (user != null)
+            {
+                return !(bool)user.HadReceivedReward && user.DailyRewardPoint < 30 && user.DailyRewardPoint > 0;
+            }
+
+            return false;
+        }
+
+        public async Task<short> GetUserBonusIndex(long userId)
+        {
+            try
+            {
+                return (short)await _contx.SYSTEM_USERS
+                    .Where(u => u.UserId == userId)
+                    .Select(u => u.BonusIndex)
+                    .FirstOrDefaultAsync();
+            }
+            catch(NullReferenceException)
+            {
+                throw new NullReferenceException($"User {userId} was not found");
+            }
         }
     }
 }

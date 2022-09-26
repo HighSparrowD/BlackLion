@@ -484,5 +484,17 @@ namespace MyWebApi.Controllers
         {
             return await _repository.GetUserNickname(userId);
         }
+
+        [HttpGet("/CheckUserCanClaimReward/{userId}")]
+        public async Task<bool> CheckUserCanClaimReward(long userId)
+        {
+            return await _repository.CheckUserCanClaimReward(userId);
+        }
+
+        [HttpGet("/ClaimDailyReward/{userId}")]
+        public async Task<string> ClaimDailyReward(long userId)
+        {
+            return await _repository.ClaimDailyReward(userId);
+        }
     }
 }
