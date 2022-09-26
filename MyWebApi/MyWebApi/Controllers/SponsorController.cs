@@ -242,5 +242,36 @@ namespace MyWebApi.Controllers
         {
             return await _repository.AddSponsorLanguage(model);
         }
+
+        [HttpPost("/AddEventTemplate")]
+        public async Task<long> AddEventTemplate(EventTemplate model)
+        {
+            return await _repository.AddEventTemplate(model);
+        }
+
+        [HttpGet("/GetEventTemplateById/{templateId}")]
+        public async Task<EventTemplate> GetEventTemplateById(long templateId)
+        {
+            return await _repository.GetEventTemplateById(templateId);
+        }
+
+        [HttpGet("/GetEventTemplateByName/{templateName}")]
+        public async Task<EventTemplate> GetEventTemplateByName(string templateName)
+        {
+            return await _repository.GetEventTemplateByName(templateName);
+        }
+
+        [HttpGet("/GetSponsorEventTemplates/{sponsorId}")]
+        public async Task<List<EventTemplate>> GetSponsorEventTemplates(long sponsorId)
+        {
+            return await _repository.GetSponsorEventTemplates(sponsorId);
+        }
+
+        [HttpDelete("/DeleteEventTemplate/{templateId}")]
+        public async Task<bool> DeleteEventTemplate(long templateId)
+        {
+            return await _repository.DeleteEventTemplate(templateId);
+        }
+
     }
 }

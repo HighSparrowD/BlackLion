@@ -55,6 +55,7 @@ namespace MyWebApi.Data
         public DbSet<SponsorLanguage> SPONSOR_LANGUAGES { get; set; }
         public DbSet<SponsorContactInfo> SPONSOR_CONTACT_INFO { get; set; }
         public DbSet<Event> SPONSOR_EVENTS { get; set; }
+        public DbSet<EventTemplate> SPONSOR_EVENT_TEMPLATES { get; set; }
         public DbSet<UserEvent> USER_EVENTS { get; set; }
         public DbSet<SponsorNotification> SPONSOR_NOTIFICATIONS { get; set; }
         public DbSet<SponsorRating> SPONSOR_RATINGS { get; set; }

@@ -49,5 +49,10 @@ namespace MyWebApi.Interfaces
         Task<int> GetSponsorLevel(long sponsorId);
         Task<Stats> GetSponsorStats(long sponsorId);
         Task<long> AddSponsorLanguage(SponsorLanguage model);
+        Task<long> AddEventTemplate(EventTemplate model);
+        Task<EventTemplate> GetEventTemplateById(long eventId);
+        Task<EventTemplate> GetEventTemplateByName(string templateName);
+        Task<List<EventTemplate>> GetSponsorEventTemplates(long sponsorId);
+        Task<bool> DeleteEventTemplate(long templateId);
     }
 }
