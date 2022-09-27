@@ -273,5 +273,11 @@ namespace MyWebApi.Controllers
             return await _repository.DeleteEventTemplate(templateId);
         }
 
+        [HttpGet("/GetSponsorLanguages/{sponsorId}")]
+        public async Task<List<int>> GetSponsorLanguages(long sponsorId)
+        {
+            return await _repository.GetSponsorLanguagesAsync(sponsorId);
+        }
+
     }
 }

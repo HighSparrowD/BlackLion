@@ -106,6 +106,20 @@ def get_user_info(userId):
         return None
 
 
+def get_sponsor_info(userId):
+    try:
+        return json.loads(requests.get(f"https://localhost:44381/GetSponsorInfo/{userId}", verify=False).text)
+    except:
+        return None
+
+
+def get_sponsor_languages(userId):
+    try:
+        return json.loads(requests.get(f"https://localhost:44381/GetSponsorLanguages/{userId}", verify=False).text)
+    except:
+        return None
+
+
 def get_user_base_info(userId):
     try:
         return json.loads(requests.get(f"https://localhost:44381/GetUserBaseInfo/{userId}", verify=False).text)
@@ -139,7 +153,6 @@ def start_program_in_debug_mode(bot): # TODO: remove in production
     users = json.loads(requests.get("https://localhost:44381/GetAllUsersIds", verify=False).text)
     for user in users:
         Menues.go_back_to_main_menu(bot, user)
-
 
 
 def get_user_list(userId):
