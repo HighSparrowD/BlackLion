@@ -54,5 +54,6 @@ namespace MyWebApi.Interfaces
         Task<EventTemplate> GetEventTemplateByName(string templateName);
         Task<List<EventTemplate>> GetSponsorEventTemplates(long sponsorId);
         Task<bool> DeleteEventTemplate(long templateId);
+        Task<List<int>> GetSponsorLanguagesAsync(long sponsorId);
     }
 }

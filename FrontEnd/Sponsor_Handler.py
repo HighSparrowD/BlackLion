@@ -15,6 +15,7 @@ class SponsorHandler:
     def __init__(self, bot, message, sponsor_handlers, hasVisited=True):
         self.bot = bot
         self.current_user = message.from_user.id
+        self.current_user_info = None
         Helpers.switch_user_busy_status(self.current_user)
         self.current_userName = message.from_user.username
         self.isSponsor = Helpers.check_user_is_sponsor(self.current_user)
@@ -73,13 +74,15 @@ class SponsorHandler:
 
         self.empty_markup = InlineKeyboardMarkup()
         self.okMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add(KeyboardButton("Ok"))
+        self.langOkMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add(KeyboardButton("Ok"), KeyboardButton("Same as mine"))
         self.language_levels_markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add(KeyboardButton("A1"), KeyboardButton("A2"), KeyboardButton("B1"), KeyboardButton("B2"), KeyboardButton("C1"), KeyboardButton("C2"))
         self.markup1 = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add(KeyboardButton("/register"))
+        self.eventStatus_markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add(KeyboardButton("Online"), KeyboardButton("Offline"))
         self.app_langs_markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
         self.skip_markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add(KeyboardButton("skip"))
         self.registration_checkout_markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add(KeyboardButton("1"), KeyboardButton("2"), KeyboardButton("3"), KeyboardButton("4"), KeyboardButton("5"), KeyboardButton("6"), KeyboardButton("7"), KeyboardButton("8"), KeyboardButton("9"), KeyboardButton("10"))
-        self.markup2 = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add(KeyboardButton("/myads"), KeyboardButton("/createad"), KeyboardButton("/exit"))
-        self.markupYN = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add(KeyboardButton("Yes, text only"), KeyboardButton("No, i'll send media"))
+        self.markup2 = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add(KeyboardButton("/myads"), KeyboardButton("/createad"), KeyboardButton("/exit")), KeyboardButton("/createevent")
+        self.markupYN = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add(KeyboardButton("Yes"), KeyboardButton("No"))
         self.markup_delete = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add(KeyboardButton("Yes"), KeyboardButton("No"))
         self.markup_ad_checkout = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add(
             KeyboardButton("Ok"), KeyboardButton("Change Text"), KeyboardButton("Change Media"), KeyboardButton("Delete ad"))
@@ -157,9 +160,19 @@ class SponsorHandler:
                     self.bot.register_next_step_handler(message, self.ad_creating1, chat_id=self.current_user)
                 else:
                     self.bot.send_message(self.current_user, "Sorry, you have reached your max ad limit. Please delete one of your ads, or contact administration to buy more", reply_markup=self.markup2)
-
             else:
-                self.bot.send_message(self.current_user, self.permission_error_message)
+                self.bot.send_message(self.current_user, self.permission_error_message, reply_markup=self.markup2)
+        elif message.text == "/createevent":
+            if self.isSponsor:
+                self.dat = {}
+                self.languages = {}
+                self.countries = {}
+                self.current_user_info = Helpers.get_sponsor_info(self.current_user)
+                self.get_localisation(self.current_user_info["userAppLanguage"])
+                self.bot.send_message(self.current_user, "Will this event be online or offline?", reply_markup=self.eventStatus_markup)
+                self.bot.register_next_step_handler(message, self.create_event_status_step)
+            else:
+                self.bot.send_message(self.current_user, self.permission_error_message, reply_markup=self.markup2)
         elif message.text == "/switchstatus":
             self.bot.send_message(self.current_user, "Switching to admin section")
             self.destruct()
@@ -225,6 +238,9 @@ class SponsorHandler:
 
             self.return_to_registration_checkout(message)
 
+        self.bot.send_message(self.current_user, "Unable to recognise text here. Please, try again")
+        self.bot.register_next_step_handler(message, self.registration_name_step, revisit=revisit, chat_id=self.current_user)
+
     def registration_languages_step(self, message, revisit):
         msg_text = message.text.lower().strip()
         if msg_text != "ok":
@@ -244,7 +260,7 @@ class SponsorHandler:
                     self.bot.send_message(self.current_user, "Added", reply_markup=self.okMarkup)
             else:
                 self.bot.send_message(self.current_user, "language was not recognized, try finding it in our list above")
-                self.bot.register_next_step_handler(message, self.registration_languages_step, chat_id=self.current_user)
+                self.bot.register_next_step_handler(message, self.registration_languages_step, revisit=revisit, chat_id=self.current_user)
                 return False
 
         if self.chosen_languages:
@@ -268,7 +284,7 @@ class SponsorHandler:
 
         else:
             self.bot.send_message(self.current_user, "You haven't chosen any languages!")
-            self.bot.register_next_step_handler(message, self.registration_languages_step, chat_id=self.current_user)
+            self.bot.register_next_step_handler(message, self.registration_languages_step, revisit=revisit, chat_id=self.current_user)
 
     def registration_language_level_step(self, message, langs, index, revisit=False):
         if message.text in self.language_levels:
@@ -276,12 +292,12 @@ class SponsorHandler:
             index += 1
         else:
             self.bot.send_message(self.current_user, "No such option", reply_markup=self.language_levels_markup)
-            self.bot.register_next_step_handler(message, self.registration_languages_step, langs=langs, index=index, chat_id=self.current_user)
+            self.bot.register_next_step_handler(message, self.registration_languages_step, revisit=revisit, langs=langs, index=index, chat_id=self.current_user)
             return False
 
-        if len(langs) >= index:
+        if len(langs) > index:
             self.bot.send_message(self.current_user, f"Please, choose a level of {self.languages[langs[index]]}", reply_markup=self.language_levels_markup)
-            self.bot.register_next_step_handler(message, self.registration_age_step, langs=langs, index=index, chat_id=self.current_user)
+            self.bot.register_next_step_handler(message, self.registration_languages_step, langs=langs, index=index, chat_id=self.current_user)
             return False
 
         if not revisit:
@@ -309,12 +325,12 @@ class SponsorHandler:
                 self.return_to_registration_checkout(message)
                 return False
 
-            self.bot.send_message(self.current_user, "Your age is not corresponds to our age policies") #TODO: Write that policy and send it as a file
-            self.bot.register_next_step_handler(message, self.registration_age_step, chat_id=self.current_user)
+            self.bot.send_message(self.current_user, "Your age is not corresponds to our age policies. Please try again") #TODO: Write that policy and send it as a file
+            self.bot.register_next_step_handler(message, self.registration_age_step, revisit=revisit, chat_id=self.current_user)
 
         except:
             self.bot.send_message(self.current_user, "Numbers please :-)")
-            self.bot.register_next_step_handler(message, self.registration_age_step, chat_id=self.current_user)
+            self.bot.register_next_step_handler(message, self.registration_age_step, revisit=revisit, chat_id=self.current_user)
 
     def registration_country_step(self, message, revisit=False):
         msg_text = message.text.lower().strip()
@@ -336,7 +352,7 @@ class SponsorHandler:
                 self.bot.send_message(self.current_user, "Added", reply_markup=self.okMarkup)
             else:
                 self.bot.send_message(self.current_user, "Country was not recognized, try finding it in our list above")
-                self.bot.register_next_step_handler(message, self.registration_country_step, chat_id=self.current_user)
+                self.bot.register_next_step_handler(message, self.registration_country_step, revisit=revisit, chat_id=self.current_user)
                 return False
 
         if self.country:
@@ -360,7 +376,7 @@ class SponsorHandler:
             return False
         else:
             self.bot.send_message(self.current_user, "You haven't chosen a country!")
-            self.bot.register_next_step_handler(message, self.registration_city_step, chat_id=self.current_user)
+            self.bot.register_next_step_handler(message, self.registration_country_step, revisit=revisit, chat_id=self.current_user)
 
     def registration_city_step(self, message, revisit=False):
         msg_text = message.text.lower().strip()
@@ -382,7 +398,7 @@ class SponsorHandler:
                 self.bot.send_message(self.current_user, "Added", reply_markup=self.okMarkup)
             else:
                 self.bot.send_message(self.current_user, "City was not recognized, try finding it in our list above")
-                self.bot.register_next_step_handler(message, self.registration_country_step, chat_id=self.current_user)
+                self.bot.register_next_step_handler(message, self.registration_country_step, revisit=revisit, chat_id=self.current_user)
                 return False
 
         if self.city:
@@ -399,7 +415,7 @@ class SponsorHandler:
 
         else:
             self.bot.send_message(self.current_user, "You haven't chosen a city!")
-            self.bot.register_next_step_handler(message, self.registration_city_step, chat_id=self.current_user)
+            self.bot.register_next_step_handler(message, self.registration_city_step, revisit=revisit, chat_id=self.current_user)
 
     def registration_contact_tel_step(self, message, revisit=False):
         if message.text:
@@ -413,7 +429,7 @@ class SponsorHandler:
             return False
 
         self.bot.send_message(self.current_user, "Something went wrong, Please try again", reply_markup=self.skip_markup)
-        self.bot.register_next_step_handler(message, self.registration_contact_tel_step, chat_id=self.current_user)
+        self.bot.register_next_step_handler(message, self.registration_contact_tel_step, revisit=revisit, chat_id=self.current_user)
 
     def registration_contact_email_step(self, message, revisit=False):
         if message.text:
@@ -427,7 +443,7 @@ class SponsorHandler:
             return False
 
         self.bot.send_message(self.current_user, "Something went wrong, Please try again", reply_markup=self.skip_markup)
-        self.bot.register_next_step_handler(message, self.registration_contact_email_step, chat_id=self.current_user)
+        self.bot.register_next_step_handler(message, self.registration_contact_email_step, revisit=revisit, chat_id=self.current_user)
 
     def registration_contact_instagram_step(self, message, revisit=False):
         if message.text:
@@ -441,7 +457,7 @@ class SponsorHandler:
             return False
 
         self.bot.send_message(self.current_user, "Something went wrong, Please try again", reply_markup=self.skip_markup)
-        self.bot.register_next_step_handler(message, self.registration_contact_instagram_step, chat_id=self.current_user)
+        self.bot.register_next_step_handler(message, self.registration_contact_instagram_step, revisit=revisit, chat_id=self.current_user)
 
     def registration_contact_facebook_step(self, message, revisit=False):
         if message.text:
@@ -455,7 +471,7 @@ class SponsorHandler:
             return False
 
         self.bot.send_message(self.current_user, "Something went wrong, Please try again")
-        self.bot.register_next_step_handler(message, self.registration_contact_facebook_step, chat_id=self.current_user)
+        self.bot.register_next_step_handler(message, self.registration_contact_facebook_step, revisit=revisit, chat_id=self.current_user)
 
     def registration_checkout_step(self, message):
         if message.text == "1":
@@ -502,34 +518,300 @@ class SponsorHandler:
         elif message.text == "10":
             self.register_sponsor()
 
-    def create_event_status_step(self, message, revisit): #Online or Offline
+    def create_event_status_step(self, message, revisit=False): #Online or Offline
+        if message.text == "Online":
+            self.dat["isOnline"] = True
+        elif message.text == "Offline":
+            self.dat["isOnline"] = False
+        else:
+            self.bot.send_message(self.current_user, "No such option", reply_markup=self.eventStatus_markup)
+            self.bot.register_next_step_handler(message, self.create_event_status_step, revisit=revisit)
+            return False
+
+        if not revisit:
+            self.bot.send_message(self.current_user, "Name your event")
+            self.bot.register_next_step_handler(message, self.create_event_name_step)
+            return False
+        #TODO: return to checkout function
+
+    def create_event_name_step(self, message, revisit=False):
+        if message.text:
+            self.dat["name"] = message.text
+        else:
+            self.bot.send_message(self.current_user, "Unable recognise text, please try again")
+            self.bot.register_next_step_handler(message, self.create_event_name_step, revisit=revisit, chat_id=self.current_user)
+            return False
+
+        if not revisit:
+            Coms.reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page,
+                             self.markup_pages_count)
+            Coms.count_pages(self.cities, self.current_markup_elements, self.markup_pages_count)
+            markup = Coms.assemble_markup(self.markup_page, self.current_markup_elements, 0)
+
+            self.bot.send_message(self.current_user, "What languages do you speak?", reply_markup=markup)
+            self.bot.send_message(self.current_user, "Chose one from above, or simply type to chat", reply_markup=self.langOkMarkup)
+
+            self.bot.register_next_step_handler(message, self.create_event_languages_step, chat_id=self.current_user)
+            return False
+        # TODO: return to checkout function
+
+    def create_event_languages_step(self, message, revisit=False):
+        msg_text = message.text.lower().strip()
+        if msg_text != "ok" and msg_text != "same as mine":
+
+            language = self.spoken_languages_convertor(msg_text)
+            if language:
+                if language in self.chosen_languages:
+                    Coms.remove_tick_from_element(self.bot, self.current_user, self.current_inline_message_id,
+                                                  self.current_markup_elements,
+                                                  self.markup_page, str(self.previous_item))
+                    self.chosen_languages.remove(language)
+                    self.bot.send_message(self.current_user, "Removed", reply_markup=self.okMarkup)
+                else:
+
+                    Coms.add_tick_to_element(self.bot, self.current_user, self.current_inline_message_id, self.current_markup_elements,
+                                                 self.markup_page, str(language))
+                    self.chosen_languages.append(language)
+                    self.bot.send_message(self.current_user, "Added", reply_markup=self.okMarkup)
+            else:
+                self.bot.send_message(self.current_user, "language was not recognized, try finding it in our list above")
+                self.bot.register_next_step_handler(message, self.create_event_languages_step, revisit=revisit, chat_id=self.current_user)
+                return False
+
+        if message.text == "same as mine":
+            self.chosen_languages = Helpers.get_sponsor_languages(self.current_user)
+
+        if self.chosen_languages:
+            self.dat["languages"] = self.chosen_languages
+
+            self.previous_item = ''
+
+            if not revisit:
+                self.bot.send_message(self.current_user, f"Tell me a minimal entrance age")
+                self.bot.register_next_step_handler(message, self.create_event_min_age_step, chat_id=self.current_user)
+                return False
+            #TODO: return to checkout function
+
+        else:
+            self.bot.send_message(self.current_user, "You haven't chosen any languages!")
+            self.bot.register_next_step_handler(message, self.create_event_languages_step, revisit=revisit, chat_id=self.current_user)
+
+    def create_event_min_age_step(self, message, revisit=False):
+        try:
+            age = int(message.text)
+            if 100 > age >= 14:
+                self.dat["minAge"] = age
+                if not revisit:
+                    self.bot.send_message(self.current_user, "Now tell me a maximal entrance age")
+                    self.bot.register_next_step_handler(message, self.create_event_max_age_step, chat_id=self.current_user)
+                    return False
+                # TODO: return to checkout function
+            self.bot.send_message(self.current_user, "Sorry, choosing that age goes against our policies")
+            self.bot.register_next_step_handler(message, self.create_event_min_age_step, chat_id=self.current_user)
+        except:
+            self.bot.send_message(self.current_user, "Only numbers please")
+            self.bot.register_next_step_handler(message, self.create_event_min_age_step, revisit=revisit, chat_id=self.current_user)
+
+    def create_event_max_age_step(self, message, revisit=False):
+        try:
+            age = int(message.text)
+            if 100 > age >= 14:
+                self.dat["maxAge"] = age
+                if not revisit:
+                    self.bot.send_message(self.current_user, "Write a description to your event.(It is gonna be visible to all users)")
+                    self.bot.register_next_step_handler(message, self.create_event_description_step, chat_id=self.current_user)
+                    return False
+                # TODO: return to checkout function
+            self.bot.send_message(self.current_user, "Sorry, choosing that age goes against our policies")
+            self.bot.register_next_step_handler(message, self.create_event_max_age_step, chat_id=self.current_user)
+        except:
+            self.bot.send_message(self.current_user, "Only numbers please")
+            self.bot.register_next_step_handler(message, self.create_event_max_age_step, revisit=revisit, chat_id=self.current_user)
+
+    def create_event_description_step(self, message, revisit=False):
+        if message.text:
+            if message.text:
+                self.dat["description"] = message.text
+            else:
+                self.bot.send_message(self.current_user, "Cant recognise text. Please try again")
+                self.bot.register_next_step_handler(message, self.create_event_description_step, chat_id=self.current_user)
+                return False
+
+            if not revisit:
+                self.bot.send_message(self.current_user, "Choose languages for that event")
+                self.bot.register_next_step_handler(message, self.create_event_price_step, chat_id=self.current_user)
+                return False
+            # TODO: return to checkout function
+
+        self.bot.send_message(self.current_user, "Unable to recognise text here, please try again")
+        self.bot.register_next_step_handler(message, self.create_event_description_step, revisit=revisit, chat_id=self.current_user)
+
+    def create_event_price_step(self, message, revisit=False):
+        try:
+            age = int(message.text)
+            self.dat["price"] = age
+            if not revisit:
+                #TODO: skip country step if event is online???
+                Coms.reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page,
+                                 self.markup_pages_count)
+                Coms.count_pages(self.countries, self.current_markup_elements, self.markup_pages_count)
+                markup = Coms.assemble_markup(self.markup_page, self.current_markup_elements, 0)
+
+                self.previous_item = ''
+                self.current_inline_message_id = \
+                self.bot.send_message(self.current_user, "Where are you planning to conduct events in?", reply_markup=markup).json['message_id']
+                self.bot.register_next_step_handler(message, self.create_event_country_step, chat_id=self.current_user)
+                return False
+            # TODO: return to checkout function
+        except:
+            self.bot.send_message(self.current_user, "Only numbers please")
+            self.bot.register_next_step_handler(message, self.create_event_max_age_step, revisit=revisit, chat_id=self.current_user)
+
+    def create_event_country_step(self, message, revisit=False):
+        msg_text = message.text.lower().strip()
+        if msg_text != "ok":
+            country = self.country_convertor(msg_text)
+            if country:
+                if self.previous_item:
+                    Coms.remove_tick_from_element(self.bot, self.current_user, self.current_inline_message_id,
+                                                  self.current_markup_elements,
+                                                  self.markup_page, str(self.previous_item))
+
+                    self.bot.send_message(self.current_user, "Removed", reply_markup=self.okMarkup)
+
+
+                self.country = country
+                self.previous_item = country
+                Coms.add_tick_to_element(self.bot, self.current_user, self.current_inline_message_id, self.current_markup_elements,
+                                             self.markup_page, str(country))
+                self.bot.send_message(self.current_user, "Added", reply_markup=self.okMarkup)
+            else:
+                self.bot.send_message(self.current_user, "Country was not recognized, try finding it in our list above")
+                self.bot.register_next_step_handler(message, self.registration_country_step, chat_id=self.current_user)
+                return False
+
+        if self.country:
+            self.dat["countryId"] = self.country
+
+            #if not revisit: # Redundant, user has to choose city after changing the country as well
+            cities = json.loads(
+                requests.get(f"https://localhost:44381/GetCities/{self.country}/{self.dat['userAppLanguage']}",
+                             verify=False).text)
+            for city in cities:
+                self.cities[city["id"]] = city["cityName"].lower()
+
+            Coms.reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page, self.markup_pages_count)
+            Coms.count_pages(self.cities, self.current_markup_elements, self.markup_pages_count)
+            markup = Coms.assemble_markup(self.markup_page, self.current_markup_elements, 0)
+
+            self.previous_item = ''
+            self.current_inline_message_id = self.bot.send_message(self.current_user, "Which city are you planning to conduct events in?", reply_markup=markup).json['message_id']
+            self.bot.send_message(self.current_user, "Chose one from above, or simply type to chat", reply_markup=self.okMarkup)
+            self.bot.register_next_step_handler(message, self.create_event_city_step, revisit=revisit, chat_id=self.current_user)
+            return False
+        else:
+            self.bot.send_message(self.current_user, "You haven't chosen a country!")
+            self.bot.register_next_step_handler(message, self.create_event_country_step, revisit=revisit, chat_id=self.current_user)
+
+    def create_event_city_step(self, message, revisit=False):
+        msg_text = message.text.lower().strip()
+        if msg_text != "ok":
+            city = self.city_convertor(msg_text)
+            if city:
+                if self.previous_item:
+                    Coms.remove_tick_from_element(self.bot, self.current_user, self.current_inline_message_id,
+                                                  self.current_markup_elements,
+                                                  self.markup_page, str(self.previous_item))
+
+                    self.bot.send_message(self.current_user, "Removed", reply_markup=self.okMarkup)
+
+
+                self.city = city
+                self.previous_item = city
+                Coms.add_tick_to_element(self.bot, self.current_user, self.current_inline_message_id, self.current_markup_elements,
+                                             self.markup_page, str(city))
+                self.bot.send_message(self.current_user, "Added", reply_markup=self.okMarkup)
+            else:
+                self.bot.send_message(self.current_user, "City was not recognized, try finding it in our list above")
+                self.bot.register_next_step_handler(message, self.registration_city_step, revisit=revisit, chat_id=self.current_user)
+                return False
+
+        if self.city:
+            self.dat["cityId"] = self.city
+            if not revisit:
+                self.previous_item = ''
+                self.bot.send_message(self.current_user, "Ok, now the starting date. State the precise date and time of event start.\nNote: if meeting time is different from the starting time, please, write about it in the description")
+                self.bot.register_next_step_handler(message, self.create_event_start_date_step, chat_id=self.current_user)
+                return False
+            #TODO: return to checkout function
+
+        else:
+            self.bot.send_message(self.current_user, "You haven't chosen a city!")
+            self.bot.register_next_step_handler(message, self.create_event_city_step, revisit=revisit, chat_id=self.current_user)
+
+    def create_event_start_date_step(self, message, revisit=False):
         pass
-    def create_event_name_step(self, message, revisit):
-        pass
-    def create_event_languages_step(self, message, revisit):
-        pass
-    def create_event_min_age_step(self, message, revisit):
-        pass
-    def create_event_max_age_step(self, message, revisit):
-        pass
-    def create_event_description_step(self, message, revisit):
-        pass
-    def create_event_price_step(self, message, revisit):
-        pass
-    def create_event_country_step(self, message, revisit):
-        pass
-    def create_event_city_step(self, message, revisit):
-        pass
-    def create_event_start_date_step(self, message, revisit):
-        pass
-    def create_event_has_group_step(self, message, revisit):
-        pass
-    def create_event_group_link_step(self, message, revisit):
-        pass
-    def create_event_photo_step(self, message, revisit):
-        pass
-    def create_event_bounty_step(self, message, revisit):
-        pass
+
+    def create_event_has_group_step(self, message, revisit=False):
+        if message.text == "Yes":
+            self.dat["hasGroup"] = True
+            self.bot.send_message(self.current_user, "Please, send me a group link")
+            self.bot.register_next_step_handler(message, self.create_event_group_link_step, revisit=revisit, chat_id=self.current_user)
+            return False
+        elif message.text == "No":
+            self.dat["hasGroup"] = False
+            self.dat["groupLink"] = ""
+            if not revisit:
+                self.bot.send_message(self.current_user, "You can attach a photo to your event if you want :-).\nSend it to me or simply press a skip button", reply_markup=self.skip_markup)
+                self.bot.register_next_step_handler(message, self.create_event_photo_step, chat_id=self.current_user)
+            else:
+                pass
+                # TODO: return to checkout function
+            return False
+        self.bot.send_message(self.current_user, "No such option")
+        self.bot.register_next_step_handler(message, self.create_event_has_group_step, revisit=revisit, chat_id=self.current_user)
+
+    def create_event_group_link_step(self, message, revisit=False):
+        if message.text:
+            self.dat["groupLink"] = message.text
+            if not revisit:
+                self.bot.send_message(self.current_user, "You can attach a photo to your event if you want :-).\nSend it to me or simply press a skip button", reply_markup=self.skip_markup)
+                self.bot.register_next_step_handler(message, self.create_event_photo_step, revisit=revisit, chat_id=self.current_user)
+                return False
+            #TODO: return to checkout function
+            return False
+        self.bot.send_message(self.current_user, "I cant recognise text in your message, please try again")
+        self.bot.register_next_step_handler(message, self.create_event_group_link_step, revisit=revisit, chat_id=self.current_user)
+
+    def create_event_photo_step(self, message, revisit=False):
+        if message.photo:
+            self.dat["photo"] = message.photo[len(message.photo) - 1].file_id
+        if not revisit:
+            self.bot.send_message(self.current_user, "What bounty would you like to give for attending to your event?")
+            self.bot.register_next_step_handler(message, self.create_event_bounty_step, chat_id=self.current_user)
+            return False
+        #TODO: return to checkout function
+
+    def create_event_bounty_step(self, message):
+        try:
+            bounty = int(message.text)
+            user_bounty_limits = 150  #TODO: GET USER'S LIMITS (depends on his starting pack)
+
+            if bounty < 0:
+                bounty = 0
+
+            if bounty <= user_bounty_limits:
+                self.dat["bounty"] = bounty
+
+                self.bot.send_message(self.current_user, "Write a description to your event.(It is gonna be visible to all users)")
+                self.bot.register_next_step_handler(message, self.create_event_description_step, chat_id=self.current_user)
+                return False
+            self.bot.send_message(self.current_user, f"Sorry, that you according to your package, you can't set bounty larger then {user_bounty_limits}. Please try again")
+            self.bot.register_next_step_handler(message, self.create_event_bounty_step, chat_id=self.current_user)
+        except:
+            self.bot.send_message(self.current_user, "Only numbers please")
+            self.bot.register_next_step_handler(message, self.create_event_bounty_step, chat_id=self.current_user)
+
     def create_event_checkout_step(self, message, revisit):
         pass
     def create_event_template_step(self, message, revisit):

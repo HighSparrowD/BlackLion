@@ -613,5 +613,13 @@ namespace MyWebApi.Repositories
 
             return false;
         }
+
+        public async Task<List<int>> GetSponsorLanguagesAsync(long sponsorId)
+        {
+            return await _contx.SPONSOR_LANGUAGES
+                .Where(l => l.SponsorId == sponsorId)
+                .Select(l => l.LanguageId)
+                .ToListAsync();
+        }
     }
 }
