@@ -17,6 +17,7 @@ using System.Collections.Generic;
 using System.Data.SqlTypes;
 using System.Linq;
 using System.Net.Http.Headers;
+using System.Reflection.Metadata.Ecma335;
 using System.Threading.Tasks;
 
 namespace MyWebApi.Repositories
@@ -646,6 +647,9 @@ namespace MyWebApi.Repositories
             {            
                 if((bool)userInfo1.ShouldConsiderLanguages && (bool)userInfo2.ShouldConsiderLanguages)
                 {
+                    await AddUserTrustProgressAsync(user1, 0.000005 * (double)userInfo1.BonusIndex);
+                    await AddUserTrustProgressAsync(user2, 0.000005 * (double)userInfo2.BonusIndex);
+
                     return (await _contx.SYSTEM_USERS
                         .Where(u => u.UserId == user2)
                         .Where(u => userInfo1.UserDataInfo.UserLanguages.Any(l => u.UserPreferences.UserLanguagePreferences.Contains(l)))
@@ -654,6 +658,9 @@ namespace MyWebApi.Repositories
                 }
                 else if ((bool)userInfo1.ShouldConsiderLanguages)
                 {
+                    await AddUserTrustProgressAsync(user1, 0.000005 * (double)userInfo1.BonusIndex);
+                    await AddUserTrustProgressAsync(user2, 0.000005 * (double)userInfo2.BonusIndex);
+
                     return (await _contx.SYSTEM_USERS
                         .Where(u => u.UserId == user2)
                         .Where(u => u.UserDataInfo.UserLanguages.Any(l => userInfo1.UserPreferences.UserLanguagePreferences.Contains(l)))
@@ -661,11 +668,19 @@ namespace MyWebApi.Repositories
                 }
                 else if ((bool)userInfo2.ShouldConsiderLanguages)
                 {
+                    await AddUserTrustProgressAsync(user1, 0.000005 * (double)userInfo1.BonusIndex);
+                    await AddUserTrustProgressAsync(user2, 0.000005 * (double)userInfo2.BonusIndex);
+
                     return (await _contx.SYSTEM_USERS
                         .Where(u => u.UserId == user2)
                         .Where(u => userInfo1.UserDataInfo.UserLanguages.Any(l => u.UserPreferences.UserLanguagePreferences.Contains(l)))
                         .SingleOrDefaultAsync()) != null;
                 }
+
+                await AddUserTrustProgressAsync(user1, 0.000005 * (double)userInfo1.BonusIndex);
+                await AddUserTrustProgressAsync(user2, 0.000005 * (double)userInfo2.BonusIndex);
+
+                return true;
             }
             return false;
         }
