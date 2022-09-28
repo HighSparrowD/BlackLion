@@ -63,6 +63,8 @@ namespace MyWebApi.Data
         public DbSet<Stats> SPONSOR_STATS { get; set; }
         public DbSet<UserTrustLevel> USER_TRUST_LEVELS { get; set; }
         public DbSet<DailyReward> DAILY_REWARDS { get; set; }
+        public DbSet<InvitationCredentials> USER_INVITATION_CREDENTIALS { get; set; }
+        public DbSet<Invitation> USER_INVITATIONS { get; set; }
 
 
 

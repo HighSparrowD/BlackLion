@@ -24,6 +24,7 @@ namespace MyWebApi.Entities.UserInfoEntities
         public short? DailyRewardPoint { get; set; }
         public short? BonusIndex { get; set; }
         public string? Nickname{ get; set; }
+        public long? ParentId{ get; set; }
         public DateTime? PremiumExpirationDate{ get; set; }
         public virtual UserBaseInfo? UserBaseInfo { get; set; }
         public virtual UserDataInfo? UserDataInfo  { get; set; }

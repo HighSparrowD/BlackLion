@@ -41,7 +41,7 @@ namespace MyWebApi.Interfaces
         Task<int> GetUserAppLanguage(long id);
         Task<User> GetFriendInfoAsync(long id);
         Task<List<FriendModel>> GetFriendsAsync();
-        Task<long> RegisterUserAsync(User model, UserBaseInfo baseModel, UserDataInfo dataModel, UserPreferences prefsModel, Location location);
+        Task<long> RegisterUserAsync(User model, UserBaseInfo baseModel, UserDataInfo dataModel, UserPreferences prefsModel, Location location, bool wasRegistered=false);
         Task<long> AddFriendUserAsync(long id);
         Task<Country> GetCountryAsync(long id);
         Task<List<long>> GetAllUsersAsync();
@@ -88,5 +88,11 @@ namespace MyWebApi.Interfaces
         Task<string> ClaimDailyReward(long userId);
         Task<bool> CheckUserCanClaimReward(long userId);
         Task<short> GetUserBonusIndex(long userId);
+        Task<InvitationCredentials> GenerateInvitationCredentialsAsync(long userId);
+        Task<InvitationCredentials> GetInvitationCredentialsByUserIdAsync(long userId);
+        Task<string> GetUserInvitationLinkAsync(long userId);
+        Task<string> GetUserInvitationQRCodeAsync(long userId);
+        Task<bool> InviteUserAsync(Guid invitationId, long userId);
+        Task<Invitation> GetInvitation(long userId);
     }
 }

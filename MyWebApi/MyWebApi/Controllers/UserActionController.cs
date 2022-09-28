@@ -496,5 +496,23 @@ namespace MyWebApi.Controllers
         {
             return await _repository.ClaimDailyReward(userId);
         }
+
+        [HttpGet("/GenerateInvitationCredentials/{userId}")]
+        public async Task<InvitationCredentials> GenerateInvitationCredentials(long userId)
+        {
+            return await _repository.GenerateInvitationCredentialsAsync(userId);
+        }
+
+        [HttpGet("/GetInvitationCredentialsByUserId/{userId}")]
+        public async Task<InvitationCredentials> GetInvitationCredentialsByUserId(long userId)
+        {
+            return await _repository.GetInvitationCredentialsByUserIdAsync(userId);
+        }
+
+        [HttpGet("/InviteUser/{invitationId}/{userId}")]
+        public async Task<bool> InviteUser(Guid invitationId, long userId)
+        {
+            return await _repository.InviteUserAsync(invitationId, userId);
+        }
     }
 }
