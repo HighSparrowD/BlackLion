@@ -93,6 +93,10 @@ namespace MyWebApi.Interfaces
         Task<string> GetUserInvitationLinkAsync(long userId);
         Task<string> GetUserInvitationQRCodeAsync(long userId);
         Task<bool> InviteUserAsync(Guid invitationId, long userId);
-        Task<Invitation> GetInvitation(long userId);
+        Task<Invitation> GetInvitationAsync(long userId);
+        Task<bool> NotifyUserAboutReferentialRegistrationAsync(long userId, long invitedUserId);
+        Task<bool> AddUserNotificationAsync(UserNotification model);
+        Task<int> GetInvitedUsersCountAsync(long userId);
+        Task<bool> CheckUserHasNotificationsAsync(long userId);
     }
 }
