@@ -10,6 +10,7 @@ from Core import HelpersMethodes as Helpers
 class Reporter:
     def __init__(self, bot, msg, language, reporters, hasVisited=True):
         self.bot = bot
+        self.message = msg
         self.current_user = msg.from_user.id
         Helpers.switch_user_busy_status(self.current_user)
         self.reporters = reporters
@@ -70,7 +71,7 @@ class Reporter:
                 return int(reason["id"])
 
     def destruct(self):
-        go_back_to_main_menu(self.bot, self.current_user)
+        go_back_to_main_menu(self.bot, self.current_user, self.message)
         self.reporters.remove(self)
         Helpers.switch_user_busy_status(self.current_user)
         del self

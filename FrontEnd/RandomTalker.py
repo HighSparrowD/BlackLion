@@ -1,12 +1,9 @@
-import copy
-
 import requests
 from telebot.types import ReplyKeyboardMarkup, KeyboardButton
 
 import Core.HelpersMethodes as Helpers
 
 from Common.Menues import go_back_to_main_menu
-from Requester import Requester
 
 
 class RandomTalker:
@@ -116,9 +113,5 @@ class RandomTalker:
             self.bot.message_handlers.remove(self.ah)
         if self.rh in self.bot.message_handlers:
             self.bot.message_handlers.remove(self.rh)
-        if Helpers.check_user_has_requests(self.current_user):
-            request_list = Helpers.get_user_requests(self.current_user)
-            Requester(self.bot, self.message, self.current_user, request_list)
-            return False
-        go_back_to_main_menu(self.bot, self.current_user)
+        go_back_to_main_menu(self.bot, self.current_user, self.message)
         del self

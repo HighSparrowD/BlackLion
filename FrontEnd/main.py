@@ -1,19 +1,19 @@
 from telebot import *
 
-from Common.Menues import show_admin_markup, admin_menu_markup, register_markup
+import Common.Menues as Menus
 from Familiator import *
 from RandomTalker import *
 from Registration import *
 from Reporter import Reporter
-from Requester import *
 from Shop import *
 
 import Core.HelpersMethodes as Helpers
-from Sponsor_Handler import SponsorHandler, SponsorHandlerAdmin
+# from Sponsor_Handler import SponsorHandler
+# from SponsorHandlerAdmin import SponsorHandlerAdmin
 from AdminCabinet import AdminCabinet
 
 bot = TeleBot("5488749379:AAEJ0t9RksogDD14zJLRYqSisBUpu2pS2WU") #TODO: relocate code to an .env file or db
-Helpers.start_program_in_debug_mode(bot) #TODO: remove in production
+Menus.start_program_in_debug_mode(bot) #TODO: remove in production
 
 familiators = []
 random_talkers = []
@@ -24,6 +24,18 @@ admin_sponsor_handlers = []
 admin_cabinets = []
 reporters = []
 shops = []
+
+
+@bot.message_handler(commands=["start"], is_multihandler=True)
+def Start(message):
+    invitorId = get_invitor_id(message.html_text)
+    if invitorId:
+        if Helpers.user_invitation_link(invitorId, message.from_user.id):
+            create_registrator(message)
+            return False
+        bot.send_message(message.from_user.id, "Sorry. Something went wrong")
+    return False
+    #TODO: add normal start here (description message, blah blah blah). Leave it for later, it is not that important
 
 
 @bot.message_handler(commands=["registration"], is_multihandler=True)
@@ -72,15 +84,15 @@ def SwitchAdminStatus(message):
         msg = Helpers.switch_admin_status(message.from_user.id)
         bot.send_message(message.from_user.id, msg)
         if Helpers.check_user_is_admin(message.from_user.id):
-            show_admin_markup(bot, message.from_user.id)
+            Menus.show_admin_markup(bot, message.from_user.id)
         if user_was_admin:
-            go_back_to_main_menu(bot, message.from_user.id)
+            go_back_to_main_menu(bot, message.from_user.id, message)
 
         return False
 
     msg = Helpers.get_admin_status(message.from_user.id)
     if msg:
-        bot.send_message(message.from_user.id, f"Your current admin status is: -> {msg} <-", reply_markup=admin_menu_markup)
+        bot.send_message(message.from_user.id, f"Your current admin status is: -> {msg} <-", reply_markup=Menus.admin_menu_markup)
 
 
 @bot.message_handler(commands=["enteradmincabinet"])
@@ -154,11 +166,12 @@ def create_reporter(message):
 
 def create_sponsor_handler(message):
     if Helpers.check_user_is_admin(message.from_user.id):
-        return SponsorHandlerAdmin(bot, message, admin_sponsor_handlers)
+        pass
+        # return SponsorHandlerAdmin(bot, message, admin_sponsor_handlers)
     elif Helpers.check_user_exists(message.from_user.id):
         if not Helpers.check_user_is_banned(message.from_user.id):
             visit = Helpers.check_user_has_visited_section(message.from_user.id, 8)
-            return SponsorHandler(bot, message, sponsor_handlers, visit)
+            # return SponsorHandler(bot, message, sponsor_handlers, visit)
         else:
             bot.send_message(message.from_user.id, "Sorry, you had been banned. Please contact the support team")
     send_registration_warning(message.from_user.id)
@@ -170,7 +183,7 @@ def create_admin_cabinet(message):
 
 
 def send_registration_warning(userId):
-    bot.send_message(userId, "Please register before entering this section", reply_markup=register_markup)
+    bot.send_message(userId, "Please register before entering this section", reply_markup=Menus.register_markup)
 
 
 def check_module_created(userId, module_array): #Probably redundant
@@ -178,6 +191,10 @@ def check_module_created(userId, module_array): #Probably redundant
         if module.current_user == userId:
             return True
     return False
+
+
+def get_invitor_id(html_text):
+    return html_text.strip("/start")
 
 
 bot.polling()

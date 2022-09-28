@@ -1,6 +1,6 @@
 import json
 import requests
-from Common import Menues
+
 
 def check_user_exists(userId):
     return bool(json.loads(requests.get(f"https://localhost:44381/CheckUserExists/{userId}", verify=False).text))
@@ -150,14 +150,20 @@ def delete_user_request(requestId):
 
 def start_program_in_debug_mode(bot): # TODO: remove in production
     requests.get("https://localhost:44381/SetDebugProperties", verify=False)
-    users = json.loads(requests.get("https://localhost:44381/GetAllUsersIds", verify=False).text)
-    for user in users:
-        Menues.go_back_to_main_menu(bot, user)
+    return json.loads(requests.get("https://localhost:44381/GetAllUsersIds", verify=False).text)
 
 
 def get_user_list(userId):
     try:
         return json.loads(requests.get(f"https://localhost:44381/GetUserList/{userId}", verify=False).text)
+    except:
+        return None
+
+
+def user_invitation_link(invitationId, userId):
+    try:
+        return bool(
+            json.loads(requests.get(f"https://localhost:44381/InviteUser/{invitationId}/{userId}", verify=False).text))
     except:
         return None
 
