@@ -6,6 +6,7 @@ import Common.Menues as menues
 class Shop:
     def __init__(self, bot, message, shops, visit):
         self.bot = bot
+        self.message = message
         self.current_user = message.from_user.id
         Helpers.switch_user_busy_status(self.current_user)
         self.price_list = f"\n1 day of premium costs 500p\n7 days of premium cost 1500p\n1 month (always 30 days) costs 7000p"
@@ -61,11 +62,10 @@ class Shop:
         self.bot.register_next_step_handler(message, self.start, chat_id=self.current_user)
 
     def message_handler(self, message):
-        menues.go_back_to_main_menu(self.bot, self.current_user)
         self.destruct()
 
     def destruct(self):
         self.bot.message_handlers.remove(self.mh)
         self.shops.remove(self)
         Helpers.switch_user_busy_status(self.current_user)
-        del self
+        menues.go_back_to_main_menu(self.bot, self.current_user, self.message)

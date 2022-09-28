@@ -1,7 +1,9 @@
 import copy
 from math import ceil
-
+from Core import HelpersMethodes as Helpers
 from telebot.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardButton, InlineKeyboardMarkup
+
+from Requester import Requester
 
 menu_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True) \
     .add(KeyboardButton("/search"),
@@ -20,12 +22,28 @@ register_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=Tr
     .add(KeyboardButton("/registration"))
 
 
-def go_back_to_main_menu(bot, user):
+def go_back_to_main_menu(bot, user, message):
+    if Helpers.check_user_has_requests(user):
+        request_list = Helpers.get_user_requests(user)
+        if message:
+            Requester(bot, message, user, request_list)
+        return False
+    if Helpers.check_user_has_notifications(user):
+        notification_list = Helpers.get_user_notifications(user)
+        for notif in notification_list: #TODO: Maybe create a separate module for handling that
+            bot.send_message(notif["userId1"], notif["description"])
+            Helpers.delete_user_notifications(notif["id"])
     bot.send_message(user, "What are we doing next? 😊", reply_markup=menu_markup)
 
 
 def show_admin_markup(bot, user):
     bot.send_message(user, "Sending you basic admin command set 😏", reply_markup=admin_menu_markup)
+
+
+def start_program_in_debug_mode(bot): # TODO: remove in production
+    users = Helpers.start_program_in_debug_mode(bot)
+    for user in users:
+        go_back_to_main_menu(bot, user, None)
 
 
 def count_pages(section_elements, current_markup_elements, markup_pages_count, prefs=False):

@@ -36,7 +36,7 @@ namespace MyWebApi.Repositories
             throw new System.NotImplementedException();
         }
 
-        public async Task<long> RegisterUserAsync(User model, UserBaseInfo baseModel, UserDataInfo dataModel, UserPreferences prefsModel, Location location)
+        public async Task<long> RegisterUserAsync(User model, UserBaseInfo baseModel, UserDataInfo dataModel, UserPreferences prefsModel, Location location, bool wasRegistered = false)
         {
             await _contx.USER_LOCATIONS.AddAsync(location);
 
@@ -58,10 +58,27 @@ namespace MyWebApi.Repositories
             await _contx.SYSTEM_USERS.AddAsync(model);
             await _contx.SaveChangesAsync();
 
-            await GenerateUserAchievementList(baseModel.Id, dataModel.LanguageId, false); //TODO: Set to false instead of wasRegistered WHEN                                                                              //Or if some users were registered before achievements were implemented
+            await GenerateUserAchievementList(baseModel.Id, dataModel.LanguageId, wasRegistered);
             await TopUpUserWalletBalance(model.UserId, 180, "Starting Pack"); //180 is a starting user point pack
             await AddUserTrustLevel(model.UserId);
             await AddUserTrustProgressAsync(model.UserId, 0.000012);
+
+            var invitation = await GetInvitationAsync(model.UserId);
+
+            if(invitation != null)
+            {
+                var invitor = invitation.InvitorCredentials.Invitor;
+                model.BonusIndex = 2;
+                model.ParentId = invitor.UserId;
+
+                _contx.SYSTEM_USERS.Update(model);
+                await _contx.SaveChangesAsync();
+
+                //User is instantly liked by an invitor (Possibly let users turn of that feature)
+                await RegisterUserRequest(new UserNotification { UserId = invitor.UserId, UserId1 = model.UserId, IsLikedBack = false });
+                //Invitor is notified about referential registration
+                await NotifyUserAboutReferentialRegistrationAsync(invitor.UserId, model.UserId);
+            }
 
             return model.UserId;
         }
@@ -69,7 +86,7 @@ namespace MyWebApi.Repositories
         public async Task<List<long>> GetAllUsersAsync()
         {
             return await _contx.SYSTEM_USERS
-                .Where(u => u.UserId != 1324407781) //All except Sania's account
+                .Where(u => u.UserId != 1324407781 && u.UserId != 576569499) //All except Sania's accounts
                 .Select(u => u.UserId)
                 .ToListAsync(); 
         }
@@ -92,7 +109,7 @@ namespace MyWebApi.Repositories
                 .Include(s => s.UserDataInfo).ThenInclude(s => s.Reason)
                 .Include(s => s.UserPreferences)
                 .Include(s => s.UserBlackList)
-                .SingleAsync();
+                .SingleOrDefaultAsync();
         }
 
         public async Task<List<User>> GetUsersAsync(long userId)
@@ -201,17 +218,19 @@ namespace MyWebApi.Repositories
 
         public async Task<bool> CheckUserHasVisitedSection(long userId, int sectionId)
         {
-            var visit = await _contx.USER_VISITS.Where(v => v.UserId == userId && v.SectionId == sectionId).SingleOrDefaultAsync();
-
-            await AddUserTrustProgressAsync(userId, 0.000002);
+            var visit = await _contx.USER_VISITS.
+                Where(v => v.UserId == userId && v.SectionId == sectionId)
+                .FirstOrDefaultAsync();
 
             if (visit != null)
             {
+                await AddUserTrustProgressAsync(userId, 0.000002);
                 return true;
             }
 
             if (await CheckUserIsRegistered(userId))
             {
+                await AddUserTrustProgressAsync(userId, 0.000002);
                 await _contx.USER_VISITS.AddAsync(new Visit { UserId = userId, SectionId = sectionId });
                 await _contx.SaveChangesAsync();
                 return false;
@@ -578,7 +597,7 @@ namespace MyWebApi.Repositories
                 startingUser.IsBanned = false;
                 startingUser.IsDeleted = false;
 
-                await RegisterUserAsync(startingUser, startingUserBase, startingUserData, startingUserPrefs, userLocation);
+                await RegisterUserAsync(startingUser, startingUserBase, startingUserData, startingUserPrefs, userLocation, wasRegistered:true);
             }
 
             return 1;
@@ -941,7 +960,6 @@ namespace MyWebApi.Repositories
 
         public async Task<long> RegisterUserRequest(UserNotification request)
         {
-            request.Id = await _contx.USER_NOTIFICATIONS.CountAsync() +1;
             request.Severity = (short)SystemEnums.Severities.Moderate;
 
             if (request.IsLikedBack)
@@ -949,10 +967,7 @@ namespace MyWebApi.Repositories
             else
                 request.SectionId = (short)SystemEnums.Sections.Familiator;
 
-            await _contx.USER_NOTIFICATIONS.AddAsync(request);
-            await _contx.SaveChangesAsync();
-
-            await AddUserTrustProgressAsync((long)request.UserId, 0.000002);
+            await AddUserNotificationAsync(request);
 
             return request.Id;
         }
@@ -1052,6 +1067,7 @@ namespace MyWebApi.Repositories
         {
             return _contx.USER_NOTIFICATIONS
                 .Where(r => r.UserId == senderId && r.UserId1 == recieverId)
+                .Where(r => r.SectionId == (int)SystemEnums.Sections.Requester || r.SectionId == (int)SystemEnums.Sections.Familiator)
                 .FirstOrDefault() != null;
         }
 
@@ -1212,6 +1228,170 @@ namespace MyWebApi.Repositories
             {
                 throw new NullReferenceException($"User {userId} was not found");
             }
+        }
+
+        public async Task<InvitationCredentials> GenerateInvitationCredentialsAsync(long userId)
+        {
+            var invitationCreds = await GetInvitationCredentialsByUserIdAsync(userId);
+
+            if (invitationCreds == null)
+            {
+                var id = Guid.NewGuid();
+                var linkBase = "https://t.me/PersonalityDatingNiceBot?start=";
+
+                invitationCreds = new InvitationCredentials
+                {
+                    Id = id,
+                    UserId = userId,
+                    Link = linkBase + id,
+                    //TODO: Generate QR code via an external (or internal) service
+                };
+
+                await _contx.USER_INVITATION_CREDENTIALS.AddAsync(invitationCreds);
+                await _contx.SaveChangesAsync();
+            }
+
+            return invitationCreds;
+        }
+
+        public async Task<InvitationCredentials> GetInvitationCredentialsByUserIdAsync(long userId)
+        {
+            return await _contx.USER_INVITATION_CREDENTIALS
+                .Where(i => i.UserId == userId)
+                .FirstOrDefaultAsync();
+        }
+
+        public async Task<string> GetUserInvitationLinkAsync(long userId)
+        {
+            var invitation = await GetInvitationCredentialsByUserIdAsync(userId);
+
+            if (invitation != null)
+                return invitation.Link;
+
+            return null;
+        }
+
+        public async Task<string> GetUserInvitationQRCodeAsync(long userId)
+        {
+            var invitation = await GetInvitationCredentialsByUserIdAsync(userId);
+
+            if (invitation != null)
+                return invitation.QRCode;
+
+            return null;
+        }
+
+        public async Task<bool> InviteUserAsync(Guid invitationId, long userId)
+        {
+            var invitationCreds = await _contx.USER_INVITATION_CREDENTIALS.FindAsync(invitationId);
+
+            if (invitationCreds != null)
+            {
+                var invitedUser = await GetUserInfoAsync(userId);
+                var invitation = await GetInvitationAsync(userId);
+
+                if (invitedUser != null)
+                    return false;
+                else if (invitation != null)
+                    return false;
+
+                invitation = new Invitation
+                {
+                    Id = Guid.NewGuid(),
+                    InvitorCredentialsId = invitationCreds.Id,
+                    InvitedUserId = userId,
+                    InvitationTime = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc)
+                };
+
+                await _contx.USER_INVITATIONS.AddAsync(invitation);
+                await _contx.SaveChangesAsync();
+
+                return true;
+            }
+
+            return false;
+        }
+
+        public async Task<Invitation> GetInvitationAsync(long userId)
+        {
+            return await _contx.USER_INVITATIONS
+                .Where(i => i.InvitedUserId == userId)
+                .Include(i => i.InvitorCredentials).ThenInclude(i => i.Invitor)
+                .FirstOrDefaultAsync();
+        }
+
+        public async Task<bool> NotifyUserAboutReferentialRegistrationAsync(long userId, long invitedUserId)
+        {
+            if (await CheckUserIsRegistered(userId))
+            {
+                var invitedUsersCount = await GetInvitedUsersCountAsync(userId);
+                return await AddUserNotificationAsync(new UserNotification
+                    {
+                        UserId1 = userId,
+                        IsLikedBack = false,
+                        Description = $"Hey! new user had been registered via your link. Thanks for helping us grow!\nSo far, you have invited: {invitedUsersCount} people. \nYou receive 1p for every action they are maiking ;-)",
+                        SectionId = (int)SystemEnums.Sections.Registration,
+                        Severity = (short)SystemEnums.Severities.Moderate
+                    });
+            }
+
+            return false;
+        }
+
+        public async Task<bool> AddUserNotificationAsync(UserNotification model)
+        {
+            try
+            {
+                model.Id = await _contx.USER_NOTIFICATIONS.CountAsync() + 1;
+                await _contx.USER_NOTIFICATIONS.AddAsync(model);
+                await _contx.SaveChangesAsync();
+
+                if (model.UserId != null)
+                    await AddUserTrustProgressAsync((long)model.UserId, 0.000002);
+
+                return true;
+            }
+            catch { throw new Exception("Something went wrong when adding notification"); }
+        }
+
+        public async Task<int> GetInvitedUsersCountAsync(long userId)
+        {
+            return await _contx.USER_INVITATIONS
+                .Where(i => i.InvitorCredentials.UserId == userId)
+                .CountAsync();
+        }
+
+        public async Task<bool> CheckUserHasNotificationsAsync(long userId)
+        {
+            return await _contx.USER_NOTIFICATIONS
+                .Where(n => n.UserId1 == userId && n.SectionId != (int)SystemEnums.Sections.Familiator && n.SectionId != (int)SystemEnums.Sections.Requester)
+                .CountAsync() > 0;
+        }
+
+        public async Task<List<UserNotification>> GetUserNotifications(long userId)
+        {
+            return await _contx.USER_NOTIFICATIONS
+                .Where(n => n.UserId1 == userId)
+                .ToListAsync();
+        }
+
+        public async Task<bool> DeleteUserNotification(long notificationId)
+        {
+            try
+            {
+                var notification = await _contx.USER_NOTIFICATIONS
+                    .FindAsync(notificationId);
+
+                if (notification != null)
+                {
+                    _contx.USER_NOTIFICATIONS.Remove(notification);
+                    await _contx.SaveChangesAsync();
+
+                    return true;
+                }
+                return true;
+            }
+            catch { return false; }
         }
     }
 }

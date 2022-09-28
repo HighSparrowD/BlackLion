@@ -14,6 +14,7 @@ from SponsorHandlerAdmin import SponsorHandlerAdmin
 class SponsorHandler:
     def __init__(self, bot, message, sponsor_handlers, hasVisited=True):
         self.bot = bot
+        self.message = message
         self.current_user = message.from_user.id
         self.current_user_info = None
         Helpers.switch_user_busy_status(self.current_user)
@@ -1058,6 +1059,6 @@ class SponsorHandler:
         self.bot.message_handlers.remove(self.mhCode)
         self.bot.message_handlers.remove(self.eh)
         self.sponsor_handlers.remove(self)
-        go_back_to_main_menu(self.bot, self.current_user)
+        go_back_to_main_menu(self.bot, self.current_user, self.message)
         Helpers.switch_user_busy_status(self.current_user)
         del self

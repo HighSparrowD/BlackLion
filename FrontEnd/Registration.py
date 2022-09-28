@@ -622,7 +622,7 @@ class Registrator:
         self.registrators.remove(self)
         if self.hasVisited:
             Helpers.switch_user_busy_status(self.current_user)
-        go_back_to_main_menu(self.bot, self.current_user)
+        go_back_to_main_menu(self.bot, self.current_user, self.msg)
         del self
 
     def __del__(self):

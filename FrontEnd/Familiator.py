@@ -161,5 +161,5 @@ class Familiator:
             request_list = Helpers.get_user_requests(self.current_user)
             Requester(self.bot, self.msg, self.current_user, request_list)
             return False
-        go_back_to_main_menu(self.bot, self.current_user)
+        go_back_to_main_menu(self.bot, self.current_user, self.msg)
         del self

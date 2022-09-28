@@ -3,8 +3,6 @@ import random
 from telebot.types import KeyboardButton, ReplyKeyboardMarkup
 from Core import HelpersMethodes as Helpers
 
-from Common.Menues import go_back_to_main_menu
-
 
 class Requester:
     def __init__(self, bot, message, receiver, request_list):
@@ -32,6 +30,14 @@ class Requester:
 
         self.bot.send_message(self.receiver, self.start_message, reply_markup=self.start_markup)
         self.bot.register_next_step_handler(message, self.start, chat_id=self.receiver)
+
+        self.menu_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True) \
+            .add(KeyboardButton("/search"),
+                 KeyboardButton("/random"),
+                 KeyboardButton("/feedback"),
+                 KeyboardButton("/sponsoraccount"),
+                 KeyboardButton("/random"),
+                 KeyboardButton("/shop"))
 
         # if liked:
         #     self.d["userDescription"] = self.m + self.d["userDescription"]
@@ -124,5 +130,5 @@ class Requester:
     def destruct(self, shouldSend):
         Helpers.switch_user_busy_status(self.receiver)
         if shouldSend:
-            go_back_to_main_menu(self.bot, self.receiver)
+            self.bot.send_message(self.receiver, "What are we doing next? 😊", reply_markup=self.menu_markup)
         del self
