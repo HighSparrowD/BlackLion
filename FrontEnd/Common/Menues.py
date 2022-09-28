@@ -28,6 +28,11 @@ def go_back_to_main_menu(bot, user, message):
         if message:
             Requester(bot, message, user, request_list)
         return False
+    if Helpers.check_user_has_notifications(user):
+        notification_list = Helpers.get_user_notifications(user)
+        for notif in notification_list: #TODO: Maybe create a separate module for handling that
+            bot.send_message(notif["userId1"], notif["description"])
+            Helpers.delete_user_notifications(notif["id"])
     bot.send_message(user, "What are we doing next? 😊", reply_markup=menu_markup)
 
 

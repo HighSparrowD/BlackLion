@@ -92,6 +92,14 @@ def check_user_has_requests(userId):
         return None
 
 
+def check_user_has_notifications(userId):
+    try:
+        return bool(
+            json.loads(requests.get(f"https://localhost:44381/CheckUserHasNotifications/{userId}", verify=False).text))
+    except:
+        return None
+
+
 def get_user_request(requestId):
     try:
         return json.loads(requests.get(f"https://localhost:44381/CheckUserHasRequest/{requestId}", verify=False).text)
@@ -134,6 +142,13 @@ def get_user_requests(userId):
         return None
 
 
+def get_user_notifications(userId):
+    try:
+        return json.loads(requests.get(f"https://localhost:44381/GetUserNotifications/{userId}", verify=False).text)
+    except:
+        return None
+
+
 def delete_user_requests(userId):
     try:
         return json.loads(requests.delete(f"https://localhost:44381/DeleteUserRequests/{userId}", verify=False).text)
@@ -144,6 +159,14 @@ def delete_user_requests(userId):
 def delete_user_request(requestId):
     try:
         return json.loads(requests.delete(f"https://localhost:44381/DeleteUserRequest/{requestId}", verify=False).text)
+    except:
+        return None
+
+
+def delete_user_notifications(notificationId):
+    try:
+        return bool(
+            json.loads(requests.delete(f"https://localhost:44381/DeleteUserNotification/{notificationId}", verify=False).text))
     except:
         return None
 

@@ -77,7 +77,7 @@ namespace MyWebApi.Repositories
                 //User is instantly liked by an invitor (Possibly let users turn of that feature)
                 await RegisterUserRequest(new UserNotification { UserId = invitor.UserId, UserId1 = model.UserId, IsLikedBack = false });
                 //Invitor is notified about referential registration
-                await NotifyUserAboutReferentialRegistrationAsync(model.UserId, invitor.UserId);
+                await NotifyUserAboutReferentialRegistrationAsync(invitor.UserId, model.UserId);
             }
 
             return model.UserId;
@@ -86,7 +86,7 @@ namespace MyWebApi.Repositories
         public async Task<List<long>> GetAllUsersAsync()
         {
             return await _contx.SYSTEM_USERS
-                .Where(u => u.UserId != 1324407781) //All except Sania's account
+                .Where(u => u.UserId != 1324407781 && u.UserId != 576569499) //All except Sania's accounts
                 .Select(u => u.UserId)
                 .ToListAsync(); 
         }
@@ -1346,7 +1346,8 @@ namespace MyWebApi.Repositories
                 await _contx.USER_NOTIFICATIONS.AddAsync(model);
                 await _contx.SaveChangesAsync();
 
-                await AddUserTrustProgressAsync((long)model.UserId, 0.000002);
+                if (model.UserId != null)
+                    await AddUserTrustProgressAsync((long)model.UserId, 0.000002);
 
                 return true;
             }

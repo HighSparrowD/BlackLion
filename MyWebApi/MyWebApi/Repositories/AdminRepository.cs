@@ -112,7 +112,7 @@ namespace MyWebApi.Repositories
                 var userInvitations = await _contx.USER_INVITATIONS.Where(u => u.InvitorCredentials.UserId == userId).ToListAsync();
                 var userInvitationCreds = await _contx.USER_INVITATION_CREDENTIALS.Where(u => u.UserId == userId).SingleOrDefaultAsync();
 
-                if (userInvitations != null)
+                if (userInvitations.Count > 0)
                 {
                     _contx.USER_INVITATIONS.RemoveRange(userInvitations);
                     await _contx.SaveChangesAsync();
