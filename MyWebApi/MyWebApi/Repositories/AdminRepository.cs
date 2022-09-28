@@ -109,6 +109,20 @@ namespace MyWebApi.Repositories
                 var userNotifications1 = await _contx.USER_NOTIFICATIONS.Where(u => u.UserId1 == userId).ToListAsync();
                 var sponsorRatings = await _contx.SPONSOR_RATINGS.Where(u => u.UserId == userId).ToListAsync();
                 var userTrustLevel = await _contx.USER_TRUST_LEVELS.Where(u => u.Id == userId).SingleOrDefaultAsync();
+                var userInvitations = await _contx.USER_INVITATIONS.Where(u => u.InvitorCredentials.UserId == userId).ToListAsync();
+                var userInvitationCreds = await _contx.USER_INVITATION_CREDENTIALS.Where(u => u.UserId == userId).SingleOrDefaultAsync();
+
+                if (userInvitations != null)
+                {
+                    _contx.USER_INVITATIONS.RemoveRange(userInvitations);
+                    await _contx.SaveChangesAsync();
+                }
+
+                if (userInvitationCreds != null)
+                {
+                    _contx.USER_INVITATION_CREDENTIALS.Remove(userInvitationCreds);
+                    await _contx.SaveChangesAsync();
+                }
 
                 if (userLocation != null)
                 {
