@@ -98,5 +98,7 @@ namespace MyWebApi.Interfaces
         Task<bool> AddUserNotificationAsync(UserNotification model);
         Task<int> GetInvitedUsersCountAsync(long userId);
         Task<bool> CheckUserHasNotificationsAsync(long userId);
+        Task<List<UserNotification>> GetUserNotifications(long userId);
+        Task<bool> DeleteUserNotification(long notificationId);
     }
 }

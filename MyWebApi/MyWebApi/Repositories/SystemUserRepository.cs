@@ -1366,5 +1366,31 @@ namespace MyWebApi.Repositories
                 .Where(n => n.UserId1 == userId && n.SectionId != (int)SystemEnums.Sections.Familiator && n.SectionId != (int)SystemEnums.Sections.Requester)
                 .CountAsync() > 0;
         }
+
+        public async Task<List<UserNotification>> GetUserNotifications(long userId)
+        {
+            return await _contx.USER_NOTIFICATIONS
+                .Where(n => n.UserId1 == userId)
+                .ToListAsync();
+        }
+
+        public async Task<bool> DeleteUserNotification(long notificationId)
+        {
+            try
+            {
+                var notification = await _contx.USER_NOTIFICATIONS
+                    .FindAsync(notificationId);
+
+                if (notification != null)
+                {
+                    _contx.USER_NOTIFICATIONS.Remove(notification);
+                    await _contx.SaveChangesAsync();
+
+                    return true;
+                }
+                return true;
+            }
+            catch { return false; }
+        }
     }
 }

@@ -515,10 +515,22 @@ namespace MyWebApi.Controllers
             return await _repository.InviteUserAsync(invitationId, userId);
         }
 
-        [HttpGet("/CheckUserHasNotifications{userId}")]
+        [HttpGet("/CheckUserHasNotifications/{userId}")]
         public async Task<bool> CheckUserHasNotifications(long userId)
         {
             return await _repository.CheckUserHasNotificationsAsync(userId);
+        }
+
+        [HttpGet("/GetUserNotifications/{userId}")]
+        public async Task<List<UserNotification>> GetUserNotifications(long userId)
+        {
+            return await _repository.GetUserNotifications(userId);
+        }
+
+        [HttpGet("/DeleteUserNotification/{notificationId}")]
+        public async Task<bool> DeleteUserNotification(long notificationId)
+        {
+            return await _repository.DeleteUserNotification(notificationId);
         }
     }
 }
