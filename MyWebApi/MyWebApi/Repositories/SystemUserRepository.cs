@@ -74,7 +74,8 @@ namespace MyWebApi.Repositories
                 _contx.SYSTEM_USERS.Update(model);
                 await _contx.SaveChangesAsync();
 
-                await RegisterUserRequest(new UserNotification {UserId = model.UserId, UserId1 = model.UserId, IsLikedBack = false }); //TODO: DO DO DO
+                await RegisterUserRequest(new UserNotification { UserId = invitor.UserId, UserId1 = model.UserId, IsLikedBack = false });
+                //TODO: Notify user about the successfull registration by his link. (Notify about a current invited users count, and his bonus)
             }
 
             return model.UserId;
@@ -215,17 +216,19 @@ namespace MyWebApi.Repositories
 
         public async Task<bool> CheckUserHasVisitedSection(long userId, int sectionId)
         {
-            var visit = await _contx.USER_VISITS.Where(v => v.UserId == userId && v.SectionId == sectionId).SingleOrDefaultAsync();
-
-            await AddUserTrustProgressAsync(userId, 0.000002);
+            var visit = await _contx.USER_VISITS.
+                Where(v => v.UserId == userId && v.SectionId == sectionId)
+                .FirstOrDefaultAsync();
 
             if (visit != null)
             {
+                await AddUserTrustProgressAsync(userId, 0.000002);
                 return true;
             }
 
             if (await CheckUserIsRegistered(userId))
             {
+                await AddUserTrustProgressAsync(userId, 0.000002);
                 await _contx.USER_VISITS.AddAsync(new Visit { UserId = userId, SectionId = sectionId });
                 await _contx.SaveChangesAsync();
                 return false;
