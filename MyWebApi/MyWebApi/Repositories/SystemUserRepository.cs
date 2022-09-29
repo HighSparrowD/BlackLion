@@ -742,6 +742,12 @@ namespace MyWebApi.Repositories
             }
 
             await _contx.USER_WALLET_BALANCES.AddAsync(userBalance);
+
+            var userParentId = (await _contx.SYSTEM_USERS.FindAsync(userId)).ParentId;
+
+            if (userParentId != null && userParentId > 0)
+                await TopUpUserWalletBalance((long)userParentId, 1, $"Referential reward for user's {userParentId} action");
+
             await _contx.SaveChangesAsync();
             await RegisterUserWalletPurchase(userId, points, description); //Registers info about amount of points decremented / incremented
 
