@@ -1,0 +1,1 @@
+That script tests a formula describing a PERSONALITY point values
