@@ -1399,5 +1399,25 @@ namespace MyWebApi.Repositories
             }
             catch { return false; }
         }
+
+        public async Task<List<UserAchievement>> GetRandomAchievements(long userId)
+        {
+            var achievents = await _contx.USER_ACHIEVEMENTS
+                .Where(a => a.UserBaseInfoId == userId)
+                .Where(a => !a.IsAcquired)
+                //.OrderBy(a => new Random().Next()) //TODO: select a few random achievements, ! without repeating !
+                .Include(a => a.Achievement)
+                .ToListAsync();
+
+            //Normal scenario. User still has more than 3 achievements to claim
+            if(achievents.Count > 3)
+                return achievents.Take(3).ToList();
+
+            if (achievents.Count < 3)
+                return achievents.Take(achievents.Count).ToList();
+
+            //If there is no achievements left to claim
+            return achievents;
+        }
     }
 }

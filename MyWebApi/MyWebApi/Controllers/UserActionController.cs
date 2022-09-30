@@ -532,5 +532,11 @@ namespace MyWebApi.Controllers
         {
             return await _repository.DeleteUserNotification(notificationId);
         }
+
+        [HttpGet("/GetRandomAchievements/{userId}")]
+        public async Task<List<UserAchievement>> GetRandomAchievements(long userId)
+        {
+            return await _repository.GetRandomAchievements(userId);
+        }
     }
 }

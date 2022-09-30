@@ -100,5 +100,6 @@ namespace MyWebApi.Interfaces
         Task<bool> CheckUserHasNotificationsAsync(long userId);
         Task<List<UserNotification>> GetUserNotifications(long userId);
         Task<bool> DeleteUserNotification(long notificationId);
+        Task<List<UserAchievement>> GetRandomAchievements(long userId);
     }
 }
