@@ -727,8 +727,10 @@ namespace MyWebApi.Repositories
                 else
                     userBalance.Amount += points;
 
-                userBalance.Id = await _contx.USER_WALLET_BALANCES.CountAsync() +1;
                 userBalance.PointInTime = time;
+
+                _contx.USER_WALLET_BALANCES.Update(userBalance);
+                await _contx.SaveChangesAsync();
             }
             else
             {
@@ -739,9 +741,10 @@ namespace MyWebApi.Repositories
                     UserId = userId,
                     PointInTime = time
                 };
-            }
 
-            await _contx.USER_WALLET_BALANCES.AddAsync(userBalance);
+                await _contx.USER_WALLET_BALANCES.AddAsync(userBalance);
+                await _contx.SaveChangesAsync();
+            }
 
             var userParentId = (await _contx.SYSTEM_USERS.FindAsync(userId)).ParentId;
 
