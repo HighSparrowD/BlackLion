@@ -101,5 +101,6 @@ namespace MyWebApi.Interfaces
         Task<List<UserNotification>> GetUserNotifications(long userId);
         Task<bool> DeleteUserNotification(long notificationId);
         Task<List<UserAchievement>> GetRandomAchievements(long userId);
+        Task<double> CalculateSimilarityAsync(double param1, double param2);
     }
 }

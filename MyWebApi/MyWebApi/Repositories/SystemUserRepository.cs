@@ -1419,5 +1419,39 @@ namespace MyWebApi.Repositories
             //If there is no achievements left to claim
             return achievents;
         }
+
+        public async Task<double> CalculateSimilarityAsync(double param1, double param2)
+        {
+            double difference = 0;
+            double x = 0;
+            double c = 0;
+
+            //Remove negative values. We are all possitive here ;)
+            if (param1 < 0)
+                param1 *= -1;
+
+            if (param2 < 0)
+                param2 *= -1;
+
+            await Task.Run(() =>
+            {
+                if (param1 > param2)
+                {
+                    difference = param1 - param2;
+                    x = (difference * 100) / param1;
+                    c = 1 - (x / 100);
+                }
+                else if (param2 > param1)
+                {
+                    difference = param2 - param1;
+                    x = (difference * 100) / param2;
+                    c = 1 - (x / 100);
+                }
+                else if (param1 == param2)
+                    c = 0.999999; //Similarity percentage will never be equal to 100% !
+            });
+
+            return c;
+        }
     }
 }
