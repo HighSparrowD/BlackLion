@@ -538,5 +538,11 @@ namespace MyWebApi.Controllers
         {
             return await _repository.GetRandomAchievements(userId);
         }
+
+        [HttpGet("/CalculateSimilarity/{param1}/{param2}")] //Remove in production. This method is internal
+        public async Task<double> CalculateSimilarity(double param1, double param2)
+        {
+            return await _repository.CalculateSimilarityAsync(param1, param2);
+        }
     }
 }
