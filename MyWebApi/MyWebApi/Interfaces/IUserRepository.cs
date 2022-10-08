@@ -9,6 +9,9 @@ using MyWebApi.Entities.AchievementEntities;
 using System;
 using MyWebApi.Entities.UserActionEntities;
 using MyWebApi.Entities.SponsorEntities;
+using MyWebApi.Entities.DailyTaskEntities;
+using MyWebApi.Enums;
+using static MyWebApi.Enums.SystemEnums;
 
 namespace MyWebApi.Interfaces
 {
@@ -102,5 +105,13 @@ namespace MyWebApi.Interfaces
         Task<bool> DeleteUserNotification(long notificationId);
         Task<List<UserAchievement>> GetRandomAchievements(long userId);
         Task<double> CalculateSimilarityAsync(double param1, double param2);
+        Task<DailyTask> GetDailyTaskByIdAsync(long id);
+        Task<UserDailyTask> GetUserDailyTaskByIdAsync(long userId, long taskId);
+        Task<int> UpdateUserDailyTaskProgressAsync(long userId, long id, int progress);
+        Task<int> GiveDailyTaskRewardToUserAsync(long userId, long taskId);
+        Task<int> GiveDailyTaskRewardToUserAsync(long userId, UserDailyTask task);
+        Task<bool> CheckUserHasTasksInSectionAsync(long userId, int sectionId);
+        Task<byte> GenerateUserDailyTaskListAsync(long userId);
+        Task<string> ShowDailyTaskProgressAsync(long userId, long taskId);
     }
 }

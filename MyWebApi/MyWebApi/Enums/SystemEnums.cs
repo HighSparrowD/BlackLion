@@ -68,5 +68,19 @@
             Comment = 3,
             Report = 4,
         }
+
+        public enum Currencies
+        {
+            Points = 1,
+            PersonalityPoints = 2,
+            Premium = 3 // Maybe remove in the future
+        }
+
+        public enum TaskType
+        {
+            Common = 1,
+            Rare = 2,
+            Premium = 3
+        }
     }
 }
