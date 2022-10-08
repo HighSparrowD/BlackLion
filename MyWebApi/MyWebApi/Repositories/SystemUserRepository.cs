@@ -465,6 +465,16 @@ namespace MyWebApi.Repositories
 
                 await TopUpUserWalletBalance(userId, achievement.Achievement.Value, "Achievement acquiering");
 
+                await AddUserNotificationAsync(new UserNotification
+                {
+                    UserId1 = userId,
+                    IsLikedBack = false,
+                    SectionId = achievement.Achievement.SectionId,
+                    Severity = (byte)Severities.Moderate,
+                    Description = achievement.AcquireMessage
+                });
+
+
                 _contx.USER_ACHIEVEMENTS.Update(achievement);
                 await _contx.SaveChangesAsync();
 
