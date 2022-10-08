@@ -1408,12 +1408,14 @@ namespace MyWebApi.Repositories
             var achievents = await _contx.USER_ACHIEVEMENTS
                 .Where(a => a.UserBaseInfoId == userId)
                 .Where(a => !a.IsAcquired)
-                //.OrderBy(a => new Random().Next()) //TODO: select a few random achievements, ! without repeating !
                 .Include(a => a.Achievement)
                 .ToListAsync();
 
+            //Shuffle the achievement list
+            achievents = achievents.OrderBy(a => new Random().Next()).ToList();
+
             //Normal scenario. User still has more than 3 achievements to claim
-            if(achievents.Count > 3)
+            if (achievents.Count > 3)
                 return achievents.Take(3).ToList();
 
             if (achievents.Count < 3)
