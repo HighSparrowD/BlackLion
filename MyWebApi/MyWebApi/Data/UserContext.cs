@@ -2,6 +2,7 @@
 using MyWebApi.Entities.AchievementEntities;
 using MyWebApi.Entities.AdminEntities;
 using MyWebApi.Entities.DailyRewardEntities;
+using MyWebApi.Entities.DailyTaskEntities;
 using MyWebApi.Entities.LocalisationEntities;
 using MyWebApi.Entities.LocationEntities;
 using MyWebApi.Entities.ReasonEntities;
@@ -65,6 +66,8 @@ namespace MyWebApi.Data
         public DbSet<DailyReward> DAILY_REWARDS { get; set; }
         public DbSet<InvitationCredentials> USER_INVITATION_CREDENTIALS { get; set; }
         public DbSet<Invitation> USER_INVITATIONS { get; set; }
+        public DbSet<DailyTask> DAILY_TASKS { get; set; }
+        public DbSet<UserDailyTask> USER_DAILY_TASKS { get; set; }
 
 
 
@@ -108,6 +111,8 @@ namespace MyWebApi.Data
             builder.Entity<Gender>().HasKey(g => new { g.Id, g.ClassLocalisationId });
             builder.Entity<AgePreference>().HasKey(g => new { g.Id, g.ClassLocalisationId });
             builder.Entity<CommunicationPreference>().HasKey(g => new { g.Id, g.ClassLocalisationId });
+            builder.Entity<DailyTask>().HasKey(t => new { t.Id, t.ClassLocalisationId });
+            builder.Entity<UserDailyTask>().HasKey(t => new { t.UserId, t.DailyTaskId });
 
             builder.Entity<Ad>();
 

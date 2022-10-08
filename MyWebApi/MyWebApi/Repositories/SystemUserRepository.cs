@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Validations;
 using MyWebApi.Data;
 using MyWebApi.Entities.AchievementEntities;
+using MyWebApi.Entities.DailyTaskEntities;
 using MyWebApi.Entities.LocationEntities;
 using MyWebApi.Entities.ReasonEntities;
 using MyWebApi.Entities.ReportEntities;
@@ -19,6 +20,7 @@ using System.Linq;
 using System.Net.Http.Headers;
 using System.Reflection.Metadata.Ecma335;
 using System.Threading.Tasks;
+using static MyWebApi.Enums.SystemEnums;
 
 namespace MyWebApi.Repositories
 {
@@ -1457,6 +1459,153 @@ namespace MyWebApi.Repositories
             });
 
             return c;
+        }
+
+        public async Task<DailyTask> GetDailyTaskByIdAsync(long id)
+        {
+            return await _contx.DAILY_TASKS
+                .Where(t => t.Id == id)
+                .SingleOrDefaultAsync();
+        }
+
+        public async Task<UserDailyTask> GetUserDailyTaskByIdAsync(long userId, long taskId)
+        {
+            return await _contx.USER_DAILY_TASKS
+                .Where(t => t.UserId == userId && t.DailyTaskId == taskId)
+                .Include(t => t.DailyTask)
+                .SingleOrDefaultAsync();
+        }
+
+        public async Task<int> UpdateUserDailyTaskProgressAsync(long userId, long id, int progress)
+        {
+            var task = await GetUserDailyTaskByIdAsync(userId, id);
+
+            if (task == null)
+                return 0;
+
+            //Remove negative values
+            if (progress < 0)
+                progress *= -1;
+
+            if (task.Progress + progress >= task.DailyTask.Condition)
+            {
+                return await GiveDailyTaskRewardToUserAsync(userId, task);
+            }
+
+            task.Progress += progress;
+
+            _contx.USER_DAILY_TASKS.Update(task);
+            await _contx.SaveChangesAsync();
+
+            return task.Progress;
+        }
+
+        public async Task<int> GiveDailyTaskRewardToUserAsync(long userId, long taskId)
+        {
+            var task = await GetUserDailyTaskByIdAsync(userId, taskId);
+
+            if (task == null)
+                return 0;
+
+            return await GiveDailyTaskRewardToUserAsync(userId, task);
+        }
+
+        public async Task<int> GiveDailyTaskRewardToUserAsync(long userId, UserDailyTask task)
+        {
+            task.Progress = task.DailyTask.Condition;
+            task.IsAcquired = true;
+            await AddUserNotificationAsync(new UserNotification
+            {
+                UserId1 = userId,
+                IsLikedBack = false,
+                Severity = (short)Severities.Moderate,
+                Description = task.AcquireMessage,
+                SectionId = task.DailyTask.SectionId
+            });
+
+            if (task.DailyTask.RewardCurrency == (byte)Currencies.Points)
+                await TopUpUserWalletBalance(userId, task.DailyTask.Reward);
+            else if (task.DailyTask.RewardCurrency == (byte)Currencies.PersonalityPoints) { }
+            //TODO: Topup user Personality points wallet balace
+            else if (task.DailyTask.RewardCurrency == (byte)Currencies.Premium) { }
+            //TODO: Add premium to user
+
+            _contx.USER_DAILY_TASKS.Update(task);
+            await _contx.SaveChangesAsync();
+
+            return 1;
+        }
+
+        public async Task<bool> CheckUserHasTasksInSectionAsync(long userId, int sectionId)
+        {
+            var count = await _contx.USER_DAILY_TASKS
+                .Where(t => t.UserId == userId && t.DailyTask.SectionId == sectionId && !t.IsAcquired)
+                .CountAsync();
+
+            return count > 0;
+        }
+
+        public async Task<byte> GenerateUserDailyTaskListAsync(long userId)
+        {
+            var user = await GetUserInfoAsync(userId);
+            var taskCount = 2;
+
+            //Remove previous users tasks 
+            var prevTasks = await _contx.USER_DAILY_TASKS
+                .Where(t => t.UserId == userId)
+                .ToListAsync();
+
+            _contx.RemoveRange(prevTasks);
+            await _contx.SaveChangesAsync();
+
+            if (user == null)
+                return 0;
+
+            var userDailyTasks = new List<UserDailyTask>();
+
+            var tasks = (await _contx.DAILY_TASKS
+                .Where(t => t.TaskType == (byte)TaskType.Common || t.TaskType == (byte)TaskType.Rare)
+                .ToListAsync());
+
+            //Add a possibility of getting a premium daily task if user has premium
+            if (user.HasPremium != null && (bool)user.HasPremium)
+            {
+                //Add an additional task
+                taskCount = 3;
+                tasks.AddRange(await _contx.DAILY_TASKS.Where(t => t.TaskType == (byte)TaskType.Premium).ToListAsync());
+            }
+
+            tasks = tasks.OrderBy(t => new Random().Next())
+                .Take(taskCount)
+                .ToList();
+
+            tasks.ForEach(async t =>
+            {
+                userDailyTasks.Add(new UserDailyTask
+                {
+                    UserId = userId,
+                    DailyTaskId = t.Id,
+                    DailyTaskClassLocalisationId = t.ClassLocalisationId,
+                    Progress = 0,
+                    AcquireMessage = await t.GenerateAcquireMessage(t), //TODO: Generate
+                    IsAcquired = false
+                });
+            });
+
+            await _contx.USER_DAILY_TASKS.AddRangeAsync(userDailyTasks);
+            await _contx.SaveChangesAsync();
+
+            return 1;      
+        }
+
+        public async Task<string> ShowDailyTaskProgressAsync(long userId, long taskId)
+        {
+            var task = await GetUserDailyTaskByIdAsync(userId, taskId);
+
+            if (task == null)
+                throw new NullReferenceException($"User does not have a task #{taskId}");
+
+            return $"{task.DailyTask.Condition} / {task.Progress}";
         }
     }
 }

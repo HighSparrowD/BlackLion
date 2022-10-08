@@ -14,6 +14,7 @@ using MyWebApi.Entities.ReasonEntities;
 using MyWebApi.Entities.AchievementEntities;
 using MyWebApi.Entities.UserActionEntities;
 using MyWebApi.Entities.SponsorEntities;
+using MyWebApi.Entities.DailyTaskEntities;
 
 namespace MyWebApi.Controllers
 {
@@ -543,6 +544,48 @@ namespace MyWebApi.Controllers
         public async Task<double> CalculateSimilarity(double param1, double param2)
         {
             return await _repository.CalculateSimilarityAsync(param1, param2);
+        }
+
+        [HttpGet("/GetUserDailyTaskById/{userId}/{taskId}")]
+        public async Task<UserDailyTask> GetUserDailyTaskById(long userId, long taskId)
+        {
+            return await _repository.GetUserDailyTaskByIdAsync(userId, taskId);
+        }
+
+        [HttpGet("/GetDailyTaskById/{taskId}")]
+        public async Task<DailyTask> GetDailyTaskById(long taskId)
+        {
+            return await _repository.GetDailyTaskByIdAsync(taskId);
+        }
+
+        [HttpGet("/UpdateUserDailyTaskProgress/{userId}/{taskId}/{progress}")]
+        public async Task<int> UpdateUserDailyTaskProgress(long userId, long taskId, int progress)
+        {
+            return await _repository.UpdateUserDailyTaskProgressAsync(userId, taskId, progress);
+        }
+
+        [HttpGet("/GiveDailyTaskRewardToUser/{userId}/{taskId}")]
+        public async Task<int> GiveDailyTaskRewardToUser(long userId, long taskId)
+        {
+            return await _repository.GiveDailyTaskRewardToUserAsync(userId, taskId);
+        }
+
+        [HttpGet("/CheckUserHasTasksInSection/{userId}/{sectionId}")]
+        public async Task<bool> CheckUserHasTasksInSection(long userId, byte sectionId)
+        {
+            return await _repository.CheckUserHasTasksInSectionAsync(userId, sectionId);
+        }
+
+        [HttpGet("/GenerateUserDailyTaskList/{userId}")]
+        public async Task<byte> GenerateUserDailyTaskList(long userId)
+        {
+            return await _repository.GenerateUserDailyTaskListAsync(userId);
+        }
+
+        [HttpGet("/ShowDailyTaskProgress/{userId}/{taskId}")]
+        public async Task<string> ShowDailyTaskProgress(long userId, long taskId)
+        {
+            return await _repository.ShowDailyTaskProgressAsync(userId, taskId);
         }
     }
 }
