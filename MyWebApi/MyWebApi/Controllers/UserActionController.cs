@@ -571,7 +571,7 @@ namespace MyWebApi.Controllers
         }
 
         [HttpGet("/CheckUserHasTasksInSection/{userId}/{sectionId}")]
-        public async Task<bool> CheckUserHasTasksInSection(long userId, byte sectionId)
+        public async Task<bool> CheckUserHasTasksInSection(long userId, int sectionId)
         {
             return await _repository.CheckUserHasTasksInSectionAsync(userId, sectionId);
         }
@@ -586,6 +586,12 @@ namespace MyWebApi.Controllers
         public async Task<string> ShowDailyTaskProgress(long userId, long taskId)
         {
             return await _repository.ShowDailyTaskProgressAsync(userId, taskId);
+        }
+
+        [HttpGet("/GetUserMaximumLanguageCount/{userId}")]
+        public async Task<int> GetUserMaximumLanguageCount(long userId)
+        {
+            return await _repository.GetUserMaximumLanguageCountAsync(userId);
         }
     }
 }
