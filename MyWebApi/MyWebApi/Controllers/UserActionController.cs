@@ -192,6 +192,10 @@ namespace MyWebApi.Controllers
         [HttpPost("/RegisterUser")]
         public async Task<long> AddUser(UserRegistrationModel model)
         {
+            var langCount = await GetUserMaximumLanguageCount(model.Id);
+            if (model.UserLanguages.Count > langCount)
+                throw new Exception($"This user cannot have more than {langCount} languages !");
+
             var location = new Location { Id = model.Id, CityId = model.UserCityCode, CountryId = model.UserCountryCode };
             var uBase = new UserBaseInfo(model.Id, model.UserName, model.UserRealName, model.UserDescription, model.UserPhoto);
             var uData = new UserDataInfo
