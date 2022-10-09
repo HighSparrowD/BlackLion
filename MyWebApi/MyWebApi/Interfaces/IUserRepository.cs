@@ -113,5 +113,7 @@ namespace MyWebApi.Interfaces
         Task<bool> CheckUserHasTasksInSectionAsync(long userId, int sectionId);
         Task<byte> GenerateUserDailyTaskListAsync(long userId);
         Task<string> ShowDailyTaskProgressAsync(long userId, long taskId);
+        Task<int> GetUserMaximumLanguageCountAsync(long userId);
+        int GetMaximumLanguageCount(bool? hasPremium);
     }
 }

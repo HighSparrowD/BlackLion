@@ -458,9 +458,13 @@ namespace MyWebApi.Repositories
             try
             {
                 var achievement = await _contx.USER_ACHIEVEMENTS
-                    .Where(a => a.UserBaseInfoId == userId && a.AchievementId == achievementId)
+                    .Where(a => a.UserBaseInfoId == userId && a.AchievementId == achievementId && !a.IsAcquired)
                     .Include(a => a.Achievement)
                     .SingleOrDefaultAsync();
+
+                if (achievement == null)
+                    throw new Exception($"User have already acquired achievement #{achievementId} or it does not exist");
+
                 achievement.IsAcquired = true;
 
                 await TopUpUserWalletBalance(userId, achievement.Achievement.Value, "Achievement acquiering");
@@ -1490,7 +1494,8 @@ namespace MyWebApi.Repositories
         {
             var task = await GetUserDailyTaskByIdAsync(userId, id);
 
-            if (task == null)
+            //Do nothing if task does not exists or it was acquired
+            if (task == null || task.IsAcquired)
                 return 0;
 
             //Remove negative values
@@ -1534,7 +1539,7 @@ namespace MyWebApi.Repositories
             });
 
             if (task.DailyTask.RewardCurrency == (byte)Currencies.Points)
-                await TopUpUserWalletBalance(userId, task.DailyTask.Reward);
+                await TopUpUserWalletBalance(userId, task.DailyTask.Reward, description:"Daily task acquiering");
             else if (task.DailyTask.RewardCurrency == (byte)Currencies.PersonalityPoints) { }
             //TODO: Topup user Personality points wallet balace
             else if (task.DailyTask.RewardCurrency == (byte)Currencies.Premium) { }
@@ -1565,8 +1570,11 @@ namespace MyWebApi.Repositories
                 .Where(t => t.UserId == userId)
                 .ToListAsync();
 
-            _contx.RemoveRange(prevTasks);
-            await _contx.SaveChangesAsync();
+            if (prevTasks.Count > 0)
+            {
+                _contx.USER_DAILY_TASKS.RemoveRange(prevTasks);
+                await _contx.SaveChangesAsync();
+            }
 
             if (user == null)
                 return 0;
@@ -1589,8 +1597,10 @@ namespace MyWebApi.Repositories
                 .Take(taskCount)
                 .ToList();
 
-            tasks.ForEach(async t =>
+
+            for (int i = 0; i < taskCount; i++)
             {
+                var t = tasks[i];
                 userDailyTasks.Add(new UserDailyTask
                 {
                     UserId = userId,
@@ -1600,7 +1610,7 @@ namespace MyWebApi.Repositories
                     AcquireMessage = await t.GenerateAcquireMessage(t), //TODO: Generate
                     IsAcquired = false
                 });
-            });
+            }
 
             await _contx.USER_DAILY_TASKS.AddRangeAsync(userDailyTasks);
             await _contx.SaveChangesAsync();
@@ -1615,7 +1625,25 @@ namespace MyWebApi.Repositories
             if (task == null)
                 throw new NullReferenceException($"User does not have a task #{taskId}");
 
-            return $"{task.DailyTask.Condition} / {task.Progress}";
+            return $"{task.Progress} / {task.DailyTask.Condition}";
+        }
+
+        public async Task<int> GetUserMaximumLanguageCountAsync(long userId)
+        {
+            var user = await _contx.SYSTEM_USERS.FindAsync(userId);
+
+            if (user == null)
+                return GetMaximumLanguageCount(null);
+
+            return GetMaximumLanguageCount(user.HasPremium);
+        }
+
+        public int GetMaximumLanguageCount(bool? hasPremium)
+        {
+            if (hasPremium == null || !(bool)hasPremium)
+                return 3;
+
+            return 250; //TODO: Think if value should be hardcoded 
         }
     }
 }
