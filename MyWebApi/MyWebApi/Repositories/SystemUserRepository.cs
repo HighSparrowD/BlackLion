@@ -458,9 +458,13 @@ namespace MyWebApi.Repositories
             try
             {
                 var achievement = await _contx.USER_ACHIEVEMENTS
-                    .Where(a => a.UserBaseInfoId == userId && a.AchievementId == achievementId)
+                    .Where(a => a.UserBaseInfoId == userId && a.AchievementId == achievementId && !a.IsAcquired)
                     .Include(a => a.Achievement)
                     .SingleOrDefaultAsync();
+
+                if (achievement == null)
+                    throw new Exception($"User have already acquired achievement #{achievementId} or it does not exist");
+
                 achievement.IsAcquired = true;
 
                 await TopUpUserWalletBalance(userId, achievement.Achievement.Value, "Achievement acquiering");
