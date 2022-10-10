@@ -1562,6 +1562,8 @@ namespace MyWebApi.Repositories
 
         public async Task<byte> GenerateUserDailyTaskListAsync(long userId)
         {
+            var rand = new Random();
+
             var user = await GetUserInfoAsync(userId);
             var taskCount = 2;
 
@@ -1581,16 +1583,44 @@ namespace MyWebApi.Repositories
 
             var userDailyTasks = new List<UserDailyTask>();
 
+            //Take common tasks
             var tasks = (await _contx.DAILY_TASKS
-                .Where(t => t.TaskType == (byte)TaskType.Common || t.TaskType == (byte)TaskType.Rare)
-                .ToListAsync());
+                .Where(t => t.TaskType == (byte)TaskType.Common)
+                .ToListAsync())
+                .OrderBy(t => rand.Next())
+                .Take(35)
+                .ToList();
 
-            //Add a possibility of getting a premium daily task if user has premium
+            //Take rare tasks
+            tasks.AddRange((await _contx.DAILY_TASKS.Where(t => t.TaskType == (byte)TaskType.Rare)
+                .ToListAsync())
+                .OrderBy(t => rand.Next())
+                .Take(15)
+                );
+
+            //Give an inclresed probability of getting a premium daily task if user has premium
             if (user.HasPremium != null && (bool)user.HasPremium)
             {
                 //Add an additional task
                 taskCount = 3;
-                tasks.AddRange(await _contx.DAILY_TASKS.Where(t => t.TaskType == (byte)TaskType.Premium).ToListAsync());
+
+                //Add 8 premium tasks to a list
+                tasks.AddRange((await _contx.DAILY_TASKS.Where(t => t.TaskType == (byte)TaskType.Premium)
+                    .ToListAsync())
+                    .OrderBy(t => rand.Next())
+                    .Take(8)
+                    .ToList()
+                    );
+            }
+            else
+            {
+                //Add only 2 premium tasks to a list
+                tasks.AddRange((await _contx.DAILY_TASKS.Where(t => t.TaskType == (byte)TaskType.Premium)
+                    .ToListAsync())
+                    .OrderBy(t => rand.Next())
+                    .Take(2)
+                    .ToList()
+                    );
             }
 
             tasks = tasks.OrderBy(t => new Random().Next())
@@ -1607,7 +1637,7 @@ namespace MyWebApi.Repositories
                     DailyTaskId = t.Id,
                     DailyTaskClassLocalisationId = t.ClassLocalisationId,
                     Progress = 0,
-                    AcquireMessage = await t.GenerateAcquireMessage(t), //TODO: Generate
+                    AcquireMessage = await t.GenerateAcquireMessage(t),
                     IsAcquired = false
                 });
             }
