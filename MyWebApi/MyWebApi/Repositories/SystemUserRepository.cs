@@ -474,7 +474,7 @@ namespace MyWebApi.Repositories
                     UserId1 = userId,
                     IsLikedBack = false,
                     SectionId = achievement.Achievement.SectionId,
-                    Severity = (byte)Severities.Moderate,
+                    Severity = (byte)Severities.Minor,
                     Description = achievement.AcquireMessage
                 });
 
