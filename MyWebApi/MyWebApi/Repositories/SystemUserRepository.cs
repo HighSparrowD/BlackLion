@@ -19,6 +19,7 @@ using System.Data.SqlTypes;
 using System.Linq;
 using System.Net.Http.Headers;
 using System.Reflection.Metadata.Ecma335;
+using System.Threading;
 using System.Threading.Tasks;
 using static MyWebApi.Enums.SystemEnums;
 
@@ -474,7 +475,7 @@ namespace MyWebApi.Repositories
                     UserId1 = userId,
                     IsLikedBack = false,
                     SectionId = achievement.Achievement.SectionId,
-                    Severity = (byte)Severities.Moderate,
+                    Severity = (byte)Severities.Minor,
                     Description = achievement.AcquireMessage
                 });
 
@@ -1355,8 +1356,8 @@ namespace MyWebApi.Repositories
                         UserId1 = userId,
                         IsLikedBack = false,
                         Description = $"Hey! new user had been registered via your link. Thanks for helping us grow!\nSo far, you have invited: {invitedUsersCount} people. \nYou receive 1p for every action they are maiking ;-)",
-                        SectionId = (int)SystemEnums.Sections.Registration,
-                        Severity = (short)SystemEnums.Severities.Moderate
+                        SectionId = (int)Sections.Registration,
+                        Severity = (short)Severities.Moderate
                     });
             }
 
@@ -1400,13 +1401,25 @@ namespace MyWebApi.Repositories
                 .ToListAsync();
         }
 
-        public async Task<bool> DeleteUserNotification(long notificationId)
+        public async Task<bool> DeleteUserNotification(long userId, long notificationId)
         {
             try
             {
-                var notification = await _contx.USER_NOTIFICATIONS
-                    .FindAsync(notificationId);
+                var notification = await GetUserNotificationAsync(userId, notificationId);
 
+                if (notification != null)
+                {
+                    return await DeleteUserNotification(notification);
+                }
+                return false;
+            }
+            catch { return false; }
+        }
+
+        public async Task<bool> DeleteUserNotification(UserNotification notification)
+        {
+            try
+            {
                 if (notification != null)
                 {
                     _contx.USER_NOTIFICATIONS.Remove(notification);
@@ -1414,7 +1427,7 @@ namespace MyWebApi.Repositories
 
                     return true;
                 }
-                return true;
+                return false;
             }
             catch { return false; }
         }
@@ -1674,6 +1687,37 @@ namespace MyWebApi.Repositories
                 return 3;
 
             return 250; //TODO: Think if value should be hardcoded 
+        }
+
+        public async Task<UserNotification> GetUserNotificationAsync(long userId, long notificationId)
+        {
+            var notification = await _contx.USER_NOTIFICATIONS.Where(n => n.UserId1 == userId && n.Id == notificationId)
+                .FirstOrDefaultAsync();
+
+            return notification;
+        }
+
+        public async Task<byte> SendNotificationConfirmationCodeAsync(long userId, long notificationId)
+        {
+            var notification = await _contx.USER_NOTIFICATIONS.Where(n => n.UserId1 == userId && n.Id == notificationId)
+                .FirstOrDefaultAsync();
+
+            if (notification == null)
+                return 0;
+
+            if (await DeleteUserNotification(notification))
+                return 1;
+
+            return 0;
+        }
+
+        public async Task<List<long>> GetUserNotificationsIdsAsync(long userId)
+        {
+            var ids = await _contx.USER_NOTIFICATIONS.Where(n => n.UserId1 == userId)
+                .Select(n => n.Id)
+                .ToListAsync();
+
+            return ids;
         }
     }
 }

@@ -209,12 +209,14 @@ namespace MyWebApi.Controllers
                 LocationId = location.Id
             };
             var uPrefs = new UserPreferences(model.Id, model.UserLanguagePreferences, model.UserLocationPreferences, Entities.UserInfoEntities.User.CalculateAgeList(model.UserAge, model.AgePrefs), model.CommunicationPrefs, model.UserGenderPrefs);
-            var m = new User(model.Id);
-            m.IsBusy = false;
-            m.IsDeleted = false;
-            m.IsBanned = false;
-            m.ShouldConsiderLanguages = false;
-            m.HasPremium = false;
+            var m = new User(model.Id)
+            {
+                IsBusy = false,
+                IsDeleted = false,
+                IsBanned = false,
+                ShouldConsiderLanguages = false,
+                HasPremium = false
+            };
 
             var id = await _repository.RegisterUserAsync(m, uBase, uData, uPrefs, location);
             return id;
@@ -532,10 +534,10 @@ namespace MyWebApi.Controllers
             return await _repository.GetUserNotifications(userId);
         }
 
-        [HttpGet("/DeleteUserNotification/{notificationId}")]
-        public async Task<bool> DeleteUserNotification(long notificationId)
+        [HttpGet("/DeleteUserNotification/{userId}/{notificationId}")]
+        public async Task<bool> DeleteUserNotification(long userId, long notificationId)
         {
-            return await _repository.DeleteUserNotification(notificationId);
+            return await _repository.DeleteUserNotification(userId, notificationId);
         }
 
         [HttpGet("/GetRandomAchievements/{userId}")]
@@ -596,6 +598,24 @@ namespace MyWebApi.Controllers
         public async Task<int> GetUserMaximumLanguageCount(long userId)
         {
             return await _repository.GetUserMaximumLanguageCountAsync(userId);
+        }
+
+        [HttpGet("/GetUserNotificationsIds/{userId}")]
+        public async Task<List<long>> GetUserNotificationsIds(long userId)
+        {
+            return await _repository.GetUserNotificationsIdsAsync(userId);
+        }
+
+        [HttpGet("/GetUserNotification/{userId}/{notificationId}")]
+        public async Task<UserNotification> GetUserNotification(long userId, long notificationId)
+        {
+            return await _repository.GetUserNotificationAsync(userId, notificationId);
+        }
+
+        [HttpGet("/SendNotificationConfirmationCode/{userId}/{notificationId}")]
+        public async Task<int> SendNotificationConfirmationCode(long userId, long notificationId)
+        {
+            return await _repository.SendNotificationConfirmationCodeAsync(userId, notificationId);
         }
     }
 }
