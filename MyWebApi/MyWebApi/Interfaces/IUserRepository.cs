@@ -102,7 +102,11 @@ namespace MyWebApi.Interfaces
         Task<int> GetInvitedUsersCountAsync(long userId);
         Task<bool> CheckUserHasNotificationsAsync(long userId);
         Task<List<UserNotification>> GetUserNotifications(long userId);
-        Task<bool> DeleteUserNotification(long notificationId);
+        Task<List<long>> GetUserNotificationsIdsAsync(long userId);
+        Task<UserNotification> GetUserNotificationAsync(long userId, long notificationId);
+        Task<byte> SendNotificationConfirmationCodeAsync(long userId, long notidicationId);
+        Task<bool> DeleteUserNotification(long userId, long notificationId);
+        Task<bool> DeleteUserNotification(UserNotification notification);
         Task<List<UserAchievement>> GetRandomAchievements(long userId);
         Task<double> CalculateSimilarityAsync(double param1, double param2);
         Task<DailyTask> GetDailyTaskByIdAsync(long id);
