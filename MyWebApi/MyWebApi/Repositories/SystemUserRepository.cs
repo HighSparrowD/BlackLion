@@ -19,6 +19,7 @@ using System.Data.SqlTypes;
 using System.Linq;
 using System.Net.Http.Headers;
 using System.Reflection.Metadata.Ecma335;
+using System.Runtime.Intrinsics.X86;
 using System.Threading;
 using System.Threading.Tasks;
 using static MyWebApi.Enums.SystemEnums;
@@ -81,6 +82,11 @@ namespace MyWebApi.Repositories
                 await RegisterUserRequest(new UserNotification { UserId = invitor.UserId, UserId1 = model.UserId, IsLikedBack = false });
                 //Invitor is notified about referential registration
                 await NotifyUserAboutReferentialRegistrationAsync(invitor.UserId, model.UserId);
+            }
+
+            if (await CheckUserHasTasksInSectionAsync(model.UserId, (int)Sections.Registration))
+            {
+                //TODO find and topup user's task progress
             }
 
             return model.UserId;
@@ -188,6 +194,12 @@ namespace MyWebApi.Repositories
             report.Id = await _contx.SYSTEM_FEEDBACKS.CountAsync() + 1;
             await _contx.SYSTEM_FEEDBACKS.AddAsync(report);
             await _contx.SaveChangesAsync();
+
+            if (await CheckUserHasTasksInSectionAsync(report.UserBaseInfoId, (int)Sections.Reporter))
+            {
+                //TODO find and topup user's task progress
+            }
+
             return report.Id;
         }
 
@@ -288,6 +300,12 @@ namespace MyWebApi.Repositories
                 report.Id = await _contx.USER_REPORTS.CountAsync() +1;
                 await _contx.USER_REPORTS.AddAsync(report);
                 await _contx.SaveChangesAsync();
+
+                if (await CheckUserHasTasksInSectionAsync(report.UserBaseInfoId, (int)Sections.Reporter))
+                {
+                    //TODO find and topup user's task progress
+                }
+
                 return report.Id;
             }
             catch { return 0; }
@@ -300,7 +318,7 @@ namespace MyWebApi.Repositories
                 var pointInTime = DateTime.SpecifyKind(DateTime.Now.AddDays(-1), DateTimeKind.Utc);
                 return await _contx.USER_REPORTS.Where(r => r.InsertedUtc > pointInTime).ToListAsync();
             }
-            catch { throw new TimeZoneNotFoundException("Error has occures"); }
+            catch { throw new TimeZoneNotFoundException("Error has occured"); }
         }
 
         public async Task<Report> GetSingleUserReportByIdAsync(long id)
@@ -716,6 +734,16 @@ namespace MyWebApi.Repositories
                 await AddUserTrustProgressAsync(user1, 0.000005 * (double)userInfo1.BonusIndex);
                 await AddUserTrustProgressAsync(user2, 0.000005 * (double)userInfo2.BonusIndex);
 
+                if (await CheckUserHasTasksInSectionAsync(user1, (int)Sections.RT))
+                {
+                    //TODO find and topup user's task progress
+                }
+
+                if (await CheckUserHasTasksInSectionAsync(user2, (int)Sections.RT))
+                {
+                    //TODO find and topup user's task progress
+                }
+
                 return true;
             }
             return false;
@@ -951,6 +979,13 @@ namespace MyWebApi.Repositories
                     _contx.Update(user);
                     await _contx.SaveChangesAsync();
 
+
+                    //Possible task -> visit any section x times
+                    if (await CheckUserHasTasksInSectionAsync(userId, (int)Sections.Neutral))
+                    {
+                        //TODO find and topup user's task progress
+                    }
+
                     return (bool)user.IsBusy;
                 }
                 return false;
@@ -1121,6 +1156,13 @@ namespace MyWebApi.Repositories
                 _contx.USER_TRUST_LEVELS.Update(model);
                 await _contx.SaveChangesAsync();
 
+
+                //Possible task -> increse your trust level progress on x points
+                if (await CheckUserHasTasksInSectionAsync(userId, (int)Sections.Neutral))
+                {
+                    //TODO find and topup user's task progress
+                }
+
                 return model.Level;
             }
             return -1;
@@ -1189,6 +1231,13 @@ namespace MyWebApi.Repositories
                 _contx.SYSTEM_USERS.Update(currentUser);
                 await _contx.SaveChangesAsync();
                 return true;
+            }
+
+            //Possible task -> Update your nickname
+            //Only for premium users
+            if (await CheckUserHasTasksInSectionAsync(userId, (int)Sections.Registration))
+            {
+                //TODO find and topup user's task progress
             }
 
             return false;
@@ -1331,6 +1380,12 @@ namespace MyWebApi.Repositories
 
                 await _contx.USER_INVITATIONS.AddAsync(invitation);
                 await _contx.SaveChangesAsync();
+
+                //Possible task -> invite someone
+                if (await CheckUserHasTasksInSectionAsync(userId, (int)Sections.Registration))
+                {
+                    //TODO find and topup user's task progress
+                }
 
                 return true;
             }
