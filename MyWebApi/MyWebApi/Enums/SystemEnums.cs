@@ -10,11 +10,12 @@
             TesterPs = 4,
             TesterIn = 4,
             RT = 5,
-            Reporet = 6,
+            Reporter = 6,
             Sponsor = 7,
             Eventer = 8,
             Shop = 9, 
-            Settings = 10
+            Settings = 10,
+            Neutral = 10
         }
 
         public enum Localisations
