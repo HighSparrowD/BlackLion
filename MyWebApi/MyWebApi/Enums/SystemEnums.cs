@@ -8,14 +8,14 @@
             Familiator = 2,
             Requester = 3,
             TesterPs = 4,
-            TesterIn = 4,
-            RT = 5,
-            Reporter = 6,
-            Sponsor = 7,
-            Eventer = 8,
-            Shop = 9, 
-            Settings = 10,
-            Neutral = 10
+            TesterIn = 5,
+            RT = 6,
+            Reporter = 7,
+            Sponsor = 8,
+            Eventer = 9,
+            Shop = 10, 
+            Settings = 11,
+            Neutral = 12
         }
 
         public enum Localisations
