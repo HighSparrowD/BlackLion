@@ -653,5 +653,11 @@ namespace MyWebApi.Controllers
         {
             return await _repository.GetUserPersonalityStats(userId);
         }
+
+        [HttpGet("/SwitchPersonalityUsage/{userId}")]
+        public async Task<bool> SwitchPersonalityUsage(long userId)
+        {
+            return await _repository.SwitchPersonalityUsage(userId);
+        }
     }
 }

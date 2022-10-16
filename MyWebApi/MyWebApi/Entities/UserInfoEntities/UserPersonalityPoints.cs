@@ -20,8 +20,8 @@ namespace MyWebApi.Entities.UserInfoEntities
         public double AgreeablenessPercentage { get; set; }
         public int SelfAwareness { get; set; }
         public double SelfAwarenessPercentage { get; set; }
-        public int LevelsOfSense { get; set; }
-        public double LevelsOfSensePercentage { get; set; }
+        public int LevelOfSense { get; set; }
+        public double LevelOfSensePercentage { get; set; }
         public int Intellect { get; set; }
         public double IntellectPercentage { get; set; }
         public int Nature { get; set; }
@@ -49,8 +49,8 @@ namespace MyWebApi.Entities.UserInfoEntities
             AgreeablenessPercentage = 0;
             SelfAwareness = 0;
             SelfAwarenessPercentage = 0;
-            LevelsOfSense = 0;
-            LevelsOfSensePercentage = 0;
+            LevelOfSense = 0;
+            LevelOfSensePercentage = 0;
             Intellect = 0;
             IntellectPercentage = 0;
             Nature = 0;

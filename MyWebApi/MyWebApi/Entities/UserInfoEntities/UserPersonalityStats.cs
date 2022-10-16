@@ -13,7 +13,7 @@ namespace MyWebApi.Entities.UserInfoEntities
         public int OpenMindedness { get; set; }
         public int Agreeableness { get; set; }
         public int SelfAwareness { get; set; }
-        public int LevelsOfSense { get; set; }
+        public int LevelOfSense { get; set; }
         public int Intellect { get; set; }
         public int Nature { get; set; }
         public int Creativity { get; set; }
@@ -31,7 +31,7 @@ namespace MyWebApi.Entities.UserInfoEntities
             OpenMindedness = 0;
             Agreeableness = 0;
             SelfAwareness = 0;
-            LevelsOfSense = 0;
+            LevelOfSense = 0;
             Intellect = 0;
             Nature = 0;
             Creativity = 0;

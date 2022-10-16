@@ -63,7 +63,6 @@ namespace MyWebApi.Repositories
             {
                 var personalityStats = new UserPersonalityStats(model.UserId);
                 var personalityPoints = new UserPersonalityPoints(model.UserId);
-            
             }
 
             var invitation = await GetInvitationAsync(model.UserId);
@@ -1909,20 +1908,22 @@ namespace MyWebApi.Repositories
             catch { return null; }
         }
 
-        public Task<UserPersonalityStats> GetUserPersonalityStats(long userId)
+        public async Task<UserPersonalityStats> GetUserPersonalityStats(long userId)
         {
             try
             {
-                return _contx.USER_PERSONALITY_STATS.Where(s => s.UserId == userId).SingleOrDefaultAsync();
+                return await _contx.USER_PERSONALITY_STATS
+                    .Where(s => s.UserId == userId)
+                    .SingleOrDefaultAsync();
             }
             catch { return null; }
         }
 
-        public Task<UserPersonalityPoints> GetUserPersonalityPoints(long userId)
+        public async Task<UserPersonalityPoints> GetUserPersonalityPoints(long userId)
         {
             try
             {
-                return _contx.USER_PERSONALITY_POINTS
+                return await _contx.USER_PERSONALITY_POINTS
                     .Where(s => s.UserId == userId)
                     .SingleOrDefaultAsync();
             }
@@ -1941,7 +1942,7 @@ namespace MyWebApi.Repositories
                 model.CompassionPercentage = await CalculateSimilarityPreferences(model.Compassion, model.CompassionPercentage);
                 model.EmotionalIntellectPercentage = await CalculateSimilarityPreferences(model.EmotionalIntellect, model.EmotionalIntellectPercentage);
                 model.IntellectPercentage = await CalculateSimilarityPreferences(model.Intellect, model.IntellectPercentage);
-                model.LevelsOfSensePercentage = await CalculateSimilarityPreferences(model.LevelsOfSense, model.LevelsOfSensePercentage);
+                model.LevelOfSensePercentage = await CalculateSimilarityPreferences(model.LevelOfSense, model.LevelOfSensePercentage);
                 model.OpenMindednessPercentage = await CalculateSimilarityPreferences(model.OpenMindedness, model.OpenMindednessPercentage);
                 model.SelfAwarenessPercentage = await CalculateSimilarityPreferences(model.SelfAwareness, model.SelfAwarenessPercentage);
                 return model;
@@ -1979,6 +1980,48 @@ namespace MyWebApi.Repositories
             });
 
             return similarityCoefficient;
+        }
+
+        public async Task<bool> SwitchPersonalityUsage(long userId)
+        {
+            try
+            {
+                var userPrefs = await _contx.SYSTEM_USERS_PREFERENCES.Where(p => p.Id == userId)
+                    .SingleOrDefaultAsync();
+
+                if (userPrefs.ShouldUsePersonalityFunc)
+                {
+                    userPrefs.ShouldUsePersonalityFunc = false;
+                }
+                else
+                {
+                    userPrefs.ShouldUsePersonalityFunc = true;
+                    UserPersonalityStats personalityStats;
+                    UserPersonalityPoints personalityPoints;
+
+                    //Add personality stats, if none were created when user was registering
+                    if (await GetUserPersonalityStats(userId) == null)
+                    {
+                        personalityStats = new UserPersonalityStats(userId);
+                        await _contx.USER_PERSONALITY_STATS.AddAsync(personalityStats);
+                        await _contx.SaveChangesAsync();
+                    }
+
+                    //Add personality points, if none were created when user was registering
+                    if (await GetUserPersonalityPoints(userId) == null)
+                    {
+                        personalityPoints = new UserPersonalityPoints(userId);
+                        await _contx.USER_PERSONALITY_POINTS.AddAsync(personalityPoints);
+                        await _contx.SaveChangesAsync();
+                    }
+                }
+
+                _contx.SYSTEM_USERS_PREFERENCES.Update(userPrefs);
+                await _contx.SaveChangesAsync();
+
+                return userPrefs.ShouldUsePersonalityFunc;
+            }
+            catch { throw new NullReferenceException($"User {userId} does not exist !"); }
         }
     }
 }
