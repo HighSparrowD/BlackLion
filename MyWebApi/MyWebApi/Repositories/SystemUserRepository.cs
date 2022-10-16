@@ -784,7 +784,7 @@ namespace MyWebApi.Repositories
                 {
                     Id = Guid.NewGuid(),
                     Points = points,
-                    PersonalityPoints = 11, //TODO: Discuss this starting pack amount
+                    PersonalityPoints = 15,
                     UserId = userId,
                     PointInTime = time
                 };
@@ -829,7 +829,7 @@ namespace MyWebApi.Repositories
                 {
                     Id = Guid.NewGuid(),
                     Points = points,
-                    PersonalityPoints = 11, // TODO: discuss this starting pack amount
+                    PersonalityPoints = 15, 
                     UserId = userId,
                     PointInTime = time
                 };
