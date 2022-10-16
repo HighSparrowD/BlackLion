@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using MyWebApi.Entities.AchievementEntities;
 using MyWebApi.Entities.LocationEntities;
 using MyWebApi.Entities.ReasonEntities;
 using MyWebApi.Entities.ReportEntities;
@@ -81,6 +82,18 @@ namespace MyWebApi.Controllers
         public async Task<int> DeleteAllUsers()
         {
             return await _repository.DeleteAllUsers();
+        }
+
+        [HttpPost("/UploadAchievements")]
+        public async Task<int> UploadAchievements(List<Achievement> achievements)
+        {
+            return await _repository.UploadAchievements(achievements);
+        }
+
+        [HttpPost("/AddNewAchievements")]
+        public async Task<int> AddNewAchievements(List<Achievement> achievements)
+        {
+            return await _repository.AddNewAchievements(achievements);
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using MyWebApi.Data;
+using MyWebApi.Entities.AchievementEntities;
 using MyWebApi.Entities.LocationEntities;
 using MyWebApi.Entities.ReasonEntities;
 using MyWebApi.Entities.ReportEntities;
@@ -227,6 +228,33 @@ namespace MyWebApi.Repositories
                 return usersCount;
             }
             catch { return -1; }
+        }
+
+        public async Task<byte> UploadAchievements(List<Achievement> achievements)
+        {
+            try
+            {
+                var ach = await _contx.SYSTEM_ACHIEVEMENTS.ToListAsync();
+
+                if (ach != null)
+                    _contx.SYSTEM_ACHIEVEMENTS.RemoveRange(ach);
+
+                await _contx.SYSTEM_ACHIEVEMENTS.AddRangeAsync(achievements);
+                await _contx.SaveChangesAsync();
+
+                return 1;
+            }
+            catch { return 0; }
+        }
+
+        public async Task<byte> AddNewAchievements(List<Achievement> achievements)
+        {
+            try
+            {
+                await _contx.SYSTEM_ACHIEVEMENTS.AddRangeAsync(achievements);
+                await _contx.SaveChangesAsync();
+            }
+            catch { return 0; }
         }
     }
 }
