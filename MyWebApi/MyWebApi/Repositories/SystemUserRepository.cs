@@ -59,8 +59,7 @@ namespace MyWebApi.Repositories
             await AddUserTrustLevel(model.UserId);
             await AddUserTrustProgressAsync(model.UserId, 0.000012);
 
-            //TODO: do only if user wants to use personality functionality
-            if (true)
+            if (prefsModel.ShouldUsePersonalityFunc)
             {
                 var personalityStats = new UserPersonalityStats(model.UserId);
                 var personalityPoints = new UserPersonalityPoints(model.UserId);
@@ -177,6 +176,35 @@ namespace MyWebApi.Repositories
                 if (u.Nickname != "" && (bool)u.HasPremium)
                     u.UserBaseInfo.UserDescription = $"{u.Nickname}\n\n{u.UserBaseInfo.UserDescription}";
             });
+
+            //If user uses PERSONALITY functionality
+            if (currentUser.UserPreferences.ShouldUsePersonalityFunc)
+            {
+                //TODO: Change it for users with premium ?
+                var deviation = 15;
+
+                data.AsParallel().ForAll(async u =>
+                {
+                    //TODO: Check if user uses personality functionality and remove him from the list if he does not
+
+                    var userPoints = await _contx.USER_PERSONALITY_POINTS.Where(p => p.UserId == currentUser.UserId)
+                    .SingleOrDefaultAsync();
+
+                    var user2Points = await _contx.USER_PERSONALITY_POINTS.Where(p => p.UserId == currentUser.UserId)
+                    .SingleOrDefaultAsync();
+
+                    var userStats = await _contx.USER_PERSONALITY_STATS.Where(s => s.UserId == currentUser.UserId)
+                    .SingleOrDefaultAsync();
+
+                    var user2Stats = await _contx.USER_PERSONALITY_STATS.Where(s => s.UserId == currentUser.UserId)
+                    .SingleOrDefaultAsync();
+
+                    //TODO: create its own deviation variable depending on the number of personalities (It is likely to be grater than the nornal one)
+                    var personalitySim = await CalculateSimilarityAsync(userStats.Personality, user2Stats.Personality);
+                    
+                    //TODO: check other similarity and finish-up the search algorithm
+                });
+            }
 
             await AddUserTrustProgressAsync(userId, 0.000003);
 
@@ -1596,16 +1624,16 @@ namespace MyWebApi.Repositories
                 {
                     difference = param1 - param2;
                     x = (difference * 100) / param1;
-                    c = 1 - (x / 100);
+                    c = 0 + (x / 100);
                 }
                 else if (param2 > param1)
                 {
                     difference = param2 - param1;
                     x = (difference * 100) / param2;
-                    c = 1 - (x / 100);
+                    c = 0 + (x / 100);
                 }
                 else if (param1 == param2)
-                    c = 0.999999; //Similarity percentage will never be equal to 100% !
+                    c = 0.00000001; //Similarity percentage will never be equal to 100% !
             });
 
             return c;
