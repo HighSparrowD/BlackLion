@@ -4,6 +4,7 @@ using MyWebApi.Entities.SecondaryEntities;
 using MyWebApi.Entities.ReportEntities;
 using MyWebApi.Entities.ReasonEntities;
 using MyWebApi.Entities.LocationEntities;
+using MyWebApi.Entities.AchievementEntities;
 
 namespace MyWebApi.Interfaces
 {
@@ -19,5 +20,7 @@ namespace MyWebApi.Interfaces
         Task<List<Feedback>> GetFeedbacks ();
         Task<long> DeleteUser (long userId);
         Task<int> DeleteAllUsers ();
+        Task<byte> UploadAchievements(List<Achievement> achievements);
+        Task<byte> AddNewAchievements(List<Achievement> achievements);
     }
 }
