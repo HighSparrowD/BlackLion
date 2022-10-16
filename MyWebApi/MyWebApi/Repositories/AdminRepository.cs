@@ -253,6 +253,7 @@ namespace MyWebApi.Repositories
             {
                 await _contx.SYSTEM_ACHIEVEMENTS.AddRangeAsync(achievements);
                 await _contx.SaveChangesAsync();
+                return 1;
             }
             catch { return 0; }
         }
