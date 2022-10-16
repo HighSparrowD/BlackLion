@@ -68,6 +68,8 @@ namespace MyWebApi.Data
         public DbSet<Invitation> USER_INVITATIONS { get; set; }
         public DbSet<DailyTask> DAILY_TASKS { get; set; }
         public DbSet<UserDailyTask> USER_DAILY_TASKS { get; set; }
+        public DbSet<UserPersonalityStats> USER_PERSONALITY_STATS { get; set; }
+        public DbSet<UserPersonalityPoints> USER_PERSONALITY_POINTS { get; set; }
 
 
 

@@ -623,5 +623,35 @@ namespace MyWebApi.Controllers
         {
             return await _repository.SendNotificationConfirmationCodeAsync(userId, notificationId);
         }
+
+        [HttpGet("/GetUserPersonalityPointsAmount/{userId}")]
+        public async Task<int> GetUserPersonalityPointsAmount(long userId)
+        {
+            return await _repository.GetUserPersonalityPointsAmount(userId);
+        }
+
+        [HttpGet("/UpdateUserPersonalityStats")]
+        public async Task<bool> UpdateUserPersonalityStats(UpdateUserPersonalityStats model)
+        {
+            return await _repository.UpdateUserPersonalityStats(model);
+        }
+        
+        [HttpPost("/UpdateUserPersonalityPoints")]
+        public async Task<UserPersonalityPoints> UpdateUserPersonalityPoints(UserPersonalityPoints model)
+        {
+            return await _repository.UpdateUserPersonalityPoints(model);
+        }
+
+        [HttpGet("/GetUserPersonalityPoints/{userId}")]
+        public async Task<UserPersonalityPoints> GetUserPersonalityPoints(long userId)
+        {
+            return await _repository.GetUserPersonalityPoints(userId);
+        }
+
+        [HttpGet("/GetUserPersonalityStats/{userId}")]
+        public async Task<UserPersonalityStats> GetUserPersonalityStats(long userId)
+        {
+            return await _repository.GetUserPersonalityStats(userId);
+        }
     }
 }

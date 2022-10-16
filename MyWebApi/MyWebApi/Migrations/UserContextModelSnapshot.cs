@@ -97,6 +97,83 @@ namespace MyWebApi.Migrations
                     b.ToTable("SYSTEM_ADMINS");
                 });
 
+            modelBuilder.Entity("MyWebApi.Entities.DailyRewardEntities.DailyReward", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<short>("Index")
+                        .HasColumnType("smallint");
+
+                    b.Property<int>("PointReward")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DAILY_REWARDS");
+                });
+
+            modelBuilder.Entity("MyWebApi.Entities.DailyTaskEntities.DailyTask", b =>
+                {
+                    b.Property<long>("Id")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("ClassLocalisationId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Condition")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Reward")
+                        .HasColumnType("integer");
+
+                    b.Property<short>("RewardCurrency")
+                        .HasColumnType("smallint");
+
+                    b.Property<int>("SectionId")
+                        .HasColumnType("integer");
+
+                    b.Property<short>("TaskType")
+                        .HasColumnType("smallint");
+
+                    b.HasKey("Id", "ClassLocalisationId");
+
+                    b.ToTable("DAILY_TASKS");
+                });
+
+            modelBuilder.Entity("MyWebApi.Entities.DailyTaskEntities.UserDailyTask", b =>
+                {
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("DailyTaskId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("AcquireMessage")
+                        .HasColumnType("text");
+
+                    b.Property<int>("DailyTaskClassLocalisationId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsAcquired")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("Progress")
+                        .HasColumnType("integer");
+
+                    b.HasKey("UserId", "DailyTaskId");
+
+                    b.HasIndex("DailyTaskId", "DailyTaskClassLocalisationId");
+
+                    b.ToTable("USER_DAILY_TASKS");
+                });
+
             modelBuilder.Entity("MyWebApi.Entities.LocalisationEntities.AppLanguage", b =>
                 {
                     b.Property<int>("Id")
@@ -930,6 +1007,28 @@ namespace MyWebApi.Migrations
                     b.ToTable("PSYCHOLOGICAL_TESTS_QUESTIONS");
                 });
 
+            modelBuilder.Entity("MyWebApi.Entities.UserActionEntities.Invitation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("InvitationTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("InvitedUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("InvitorCredentialsId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InvitorCredentialsId");
+
+                    b.ToTable("USER_INVITATIONS");
+                });
+
             modelBuilder.Entity("MyWebApi.Entities.UserActionEntities.UserNotification", b =>
                 {
                     b.Property<long>("Id")
@@ -967,17 +1066,18 @@ namespace MyWebApi.Migrations
 
             modelBuilder.Entity("MyWebApi.Entities.UserInfoEntities.Balance", b =>
                 {
-                    b.Property<long>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                        .HasColumnType("uuid");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<int>("Amount")
+                    b.Property<int>("PersonalityPoints")
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("PointInTime")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Points")
+                        .HasColumnType("integer");
 
                     b.Property<long>("UserId")
                         .HasColumnType("bigint");
@@ -1030,16 +1130,39 @@ namespace MyWebApi.Migrations
                     b.ToTable("USER_ENCOUNTERS");
                 });
 
-            modelBuilder.Entity("MyWebApi.Entities.UserInfoEntities.Purchase", b =>
+            modelBuilder.Entity("MyWebApi.Entities.UserInfoEntities.InvitationCredentials", b =>
                 {
-                    b.Property<long>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Link")
+                        .HasColumnType("text");
+
+                    b.Property<string>("QRCode")
+                        .HasColumnType("text");
+
+                    b.Property<long>("UserId")
                         .HasColumnType("bigint");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("USER_INVITATION_CREDENTIALS");
+                });
+
+            modelBuilder.Entity("MyWebApi.Entities.UserInfoEntities.Purchase", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
 
                     b.Property<int>("Amount")
                         .HasColumnType("integer");
+
+                    b.Property<short>("Currency")
+                        .HasColumnType("smallint");
 
                     b.Property<string>("Description")
                         .HasColumnType("text");
@@ -1063,6 +1186,9 @@ namespace MyWebApi.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("UserId"));
 
+                    b.Property<short?>("BonusIndex")
+                        .HasColumnType("smallint");
+
                     b.Property<short?>("DailyRewardPoint")
                         .HasColumnType("smallint");
 
@@ -1083,6 +1209,9 @@ namespace MyWebApi.Migrations
 
                     b.Property<string>("Nickname")
                         .HasColumnType("text");
+
+                    b.Property<long?>("ParentId")
+                        .HasColumnType("bigint");
 
                     b.Property<DateTime?>("PremiumExpirationDate")
                         .HasColumnType("timestamp with time zone");
@@ -1188,6 +1317,131 @@ namespace MyWebApi.Migrations
                     b.ToTable("USER_EVENTS");
                 });
 
+            modelBuilder.Entity("MyWebApi.Entities.UserInfoEntities.UserPersonalityPoints", b =>
+                {
+                    b.Property<long>("UserId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("UserId"));
+
+                    b.Property<int>("Agreeableness")
+                        .HasColumnType("integer");
+
+                    b.Property<double>("AgreeablenessPercentage")
+                        .HasColumnType("double precision");
+
+                    b.Property<int>("Compassion")
+                        .HasColumnType("integer");
+
+                    b.Property<double>("CompassionPercentage")
+                        .HasColumnType("double precision");
+
+                    b.Property<int>("Creativity")
+                        .HasColumnType("integer");
+
+                    b.Property<double>("CreativityPercentage")
+                        .HasColumnType("double precision");
+
+                    b.Property<int>("EmotionalIntellect")
+                        .HasColumnType("integer");
+
+                    b.Property<double>("EmotionalIntellectPercentage")
+                        .HasColumnType("double precision");
+
+                    b.Property<int>("Intellect")
+                        .HasColumnType("integer");
+
+                    b.Property<double>("IntellectPercentage")
+                        .HasColumnType("double precision");
+
+                    b.Property<int>("LevelsOfSense")
+                        .HasColumnType("integer");
+
+                    b.Property<double>("LevelsOfSensePercentage")
+                        .HasColumnType("double precision");
+
+                    b.Property<int>("Nature")
+                        .HasColumnType("integer");
+
+                    b.Property<double>("NaturePercentage")
+                        .HasColumnType("double precision");
+
+                    b.Property<int>("OpenMindedness")
+                        .HasColumnType("integer");
+
+                    b.Property<double>("OpenMindednessPercentage")
+                        .HasColumnType("double precision");
+
+                    b.Property<int>("Personality")
+                        .HasColumnType("integer");
+
+                    b.Property<double>("PersonalityPercentage")
+                        .HasColumnType("double precision");
+
+                    b.Property<int>("Reliability")
+                        .HasColumnType("integer");
+
+                    b.Property<double>("ReliabilityPercentage")
+                        .HasColumnType("double precision");
+
+                    b.Property<int>("SelfAwareness")
+                        .HasColumnType("integer");
+
+                    b.Property<double>("SelfAwarenessPercentage")
+                        .HasColumnType("double precision");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("USER_PERSONALITY_POINTS");
+                });
+
+            modelBuilder.Entity("MyWebApi.Entities.UserInfoEntities.UserPersonalityStats", b =>
+                {
+                    b.Property<long>("UserId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("UserId"));
+
+                    b.Property<int>("Agreeableness")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Compassion")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Creativity")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("EmotionalIntellect")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Intellect")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("LevelsOfSense")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Nature")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("OpenMindedness")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Personality")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Reliability")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SelfAwareness")
+                        .HasColumnType("integer");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("USER_PERSONALITY_STATS");
+                });
+
             modelBuilder.Entity("MyWebApi.Entities.UserInfoEntities.UserPreferences", b =>
                 {
                     b.Property<long>("Id")
@@ -1268,6 +1522,17 @@ namespace MyWebApi.Migrations
                     b.Navigation("Achievement");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("MyWebApi.Entities.DailyTaskEntities.UserDailyTask", b =>
+                {
+                    b.HasOne("MyWebApi.Entities.DailyTaskEntities.DailyTask", "DailyTask")
+                        .WithMany()
+                        .HasForeignKey("DailyTaskId", "DailyTaskClassLocalisationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("DailyTask");
                 });
 
             modelBuilder.Entity("MyWebApi.Entities.LocalisationEntities.SecondaryLocalisationModel", b =>
@@ -1496,6 +1761,17 @@ namespace MyWebApi.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("MyWebApi.Entities.UserActionEntities.Invitation", b =>
+                {
+                    b.HasOne("MyWebApi.Entities.UserInfoEntities.InvitationCredentials", "InvitorCredentials")
+                        .WithMany()
+                        .HasForeignKey("InvitorCredentialsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("InvitorCredentials");
+                });
+
             modelBuilder.Entity("MyWebApi.Entities.UserActionEntities.UserNotification", b =>
                 {
                     b.HasOne("MyWebApi.Entities.UserInfoEntities.User", "Sender")
@@ -1520,6 +1796,17 @@ namespace MyWebApi.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("MyWebApi.Entities.UserInfoEntities.InvitationCredentials", b =>
+                {
+                    b.HasOne("MyWebApi.Entities.UserInfoEntities.User", "Invitor")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Invitor");
                 });
 
             modelBuilder.Entity("MyWebApi.Entities.UserInfoEntities.User", b =>

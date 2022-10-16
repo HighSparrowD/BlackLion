@@ -120,5 +120,10 @@ namespace MyWebApi.Interfaces
         Task<string> ShowDailyTaskProgressAsync(long userId, long taskId);
         Task<int> GetUserMaximumLanguageCountAsync(long userId);
         int GetMaximumLanguageCount(bool? hasPremium);
+        Task<int> GetUserPersonalityPointsAmount(long userId);
+        Task<bool> UpdateUserPersonalityStats(UpdateUserPersonalityStats model);
+        Task<UserPersonalityPoints> UpdateUserPersonalityPoints(UserPersonalityPoints model);
+        Task<UserPersonalityStats> GetUserPersonalityStats(long userId);
+        Task<UserPersonalityPoints> GetUserPersonalityPoints(long userId);
     }
 }
