@@ -208,7 +208,7 @@ namespace MyWebApi.Controllers
                 LanguageId = model.UserAppLanguageId,
                 LocationId = location.Id
             };
-            var uPrefs = new UserPreferences(model.Id, model.UserLanguagePreferences, model.UserLocationPreferences, Entities.UserInfoEntities.User.CalculateAgeList(model.UserAge, model.AgePrefs), model.CommunicationPrefs, model.UserGenderPrefs);
+            var uPrefs = new UserPreferences(model.Id, model.UserLanguagePreferences, model.UserLocationPreferences, Entities.UserInfoEntities.User.CalculateAgeList(model.UserAge, model.AgePrefs), model.CommunicationPrefs, model.UserGenderPrefs, model.ShouldUserPersonalityFunc);
             var m = new User(model.Id)
             {
                 IsBusy = false,

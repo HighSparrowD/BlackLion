@@ -24,5 +24,6 @@ namespace MyWebApi.Entities.UserInfoEntities
         public short AgePrefs { get; set; }
         public int CommunicationPrefs { get; set; }
         public short UserGenderPrefs { get; set; }
+        public bool ShouldUserPersonalityFunc { get; set; }
     }
 }
