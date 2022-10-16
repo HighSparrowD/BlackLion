@@ -1,13 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi.Validations;
+﻿using Microsoft.EntityFrameworkCore;
 using MyWebApi.Data;
 using MyWebApi.Entities.AchievementEntities;
 using MyWebApi.Entities.DailyTaskEntities;
 using MyWebApi.Entities.LocationEntities;
 using MyWebApi.Entities.ReasonEntities;
 using MyWebApi.Entities.ReportEntities;
-using MyWebApi.Entities.SecondaryEntities;
 using MyWebApi.Entities.SponsorEntities;
 using MyWebApi.Entities.UserActionEntities;
 using MyWebApi.Entities.UserInfoEntities;
@@ -15,13 +12,7 @@ using MyWebApi.Enums;
 using MyWebApi.Interfaces;
 using System;
 using System.Collections.Generic;
-using System.Data.SqlTypes;
 using System.Linq;
-using System.Net.Http.Headers;
-using System.Reflection.Metadata.Ecma335;
-using System.Runtime.CompilerServices;
-using System.Runtime.Intrinsics.X86;
-using System.Threading;
 using System.Threading.Tasks;
 using static MyWebApi.Enums.SystemEnums;
 
@@ -67,6 +58,14 @@ namespace MyWebApi.Repositories
             await TopUpUserWalletPointsBalance(model.UserId, 180, "Starting Pack"); //180 is a starting user point pack
             await AddUserTrustLevel(model.UserId);
             await AddUserTrustProgressAsync(model.UserId, 0.000012);
+
+            //TODO: do only if user wants to use personality functionality
+            if (true)
+            {
+                var personalityStats = new UserPersonalityStats(model.UserId);
+                var personalityPoints = new UserPersonalityPoints(model.UserId);
+            
+            }
 
             var invitation = await GetInvitationAsync(model.UserId);
 
@@ -784,7 +783,7 @@ namespace MyWebApi.Repositories
                 {
                     Id = Guid.NewGuid(),
                     Points = points,
-                    PersonalityPoints = 11, //TODO: Discuss this starting pack amount
+                    PersonalityPoints = 15,
                     UserId = userId,
                     PointInTime = time
                 };
@@ -829,7 +828,7 @@ namespace MyWebApi.Repositories
                 {
                     Id = Guid.NewGuid(),
                     Points = points,
-                    PersonalityPoints = 11, // TODO: discuss this starting pack amount
+                    PersonalityPoints = 15,
                     UserId = userId,
                     PointInTime = time
                 };
@@ -1842,6 +1841,116 @@ namespace MyWebApi.Repositories
                 .ToListAsync();
 
             return ids;
+        }
+
+        public async Task<int> GetUserPersonalityPointsAmount(long userId)
+        {
+            try
+            {
+                return await _contx.USER_WALLET_BALANCES.Where(b => b.UserId == userId)
+                    .Select(b => b.PersonalityPoints)
+                    .SingleOrDefaultAsync();
+            }
+            catch(NullReferenceException) { return 0; }
+        }
+
+        //Is used when user has passed some tests
+        public async Task<bool> UpdateUserPersonalityStats(UpdateUserPersonalityStats model)
+        {
+            try
+            {
+                //TODO: That method does nothing for now
+                var userStats = await RecalculateUserStats(model);
+                _contx.USER_PERSONALITY_STATS.Update(userStats);
+                await _contx.SaveChangesAsync();
+                return true;
+            }
+            catch { return false; }
+        }
+
+        public async Task<UserPersonalityPoints> UpdateUserPersonalityPoints(UserPersonalityPoints model)
+        {
+            try
+            {
+                model = await RecalculateSimilarityPercentage(model);
+                //_contx.Update(model);
+                //await _contx.SaveChangesAsync();
+
+                return model;
+            }
+            catch { return null; }
+        }
+
+        public Task<UserPersonalityStats> GetUserPersonalityStats(long userId)
+        {
+            try
+            {
+                return _contx.USER_PERSONALITY_STATS.Where(s => s.UserId == userId).SingleOrDefaultAsync();
+            }
+            catch { return null; }
+        }
+
+        public Task<UserPersonalityPoints> GetUserPersonalityPoints(long userId)
+        {
+            try
+            {
+                return _contx.USER_PERSONALITY_POINTS
+                    .Where(s => s.UserId == userId)
+                    .SingleOrDefaultAsync();
+            }
+            catch { return null; }
+        }
+
+        private async Task<UserPersonalityPoints> RecalculateSimilarityPercentage(UserPersonalityPoints model)
+        {
+            try
+            {
+                model.PersonalityPercentage = await CalculateSimilarityPreferences(model.Personality, model.PersonalityPercentage);
+                model.CreativityPercentage = await CalculateSimilarityPreferences(model.Creativity, model.CreativityPercentage);
+                model.ReliabilityPercentage = await CalculateSimilarityPreferences(model.Reliability, model.ReliabilityPercentage);
+                model.NaturePercentage = await CalculateSimilarityPreferences(model.Nature, model.NaturePercentage);
+                model.AgreeablenessPercentage = await CalculateSimilarityPreferences(model.Agreeableness, model.AgreeablenessPercentage);
+                model.CompassionPercentage = await CalculateSimilarityPreferences(model.Compassion, model.CompassionPercentage);
+                model.EmotionalIntellectPercentage = await CalculateSimilarityPreferences(model.EmotionalIntellect, model.EmotionalIntellectPercentage);
+                model.IntellectPercentage = await CalculateSimilarityPreferences(model.Intellect, model.IntellectPercentage);
+                model.LevelsOfSensePercentage = await CalculateSimilarityPreferences(model.LevelsOfSense, model.LevelsOfSensePercentage);
+                model.OpenMindednessPercentage = await CalculateSimilarityPreferences(model.OpenMindedness, model.OpenMindednessPercentage);
+                model.SelfAwarenessPercentage = await CalculateSimilarityPreferences(model.SelfAwareness, model.SelfAwarenessPercentage);
+                return model;
+            }
+            catch { return null; }
+        }
+
+        //TODO: Come up with a method of calculating user stats
+        private async Task<UserPersonalityStats> RecalculateUserStats(UpdateUserPersonalityStats model)
+        {
+            //TODO: Take user stats from DB
+
+            //TODO: Recalculate them using passed-in model
+
+            //TODO: Update model in DB and save context changes
+            await Task.Delay(1);
+            return new UserPersonalityStats(0);
+        }
+
+        private async Task<double> CalculateSimilarityPreferences(int points, double similarityCoefficient)
+        {
+            if (points == 0)
+                return 0;
+
+            await Task.Run(() =>
+            {
+                var deviationCoefficient = 0d;
+                for (int i = 1; i < points; i++)
+                {
+                    var speedCoefficient = 10;
+
+                    deviationCoefficient = (i * similarityCoefficient) / speedCoefficient;
+                    similarityCoefficient -= deviationCoefficient / (points / deviationCoefficient);
+                }
+            });
+
+            return similarityCoefficient;
         }
     }
 }
