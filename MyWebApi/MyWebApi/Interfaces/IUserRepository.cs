@@ -125,5 +125,6 @@ namespace MyWebApi.Interfaces
         Task<UserPersonalityPoints> UpdateUserPersonalityPoints(UserPersonalityPoints model);
         Task<UserPersonalityStats> GetUserPersonalityStats(long userId);
         Task<UserPersonalityPoints> GetUserPersonalityPoints(long userId);
+        Task<bool> SwitchPersonalityUsage(long userId);
     }
 }

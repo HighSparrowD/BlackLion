@@ -208,7 +208,7 @@ namespace MyWebApi.Controllers
                 LanguageId = model.UserAppLanguageId,
                 LocationId = location.Id
             };
-            var uPrefs = new UserPreferences(model.Id, model.UserLanguagePreferences, model.UserLocationPreferences, Entities.UserInfoEntities.User.CalculateAgeList(model.UserAge, model.AgePrefs), model.CommunicationPrefs, model.UserGenderPrefs);
+            var uPrefs = new UserPreferences(model.Id, model.UserLanguagePreferences, model.UserLocationPreferences, Entities.UserInfoEntities.User.CalculateAgeList(model.UserAge, model.AgePrefs), model.CommunicationPrefs, model.UserGenderPrefs, model.ShouldUserPersonalityFunc);
             var m = new User(model.Id)
             {
                 IsBusy = false,
@@ -652,6 +652,12 @@ namespace MyWebApi.Controllers
         public async Task<UserPersonalityStats> GetUserPersonalityStats(long userId)
         {
             return await _repository.GetUserPersonalityStats(userId);
+        }
+
+        [HttpGet("/SwitchPersonalityUsage/{userId}")]
+        public async Task<bool> SwitchPersonalityUsage(long userId)
+        {
+            return await _repository.SwitchPersonalityUsage(userId);
         }
     }
 }

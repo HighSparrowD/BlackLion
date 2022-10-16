@@ -59,12 +59,10 @@ namespace MyWebApi.Repositories
             await AddUserTrustLevel(model.UserId);
             await AddUserTrustProgressAsync(model.UserId, 0.000012);
 
-            //TODO: do only if user wants to use personality functionality
-            if (true)
+            if (prefsModel.ShouldUsePersonalityFunc)
             {
                 var personalityStats = new UserPersonalityStats(model.UserId);
                 var personalityPoints = new UserPersonalityPoints(model.UserId);
-            
             }
 
             var invitation = await GetInvitationAsync(model.UserId);
@@ -177,6 +175,35 @@ namespace MyWebApi.Repositories
                 if (u.Nickname != "" && (bool)u.HasPremium)
                     u.UserBaseInfo.UserDescription = $"{u.Nickname}\n\n{u.UserBaseInfo.UserDescription}";
             });
+
+            //If user uses PERSONALITY functionality
+            if (currentUser.UserPreferences.ShouldUsePersonalityFunc)
+            {
+                //TODO: Change it for users with premium ?
+                var deviation = 15;
+
+                data.AsParallel().ForAll(async u =>
+                {
+                    //TODO: Check if user uses personality functionality and remove him from the list if he does not
+
+                    var userPoints = await _contx.USER_PERSONALITY_POINTS.Where(p => p.UserId == currentUser.UserId)
+                    .SingleOrDefaultAsync();
+
+                    var user2Points = await _contx.USER_PERSONALITY_POINTS.Where(p => p.UserId == currentUser.UserId)
+                    .SingleOrDefaultAsync();
+
+                    var userStats = await _contx.USER_PERSONALITY_STATS.Where(s => s.UserId == currentUser.UserId)
+                    .SingleOrDefaultAsync();
+
+                    var user2Stats = await _contx.USER_PERSONALITY_STATS.Where(s => s.UserId == currentUser.UserId)
+                    .SingleOrDefaultAsync();
+
+                    //TODO: create its own deviation variable depending on the number of personalities (It is likely to be grater than the nornal one)
+                    var personalitySim = await CalculateSimilarityAsync(userStats.Personality, user2Stats.Personality);
+                    
+                    //TODO: check other similarity and finish-up the search algorithm
+                });
+            }
 
             await AddUserTrustProgressAsync(userId, 0.000003);
 
@@ -1596,16 +1623,16 @@ namespace MyWebApi.Repositories
                 {
                     difference = param1 - param2;
                     x = (difference * 100) / param1;
-                    c = 1 - (x / 100);
+                    c = 0 + (x / 100);
                 }
                 else if (param2 > param1)
                 {
                     difference = param2 - param1;
                     x = (difference * 100) / param2;
-                    c = 1 - (x / 100);
+                    c = 0 + (x / 100);
                 }
                 else if (param1 == param2)
-                    c = 0.999999; //Similarity percentage will never be equal to 100% !
+                    c = 0.00000001; //Similarity percentage will never be equal to 100% !
             });
 
             return c;
@@ -1881,20 +1908,22 @@ namespace MyWebApi.Repositories
             catch { return null; }
         }
 
-        public Task<UserPersonalityStats> GetUserPersonalityStats(long userId)
+        public async Task<UserPersonalityStats> GetUserPersonalityStats(long userId)
         {
             try
             {
-                return _contx.USER_PERSONALITY_STATS.Where(s => s.UserId == userId).SingleOrDefaultAsync();
+                return await _contx.USER_PERSONALITY_STATS
+                    .Where(s => s.UserId == userId)
+                    .SingleOrDefaultAsync();
             }
             catch { return null; }
         }
 
-        public Task<UserPersonalityPoints> GetUserPersonalityPoints(long userId)
+        public async Task<UserPersonalityPoints> GetUserPersonalityPoints(long userId)
         {
             try
             {
-                return _contx.USER_PERSONALITY_POINTS
+                return await _contx.USER_PERSONALITY_POINTS
                     .Where(s => s.UserId == userId)
                     .SingleOrDefaultAsync();
             }
@@ -1913,7 +1942,7 @@ namespace MyWebApi.Repositories
                 model.CompassionPercentage = await CalculateSimilarityPreferences(model.Compassion, model.CompassionPercentage);
                 model.EmotionalIntellectPercentage = await CalculateSimilarityPreferences(model.EmotionalIntellect, model.EmotionalIntellectPercentage);
                 model.IntellectPercentage = await CalculateSimilarityPreferences(model.Intellect, model.IntellectPercentage);
-                model.LevelsOfSensePercentage = await CalculateSimilarityPreferences(model.LevelsOfSense, model.LevelsOfSensePercentage);
+                model.LevelOfSensePercentage = await CalculateSimilarityPreferences(model.LevelOfSense, model.LevelOfSensePercentage);
                 model.OpenMindednessPercentage = await CalculateSimilarityPreferences(model.OpenMindedness, model.OpenMindednessPercentage);
                 model.SelfAwarenessPercentage = await CalculateSimilarityPreferences(model.SelfAwareness, model.SelfAwarenessPercentage);
                 return model;
@@ -1951,6 +1980,48 @@ namespace MyWebApi.Repositories
             });
 
             return similarityCoefficient;
+        }
+
+        public async Task<bool> SwitchPersonalityUsage(long userId)
+        {
+            try
+            {
+                var userPrefs = await _contx.SYSTEM_USERS_PREFERENCES.Where(p => p.Id == userId)
+                    .SingleOrDefaultAsync();
+
+                if (userPrefs.ShouldUsePersonalityFunc)
+                {
+                    userPrefs.ShouldUsePersonalityFunc = false;
+                }
+                else
+                {
+                    userPrefs.ShouldUsePersonalityFunc = true;
+                    UserPersonalityStats personalityStats;
+                    UserPersonalityPoints personalityPoints;
+
+                    //Add personality stats, if none were created when user was registering
+                    if (await GetUserPersonalityStats(userId) == null)
+                    {
+                        personalityStats = new UserPersonalityStats(userId);
+                        await _contx.USER_PERSONALITY_STATS.AddAsync(personalityStats);
+                        await _contx.SaveChangesAsync();
+                    }
+
+                    //Add personality points, if none were created when user was registering
+                    if (await GetUserPersonalityPoints(userId) == null)
+                    {
+                        personalityPoints = new UserPersonalityPoints(userId);
+                        await _contx.USER_PERSONALITY_POINTS.AddAsync(personalityPoints);
+                        await _contx.SaveChangesAsync();
+                    }
+                }
+
+                _contx.SYSTEM_USERS_PREFERENCES.Update(userPrefs);
+                await _contx.SaveChangesAsync();
+
+                return userPrefs.ShouldUsePersonalityFunc;
+            }
+            catch { throw new NullReferenceException($"User {userId} does not exist !"); }
         }
     }
 }
