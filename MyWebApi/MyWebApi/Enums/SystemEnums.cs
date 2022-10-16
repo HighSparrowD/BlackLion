@@ -74,7 +74,8 @@
         {
             Points = 1,
             PersonalityPoints = 2,
-            Premium = 3 // Maybe remove in the future
+            Premium = 3, // Maybe remove in the future
+            RealMoney = 4
         }
 
         public enum TaskType

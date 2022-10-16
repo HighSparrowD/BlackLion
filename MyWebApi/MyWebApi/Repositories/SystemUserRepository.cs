@@ -19,6 +19,7 @@ using System.Data.SqlTypes;
 using System.Linq;
 using System.Net.Http.Headers;
 using System.Reflection.Metadata.Ecma335;
+using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics.X86;
 using System.Threading;
 using System.Threading.Tasks;
@@ -63,7 +64,7 @@ namespace MyWebApi.Repositories
             await _contx.SaveChangesAsync();
 
             await GenerateUserAchievementList(baseModel.Id, dataModel.LanguageId, wasRegistered);
-            await TopUpUserWalletBalance(model.UserId, 180, "Starting Pack"); //180 is a starting user point pack
+            await TopUpUserWalletPointsBalance(model.UserId, 180, "Starting Pack"); //180 is a starting user point pack
             await AddUserTrustLevel(model.UserId);
             await AddUserTrustProgressAsync(model.UserId, 0.000012);
 
@@ -486,7 +487,7 @@ namespace MyWebApi.Repositories
 
                 achievement.IsAcquired = true;
 
-                await TopUpUserWalletBalance(userId, achievement.Achievement.Value, "Achievement acquiering");
+                await TopUpUserWalletPointsBalance(userId, achievement.Achievement.Value, "Achievement acquiering");
 
                 await AddUserNotificationAsync(new UserNotification
                 {
@@ -758,19 +759,19 @@ namespace MyWebApi.Repositories
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<int> TopUpUserWalletBalance(long userId, int points, string description = "")
+        public async Task<int> TopUpUserWalletPointsBalance(long userId, int points, string description = "")
         {
             var time = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
             var userBalance = await GetUserWalletBalance(userId, time);
 
             if (userBalance != null)
             {            
-                if (userBalance.Amount + points <= 0)
-                    userBalance.Amount = 0;
-                else if(userBalance.Amount + points >= int.MaxValue)
-                    userBalance.Amount = int.MaxValue;
+                if (userBalance.Points + points <= 0)
+                    userBalance.Points = 0;
+                else if(userBalance.Points + points >= int.MaxValue)
+                    userBalance.Points = int.MaxValue;
                 else
-                    userBalance.Amount += points;
+                    userBalance.Points += points;
 
                 userBalance.PointInTime = time;
 
@@ -781,8 +782,9 @@ namespace MyWebApi.Repositories
             {
                 userBalance = new Balance
                 {
-                    Id = await _contx.USER_WALLET_BALANCES.CountAsync() +1,
-                    Amount = points,
+                    Id = Guid.NewGuid(),
+                    Points = points,
+                    PersonalityPoints = 11, //TODO: Discuss this starting pack amount
                     UserId = userId,
                     PointInTime = time
                 };
@@ -794,27 +796,94 @@ namespace MyWebApi.Repositories
             var userParentId = (await _contx.SYSTEM_USERS.FindAsync(userId)).ParentId;
 
             if (userParentId != null && userParentId > 0)
-                await TopUpUserWalletBalance((long)userParentId, 1, $"Referential reward for user's {userParentId} action");
+                await TopUpUserWalletPointsBalance((long)userParentId, 1, $"Referential reward for user's {userParentId} action");
 
             await _contx.SaveChangesAsync();
-            await RegisterUserWalletPurchase(userId, points, description); //Registers info about amount of points decremented / incremented
+            await RegisterUserWalletPurchaseInPoints(userId, points, description); //Registers info about amount of points decremented / incremented
 
-            return userBalance.Amount;
+            return userBalance.Points;
         }
 
-        private async Task RegisterUserWalletPurchase(long userId, int points, string description)
+        public async Task<int> TopUpUserWalletPPBalance(long userId, int points, string description = "")
         {
-            var purchase = new Purchase
-            {
-                Id = await _contx.USER_WALLET_PURCHASES.CountAsync() +1,
-                UserId = userId,
-                PointInTime = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc),
-                Amount = points,
-                Description = description
-            };
+            var time = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
+            var userBalance = await GetUserWalletBalance(userId, time);
 
-            await _contx.USER_WALLET_PURCHASES.AddAsync(purchase);
+            if (userBalance != null)
+            {
+                if (userBalance.PersonalityPoints + points <= 0)
+                    userBalance.PersonalityPoints = 0;
+                else if (userBalance.PersonalityPoints + points >= int.MaxValue)
+                    userBalance.PersonalityPoints = int.MaxValue;
+                else
+                    userBalance.PersonalityPoints += points;
+
+                userBalance.PointInTime = time;
+
+                _contx.USER_WALLET_BALANCES.Update(userBalance);
+                await _contx.SaveChangesAsync();
+            }
+            else
+            {
+                userBalance = new Balance
+                {
+                    Id = Guid.NewGuid(),
+                    Points = points,
+                    PersonalityPoints = 11, // TODO: discuss this starting pack amount
+                    UserId = userId,
+                    PointInTime = time
+                };
+
+                await _contx.USER_WALLET_BALANCES.AddAsync(userBalance);
+                await _contx.SaveChangesAsync();
+            }
+
+            var userParentId = (await _contx.SYSTEM_USERS.FindAsync(userId)).ParentId;
+
+            if (userParentId != null && userParentId > 0)
+                await TopUpUserWalletPointsBalance((long)userParentId, 1, $"Referential reward for user's {userParentId} action");
+
             await _contx.SaveChangesAsync();
+            await RegisterUserWalletPurchaseInPP(userId, points, description); //Registers info about amount of points decremented / incremented
+
+            return userBalance.PersonalityPoints;
+        }
+
+        private async Task<bool> RegisterUserWalletPurchaseInPoints(long userId, int points, string description)
+        {
+            return await RegisterUserWalletPurchase(userId, points, description, (short)Currencies.Points);
+        }
+
+        private async Task<bool> RegisterUserWalletPurchaseInPP(long userId, int points, string description)
+        {
+            return await RegisterUserWalletPurchase(userId, points, description, (short)Currencies.PersonalityPoints);
+        }
+
+        private async Task<bool> RegisterUserWalletPurchaseInRealMoney(long userId, int points, string description)
+        {
+            return await RegisterUserWalletPurchase(userId, points, description, (short)Currencies.RealMoney);
+        }
+
+        private async Task<bool> RegisterUserWalletPurchase(long userId, int points, string description, short currency)
+        {
+            try
+            {
+                var purchase = new Purchase
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = userId,
+                    PointInTime = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc),
+                    Amount = points,
+                    Description = description,
+                    Currency = currency
+                };
+
+                await _contx.USER_WALLET_PURCHASES.AddAsync(purchase);
+                await _contx.SaveChangesAsync();
+
+                return true;
+            }
+            catch { return false; }
         }
 
         public async Task<bool> CheckUserHasPremium(long userId)
@@ -851,7 +920,7 @@ namespace MyWebApi.Repositories
 
             user.HasPremium = true;
             user.BonusIndex = 2;
-            await TopUpUserWalletBalance(userId, -cost, $"Purchase premium for {dayDuration} days");
+            await TopUpUserWalletPointsBalance(userId, -cost, $"Purchase premium for {dayDuration} days");
 
             if (user.PremiumExpirationDate < timeNow || user.PremiumExpirationDate == null)
                 user.PremiumExpirationDate = premiumFutureExpirationDate;
@@ -873,7 +942,7 @@ namespace MyWebApi.Repositories
         public async Task<bool> CheckBalanceIsSufficient(long userId, int cost)
         {
             cost = cost < 0 ? cost * -1 : cost; //Makes sure the cost amount wasnt minus value
-            return (await GetUserWalletBalance(userId, DateTime.Now)).Amount >= cost;
+            return (await GetUserWalletBalance(userId, DateTime.Now)).Points >= cost;
         }
 
         public async Task<byte> UpdateUserAppLanguageAsync(long userId, int appLanguage)
@@ -1263,7 +1332,7 @@ namespace MyWebApi.Repositories
                     .Select(r => r.PointReward)
                     .FirstOrDefaultAsync();
 
-                await TopUpUserWalletBalance(userId, reward * (short)user.BonusIndex, "Daily reward");
+                await TopUpUserWalletPointsBalance(userId, reward * (short)user.BonusIndex, "Daily reward");
                 user.HadReceivedReward = true;
                 user.DailyRewardPoint += 1;
 
@@ -1607,7 +1676,7 @@ namespace MyWebApi.Repositories
             });
 
             if (task.DailyTask.RewardCurrency == (byte)Currencies.Points)
-                await TopUpUserWalletBalance(userId, task.DailyTask.Reward, description:"Daily task acquiering");
+                await TopUpUserWalletPointsBalance(userId, task.DailyTask.Reward, description:"Daily task acquiering");
             else if (task.DailyTask.RewardCurrency == (byte)Currencies.PersonalityPoints) { }
             //TODO: Topup user Personality points wallet balace
             else if (task.DailyTask.RewardCurrency == (byte)Currencies.Premium) { }

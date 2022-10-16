@@ -6,9 +6,10 @@ namespace MyWebApi.Entities.UserInfoEntities
     public class Balance
     {
         [Key]
-        public long Id { get; set; }
+        public Guid Id { get; set; }
         public long UserId { get; set; }
-        public int Amount { get; set; }
+        public int Points { get; set; }
+        public int PersonalityPoints { get; set; }
         public DateTime PointInTime { get; set; }
     }
 }

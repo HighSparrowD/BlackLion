@@ -74,7 +74,8 @@ namespace MyWebApi.Interfaces
         Task<bool> SetUserRtLanguagePrefs(long userId, bool shouldBeConcidered);
         Task<bool> CheckUsersAreCombinableRT(long user1, long user2);
         Task<Balance> GetUserWalletBalance(long userId, DateTime pointInTime);
-        Task<int> TopUpUserWalletBalance(long userId, int points, string description);
+        Task<int> TopUpUserWalletPointsBalance(long userId, int points, string description);
+        Task<int> TopUpUserWalletPPBalance(long userId, int points, string description);
         Task<bool> CheckUserHasPremium(long userId);
         Task<bool> CheckBalanceIsSufficient(long userId, int cost);
         Task<DateTime> GetPremiumExpirationDate(long userId);
