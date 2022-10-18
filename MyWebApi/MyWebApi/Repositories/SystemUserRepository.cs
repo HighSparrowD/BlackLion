@@ -125,6 +125,10 @@ namespace MyWebApi.Repositories
             var currentUser = await GetUserInfoAsync(userId);
             var currentUserEncounters = await GetUserEncounters(userId, (int)SystemEnums.Sections.Familiator); //I am not sure if it is 2 or 3 section
 
+            //If user has elected to temporarily dissable PERSONALITY functionality (Change shold NOT be changed in th DB) 
+            if (turnOffPersonalityFunc)
+                currentUser.UserPreferences.ShouldUsePersonalityFunc = false;
+
             var data = await _contx.SYSTEM_USERS
                 .Where(u => u.UserDataInfo.ReasonId == currentUser.UserDataInfo.ReasonId)
                 .Where(u => u.UserPreferences.CommunicationPrefs == currentUser.UserPreferences.CommunicationPrefs)
@@ -368,11 +372,22 @@ namespace MyWebApi.Repositories
 
             //Check if method wasnt already repeated
             if (!isRepeated)
+            {
                 //Check if users count is less than the limit
                 if (data.Count <= 5)
-                    data = await GetUsersAsync(userId, true);
+                    data = await GetUsersAsync(userId, turnOffPersonalityFunc:turnOffPersonalityFunc, isRepeated: true);
 
-            await AddUserTrustProgressAsync(userId, 0.000003);
+                //Add user trust exp only if method was not repeated
+                await AddUserTrustProgressAsync(userId, 0.000003);
+
+                //Return users PERSONALITY usage property to normal (In case it was temporarily turned off)
+                if (turnOffPersonalityFunc)
+                {
+                    currentUser.UserPreferences.ShouldUsePersonalityFunc = true;
+                    await _contx.SaveChangesAsync();
+                }
+            }
+
 
             return data;
         }

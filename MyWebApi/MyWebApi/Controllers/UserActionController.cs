@@ -128,6 +128,12 @@ namespace MyWebApi.Controllers
             return await _repository.GetUsersAsync(userId);
         }
 
+        [HttpGet("/GetUserList/TurnOffP/{userId}")]
+        public async Task<List<User>> GetUserList2(long userId)
+        {
+            return await _repository.GetUsersAsync(userId, turnOffPersonalityFunc: true);
+        }
+
         [HttpGet("/GetFriends")]
         public async Task<IEnumerable<FriendModel>> GetFriendsList()
         {
