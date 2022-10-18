@@ -39,7 +39,7 @@ namespace MyWebApi.Interfaces
         Task<byte> UpdateUserPreferencesAsync(UserPreferences user);
         Task<byte> UpdateUserLocationAsync(Location location);
         Task<UserBaseInfo> GetUserBaseInfoAsync(long id);
-        Task<List<User>> GetUsersAsync(long userId);
+        Task<List<User>> GetUsersAsync(long userId, bool turnOffPersonalityFunc = false, bool isRepeated=false);
         Task<bool> CheckUserExists(long id);
         Task<int> GetUserAppLanguage(long id);
         Task<User> GetFriendInfoAsync(long id);
