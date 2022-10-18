@@ -15,6 +15,11 @@
         },
         "runtime": {
           "MyWebApi.dll": {}
+        },
+        "resources": {
+          "en/MyWebApi.resources.dll": {
+            "locale": "en"
+          }
         }
       },
       "Humanizer.Core/2.8.26": {

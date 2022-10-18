@@ -119,7 +119,8 @@ namespace MyWebApi.Repositories
                 .SingleOrDefaultAsync();
         }
 
-        public async Task<List<User>> GetUsersAsync(long userId)
+        //TODO: perhabs change the way the recursion based on isRepeated works
+        public async Task<List<User>> GetUsersAsync(long userId, bool turnOffPersonalityFunc = false, bool isRepeated=false)
         {
             var currentUser = await GetUserInfoAsync(userId);
             var currentUserEncounters = await GetUserEncounters(userId, (int)SystemEnums.Sections.Familiator); //I am not sure if it is 2 or 3 section
@@ -180,30 +181,196 @@ namespace MyWebApi.Repositories
             if (currentUser.UserPreferences.ShouldUsePersonalityFunc)
             {
                 //TODO: Change it for users with premium ?
-                var deviation = 15;
+                var deviation = 0.15;
+
+                //TODO: do not apply if users parameter percentage will be negative as the result
+                var minDeviation = 0.05;
+
+                if (isRepeated)
+                {
+                    deviation *= 2.3;
+                    minDeviation *= 2.3;
+                }
+
+                var userPoints = await _contx.USER_PERSONALITY_POINTS.Where(p => p.UserId == currentUser.UserId)
+                .SingleOrDefaultAsync();
+
+                var userStats = await _contx.USER_PERSONALITY_STATS.Where(s => s.UserId == currentUser.UserId)
+                .SingleOrDefaultAsync();
 
                 data.AsParallel().ForAll(async u =>
                 {
                     //TODO: Check if user uses personality functionality and remove him from the list if he does not
+                    if (!u.UserPreferences.ShouldUsePersonalityFunc)
+                        data.Remove(u);
 
-                    var userPoints = await _contx.USER_PERSONALITY_POINTS.Where(p => p.UserId == currentUser.UserId)
+                    var user2Points = await _contx.USER_PERSONALITY_POINTS.Where(p => p.UserId == u.UserId)
                     .SingleOrDefaultAsync();
 
-                    var user2Points = await _contx.USER_PERSONALITY_POINTS.Where(p => p.UserId == currentUser.UserId)
-                    .SingleOrDefaultAsync();
-
-                    var userStats = await _contx.USER_PERSONALITY_STATS.Where(s => s.UserId == currentUser.UserId)
-                    .SingleOrDefaultAsync();
-
-                    var user2Stats = await _contx.USER_PERSONALITY_STATS.Where(s => s.UserId == currentUser.UserId)
+                    var user2Stats = await _contx.USER_PERSONALITY_STATS.Where(s => s.UserId == u.UserId)
                     .SingleOrDefaultAsync();
 
                     //TODO: create its own deviation variable depending on the number of personalities (It is likely to be grater than the nornal one)
                     var personalitySim = await CalculateSimilarityAsync(userStats.Personality, user2Stats.Personality);
-                    
-                    //TODO: check other similarity and finish-up the search algorithm
+                    //Negative conditions are applied, cuz this is an exclussive condition
+                    if (personalitySim >= userPoints.PersonalityPercentage + deviation || personalitySim <= userPoints.PersonalityPercentage - minDeviation)
+                    {
+                        data.Remove(u);
+                        return; //Equivalent to continue; Cuz the body is just a function called for each item
+                    }
+
+                    if (personalitySim >= user2Points.PersonalityPercentage + deviation || personalitySim <= user2Points.PersonalityPercentage - minDeviation)
+                    {
+                        data.Remove(u);
+                        return; 
+                    }
+
+                    var emIntellectSim = await CalculateSimilarityAsync(userStats.EmotionalIntellect, user2Stats.EmotionalIntellect);
+                    if (emIntellectSim >= userPoints.EmotionalIntellectPercentage + deviation || emIntellectSim <= userPoints.EmotionalIntellectPercentage - minDeviation)
+                    {
+                        data.Remove(u);
+                        return;
+                    }
+
+                    if (emIntellectSim >= user2Points.EmotionalIntellectPercentage + deviation || emIntellectSim <= user2Points.EmotionalIntellectPercentage - minDeviation)
+                    {
+                        data.Remove(u);
+                        return;
+                    }
+
+                    var reliabilitySim = await CalculateSimilarityAsync(userStats.Reliability, user2Stats.Reliability);
+                    if (reliabilitySim >= userPoints.ReliabilityPercentage + deviation || reliabilitySim <= userPoints.ReliabilityPercentage - minDeviation)
+                    {
+                        data.Remove(u);
+                        return;
+                    }
+
+                    if (reliabilitySim >= user2Points.ReliabilityPercentage + deviation || reliabilitySim <= user2Points.ReliabilityPercentage - minDeviation)
+                    {
+                        data.Remove(u);
+                        return;
+                    }
+
+                    var compassionSim = await CalculateSimilarityAsync(userStats.Reliability, user2Stats.Reliability);
+                    if (compassionSim >= userPoints.CompassionPercentage + deviation || compassionSim <= userPoints.CompassionPercentage - minDeviation)
+                    {
+                        data.Remove(u);
+                        return;
+                    }
+
+                    if (compassionSim >= user2Points.CompassionPercentage + deviation || compassionSim <= user2Points.CompassionPercentage - minDeviation)
+                    {
+                        data.Remove(u);
+                        return;
+                    }
+
+                    var openMindSim = await CalculateSimilarityAsync(userStats.OpenMindedness, user2Stats.OpenMindedness);
+                    if (openMindSim >= userPoints.OpenMindednessPercentage + deviation || openMindSim <= userPoints.OpenMindednessPercentage - minDeviation)
+                    {
+                        data.Remove(u);
+                        return;
+                    }
+
+                    if (openMindSim >= user2Points.OpenMindednessPercentage + deviation || openMindSim <= user2Points.OpenMindednessPercentage - minDeviation)
+                    {
+                        data.Remove(u);
+                        return;
+                    }
+
+                    var agreeablenessSim = await CalculateSimilarityAsync(userStats.Agreeableness, user2Stats.Agreeableness);
+                    if (agreeablenessSim >= userPoints.AgreeablenessPercentage + deviation || agreeablenessSim <= userPoints.AgreeablenessPercentage - minDeviation)
+                    {
+                        data.Remove(u);
+                        return;
+                    }
+
+                    if (agreeablenessSim >= user2Points.AgreeablenessPercentage + deviation || agreeablenessSim <= user2Points.AgreeablenessPercentage - minDeviation)
+                    {
+                        data.Remove(u);
+                        return;
+                    }
+
+                    var selfAwerenessSim = await CalculateSimilarityAsync(userStats.SelfAwareness, user2Stats.SelfAwareness);
+                    if (selfAwerenessSim >= userPoints.AgreeablenessPercentage + deviation || selfAwerenessSim <= userPoints.AgreeablenessPercentage - minDeviation)
+                    {
+                        data.Remove(u);
+                        return;
+                    }
+
+                    if (selfAwerenessSim >= user2Points.AgreeablenessPercentage + deviation || selfAwerenessSim <= user2Points.AgreeablenessPercentage - minDeviation)
+                    {
+                        data.Remove(u);
+                        return;
+                    }
+
+                    var levelOfSense = await CalculateSimilarityAsync(userStats.LevelOfSense, user2Stats.LevelOfSense);
+                    if (levelOfSense >= userPoints.LevelOfSensePercentage + deviation || levelOfSense <= userPoints.LevelOfSensePercentage - minDeviation)
+                    {
+                        data.Remove(u);
+                        return;
+                    }
+
+                    if (levelOfSense >= user2Points.LevelOfSensePercentage + deviation || levelOfSense <= user2Points.LevelOfSensePercentage - minDeviation)
+                    {
+                        data.Remove(u);
+                        return;
+                    }
+
+                    var intellectSim = await CalculateSimilarityAsync(userStats.Intellect, user2Points.Intellect);
+                    if (intellectSim >= userPoints.IntellectPercentage + deviation || intellectSim <= userPoints.IntellectPercentage - minDeviation)
+                    {
+                        data.Remove(u);
+                        return;
+                    }
+
+                    if (intellectSim >= user2Points.IntellectPercentage + deviation || intellectSim <= user2Points.IntellectPercentage - minDeviation)
+                    {
+                        data.Remove(u);
+                        return;
+                    }
+
+                    var natureSim = await CalculateSimilarityAsync(userStats.Nature, user2Stats.Nature);
+                    if (natureSim >= userPoints.Nature + deviation || natureSim <= userPoints.Nature - minDeviation)
+                    {
+                        data.Remove(u);
+                        return;
+                    }
+
+                    if (natureSim >= user2Points.NaturePercentage + deviation || natureSim <= user2Points.NaturePercentage - minDeviation)
+                    {
+                        data.Remove(u);
+                        return;
+                    }
+
+                    var creativitySim = await CalculateSimilarityAsync(userStats.Creativity, user2Stats.Creativity);
+                    if (creativitySim >= userPoints.CreativityPercentage + deviation || creativitySim <= userPoints.CreativityPercentage - minDeviation)
+                    {
+                        data.Remove(u);
+                        return;
+                    }
+
+                    if (creativitySim >= user2Points.CreativityPercentage + deviation || creativitySim <= user2Points.CreativityPercentage - minDeviation)
+                    {
+                        data.Remove(u);
+                        return;
+                    }
                 });
             }
+            else
+            {
+                //Remove users using PERSONALITY fucntionality
+                data.AsParallel().ForAll(u =>
+                {
+                    if (u.UserPreferences.ShouldUsePersonalityFunc)
+                        data.Remove(u);
+                });
+            }
+
+            //Check if method wasnt already repeated
+            if (!isRepeated)
+                //Check if users count is less than the limit
+                if (data.Count <= 5)
+                    data = await GetUsersAsync(userId, true);
 
             await AddUserTrustProgressAsync(userId, 0.000003);
 
