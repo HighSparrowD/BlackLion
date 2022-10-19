@@ -528,6 +528,12 @@ namespace MyWebApi.Controllers
             return await _repository.GetInvitationCredentialsByUserIdAsync(userId);
         }
 
+        [HttpGet("/GetQRCode/{data}/{userId}")]
+        public async Task<string> GetQRCode(string data, long userId)
+        {
+            return await _repository.GetQRCode(data, userId);
+        }
+
         [HttpGet("/InviteUser/{invitationId}/{userId}")]
         public async Task<bool> InviteUser(Guid invitationId, long userId)
         {

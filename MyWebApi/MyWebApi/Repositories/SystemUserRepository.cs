@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http;
+using Microsoft.EntityFrameworkCore;
 using MyWebApi.Data;
 using MyWebApi.Entities.AchievementEntities;
 using MyWebApi.Entities.DailyTaskEntities;
@@ -12,9 +13,13 @@ using MyWebApi.Enums;
 using MyWebApi.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Net;
+using System.Text;
 using System.Threading.Tasks;
 using static MyWebApi.Enums.SystemEnums;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace MyWebApi.Repositories
 {
@@ -1605,7 +1610,6 @@ namespace MyWebApi.Repositories
                     Id = id,
                     UserId = userId,
                     Link = linkBase + id,
-                    //TODO: Generate QR code via an external (or internal) service
                 };
 
                 await _contx.USER_INVITATION_CREDENTIALS.AddAsync(invitationCreds);
@@ -1613,6 +1617,47 @@ namespace MyWebApi.Repositories
             }
 
             return invitationCreds;
+        }
+
+        //Generate QR code on user request 
+        //TODO: Generate QR code with a proper link
+        public async Task<string> GetQRCode(string link, long userId)
+        {
+            string data;
+            var apiBase = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=";
+            var request = WebRequest.Create(apiBase + link);
+            request.Method = "GET";
+
+
+            var creds = await _contx.USER_INVITATION_CREDENTIALS.Where(c => c.UserId == userId)
+                .SingleOrDefaultAsync();
+
+            if (creds != null)
+            {
+                if (creds.QRCode != null)
+                    return creds.QRCode;
+
+                var response = await request.GetResponseAsync();
+
+                using (var stream = response.GetResponseStream())
+                {
+                    using (var streamReader = new StreamReader(stream, Encoding.ASCII))
+                    {
+                        data = await streamReader.ReadToEndAsync();
+                        var bytes = Encoding.Unicode.GetBytes(data);
+                        data = Convert.ToBase64String(bytes);
+
+                        creds.QRCode = data;
+                        await _contx.SaveChangesAsync(); // TODO: delete after debbuging. Another method should save it
+                    }
+                }
+
+                return data;
+            }
+
+            //If credentials do not exist. Create them and try generationg QrCode again
+            await GenerateInvitationCredentialsAsync(userId);
+            return await GetQRCode(link, userId);
         }
 
         public async Task<InvitationCredentials> GetInvitationCredentialsByUserIdAsync(long userId)
