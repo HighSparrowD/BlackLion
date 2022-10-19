@@ -94,6 +94,7 @@ namespace MyWebApi.Interfaces
         Task<short> GetUserBonusIndex(long userId);
         Task<InvitationCredentials> GenerateInvitationCredentialsAsync(long userId);
         Task<InvitationCredentials> GetInvitationCredentialsByUserIdAsync(long userId);
+        Task<string> GetQRCode(string link, long userId);
         Task<string> GetUserInvitationLinkAsync(long userId);
         Task<string> GetUserInvitationQRCodeAsync(long userId);
         Task<bool> InviteUserAsync(Guid invitationId, long userId);
