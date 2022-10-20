@@ -70,6 +70,7 @@ namespace MyWebApi.Data
         public DbSet<UserDailyTask> USER_DAILY_TASKS { get; set; }
         public DbSet<UserPersonalityStats> USER_PERSONALITY_STATS { get; set; }
         public DbSet<UserPersonalityPoints> USER_PERSONALITY_POINTS { get; set; }
+        public DbSet<TestPayload> USER_TESTS_RESULTS { get; set; }
 
 
 
@@ -115,6 +116,8 @@ namespace MyWebApi.Data
             builder.Entity<CommunicationPreference>().HasKey(g => new { g.Id, g.ClassLocalisationId });
             builder.Entity<DailyTask>().HasKey(t => new { t.Id, t.ClassLocalisationId });
             builder.Entity<UserDailyTask>().HasKey(t => new { t.UserId, t.DailyTaskId });
+
+            builder.Entity<TestPayload>().HasKey(p => new { p.UserId, p.TestId });
 
             builder.Entity<Ad>();
 

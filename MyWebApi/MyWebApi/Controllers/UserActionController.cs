@@ -15,6 +15,7 @@ using MyWebApi.Entities.AchievementEntities;
 using MyWebApi.Entities.UserActionEntities;
 using MyWebApi.Entities.SponsorEntities;
 using MyWebApi.Entities.DailyTaskEntities;
+using MyWebApi.Entities.TestEntities;
 
 namespace MyWebApi.Controllers
 {
@@ -642,8 +643,8 @@ namespace MyWebApi.Controllers
             return await _repository.GetUserPersonalityPointsAmount(userId);
         }
 
-        [HttpGet("/UpdateUserPersonalityStats")]
-        public async Task<bool> UpdateUserPersonalityStats(UpdateUserPersonalityStats model)
+        [HttpPost("/UpdateUserPersonalityStats")]
+        public async Task<bool> UpdateUserPersonalityStats(TestPayload model)
         {
             return await _repository.UpdateUserPersonalityStats(model);
         }

@@ -7,6 +7,7 @@ using MyWebApi.Entities.LocationEntities;
 using MyWebApi.Entities.ReasonEntities;
 using MyWebApi.Entities.ReportEntities;
 using MyWebApi.Entities.SponsorEntities;
+using MyWebApi.Entities.TestEntities;
 using MyWebApi.Entities.UserActionEntities;
 using MyWebApi.Entities.UserInfoEntities;
 using MyWebApi.Enums;
@@ -2118,11 +2119,14 @@ namespace MyWebApi.Repositories
         }
 
         //Is used when user has passed some tests
-        public async Task<bool> UpdateUserPersonalityStats(UpdateUserPersonalityStats model)
+        public async Task<bool> UpdateUserPersonalityStats(TestPayload model)
         {
             try
             {
-                //TODO: That method does nothing for now
+                //Breake if test result wasnt saved
+                if (!await RegisterTestPassingAsync(model))
+                    return false;
+
                 var userStats = await RecalculateUserStats(model);
                 _contx.USER_PERSONALITY_STATS.Update(userStats);
                 await _contx.SaveChangesAsync();
@@ -2136,8 +2140,8 @@ namespace MyWebApi.Repositories
             try
             {
                 model = await RecalculateSimilarityPercentage(model);
-                //_contx.Update(model);
-                //await _contx.SaveChangesAsync();
+                _contx.Update(model);
+                await _contx.SaveChangesAsync();
 
                 return model;
             }
@@ -2186,16 +2190,40 @@ namespace MyWebApi.Repositories
             catch { return null; }
         }
 
-        //TODO: Come up with a method of calculating user stats
-        private async Task<UserPersonalityStats> RecalculateUserStats(UpdateUserPersonalityStats model)
+        private async Task<UserPersonalityStats> RecalculateUserStats(TestPayload model)
         {
-            //TODO: Take user stats from DB
+            var devider = 1;
+            var userStats = await _contx.USER_PERSONALITY_STATS.Where(s => s.UserId == model.UserId)
+                .SingleOrDefaultAsync();
 
-            //TODO: Recalculate them using passed-in model
+            //If user have passed some test before - set the devider to 2, to find an average value
+            if ((await _contx.USER_TESTS_RESULTS.Where(r => r.UserId == model.UserId).ToListAsync()).Count > 1)
+                devider = 2;
 
-            //TODO: Update model in DB and save context changes
-            await Task.Delay(1);
-            return new UserPersonalityStats(0);
+            if (model.Personality != 0)
+                userStats.Personality = (userStats.Personality + model.Personality) / devider;
+            if (model.EmotionalIntellect != 0)
+                userStats.EmotionalIntellect = (userStats.EmotionalIntellect + model.EmotionalIntellect) / devider;
+            if (model.Reliability != 0)
+                userStats.Reliability = (userStats.Reliability + model.Reliability) / devider;
+            if (model.Compassion != 0)
+                userStats.Compassion = (userStats.Compassion + model.Compassion) / devider;
+            if (model.OpenMindedness != 0)
+                userStats.OpenMindedness = (userStats.OpenMindedness + model.OpenMindedness) / devider;
+            if (model.Agreeableness != 0)
+                userStats.Agreeableness = (userStats.Agreeableness + model.Agreeableness) / devider;
+            if (model.SelfAwareness != 0)
+                userStats.SelfAwareness = (userStats.SelfAwareness + model.SelfAwareness) / devider;
+            if (model.LevelOfSense != 0)
+                userStats.LevelOfSense = (userStats.LevelOfSense + model.LevelOfSense) / devider;
+            if (model.Intellect != 0)
+                userStats.Intellect = (userStats.Intellect + model.Intellect) / devider;
+            if (model.Nature != 0)
+                userStats.Nature = (userStats.Nature + model.Nature) / devider;
+            if (model.Creativity != 0)
+                userStats.Creativity = (userStats.Creativity + model.Creativity) / devider;
+
+            return userStats;
         }
 
         private async Task<double> CalculateSimilarityPreferences(int points, double similarityCoefficient)
@@ -2258,6 +2286,19 @@ namespace MyWebApi.Repositories
                 return userPrefs.ShouldUsePersonalityFunc;
             }
             catch { throw new NullReferenceException($"User {userId} does not exist !"); }
+        }
+
+        public async Task<bool> RegisterTestPassingAsync(TestPayload model)
+        {
+            try
+            {
+                await _contx.USER_TESTS_RESULTS.AddAsync(model);
+                await _contx.SaveChangesAsync();
+
+                return true;
+            }
+            catch { return false; }
+
         }
     }
 }

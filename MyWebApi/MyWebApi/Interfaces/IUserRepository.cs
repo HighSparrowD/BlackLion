@@ -12,6 +12,7 @@ using MyWebApi.Entities.SponsorEntities;
 using MyWebApi.Entities.DailyTaskEntities;
 using MyWebApi.Enums;
 using static MyWebApi.Enums.SystemEnums;
+using MyWebApi.Entities.TestEntities;
 
 namespace MyWebApi.Interfaces
 {
@@ -122,10 +123,11 @@ namespace MyWebApi.Interfaces
         Task<int> GetUserMaximumLanguageCountAsync(long userId);
         int GetMaximumLanguageCount(bool? hasPremium);
         Task<int> GetUserPersonalityPointsAmount(long userId);
-        Task<bool> UpdateUserPersonalityStats(UpdateUserPersonalityStats model);
+        Task<bool> UpdateUserPersonalityStats(TestPayload model);
         Task<UserPersonalityPoints> UpdateUserPersonalityPoints(UserPersonalityPoints model);
         Task<UserPersonalityStats> GetUserPersonalityStats(long userId);
         Task<UserPersonalityPoints> GetUserPersonalityPoints(long userId);
         Task<bool> SwitchPersonalityUsage(long userId);
+        Task<bool> RegisterTestPassingAsync(TestPayload model);
     }
 }
