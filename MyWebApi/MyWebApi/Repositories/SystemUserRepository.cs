@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http;
+﻿using Microsoft.AspNetCore.Server.IIS.Core;
+using Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http;
 using Microsoft.EntityFrameworkCore;
 using MyWebApi.Data;
 using MyWebApi.Entities.AchievementEntities;
@@ -1629,7 +1630,7 @@ namespace MyWebApi.Repositories
 
             var generator = new QRCodeGenerator();
             var d = generator.CreateQrCode(link, QRCodeGenerator.ECCLevel.Q);
-            var code = new PngByteQRCode(d).GetGraphic(30);
+            var code = new PngByteQRCode(d).GetGraphic(15);
 
             var creds = await _contx.USER_INVITATION_CREDENTIALS.Where(c => c.UserId == userId)
                 .SingleOrDefaultAsync();
@@ -1642,14 +1643,18 @@ namespace MyWebApi.Repositories
                 data = Convert.ToBase64String(code);
 
                 creds.QRCode = data;
-                await _contx.SaveChangesAsync(); // TODO: delete after debbuging. Another method should save it
+                await _contx.SaveChangesAsync();
 
                 return data;
             }
 
             //If credentials do not exist. Create them and try generationg QrCode again
-            await GenerateInvitationCredentialsAsync(userId);
-            return await GetQRCode(link, userId);
+            if(await CheckUserIsRegistered(userId))
+            {
+                await GenerateInvitationCredentialsAsync(userId);
+                return await GetQRCode(link, userId);
+            }
+            return "";
         }
 
         public async Task<InvitationCredentials> GetInvitationCredentialsByUserIdAsync(long userId)
