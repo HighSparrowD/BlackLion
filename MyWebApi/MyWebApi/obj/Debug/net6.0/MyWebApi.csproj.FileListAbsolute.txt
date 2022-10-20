@@ -208,3 +208,4 @@ C:\Git\BlackLion\MyWebApi\MyWebApi\bin\Debug\net6.0\en\MyWebApi.resources.dll
 C:\Git\BlackLion\MyWebApi\MyWebApi\obj\Debug\net6.0\MyWebApi.Resources.localisation.en.resources
 C:\Git\BlackLion\MyWebApi\MyWebApi\obj\Debug\net6.0\MyWebApi.csproj.GenerateResource.cache
 C:\Git\BlackLion\MyWebApi\MyWebApi\obj\Debug\net6.0\en\MyWebApi.resources.dll
+C:\Git\BlackLion\MyWebApi\MyWebApi\bin\Debug\net6.0\QRCoder.dll

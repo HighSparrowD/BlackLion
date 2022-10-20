@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "5RrQCMbMnril1eY5CZsssQTox4080BDzrVk8TYwDOO88ggagMonmiZlCCXK17OFV3YYE4uGESl70SH4udqwvHA==",
+  "dgSpecHash": "Zvb7An0Z5Ta+634Ey/H1nZFkQdM8QDkJ2xqpLalMfvVQzmGk3wJNscIUyl+DxL9Z5JYxsmO8aOHiNuz+pu+g/g==",
   "success": true,
   "projectFilePath": "C:\\Git\\BlackLion\\MyWebApi\\MyWebApi\\MyWebApi.csproj",
   "expectedPackageFiles": [
@@ -25,6 +25,7 @@
     "C:\\Users\\crazy\\.nuget\\packages\\microsoft.openapi\\1.2.3\\microsoft.openapi.1.2.3.nupkg.sha512",
     "C:\\Users\\crazy\\.nuget\\packages\\npgsql\\6.0.7\\npgsql.6.0.7.nupkg.sha512",
     "C:\\Users\\crazy\\.nuget\\packages\\npgsql.entityframeworkcore.postgresql\\6.0.7\\npgsql.entityframeworkcore.postgresql.6.0.7.nupkg.sha512",
+    "C:\\Users\\crazy\\.nuget\\packages\\qrcoder\\1.4.3\\qrcoder.1.4.3.nupkg.sha512",
     "C:\\Users\\crazy\\.nuget\\packages\\swashbuckle.aspnetcore\\6.4.0\\swashbuckle.aspnetcore.6.4.0.nupkg.sha512",
     "C:\\Users\\crazy\\.nuget\\packages\\swashbuckle.aspnetcore.swagger\\6.4.0\\swashbuckle.aspnetcore.swagger.6.4.0.nupkg.sha512",
     "C:\\Users\\crazy\\.nuget\\packages\\swashbuckle.aspnetcore.swaggergen\\6.4.0\\swashbuckle.aspnetcore.swaggergen.6.4.0.nupkg.sha512",

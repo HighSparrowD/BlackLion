@@ -12,6 +12,7 @@ using MyWebApi.Entities.UserActionEntities;
 using MyWebApi.Entities.UserInfoEntities;
 using MyWebApi.Enums;
 using MyWebApi.Interfaces;
+using QRCoder;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -1625,10 +1626,10 @@ namespace MyWebApi.Repositories
         public async Task<string> GetQRCode(string link, long userId)
         {
             string data;
-            var apiBase = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=";
-            var request = WebRequest.Create(apiBase + link);
-            request.Method = "GET";
 
+            var generator = new QRCodeGenerator();
+            var d = generator.CreateQrCode(link, QRCodeGenerator.ECCLevel.Q);
+            var code = new PngByteQRCode(d).GetGraphic(30);
 
             var creds = await _contx.USER_INVITATION_CREDENTIALS.Where(c => c.UserId == userId)
                 .SingleOrDefaultAsync();
@@ -1638,20 +1639,10 @@ namespace MyWebApi.Repositories
                 if (creds.QRCode != null)
                     return creds.QRCode;
 
-                var response = await request.GetResponseAsync();
+                data = Convert.ToBase64String(code);
 
-                using (var stream = response.GetResponseStream())
-                {
-                    using (var streamReader = new StreamReader(stream, Encoding.ASCII))
-                    {
-                        data = await streamReader.ReadToEndAsync();
-                        var bytes = Encoding.Unicode.GetBytes(data);
-                        data = Convert.ToBase64String(bytes);
-
-                        creds.QRCode = data;
-                        await _contx.SaveChangesAsync(); // TODO: delete after debbuging. Another method should save it
-                    }
-                }
+                creds.QRCode = data;
+                await _contx.SaveChangesAsync(); // TODO: delete after debbuging. Another method should save it
 
                 return data;
             }
