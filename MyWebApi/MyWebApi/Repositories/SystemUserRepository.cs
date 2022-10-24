@@ -78,7 +78,27 @@ namespace MyWebApi.Repositories
             if(invitation != null)
             {
                 var invitor = invitation.InvitorCredentials.Invitor;
-                model.BonusIndex = 2;
+                invitor.InvitedUsersCount++;
+
+                if (invitor.InvitedUsersCount == 3)
+                {
+                    invitor.InvitedUsersBonus = 0.25;
+                    await TopUpUserWalletPointsBalance(invitor.UserId, 1199, $"User {model.UserId} has invited 3 users");
+                }
+                else if (invitor.InvitedUsersCount == 7)
+                {
+                    invitor.InvitedUsersBonus = 0.45;
+                    await TopUpUserWalletPointsBalance(invitor.UserId, 1499, $"User {model.UserId} has invited 7 users");
+                }
+                else if (invitor.InvitedUsersBonus == 10)
+                {
+                    invitor.InvitedUsersBonus = 0.7;
+                    await TopUpUserWalletPointsBalance(invitor.UserId, 1999, $"User {model.UserId} has invited 10 users");
+                    //TODO: apply effect later
+                    await GrantPremiumToUser(model.UserId, 0, 30);
+                }
+
+                model.BonusIndex = 1.5;
                 model.ParentId = invitor.UserId;
 
                 _contx.SYSTEM_USERS.Update(model);
@@ -127,9 +147,10 @@ namespace MyWebApi.Repositories
                 .SingleOrDefaultAsync();
         }
 
-        //TODO: perhabs change the way the recursion based on isRepeated works
         public async Task<List<User>> GetUsersAsync(long userId, bool turnOffPersonalityFunc = false, bool isRepeated=false)
         {
+            const byte miminalProfileCount = 5;
+
             var currentUser = await GetUserInfoAsync(userId);
             var currentUserEncounters = await GetUserEncounters(userId, (int)SystemEnums.Sections.Familiator); //I am not sure if it is 2 or 3 section
 
@@ -201,8 +222,8 @@ namespace MyWebApi.Repositories
 
                 if (isRepeated)
                 {
-                    deviation *= 2.3;
-                    minDeviation *= 2.3;
+                    deviation *= 1.5;
+                    minDeviation *= 3.2;
                 }
 
                 var userPoints = await _contx.USER_PERSONALITY_POINTS.Where(p => p.UserId == currentUser.UserId)
@@ -385,7 +406,7 @@ namespace MyWebApi.Repositories
             if (!isRepeated)
             {
                 //Check if users count is less than the limit
-                if (data.Count <= 5)
+                if (data.Count <= miminalProfileCount)
                     data = await GetUsersAsync(userId, turnOffPersonalityFunc:turnOffPersonalityFunc, isRepeated: true);
 
                 //Add user trust exp only if method was not repeated
@@ -406,6 +427,16 @@ namespace MyWebApi.Repositories
             data.OrderByDescending(u => u.UserDataInfo.Location.CityId == currentUser.UserDataInfo.Location.CityId)
                 .ToList();
 
+
+            if (currentUser.ProfileViewsCount + data.Count >= 15 && currentUser.ProfileViewsCount < 15)
+                await TopUpUserWalletPointsBalance(currentUser.UserId, 9, "User has viewed 15 profiles");
+            if(currentUser.ProfileViewsCount >= 30 && currentUser.ProfileViewsCount < 30)
+                await TopUpUserWalletPointsBalance(currentUser.UserId, 15, "User has viewed 30 profiles");
+            if (currentUser.ProfileViewsCount >= 50 && currentUser.ProfileViewsCount < 50)
+                await TopUpUserWalletPointsBalance(currentUser.UserId, 22, "User has viewed 50 profiles");
+
+            currentUser.ProfileViewsCount += data.Count;
+            await _contx.SaveChangesAsync();
             return data;
         }
 
@@ -1020,8 +1051,13 @@ namespace MyWebApi.Repositories
 
             var userParentId = (await _contx.SYSTEM_USERS.FindAsync(userId)).ParentId;
 
-            if (userParentId != null && userParentId > 0)
-                await TopUpUserWalletPointsBalance((long)userParentId, 1, $"Referential reward for user's {userParentId} action");
+            if (points > 0 && userParentId != null && userParentId > 0)
+            {
+                var parent = await GetUserInfoAsync((long)userParentId);
+
+                if (parent != null && parent.InvitedUsersBonus != null)
+                    await TopUpUserWalletPointsBalance((long)userParentId, (int)(points * parent.InvitedUsersBonus), $"Referential reward for users {userId} action");
+            }
 
             await _contx.SaveChangesAsync();
             await RegisterUserWalletPurchaseInPoints(userId, points, description); //Registers info about amount of points decremented / incremented
