@@ -406,6 +406,16 @@ namespace MyWebApi.Repositories
             data.OrderByDescending(u => u.UserDataInfo.Location.CityId == currentUser.UserDataInfo.Location.CityId)
                 .ToList();
 
+
+            if (currentUser.ProfileViewsCount + data.Count >= 15 && currentUser.ProfileViewsCount < 15)
+                await TopUpUserWalletPointsBalance(currentUser.UserId, 9, "User has viewed 15 profiles");
+            if(currentUser.ProfileViewsCount >= 30 && currentUser.ProfileViewsCount < 30)
+                await TopUpUserWalletPointsBalance(currentUser.UserId, 15, "User has viewed 30 profiles");
+            if (currentUser.ProfileViewsCount >= 50 && currentUser.ProfileViewsCount < 50)
+                await TopUpUserWalletPointsBalance(currentUser.UserId, 22, "User has viewed 50 profiles");
+
+            currentUser.ProfileViewsCount += data.Count;
+            await _contx.SaveChangesAsync();
             return data;
         }
 
