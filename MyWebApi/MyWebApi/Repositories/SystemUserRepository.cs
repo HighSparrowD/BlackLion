@@ -78,6 +78,26 @@ namespace MyWebApi.Repositories
             if(invitation != null)
             {
                 var invitor = invitation.InvitorCredentials.Invitor;
+                invitor.InvitedUsersCount++;
+
+                if (invitor.InvitedUsersCount == 3)
+                {
+                    invitor.InvitedUsersBonus = 0.25;
+                    await TopUpUserWalletPointsBalance(invitor.UserId, 1199, $"User {model.UserId} has invited 3 users");
+                }
+                else if (invitor.InvitedUsersCount == 7)
+                {
+                    invitor.InvitedUsersBonus = 0.45;
+                    await TopUpUserWalletPointsBalance(invitor.UserId, 1499, $"User {model.UserId} has invited 7 users");
+                }
+                else if (invitor.InvitedUsersBonus == 10)
+                {
+                    invitor.InvitedUsersBonus = 0.7;
+                    await TopUpUserWalletPointsBalance(invitor.UserId, 1999, $"User {model.UserId} has invited 10 users");
+                    //TODO: apply effect later
+                    await GrantPremiumToUser(model.UserId, 0, 30);
+                }
+
                 model.BonusIndex = 1.5;
                 model.ParentId = invitor.UserId;
 
@@ -1031,8 +1051,13 @@ namespace MyWebApi.Repositories
 
             var userParentId = (await _contx.SYSTEM_USERS.FindAsync(userId)).ParentId;
 
-            if (userParentId != null && userParentId > 0)
-                await TopUpUserWalletPointsBalance((long)userParentId, 1, $"Referential reward for user's {userParentId} action");
+            if (points > 0 && userParentId != null && userParentId > 0)
+            {
+                var parent = await GetUserInfoAsync((long)userParentId);
+
+                if (parent != null && parent.InvitedUsersBonus != null)
+                    await TopUpUserWalletPointsBalance((long)userParentId, (int)(points * parent.InvitedUsersBonus), $"Referential reward for users {userId} action");
+            }
 
             await _contx.SaveChangesAsync();
             await RegisterUserWalletPurchaseInPoints(userId, points, description); //Registers info about amount of points decremented / incremented

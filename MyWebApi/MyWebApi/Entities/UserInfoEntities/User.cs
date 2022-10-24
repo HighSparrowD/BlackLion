@@ -23,6 +23,8 @@ namespace MyWebApi.Entities.UserInfoEntities
         public bool? HadReceivedReward { get; set; }
         public short? DailyRewardPoint { get; set; }
         public double? BonusIndex { get; set; }
+        public int? InvitedUsersCount { get; set; }
+        public double? InvitedUsersBonus { get; set; }
         public string? Nickname { get; set; }
         public long? ParentId { get; set; }
         public int? ProfileViewsCount { get; set; }
