@@ -78,7 +78,7 @@ namespace MyWebApi.Repositories
             if(invitation != null)
             {
                 var invitor = invitation.InvitorCredentials.Invitor;
-                model.BonusIndex = 2;
+                model.BonusIndex = 1.5;
                 model.ParentId = invitor.UserId;
 
                 _contx.SYSTEM_USERS.Update(model);
@@ -202,8 +202,8 @@ namespace MyWebApi.Repositories
 
                 if (isRepeated)
                 {
-                    deviation *= 2.3;
-                    minDeviation *= 2.3;
+                    deviation *= 1.5;
+                    minDeviation *= 3.2;
                 }
 
                 var userPoints = await _contx.USER_PERSONALITY_POINTS.Where(p => p.UserId == currentUser.UserId)
