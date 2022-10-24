@@ -127,9 +127,10 @@ namespace MyWebApi.Repositories
                 .SingleOrDefaultAsync();
         }
 
-        //TODO: perhabs change the way the recursion based on isRepeated works
         public async Task<List<User>> GetUsersAsync(long userId, bool turnOffPersonalityFunc = false, bool isRepeated=false)
         {
+            const byte miminalProfileCount = 5;
+
             var currentUser = await GetUserInfoAsync(userId);
             var currentUserEncounters = await GetUserEncounters(userId, (int)SystemEnums.Sections.Familiator); //I am not sure if it is 2 or 3 section
 
@@ -385,7 +386,7 @@ namespace MyWebApi.Repositories
             if (!isRepeated)
             {
                 //Check if users count is less than the limit
-                if (data.Count <= 5)
+                if (data.Count <= miminalProfileCount)
                     data = await GetUsersAsync(userId, turnOffPersonalityFunc:turnOffPersonalityFunc, isRepeated: true);
 
                 //Add user trust exp only if method was not repeated
