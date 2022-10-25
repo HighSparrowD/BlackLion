@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using MyWebApi.Data;
 using MyWebApi.Entities.AchievementEntities;
+using MyWebApi.Entities.DailyTaskEntities;
 using MyWebApi.Entities.LocationEntities;
 using MyWebApi.Entities.ReasonEntities;
 using MyWebApi.Entities.ReportEntities;
@@ -253,6 +254,19 @@ namespace MyWebApi.Repositories
             {
                 await _contx.SYSTEM_ACHIEVEMENTS.AddRangeAsync(achievements);
                 await _contx.SaveChangesAsync();
+                return 1;
+            }
+            catch { return 0; }
+        }
+
+        public async Task<byte> AddDailyTaskAsync(DailyTask model)
+        {
+            try
+            {
+                model.Id = (await _contx.DAILY_TASKS.CountAsync()) + 1;
+                await _contx.DAILY_TASKS.AddAsync(model);
+                await _contx.SaveChangesAsync();
+
                 return 1;
             }
             catch { return 0; }

@@ -5,6 +5,7 @@ using MyWebApi.Entities.ReportEntities;
 using MyWebApi.Entities.ReasonEntities;
 using MyWebApi.Entities.LocationEntities;
 using MyWebApi.Entities.AchievementEntities;
+using MyWebApi.Entities.DailyTaskEntities;
 
 namespace MyWebApi.Interfaces
 {
@@ -22,5 +23,6 @@ namespace MyWebApi.Interfaces
         Task<int> DeleteAllUsers ();
         Task<byte> UploadAchievements(List<Achievement> achievements);
         Task<byte> AddNewAchievements(List<Achievement> achievements);
+        Task<byte> AddDailyTaskAsync(DailyTask model);
     }
 }

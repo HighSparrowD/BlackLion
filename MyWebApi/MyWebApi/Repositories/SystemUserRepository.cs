@@ -1621,7 +1621,7 @@ namespace MyWebApi.Repositories
 
             if (user != null)
             {
-                return !(bool)user.HadReceivedReward && user.DailyRewardPoint < 30 && user.DailyRewardPoint > 0;
+                return !user.HadReceivedReward && user.DailyRewardPoint < 30 && user.DailyRewardPoint > 0;
             }
 
             return false;
