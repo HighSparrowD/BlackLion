@@ -93,9 +93,10 @@ namespace MyWebApi.Repositories
                 else if (invitor.InvitedUsersBonus == 10)
                 {
                     invitor.InvitedUsersBonus = 0.7;
-                    await TopUpUserWalletPointsBalance(invitor.UserId, 1999, $"User {model.UserId} has invited 10 users");
+                    // 1499 will then turn into 1999 due to premium purchase reward
+                    await TopUpUserWalletPointsBalance(invitor.UserId, 1499, $"User {model.UserId} has invited 10 users");
                     //TODO: apply effect later
-                    await GrantPremiumToUser(model.UserId, 0, 30);
+                    await GrantPremiumToUser(model.UserId, 0, 30, (short)Currencies.Points);
                 }
 
                 model.BonusIndex = 1.5;
@@ -1163,7 +1164,7 @@ namespace MyWebApi.Repositories
                 return DateTime.MinValue;
         }
 
-        public async Task<DateTime> GrantPremiumToUser(long userId, int cost, int dayDuration)
+        public async Task<DateTime> GrantPremiumToUser(long userId, int cost, int dayDuration, short currency)
         {
             var timeNow = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
             var premiumFutureExpirationDate = DateTime.SpecifyKind(DateTime.Now.AddDays(dayDuration), DateTimeKind.Utc); //TODO: Possible feature: Countdown starts from 00:00 at the next day of purchase
@@ -1174,7 +1175,16 @@ namespace MyWebApi.Repositories
 
             user.HasPremium = true;
             user.BonusIndex = 2;
-            await TopUpUserWalletPointsBalance(userId, -cost, $"Purchase premium for {dayDuration} days");
+
+            //If transaction was made for points
+            if (currency == (short)Currencies.Points)
+                await TopUpUserWalletPointsBalance(userId, -cost, $"Purchase premium for {dayDuration} days");
+            //If transaction was made for real money
+            else if (currency == (short)Currencies.RealMoney)
+                await RegisterUserWalletPurchaseInRealMoney(userId, cost, $"Purchase premium for {dayDuration} days");
+
+            //Reward for premium purchase
+            await TopUpUserWalletPointsBalance(userId, 500);
 
             if (user.PremiumExpirationDate < timeNow || user.PremiumExpirationDate == null)
                 user.PremiumExpirationDate = premiumFutureExpirationDate;

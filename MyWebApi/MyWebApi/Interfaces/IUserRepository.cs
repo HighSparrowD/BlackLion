@@ -81,7 +81,7 @@ namespace MyWebApi.Interfaces
         Task<bool> CheckUserHasPremium(long userId);
         Task<bool> CheckBalanceIsSufficient(long userId, int cost);
         Task<DateTime> GetPremiumExpirationDate(long userId);
-        Task<DateTime> GrantPremiumToUser(long userId, int cost, int dayDuration);
+        Task<DateTime> GrantPremiumToUser(long userId, int cost, int dayDuration, short currency);
         Task<long> RegisterUserEncounter(Encounter model);
         Task<Encounter> GetUserEncounter(long userId, long encounterId, int sectionId);
         Task<List<Encounter>> GetUserEncounters(long userId, int sectionId);
