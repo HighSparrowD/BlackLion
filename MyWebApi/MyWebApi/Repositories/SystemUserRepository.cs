@@ -159,16 +159,17 @@ namespace MyWebApi.Repositories
                 currentUser.UserPreferences.ShouldUsePersonalityFunc = false;
 
             var data = await _contx.SYSTEM_USERS
+                .Where(u => u.UserId != currentUser.UserId)
                 .Where(u => u.UserDataInfo.ReasonId == currentUser.UserDataInfo.ReasonId)
                 .Where(u => u.UserPreferences.CommunicationPrefs == currentUser.UserPreferences.CommunicationPrefs)
                 .Where(u => u.UserPreferences.AgePrefs.Contains(currentUser.UserDataInfo.UserAge))
                 .Where(u => u.UserPreferences.UserLocationPreferences.Contains(currentUser.UserDataInfo.Location.CountryId))
-                .Where(u => u.UserPreferences.UserGenderPrefs == currentUser.UserDataInfo.UserGender)
+                //Check if users gender preferences correspond to current user gender prefs or are equal to 'Does not matter'
+                .Where(u => u.UserPreferences.UserGenderPrefs == currentUser.UserDataInfo.UserGender || u.UserPreferences.UserGenderPrefs == 2)
                 .Where(u => u.UserDataInfo.UserLanguages.Any(l => currentUser.UserPreferences.UserLanguagePreferences.Contains(l)))
                 .Where(u => currentUser.UserPreferences.AgePrefs.Contains(u.UserDataInfo.UserAge))
                 .Where(u => currentUser.UserPreferences.UserLocationPreferences.Contains(u.UserDataInfo.Location.CountryId))
                 .Where(u => currentUser.UserDataInfo.UserLanguages.Any(l => u.UserPreferences.UserLanguagePreferences.Contains(l)))
-                .Where(u => u.UserId != currentUser.UserId)
                 .Include(u => u.UserBaseInfo)
                 .Include(u => u.UserDataInfo)
                 .ThenInclude(u => u.Location)
@@ -190,14 +191,7 @@ namespace MyWebApi.Repositories
             data = data.Where(u => !CheckRequestExists(u.UserId, userId)).ToList();
 
             //If user does NOT have gender prederences
-            if (currentUser.UserPreferences.UserGenderPrefs == 2)
-            {
-                data = data
-                    .Where(u => u.UserPreferences.UserGenderPrefs == currentUser.UserDataInfo.UserGender || u.UserPreferences.UserGenderPrefs == currentUser.UserPreferences.UserGenderPrefs)
-                    .ToList();
-            }
-            //If he does
-            else
+            if (currentUser.UserPreferences.UserGenderPrefs != 2)
             {
                 data = data.Where(u => u.UserDataInfo.UserGender == currentUser.UserPreferences.UserGenderPrefs)
                 .Where(u => currentUser.UserPreferences.UserGenderPrefs == u.UserDataInfo.UserGender)
@@ -206,7 +200,7 @@ namespace MyWebApi.Repositories
 
             //If user wants to find only people who are free today
             if (isFreeSearch)
-                data = data.Where(u => u.IsFree != null && (bool)u.IsFree).ToList();
+                data = data.Where(u => u.IsFree).ToList();
 
 
             //If user uses PERSONALITY functionality and free search is disabled
@@ -1054,7 +1048,7 @@ namespace MyWebApi.Repositories
             {
                 var parent = await GetUserInfoAsync((long)userParentId);
 
-                if (parent != null && parent.InvitedUsersBonus != null)
+                if (parent != null)
                     await TopUpUserWalletPointsBalance((long)userParentId, (int)(points * parent.InvitedUsersBonus), $"Referential reward for users {userId} action");
             }
 
@@ -2045,7 +2039,7 @@ namespace MyWebApi.Repositories
                 );
 
             //Give an inclresed probability of getting a premium daily task if user has premium
-            if (user.HasPremium != null && (bool)user.HasPremium)
+            if (user.HasPremium)
             {
                 //Add an additional task
                 taskCount = 3;
@@ -2345,6 +2339,104 @@ namespace MyWebApi.Repositories
             }
             catch { return false; }
 
+        }
+
+        public async Task<bool> UpdateTags(UpdateTags model)
+        {
+            try
+            {
+                if(await CheckUserIsRegistered(model.UserId))
+                {
+                    //Comas are removed to avoid bugs
+                    var tags = model.RawTags.ToLower().Replace(",", "").Split(" ").ToList();
+
+                    if(tags.Count > 0)
+                    {
+                        var user = await GetUserInfoAsync(model.UserId);
+                        user.UserDataInfo.Tags = tags;
+
+                        _contx.SYSTEM_USERS_DATA.Update(user.UserDataInfo);
+                        await _contx.SaveChangesAsync();
+                        return true;
+                    }    
+                }
+
+                return false;
+            }
+            catch (NullReferenceException ) 
+            { return false; }
+        }
+
+        public async Task<List<string>> GetTags(long userId)
+        {
+            try
+            {
+                if (await CheckUserIsRegistered(userId))
+                {
+                     var userData = await _contx.SYSTEM_USERS_DATA.Where(u => u.Id == userId).FirstOrDefaultAsync();
+                    return userData.Tags;
+                }
+
+                return null;
+            }
+            catch (NullReferenceException)
+            { return null; }
+        }
+
+        public async Task<User> GetUserListByTagsAsync(long userId)
+        {
+            var tags = await GetTags(userId);
+
+            var currentUser = await GetUserInfoAsync(userId);
+            var currentUserEncounters = await GetUserEncounters(userId, (int)Sections.Familiator); //I am not sure if it is 2 or 3 section
+
+            var data = await _contx.SYSTEM_USERS
+                .Where(u => u.UserId != currentUser.UserId)
+                .Where(u => u.UserPreferences.AgePrefs.Contains(currentUser.UserDataInfo.UserAge))
+                //Check if users gender preferences correspond to current user gender prefs or are equal to 'Does not matter'
+                .Where(u => u.UserPreferences.UserGenderPrefs == currentUser.UserDataInfo.UserGender || u.UserPreferences.UserGenderPrefs == 2)
+                .Where(u => u.UserDataInfo.UserLanguages.Any(l => currentUser.UserPreferences.UserLanguagePreferences.Contains(l)))
+                .Where(u => currentUser.UserPreferences.AgePrefs.Contains(u.UserDataInfo.UserAge))
+                .Where(u => currentUser.UserDataInfo.UserLanguages.Any(l => u.UserPreferences.UserLanguagePreferences.Contains(l)))
+                .Include(u => u.UserBaseInfo)
+                .Include(u => u.UserDataInfo)
+                .ThenInclude(u => u.Location)
+                .Include(u => u.UserPreferences)
+                .Include(u => u.UserBlackList)
+                .ToListAsync();
+
+            //Check if users had encountered one another
+            data = data.Where(u => !currentUser.CheckIfHasEncountered(currentUserEncounters, u.UserId)).ToList();
+
+            //Check if users are in each others black lists
+            data = data.Where(u => u.UserBlackList.Where(u => u.UserId1 == userId).SingleOrDefault() == null).ToList();
+            data = data.Where(u => currentUser.UserBlackList.Where(l => l.UserId1 == u.UserId).SingleOrDefault() == null).ToList();
+
+            //Check if request already exists
+            data = data.Where(u => !CheckRequestExists(userId, u.UserId)).ToList();
+
+            //Check if current user had already recieved request from user
+            data = data.Where(u => !CheckRequestExists(u.UserId, userId)).ToList();
+
+            //If user does NOT have gender prederences
+            if (currentUser.UserPreferences.UserGenderPrefs != 2)
+            {
+                data = data.Where(u => u.UserDataInfo.UserGender == currentUser.UserPreferences.UserGenderPrefs)
+                .Where(u => currentUser.UserPreferences.UserGenderPrefs == u.UserDataInfo.UserGender)
+                .ToList();
+            }
+
+            //TODO: remove in production
+            data.Add(currentUser);
+            data.Add(currentUser);
+            data.Add(currentUser);
+            data.Add(currentUser);
+            data.Add(currentUser);
+
+            var user = data.OrderByDescending(u => tags.Any(t => u.UserDataInfo.Tags.Contains(t)))
+                .FirstOrDefault();
+
+            return user;
         }
     }
 }

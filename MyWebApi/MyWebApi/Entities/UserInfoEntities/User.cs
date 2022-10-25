@@ -15,20 +15,21 @@ namespace MyWebApi.Entities.UserInfoEntities
         public long UserBaseInfoId { get; set; }
         public long UserDataInfoId { get; set; }
         public long UserPreferencesId { get; set; }
-        public bool? ShouldConsiderLanguages { get; set; }
-        public bool? IsBusy { get; set; }
+        public bool ShouldConsiderLanguages { get; set; }
+        public bool IsBusy { get; set; }
         public bool IsBanned { get; set; }
         public bool IsDeleted { get; set; }
-        public bool? HasPremium { get; set; }
-        public bool? HadReceivedReward { get; set; }
-        public bool? IsFree { get; set; }
-        public short? DailyRewardPoint { get; set; }
-        public double? BonusIndex { get; set; }
-        public int? InvitedUsersCount { get; set; }
-        public double? InvitedUsersBonus { get; set; }
+        public bool HasPremium { get; set; }
+        public bool HadReceivedReward { get; set; }
+        public bool IsFree { get; set; }
+        public short DailyRewardPoint { get; set; }
+        public double BonusIndex { get; set; }
+        public int InvitedUsersCount { get; set; }
+        public double InvitedUsersBonus { get; set; }
         public string? Nickname { get; set; }
         public long? ParentId { get; set; }
-        public int? ProfileViewsCount { get; set; }
+        public int ProfileViewsCount { get; set; }
+        public int TagSearchesCount { get; set; }
         public DateTime? PremiumExpirationDate{ get; set; }
         public virtual UserBaseInfo? UserBaseInfo { get; set; }
         public virtual UserDataInfo? UserDataInfo  { get; set; }

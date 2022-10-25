@@ -17,6 +17,7 @@ namespace MyWebApi.Entities.UserInfoEntities
         public int LanguageId { get; set; } //AppLanguage
         public long LocationId { get; set; }
         public int ReasonClassLocalisationId { get; set; }
+        public List<string>? Tags { get; set; }
         public virtual Location? Location { get; set; }
         public virtual UserReason? Reason { get; set; }
         //public virtual Language? Language { get; set; }
