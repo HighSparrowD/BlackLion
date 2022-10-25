@@ -435,7 +435,6 @@ namespace MyWebApi.Repositories
             if (currentUser.ProfileViewsCount >= 50 && currentUser.ProfileViewsCount < 50)
                 await TopUpUserWalletPointsBalance(currentUser.UserId, 22, "User has viewed 50 profiles");
 
-            currentUser.ProfileViewsCount += data.Count;
             await _contx.SaveChangesAsync();
             return data;
         }
@@ -1431,6 +1430,13 @@ namespace MyWebApi.Repositories
         {
             model.Id = await _contx.USER_ENCOUNTERS.CountAsync() + 1;
             model.EncounterDate = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
+
+            if (model.SectionId == (int)Sections.Familiator || model.SectionId == (int)Sections.Requester)
+            {
+                var user = await _contx.SYSTEM_USERS.FindAsync(model.UserId);
+                user.ProfileViewsCount++;
+            }
+
             await _contx.USER_ENCOUNTERS.AddAsync(model);
             await _contx.SaveChangesAsync();
 

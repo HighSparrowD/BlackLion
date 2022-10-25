@@ -446,7 +446,7 @@ namespace MyWebApi.Controllers
         }
 
         [HttpPost("/RegisterUserEncounter")]
-        public async Task<long> RegisterUserRequest(Encounter model)
+        public async Task<long> RegisterUserEncounter(Encounter model)
         {
             return await _repository.RegisterUserEncounter(model);
         }
