@@ -219,7 +219,7 @@ namespace MyWebApi.Controllers
                 UserAge = model.UserAge,
                 UserGender = model.UserGender,
                 LanguageId = model.UserAppLanguageId,
-                LocationId = location.Id
+                LocationId = location.Id,
             };
             var uPrefs = new UserPreferences(model.Id, model.UserLanguagePreferences, model.UserLocationPreferences, Entities.UserInfoEntities.User.CalculateAgeList(model.UserAge, model.AgePrefs), model.CommunicationPrefs, model.UserGenderPrefs, model.ShouldUserPersonalityFunc);
             var m = new User(model.Id)
@@ -685,6 +685,24 @@ namespace MyWebApi.Controllers
         public async Task<bool> SwitchPersonalityUsage(long userId)
         {
             return await _repository.SwitchPersonalityUsage(userId);
+        }
+
+        [HttpPost("/UpdateTags")]
+        public async Task<bool> UpdateTags(UpdateTags model)
+        {
+            return await _repository.UpdateTags(model);
+        }
+
+        [HttpGet("/GetTags/{userId}")]
+        public async Task<List<string>> UpdateTags(long userId)
+        {
+            return await _repository.GetTags(userId);
+        }
+
+        [HttpGet("/GetUserListByTags/{userId}")]
+        public async Task<User> GetUserListByTags(long userId)
+        {
+            return await _repository.GetUserListByTagsAsync(userId);
         }
     }
 }

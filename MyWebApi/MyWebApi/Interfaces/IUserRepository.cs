@@ -13,6 +13,7 @@ using MyWebApi.Entities.DailyTaskEntities;
 using MyWebApi.Enums;
 using static MyWebApi.Enums.SystemEnums;
 using MyWebApi.Entities.TestEntities;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace MyWebApi.Interfaces
 {
@@ -129,5 +130,8 @@ namespace MyWebApi.Interfaces
         Task<UserPersonalityPoints> GetUserPersonalityPoints(long userId);
         Task<bool> SwitchPersonalityUsage(long userId);
         Task<bool> RegisterTestPassingAsync(TestPayload model);
+        Task<bool> UpdateTags(UpdateTags model);
+        Task<List<string>> GetTags(long userId);
+        Task<User> GetUserListByTagsAsync(long userId);
     }
 }
