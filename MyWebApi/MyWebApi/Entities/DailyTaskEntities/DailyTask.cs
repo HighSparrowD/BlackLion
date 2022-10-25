@@ -28,9 +28,9 @@ namespace MyWebApi.Entities.DailyTaskEntities
                 if (task.RewardCurrency == (byte)SystemEnums.Currencies.Points)
                     currency = "p";
                 else if (task.RewardCurrency == (byte)SystemEnums.Currencies.PersonalityPoints)
-                    currency = "PERSONALITY points";
+                    currency = " PERSONALITY points";
 
-                message = $"You have accomplish a daily task!\n\n{task.Description}\n{task.Reward}{currency}";
+                message = $"You have accomplished a daily task!\n\n{task.Description}\n{task.Reward}{currency}";
             });
 
             return message;

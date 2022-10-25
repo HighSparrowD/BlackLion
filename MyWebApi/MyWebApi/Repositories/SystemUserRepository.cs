@@ -93,9 +93,10 @@ namespace MyWebApi.Repositories
                 else if (invitor.InvitedUsersBonus == 10)
                 {
                     invitor.InvitedUsersBonus = 0.7;
-                    await TopUpUserWalletPointsBalance(invitor.UserId, 1999, $"User {model.UserId} has invited 10 users");
+                    // 1499 will then turn into 1999 due to premium purchase reward
+                    await TopUpUserWalletPointsBalance(invitor.UserId, 1499, $"User {model.UserId} has invited 10 users");
                     //TODO: apply effect later
-                    await GrantPremiumToUser(model.UserId, 0, 30);
+                    await GrantPremiumToUser(model.UserId, 0, 30, (short)Currencies.Points);
                 }
 
                 model.BonusIndex = 1.5;
@@ -1163,7 +1164,7 @@ namespace MyWebApi.Repositories
                 return DateTime.MinValue;
         }
 
-        public async Task<DateTime> GrantPremiumToUser(long userId, int cost, int dayDuration)
+        public async Task<DateTime> GrantPremiumToUser(long userId, int cost, int dayDuration, short currency)
         {
             var timeNow = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
             var premiumFutureExpirationDate = DateTime.SpecifyKind(DateTime.Now.AddDays(dayDuration), DateTimeKind.Utc); //TODO: Possible feature: Countdown starts from 00:00 at the next day of purchase
@@ -1174,7 +1175,16 @@ namespace MyWebApi.Repositories
 
             user.HasPremium = true;
             user.BonusIndex = 2;
-            await TopUpUserWalletPointsBalance(userId, -cost, $"Purchase premium for {dayDuration} days");
+
+            //If transaction was made for points
+            if (currency == (short)Currencies.Points)
+                await TopUpUserWalletPointsBalance(userId, -cost, $"Purchase premium for {dayDuration} days");
+            //If transaction was made for real money
+            else if (currency == (short)Currencies.RealMoney)
+                await RegisterUserWalletPurchaseInRealMoney(userId, cost, $"Purchase premium for {dayDuration} days");
+
+            //Reward for premium purchase
+            await TopUpUserWalletPointsBalance(userId, 500);
 
             if (user.PremiumExpirationDate < timeNow || user.PremiumExpirationDate == null)
                 user.PremiumExpirationDate = premiumFutureExpirationDate;
@@ -1621,7 +1631,7 @@ namespace MyWebApi.Repositories
 
             if (user != null)
             {
-                return !(bool)user.HadReceivedReward && user.DailyRewardPoint < 30 && user.DailyRewardPoint > 0;
+                return !user.HadReceivedReward && user.DailyRewardPoint < 30 && user.DailyRewardPoint > 0;
             }
 
             return false;
@@ -2385,9 +2395,13 @@ namespace MyWebApi.Repositories
 
         public async Task<User> GetUserListByTagsAsync(long userId)
         {
-            var tags = await GetTags(userId);
-
             var currentUser = await GetUserInfoAsync(userId);
+
+            //Throw exception if user has reached his tag search limit
+            if (!currentUser.HasPremium && currentUser.TagSearchesCount + 1 > 3)
+                throw new ApplicationException($"User {userId} has already reached his tag-search limit");
+
+            var tags = await GetTags(userId);
             var currentUserEncounters = await GetUserEncounters(userId, (int)Sections.Familiator); //I am not sure if it is 2 or 3 section
 
             var data = await _contx.SYSTEM_USERS
@@ -2425,6 +2439,9 @@ namespace MyWebApi.Repositories
                 .Where(u => currentUser.UserPreferences.UserGenderPrefs == u.UserDataInfo.UserGender)
                 .ToList();
             }
+
+            currentUser.TagSearchesCount++;
+            await _contx.SaveChangesAsync();
 
             //TODO: remove in production
             data.Add(currentUser);

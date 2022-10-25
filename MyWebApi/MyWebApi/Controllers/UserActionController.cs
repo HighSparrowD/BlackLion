@@ -399,10 +399,10 @@ namespace MyWebApi.Controllers
             return await _repository.GetPremiumExpirationDate(userId);
         }
 
-        [HttpGet("/GrantPremiumToUser/{userId}/{cost}/{dayDuration}")]
-        public async Task<DateTime> GrantPremiumToUser(long userId, int cost, int dayDuration)
+        [HttpGet("/GrantPremiumToUser/{userId}/{cost}/{dayDuration}/{currency}")]
+        public async Task<DateTime> GrantPremiumToUser(long userId, int cost, int dayDuration, short currency)
         {
-            return await _repository.GrantPremiumToUser(userId, cost, dayDuration);
+            return await _repository.GrantPremiumToUser(userId, cost, dayDuration, currency);
         }
 
         [HttpGet("/CheckUserIsBusy/{userId}")]
