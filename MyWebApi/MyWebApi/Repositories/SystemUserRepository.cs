@@ -2385,9 +2385,13 @@ namespace MyWebApi.Repositories
 
         public async Task<User> GetUserListByTagsAsync(long userId)
         {
-            var tags = await GetTags(userId);
-
             var currentUser = await GetUserInfoAsync(userId);
+
+            //Throw exception if user has reached his tag search limit
+            if (!currentUser.HasPremium && currentUser.TagSearchesCount + 1 > 3)
+                throw new ApplicationException($"User {userId} has already reached his tag-search limit");
+
+            var tags = await GetTags(userId);
             var currentUserEncounters = await GetUserEncounters(userId, (int)Sections.Familiator); //I am not sure if it is 2 or 3 section
 
             var data = await _contx.SYSTEM_USERS
@@ -2425,6 +2429,9 @@ namespace MyWebApi.Repositories
                 .Where(u => currentUser.UserPreferences.UserGenderPrefs == u.UserDataInfo.UserGender)
                 .ToList();
             }
+
+            currentUser.TagSearchesCount++;
+            await _contx.SaveChangesAsync();
 
             //TODO: remove in production
             data.Add(currentUser);
