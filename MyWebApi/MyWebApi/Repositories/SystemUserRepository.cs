@@ -147,7 +147,7 @@ namespace MyWebApi.Repositories
                 .SingleOrDefaultAsync();
         }
 
-        public async Task<List<User>> GetUsersAsync(long userId, bool turnOffPersonalityFunc = false, bool isRepeated=false)
+        public async Task<List<User>> GetUsersAsync(long userId, bool turnOffPersonalityFunc = false, bool isRepeated=false, bool isFreeSearch = false)
         {
             const byte miminalProfileCount = 5;
 
@@ -204,15 +204,13 @@ namespace MyWebApi.Repositories
                 .ToList();
             }
 
-            //Todo: Probably remove AsParallel query 
-            data.AsParallel().ForAll(u => 
-            {
-                if (u.Nickname != "" && (bool)u.HasPremium)
-                    u.UserBaseInfo.UserDescription = $"{u.Nickname}\n\n{u.UserBaseInfo.UserDescription}";
-            });
+            //If user wants to find only people who are free today
+            if (isFreeSearch)
+                data = data.Where(u => u.IsFree != null && (bool)u.IsFree).ToList();
 
-            //If user uses PERSONALITY functionality
-            if (currentUser.UserPreferences.ShouldUsePersonalityFunc)
+
+            //If user uses PERSONALITY functionality and free search is disabled
+            if (currentUser.UserPreferences.ShouldUsePersonalityFunc && !isFreeSearch)
             {
                 //TODO: Change it for users with premium ?
                 var deviation = 0.15;
@@ -394,12 +392,15 @@ namespace MyWebApi.Repositories
             }
             else
             {
-                //Remove users using PERSONALITY fucntionality
-                data.AsParallel().ForAll(u =>
+                if(!isFreeSearch)
                 {
-                    if (u.UserPreferences.ShouldUsePersonalityFunc)
-                        data.Remove(u);
-                });
+                    //Remove users using PERSONALITY fucntionality
+                    data.AsParallel().ForAll(u =>
+                    {
+                        if (u.UserPreferences.ShouldUsePersonalityFunc)
+                            data.Remove(u);
+                    });
+                }
             }
 
             //Check if method wasnt already repeated
@@ -407,7 +408,7 @@ namespace MyWebApi.Repositories
             {
                 //Check if users count is less than the limit
                 if (data.Count <= miminalProfileCount)
-                    data = await GetUsersAsync(userId, turnOffPersonalityFunc:turnOffPersonalityFunc, isRepeated: true);
+                    data = await GetUsersAsync(userId, turnOffPersonalityFunc:turnOffPersonalityFunc, isRepeated: true, isFreeSearch:isFreeSearch);
 
                 //Add user trust exp only if method was not repeated
                 await AddUserTrustProgressAsync(userId, 0.000003);
@@ -418,24 +419,22 @@ namespace MyWebApi.Repositories
                     currentUser.UserPreferences.ShouldUsePersonalityFunc = true;
                     await _contx.SaveChangesAsync();
                 }
+
+                //Todo: Probably remove AsParallel query 
+                data.AsParallel().ForAll(u =>
+                {
+                    if (u.Nickname != "" && (bool)u.HasPremium)
+                        u.UserBaseInfo.UserDescription = $"{u.Nickname}\n\n{u.UserBaseInfo.UserDescription}";
+                });
+
+                //Order user list randomly 
+                data = data.OrderBy(u => new Random().Next())
+                    .ToList();
+
+                data.OrderByDescending(u => u.UserDataInfo.Location.CityId == currentUser.UserDataInfo.Location.CityId)
+                    .ToList();
             }
 
-            //Order user list randomly 
-            data = data.OrderBy(u => new Random().Next())
-                .ToList();
-
-            data.OrderByDescending(u => u.UserDataInfo.Location.CityId == currentUser.UserDataInfo.Location.CityId)
-                .ToList();
-
-
-            if (currentUser.ProfileViewsCount + data.Count >= 15 && currentUser.ProfileViewsCount < 15)
-                await TopUpUserWalletPointsBalance(currentUser.UserId, 9, "User has viewed 15 profiles");
-            if(currentUser.ProfileViewsCount >= 30 && currentUser.ProfileViewsCount < 30)
-                await TopUpUserWalletPointsBalance(currentUser.UserId, 15, "User has viewed 30 profiles");
-            if (currentUser.ProfileViewsCount >= 50 && currentUser.ProfileViewsCount < 50)
-                await TopUpUserWalletPointsBalance(currentUser.UserId, 22, "User has viewed 50 profiles");
-
-            currentUser.ProfileViewsCount += data.Count;
             await _contx.SaveChangesAsync();
             return data;
         }
@@ -1431,6 +1430,20 @@ namespace MyWebApi.Repositories
         {
             model.Id = await _contx.USER_ENCOUNTERS.CountAsync() + 1;
             model.EncounterDate = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
+
+            if (model.SectionId == (int)Sections.Familiator || model.SectionId == (int)Sections.Requester)
+            {
+                var user = await _contx.SYSTEM_USERS.FindAsync(model.UserId);
+                user.ProfileViewsCount++;
+
+                if (user.ProfileViewsCount == 15)
+                    await TopUpUserWalletPointsBalance(user.UserId, 9, "User has viewed 15 profiles");
+                else if (user.ProfileViewsCount == 30)
+                    await TopUpUserWalletPointsBalance(user.UserId, 15, "User has viewed 30 profiles");
+                else if (user.ProfileViewsCount == 50)
+                    await TopUpUserWalletPointsBalance(user.UserId, 22, "User has viewed 50 profiles");
+            }
+
             await _contx.USER_ENCOUNTERS.AddAsync(model);
             await _contx.SaveChangesAsync();
 

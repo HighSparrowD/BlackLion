@@ -135,6 +135,12 @@ namespace MyWebApi.Controllers
             return await _repository.GetUsersAsync(userId, turnOffPersonalityFunc: true);
         }
 
+        [HttpGet("/GetUserList/FreeSearch/{userId}")]
+        public async Task<List<User>> GetUserList3(long userId)
+        {
+            return await _repository.GetUsersAsync(userId, isFreeSearch: true);
+        }
+
         [HttpGet("/GetFriends")]
         public async Task<IEnumerable<FriendModel>> GetFriendsList()
         {
@@ -446,7 +452,7 @@ namespace MyWebApi.Controllers
         }
 
         [HttpPost("/RegisterUserEncounter")]
-        public async Task<long> RegisterUserRequest(Encounter model)
+        public async Task<long> RegisterUserEncounter(Encounter model)
         {
             return await _repository.RegisterUserEncounter(model);
         }
