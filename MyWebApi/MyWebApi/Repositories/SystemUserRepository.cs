@@ -2443,14 +2443,28 @@ namespace MyWebApi.Repositories
             currentUser.TagSearchesCount++;
             await _contx.SaveChangesAsync();
 
-            //TODO: remove in production
-            data.Add(currentUser);
-            data.Add(currentUser);
-            data.Add(currentUser);
-            data.Add(currentUser);
-            data.Add(currentUser);
+            ////TODO: remove in production
+            //var tags1 = new List<string>();
+            //tags1.Add("#starcraft");
 
-            var user = data.OrderByDescending(u => tags.Any(t => u.UserDataInfo.Tags.Contains(t)))
+            //var tags2 = new List<string>();
+            //tags2.Add("#starcraft");
+            //tags2.Add("#code");
+
+            //var tags3 = new List<string>();
+            //tags3.Add("#code");
+
+            //data.Add(new User(5) { UserDataInfo = new UserDataInfo { Tags = tags1 } });
+            //data.Add(new User(54) { UserDataInfo = new UserDataInfo { Tags = tags2 } });
+            //data.Add(new User(57) { UserDataInfo = new UserDataInfo { Tags = tags3 } });
+
+            //data.ForEach(d =>
+            //{
+            //    var t = d.UserDataInfo.Tags.Intersect(tags).Count();
+            //    Console.WriteLine(t);
+            //});
+
+            var user = data.OrderByDescending(u => u.UserDataInfo.Tags.Intersect(tags).Count())
                 .FirstOrDefault();
 
             return user;
