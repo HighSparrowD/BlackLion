@@ -206,7 +206,7 @@ namespace MyWebApi.Repositories
 
             //If user wants to find only people who are free today
             if (isFreeSearch)
-                data = data.Where(u => u.IsFree != null && (bool)u.IsFree).ToList();
+                data = data.Where(u => u.IsFree).ToList();
 
 
             //If user uses PERSONALITY functionality and free search is disabled
@@ -1054,7 +1054,7 @@ namespace MyWebApi.Repositories
             {
                 var parent = await GetUserInfoAsync((long)userParentId);
 
-                if (parent != null && parent.InvitedUsersBonus != null)
+                if (parent != null)
                     await TopUpUserWalletPointsBalance((long)userParentId, (int)(points * parent.InvitedUsersBonus), $"Referential reward for users {userId} action");
             }
 
@@ -2045,7 +2045,7 @@ namespace MyWebApi.Repositories
                 );
 
             //Give an inclresed probability of getting a premium daily task if user has premium
-            if (user.HasPremium != null && (bool)user.HasPremium)
+            if (user.HasPremium)
             {
                 //Add an additional task
                 taskCount = 3;

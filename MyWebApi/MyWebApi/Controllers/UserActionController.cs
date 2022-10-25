@@ -228,7 +228,15 @@ namespace MyWebApi.Controllers
                 IsDeleted = false,
                 IsBanned = false,
                 ShouldConsiderLanguages = false,
-                HasPremium = false
+                HasPremium = false,
+                HadReceivedReward = false,
+                IsFree = false,
+                DailyRewardPoint = 0,
+                BonusIndex = 1,
+                ProfileViewsCount = 0,
+                InvitedUsersCount = 0,
+                InvitedUsersBonus = 0,
+                TagSearchesCount = 0,
             };
 
             var id = await _repository.RegisterUserAsync(m, uBase, uData, uPrefs, location);
