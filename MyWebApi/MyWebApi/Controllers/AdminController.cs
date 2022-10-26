@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using MyWebApi.Entities.AchievementEntities;
 using MyWebApi.Entities.LocationEntities;
@@ -7,6 +8,7 @@ using MyWebApi.Entities.ReportEntities;
 using MyWebApi.Entities.SecondaryEntities;
 using MyWebApi.Interfaces;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace MyWebApi.Controllers
@@ -17,11 +19,32 @@ namespace MyWebApi.Controllers
     {
         private IAdminRepository _repository;
         private readonly ILogger<UserActionController> _logger;
+        private IStringLocalizer<AdminController> _localizer;
 
-        public AdminController(ILogger<UserActionController> logger, IAdminRepository repos)
+        public AdminController(ILogger<UserActionController> logger, IAdminRepository repos, IStringLocalizer<AdminController> localizer)
         {
             _repository = repos;
             _logger = logger;
+            _localizer = localizer;
+        }
+
+        [HttpGet("/get-admin-localisation")]
+        public async Task<Dictionary<string, string>> GetAdminLocalisation()
+        {
+            var r = _localizer["YButton"];
+            var d = Request.Headers;
+            var rawLocalisation = _localizer.GetAllStrings()
+                .Select(w => new {w.Name, w.Value})
+                .ToList();
+
+            var localisationDict = new Dictionary<string, string>();
+
+            foreach (var item in rawLocalisation)
+            {
+                localisationDict.Add(item.Name, item.Value);
+            }
+
+            return localisationDict;
         }
 
         [HttpPost("/UpdateCountries")]

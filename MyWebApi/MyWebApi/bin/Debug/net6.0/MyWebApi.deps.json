@@ -18,8 +18,8 @@
           "MyWebApi.dll": {}
         },
         "resources": {
-          "en/MyWebApi.resources.dll": {
-            "locale": "en"
+          "ru/MyWebApi.resources.dll": {
+            "locale": "ru"
           }
         }
       },
