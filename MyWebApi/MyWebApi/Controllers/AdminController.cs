@@ -31,18 +31,19 @@ namespace MyWebApi.Controllers
         [HttpGet("/get-admin-localisation")]
         public async Task<Dictionary<string, string>> GetAdminLocalisation()
         {
-            var r = _localizer["YButton"];
-            var d = Request.Headers;
-            var rawLocalisation = _localizer.GetAllStrings()
-                .Select(w => new {w.Name, w.Value})
-                .ToList();
-
             var localisationDict = new Dictionary<string, string>();
 
-            foreach (var item in rawLocalisation)
-            {
-                localisationDict.Add(item.Name, item.Value);
-            }
+            await Task.Run(() => {
+                var rawLocalization = _localizer.GetAllStrings()
+                    .Select(w => new {w.Name, w.Value})
+                    .ToList();
+
+
+                foreach (var item in rawLocalization)
+                {
+                    localisationDict.Add(item.Name, item.Value);
+                }
+            });
 
             return localisationDict;
         }

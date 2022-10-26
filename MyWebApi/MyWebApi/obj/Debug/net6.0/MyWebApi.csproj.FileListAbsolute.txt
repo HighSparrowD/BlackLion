@@ -210,3 +210,5 @@ C:\Git\BlackLion\MyWebApi\MyWebApi\bin\Debug\net6.0\ru\MyWebApi.resources.dll
 C:\Git\BlackLion\MyWebApi\MyWebApi\obj\Debug\net6.0\MyWebApi.Resources.Controllers.AdminController.ru.resources
 C:\Git\BlackLion\MyWebApi\MyWebApi\obj\Debug\net6.0\ru\MyWebApi.resources.dll
 C:\Git\BlackLion\MyWebApi\MyWebApi\obj\Debug\net6.0\MyWebApi.Resources.Controllers.AdminController.resources
+C:\Git\BlackLion\MyWebApi\MyWebApi\obj\Debug\net6.0\MyWebApi.Resources.Controllers.RegistrationController.resources
+C:\Git\BlackLion\MyWebApi\MyWebApi\obj\Debug\net6.0\MyWebApi.Resources.Controllers.RegistrationController.ru.resources
