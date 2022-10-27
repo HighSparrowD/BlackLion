@@ -100,6 +100,22 @@ def check_user_has_notifications(userId):
         return None
 
 
+def check_user_has_premium(userId):
+    try:
+        return bool(
+            json.loads(requests.get(f"https://localhost:44381/CheckUserHasPremium/{userId}", verify=False).text))
+    except:
+        return None
+
+
+def get_user_language_limit(userId):
+    try:
+        return int(
+            json.loads(requests.get(f"https://localhost:44381/GetUserMaximumLanguageCount/{userId}", verify=False).text))
+    except:
+        return None
+
+
 def get_user_request(requestId):
     try:
         return json.loads(requests.get(f"https://localhost:44381/CheckUserHasRequest/{requestId}", verify=False).text)

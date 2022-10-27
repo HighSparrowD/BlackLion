@@ -2,7 +2,7 @@
 {
     public class UpdateTags
     {
-        public int UserId { get; set; }
+        public long UserId { get; set; }
         public string RawTags { get; set; }
     }
 }
