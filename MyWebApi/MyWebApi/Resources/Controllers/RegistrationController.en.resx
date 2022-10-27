@@ -177,6 +177,9 @@
   <data name="DescriptionRequest" xml:space="preserve">
     <value>Tell something about yourself !</value>
   </data>
+  <data name="Female" xml:space="preserve">
+    <value>Female</value>
+  </data>
   <data name="GenderPrefsRequest" xml:space="preserve">
     <value>Who are you searching for ?</value>
   </data>
@@ -210,11 +213,20 @@
   <data name="LocationPrefsRequest" xml:space="preserve">
     <value>People from which countries would you like to communicate with ?</value>
   </data>
+  <data name="Male" xml:space="preserve">
+    <value>Male</value>
+  </data>
   <data name="NameNoneError" xml:space="preserve">
     <value>Name cannot be empty !</value>
   </data>
   <data name="NameRequest" xml:space="preserve">
     <value>What is your name ?</value>
+  </data>
+  <data name="Neutral" xml:space="preserve">
+    <value>Neutral</value>
+  </data>
+  <data name="NoMatter" xml:space="preserve">
+    <value>Does not matter</value>
   </data>
   <data name="Ok" xml:space="preserve">
     <value>Ok</value>
@@ -237,7 +249,13 @@
   <data name="SameAsMineButton" xml:space="preserve">
     <value>Same as mine</value>
   </data>
-  <data name="SameAsMineConfirmMessage" xml:space="preserve">
+  <data name="SameAsMineCityConfirmMessage" xml:space="preserve">
+    <value>Got it! Press OK to move to the next step or choose another city if you want ;-)</value>
+  </data>
+  <data name="SameAsMineCountryConfirmMessage" xml:space="preserve">
+    <value>Got it! Press OK to move to the next step or choose another country if you want ;-)</value>
+  </data>
+  <data name="SameAsMineLanguageConfirmMessage" xml:space="preserve">
     <value>Got it! Press OK to move to the next step or add more languages if you want ;-)</value>
   </data>
 </root>

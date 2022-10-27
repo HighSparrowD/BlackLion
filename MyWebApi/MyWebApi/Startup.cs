@@ -42,6 +42,7 @@ namespace MyWebApi
                 {
                     new CultureInfo("en"),
                     new CultureInfo("ru"),
+                    new CultureInfo("uk"),
                 };
                 options.DefaultRequestCulture = new RequestCulture("ru");
                 options.SupportedCultures = supportedCultures;

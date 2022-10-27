@@ -20,6 +20,12 @@
         "resources": {
           "ru/MyWebApi.resources.dll": {
             "locale": "ru"
+          },
+          "en/MyWebApi.resources.dll": {
+            "locale": "en"
+          },
+          "uk/MyWebApi.resources.dll": {
+            "locale": "uk"
           }
         }
       },

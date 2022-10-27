@@ -118,144 +118,144 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="AcceptMessage" xml:space="preserve">
-    <value>Принято</value>
+    <value>Прийнято</value>
   </data>
   <data name="Added" xml:space="preserve">
-    <value>Добавлено</value>
+    <value>Додано</value>
   </data>
   <data name="AgeError" xml:space="preserve">
-    <value>Возраст пожалуйста, только цифры</value>
+    <value>Вік будь ласка, тільки цифри</value>
   </data>
   <data name="AgePrefsRequest" xml:space="preserve">
-    <value>Какого возраста вы хотите найти человека ?</value>
+    <value>Якого віку ви хочете знайти особу?</value>
   </data>
   <data name="AgeRequest" xml:space="preserve">
-    <value>Сколько тебе лет ?</value>
+    <value>Скільки тобі років?</value>
   </data>
   <data name="CityChooseString" xml:space="preserve">
-    <value>Выбери город из списка выше, или просто напиши название в чат</value>
+    <value>Вибери місто зі списку вище, або просто напиши назву в чат</value>
   </data>
   <data name="CityNoneError" xml:space="preserve">
-    <value>Ты не выбрал город !</value>
+    <value>Ти не вибрав(-ла) місто !</value>
   </data>
   <data name="CityRequest" xml:space="preserve">
-    <value>В каком городе ты живёшь ?</value>
+    <value>У якому місті ти живеш?</value>
   </data>
   <data name="CityTypeError" xml:space="preserve">
-    <value>Город не найден. Попробуй выбрать из списка выше</value>
+    <value>Місто не знайдено. Спробуй обрати зі списку вище</value>
   </data>
   <data name="CountryChooseString" xml:space="preserve">
-    <value>Выбери страну из списка выше, или просто напиши название в чат</value>
+    <value>Вибери країну зі списку вище, або просто напиши назву в чат</value>
   </data>
   <data name="CountryError" xml:space="preserve">
-    <value>Пожалуйста, выбери только те, которые находятся в списке</value>
+    <value>Будь ласка, обери тільки ті, які є у списку</value>
   </data>
   <data name="CountryNoneError" xml:space="preserve">
-    <value>Ты не выбрал cтранy !</value>
+    <value>Ти не вибрав країну!</value>
   </data>
   <data name="CountryRequest" xml:space="preserve">
-    <value>В какой стране ты живёшь ?</value>
+    <value>У якій країні ти живеш?</value>
   </data>
   <data name="CountryTypeError" xml:space="preserve">
-    <value>Страна не была найдена. Попробуй найти ее в списке выше</value>
+    <value>Країна не була знайдена. Спробуй знайти її в списку вище</value>
   </data>
   <data name="CPrefsInRealLife" xml:space="preserve">
-    <value>В реальной жизни</value>
+    <value>У реальному житті</value>
   </data>
   <data name="CPrefsNoMatter" xml:space="preserve">
-    <value>Не имеет значения</value>
+    <value>Не має значення</value>
   </data>
   <data name="CPrefsOnline" xml:space="preserve">
     <value>Онлайн</value>
   </data>
   <data name="CPrefsRequest" xml:space="preserve">
-    <value>Как бы вы хотели общаться ?</value>
+    <value>Як би ви хотіли спілкуватися?</value>
   </data>
   <data name="DescriptionNoneError" xml:space="preserve">
-    <value>Описание не может быть пустым. Попробуй описать себя несколькими словами ;-)</value>
+    <value>Опис не може бути порожнім. Спробуй описати себе декількома словами ;-)</value>
   </data>
   <data name="DescriptionRequest" xml:space="preserve">
-    <value>Расскажи о себе !</value>
+    <value>Розкажи про себе !</value>
   </data>
   <data name="Female" xml:space="preserve">
-    <value>Женский</value>
+    <value>Жіночий</value>
   </data>
   <data name="GenderPrefsRequest" xml:space="preserve">
-    <value>Кого ты ищешь ?</value>
+    <value>Кого ти шукаєш ?</value>
   </data>
   <data name="GenderPrefsTypeError" xml:space="preserve">
-    <value>Пожалуйста, выбери только предоставленные варианты</value>
+    <value>Будь ласка, обери тільки надані варіанти</value>
   </data>
   <data name="GenderRequest" xml:space="preserve">
-    <value>Какой твой гендер ?</value>
+    <value>Який твій гендер ?</value>
   </data>
   <data name="IncorrectCountry" xml:space="preserve">
-    <value>Неверный код страны</value>
+    <value>Невірний код країни</value>
   </data>
   <data name="LanguageChooseString" xml:space="preserve">
-    <value>Выбери пару из списка выше, или просто напиши название языка в чат :-)</value>
+    <value>Вибери пару зі списку вище, або просто напиши назву мови в чат :-)</value>
   </data>
   <data name="LanguageError" xml:space="preserve">
-    <value>Нет такого языка. Пожалуйста, попробуй ещё раз</value>
+    <value>Немає такої мови. Будь ласка, спробуй ще раз</value>
   </data>
   <data name="LanguageNoneError" xml:space="preserve">
-    <value>Ты не выбрал ни одного языка !</value>
+    <value>Ти не вибрав(-ла) жодної мови!</value>
   </data>
   <data name="LanguagePrefsRequest" xml:space="preserve">
-    <value>На каких языках ты хочешь общаться с людьми ?</value>
+    <value>Якими мовами ти хочеш спілкуватися з людьми?</value>
   </data>
   <data name="LanguageRequest" xml:space="preserve">
-    <value>Пожалуйста, укажи все языки на которых говоришь</value>
+    <value>Будь ласка, вкажи всі мови, якими розмовляєш</value>
   </data>
   <data name="LanguageTypeError" xml:space="preserve">
-    <value>Язык не был найден, попробуй найти его в списке выше</value>
+    <value>Мова не була знайдена, спробуй знайти її у списку вище</value>
   </data>
   <data name="LocationPrefsRequest" xml:space="preserve">
-    <value>С людьми из каких стран ты бы хотел(a) общаться ?</value>
+    <value>З людьми з яких країн ти б хотів( -ла) спілкуватися?</value>
   </data>
   <data name="Male" xml:space="preserve">
-    <value>Мужской</value>
+    <value>Чоловічий</value>
   </data>
   <data name="NameNoneError" xml:space="preserve">
-    <value>Имя не может быть пустым !</value>
+    <value>Ім'я не може бути порожнім !</value>
   </data>
   <data name="NameRequest" xml:space="preserve">
-    <value>Как тебя зовут ?</value>
+    <value>Як тебе звати?</value>
   </data>
   <data name="Neutral" xml:space="preserve">
-    <value>Нейтральный</value>
+    <value>Нейтральний</value>
   </data>
   <data name="NoMatter" xml:space="preserve">
-    <value>Не имеет значения</value>
+    <value>Не має значення</value>
   </data>
   <data name="Ok" xml:space="preserve">
     <value>Ок</value>
   </data>
   <data name="PhotoNoneError" xml:space="preserve">
-    <value>Я не вижу фотку в твоём сообщении</value>
+    <value>Я не бачу фотку в твоєму повідомленні</value>
   </data>
   <data name="PhotoRequest" xml:space="preserve">
-    <value>Отправь мне свою фотку</value>
+    <value>Надішли мені свою фотку</value>
   </data>
   <data name="ReasonError" xml:space="preserve">
-    <value>Нет-нет, ты вряд-ли найдешь тут что-то другое ;-)</value>
+    <value>Ні-ні, ти навряд-чи знайдеш тут щось інше ;-)</value>
   </data>
   <data name="ReasonRequest" xml:space="preserve">
-    <value>Чего ты тут ищешь ?</value>
+    <value>Чого ти тут шукаєш ?</value>
   </data>
   <data name="Removed" xml:space="preserve">
-    <value>Удалено</value>
+    <value>Вилучено</value>
   </data>
   <data name="SameAsMineButton" xml:space="preserve">
-    <value>Как и у меня</value>
+    <value>Як і в мене</value>
   </data>
   <data name="SameAsMineCityConfirmMessage" xml:space="preserve">
-    <value>Принято! Нажми Ок чтобы перейти к следующему шагу, выбери другой город если хочешь ;-)</value>
+    <value>Прийнято! Натисни Ок, щоб перейти до наступного кроку, або обери інше місто, якщо хочеш ;-)</value>
   </data>
   <data name="SameAsMineCountryConfirmMessage" xml:space="preserve">
-    <value>Принято! Нажми Ок чтобы перейти к следующему шагу, или выбери другую страну если хочешь ;-)</value>
+    <value>Прийнято! Натисни Ок щоб перейти до наступного кроку, або обери іншу країну якщо хочеш ;-)</value>
   </data>
   <data name="SameAsMineLanguageConfirmMessage" xml:space="preserve">
-    <value>Принято! Нажми Ок чтобы перейти к следующему шагу, или добавь больше языков если хочешь ;-)</value>
+    <value>Прийнято! Натисни Ок щоб перейти до наступного кроку, або додай більше мов якщо хочеш ;-)</value>
   </data>
 </root>

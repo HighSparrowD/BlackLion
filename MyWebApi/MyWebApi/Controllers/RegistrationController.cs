@@ -19,6 +19,8 @@ namespace MyWebApi.Controllers
         [HttpGet("/get-registration-localization")]
         public async Task<Dictionary<string, string>> GetRegistrationLocalization()
         {
+            var s = Request.Headers;
+
             var localizationDict = new Dictionary<string, string>();
             await Task.Run(() =>
             {
