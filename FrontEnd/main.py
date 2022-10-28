@@ -4,7 +4,7 @@ import Common.Menues as Menus
 from Familiator import *
 from RandomTalker import *
 from Registration import *
-from Reporter import Reporter
+from FeedbackModule import FeedbackModule
 from Shop import *
 
 import Core.HelpersMethodes as Helpers
@@ -156,7 +156,7 @@ def create_reporter(message):
             if not Helpers.check_user_is_deleted(message.from_user.id):
                 language = int(json.loads(requests.get(f"https://localhost:44381/GetUserLanguagePrefs/{message.from_user.id}", verify=False).text))
                 visit = Helpers.check_user_has_visited_section(message.from_user.id, 7)
-                return Reporter(bot, message, language, reporters, visit)
+                return FeedbackModule(bot, message, language, reporters, visit)
             else:
                 bot.send_message(message.from_user.id, "Hey! your account had been deleted recently. Would you like to pass a quick registration and save all your lost data?\n Then hit /register !")
         else:

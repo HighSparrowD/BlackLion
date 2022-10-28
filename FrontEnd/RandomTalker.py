@@ -4,6 +4,7 @@ from telebot.types import ReplyKeyboardMarkup, KeyboardButton
 import Core.HelpersMethodes as Helpers
 
 from Common.Menues import go_back_to_main_menu
+from ReportModule import ReportModule
 
 
 class RandomTalker:
@@ -12,7 +13,8 @@ class RandomTalker:
         self.message = message
         self.welcome_message = "We have found someone for you!"
         self.interrupt_message = "Come back soon"
-        self.stop_message = "Conversation had been stopped. Finding a new person.\nHit /exit to exit this mode"
+        self.stop_message1 = "Conversation had been stopped."
+        self.stop_message2 = "Finding a new person.\nHit /exit to exit this mode"
         self.exit_message = ""
         self.current_user = message.chat.id
         Helpers.switch_user_busy_status(self.current_user)
@@ -26,7 +28,7 @@ class RandomTalker:
 
         self.random_talkers = random_talkers
 
-        self.YNmarkup = ReplyKeyboardMarkup(resize_keyboard=True, row_width=3, one_time_keyboard=True).add(KeyboardButton("Yes")).add(KeyboardButton("No"))
+        self.YNmarkup = ReplyKeyboardMarkup(resize_keyboard=True, row_width=3, one_time_keyboard=True).add(KeyboardButton("yes")).add(KeyboardButton("no"))
         self.exit_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(KeyboardButton("/exit"))
         self.user_action_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(KeyboardButton("/stop"), KeyboardButton("/exit"))
 
@@ -49,12 +51,12 @@ class RandomTalker:
                     break
 
     def language_prefs_step(self, message):
-        if message.text == "Yes":
+        if message.text == "yes":
             self.set_rt_language_prefs(True)
             self.bot.send_message(self.current_user, "Gotcha")
             self.enter()
             return False
-        elif message.text == "No":
+        elif message.text == "no":
             self.set_rt_language_prefs(False)
             self.bot.send_message(self.current_user, "Gotcha")
             self.enter()
@@ -90,14 +92,30 @@ class RandomTalker:
                 self.stop()
 
     def stop(self):
-        if self.user2_base:
-            self.bot.send_message(self.current_user, self.stop_message, reply_markup=self.exit_markup)
-            self.user2_base = None
-
         if self.rh in self.bot.message_handlers:
             self.bot.message_handlers.remove(self.rh)
 
+        self.report_step(self.message)
+
+    def report_step(self, message, acceptMode=False):
+        if not acceptMode:
+            self.bot.send_message(self.current_user, self.stop_message1, reply_markup=self.exit_markup)
+            self.bot.send_message(self.current_user, "Do you want to report user?", reply_markup=self.YNmarkup)
+            self.bot.register_next_step_handler(message, self.report_step, acceptMode=True, chat_id=self.current_user)
+        else:
+            if message.text == "yes":
+                ReportModule(self.bot, message, self.user2, self.proceed)
+            elif message.text == "no":
+                self.proceed()
+            else:
+                self.bot.send_message("No such option", reply_markup=self.YNmarkup)
+                self.bot.register_next_step_handler(message, self.report_step, acceptMode=acceptMode, chat_id=self.current_user)
+
+    def proceed(self):
         self.isConversing = False
+        if self.user2_base:
+            self.bot.send_message(self.current_user, self.stop_message2, reply_markup=self.exit_markup)
+            self.user2_base = None
 
     def set_rt_language_prefs(self, shouldBeConsidered):
         requests.get(f"https://localhost:44381/SetUserRtLanguagePrefs/{self.current_user}/{shouldBeConsidered}", verify=False)
