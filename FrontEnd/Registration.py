@@ -11,7 +11,7 @@ from TestModule import TestModule
 
 
 class Registrator:
-    def __init__(self, bot=None, msg=None, registrators=None, hasVisited=False, editMode=False):
+    def __init__(self, bot=None, msg=None, registrators=None, hasVisited=False):
         self.bot = bot
         self.msg = msg
         self.previous_item = '' #Is used to remove a tick from single-type items (country, city, etc..)
@@ -30,6 +30,7 @@ class Registrator:
         self.old_queries = []
 
         self.tags = ""
+        self.maxTagCount = Helpers.get_user_tag_limit(self.current_user)
 
         self.current_markup_elements = []
         self.markup_last_element = 0
@@ -45,6 +46,7 @@ class Registrator:
         self.app_language = None
 
         self.data = {}
+        self.current_user_data = None
         self.country = None
         self.city = None
 
@@ -67,12 +69,55 @@ class Registrator:
         self.pref_langs = []
         self.pref_countries = []
 
-        if not editMode:
+        if not hasVisited:
             self.app_language_step(msg)
         else:
-            pass #TODO: Move to checkout
+            self.current_user_data = Helpers.get_user_info(self.current_user)
+            if self.current_user_data:
+                base = self.current_user_data["userBaseInfo"]
+                data = self.current_user_data["userDataInfo"]
+                prefs = self.current_user_data["userPreferences"]
 
-    # def app_language_step(self, msg):
+                self.country = data["location"]["countryId"]
+                self.city = data["location"]["cityId"]
+                self.chosen_langs = data["userLanguages"]
+                self.app_language = data["languageId"]
+                self.tags = ' '.join(data["tags"])
+
+                self.data["appLanguage"] = self.app_language
+                self.data["userName"] = base["userName"]
+                self.data["id"] = self.current_user
+                self.data["userRealName"] = base["userRealName"]
+                self.data["userDescription"] = base["userDescription"]
+                self.data["userPhoto"] = base["userPhoto"]
+                self.data["reasonId"] = data["reasonId"]
+                self.data["userAge"] = data["userAge"]
+                self.data["userLanguages"] = self.chosen_langs
+                self.data["userCountryCode"] = self.country
+                self.data["userCityCode"] = self.city
+                self.data["userGender"] = data["userGender"]
+                self.data["userLanguagePreferences"] = prefs["userLanguagePreferences"]
+                self.data["userLocationPreferences"] = prefs["userLocationPreferences"]
+                self.data["agePrefs"] = prefs["agePrefs"]
+                self.data["communicationPrefs"] = prefs["communicationPrefs"]
+                self.data["userGenderPrefs"] = prefs["userGenderPrefs"]
+                self.data["tags"] = self.tags
+
+                self.get_localisations()
+
+                cities = json.loads(
+                    requests.get(f"https://localhost:44381/GetCities/{self.country}/{self.app_language}",
+                                 verify=False).text)
+
+                # For edit purposes. If left as they are -> can result bugs
+                self.cities.clear()
+
+                for city in cities:
+                    self.cities[city["id"]] = city["cityName"].lower()
+
+                self.checkout_step(msg)
+            else:
+                self.app_language_step(msg)
 
     def app_language_step(self, msg, acceptMode=False, editMode=False):
         if not acceptMode:
@@ -103,7 +148,7 @@ class Registrator:
                                  "userAppLanguageId": self.app_language}
                 else:
                     self.checkout_step(msg)
-                    self.data = {"userAppLanguageId": self.app_language}
+                    self.data["userAppLanguageId"] = self.app_language
 
             else:
                 self.bot.send_message(self.current_user, "There is no such language. Try again", reply_markup=self.app_languages_markup)
@@ -112,6 +157,7 @@ class Registrator:
     def spoken_language_step(self, msg, acceptMode=False, editMode=False):
         if not acceptMode:
             self.question_index = 2
+            self.markup_page = 1
 
             reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page, self.markup_pages_count)
             count_pages(self.languages, self.current_markup_elements, self.markup_pages_count)
@@ -216,6 +262,7 @@ class Registrator:
     def location_step(self, msg, acceptMode=False, editMode=False):
         if not acceptMode:
             self.question_index = 4
+            self.markup_page = 1
 
             reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page,
                         self.markup_pages_count)
@@ -277,6 +324,7 @@ class Registrator:
     def city_step(self, msg, acceptMode=False, editMode=False):
         if not acceptMode:
             self.question_index = 5
+            self.markup_page = 1
 
             cities = json.loads(
                 requests.get(f"https://localhost:44381/GetCities/{self.country}/{self.app_language}", verify=False).text)
@@ -459,6 +507,11 @@ class Registrator:
         if not acceptMode:
             self.question_index = 11
 
+            self.gender_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+
+            for g in self.genders.keys():
+                self.gender_markup.row().add(KeyboardButton(self.genders[g]))
+
             self.bot.send_message(self.msg.chat.id, "Who are you searching for", reply_markup=self.gender_markup)
             self.bot.register_next_step_handler(msg, self.gender_preferences_step, acceptMode=True, editMode=editMode, chat_id=self.current_user)
         else:
@@ -480,6 +533,7 @@ class Registrator:
     def language_preferences_step(self, msg, acceptMode=False, editMode=False):
         if not acceptMode:
             self.question_index = 12
+            self.markup_page = 1
 
             reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page,
                         self.markup_pages_count)
@@ -586,6 +640,7 @@ class Registrator:
     def location_preferences_step(self, msg, acceptMode=False, editMode=False):
         if not acceptMode:
             self.question_index = 14
+            self.markup_page = 1
 
             reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page,
                         self.markup_pages_count)
@@ -667,12 +722,12 @@ class Registrator:
             self.msg = msg
             self.data["userLocationPreferences"] = self.pref_countries
 
-            self.bot.send_message(msg.chat.id, "What age would you like your companion to be?", reply_markup=self.age_pref_markup)
+            self.bot.send_message(msg.chat.id, "What age would you like your companion to be? Please, send a range of numbers\nExample: 18 - 25", reply_markup=self.age_pref_markup)
             self.bot.register_next_step_handler(msg, self.age_pref_step, acceptMode=True, editMode=editMode, chat_id=self.current_user)
         else:
-            age_pref = self.age_prefs_converter(msg.text)
-            if age_pref or age_pref == 0:
-                self.msg = msg
+            try:
+                nums = msg.text.replace(" ", "").split("-")
+                age_pref = list(range(int(nums[0]), int(nums[1])))
                 self.data["agePrefs"] = age_pref
 
                 if not editMode:
@@ -680,7 +735,7 @@ class Registrator:
                 else:
                     self.checkout_step(msg)
 
-            else:
+            except:
                 self.bot.send_message(self.current_user, "Please, chose only ones in the list!",
                                       reply_markup=self.age_pref_markup)
                 self.bot.register_next_step_handler(msg, self.age_pref_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
@@ -690,7 +745,7 @@ class Registrator:
         if not acceptMode:
 
             if not self.hasVisited:
-                self.bot.send_message(self.current_user, "Ok, now to the final part. To be able to search people by tags, you have to have your own as well.\nHow it works: -----------\nIf you want to use that functionality: type a few tags (up to 25) that describe you, your interests etc... Note that using tags which go against our policies can lead your account to be banned ---------\nIf you dont want to use that functionality: just hit 'skip' :-)", reply_markup=m)
+                self.bot.send_message(self.current_user, "Ok, now to the, final part. To be able to search people by tags you have to have your own as well.\nHow it works: -----------\nIf you want to use that functionality: type a few tags (up to 25) that describe you, your interests etc... Note that using tags which go against our policies can lead your account to be banned ---------\nIf you dont want to use that functionality: just hit 'skip' :-)", reply_markup=m)
             else:
                 self.bot.send_message(self.current_user, "Type a few tags (up to 25) that describe you, your interests etc... Note that using tags which go against our policies can lead your account to be banned. \nYour previous tag list will be overwritten", reply_markup=m)
 
@@ -701,21 +756,34 @@ class Registrator:
                 self.checkout_step(msg)
             else:
                 if msg.text:
-                    self.tags = msg.text.lower().strip()
-                    self.checkout_step(msg)
+                    try:
+                        s = len(msg.text.split())
+                        if len(msg.text.split()) <= self.maxTagCount:
+                            self.tags = msg.text.lower().strip()
+                            self.checkout_step(msg)
+                        else:
+                            self.bot.send_message(self.current_user, f"You cannot use more than {self.maxTagCount} tags", reply_markup=m)
+                            self.bot.register_next_step_handler(msg, self.tags_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
+                    except:
+                        self.bot.send_message(self.current_user, "Please, dont use any special characters apart from #", reply_markup=m)
+                        self.bot.register_next_step_handler(msg, self.tags_step, acceptMode=acceptMode,
+                                                            editMode=editMode, chat_id=self.current_user)
+
                 else:
                     self.bot.send_message(self.current_user, "No tags found", reply_markup=m)
                     self.bot.register_next_step_handler(msg, self.tags_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
 
     def checkout_step(self, msg, acceptMode=False):
-        change_markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1").add("2").add(
-            "3").add("4").add("5").add("6").add("7").add("8").add("9").add("10").add("11").add("12").add("13").add(
-            "14").add("15").add("16")
+        change_markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17W")
+        final_msg = "17. ✨Finish the registration✨"
 
-        change_text = "1. Change app language\n2. Change name\n3. Change description\n4. Add or remove languages you speak\n5. Change country\n6. Change city\n7. Change reason for using the bot\n8. Change age\n9. Change your gender\n10. Change profile photo\n11. Languages the encountered users speak\n12. Country the encountered users are located\n13. Encountered users age\n14. Preferred gender\n15. Communication preferences\n\n16. ✨Finish the registration✨"
+        if self.hasVisited:
+            final_msg = "17. ✨Save changes✨"
+
+        change_text = f"1. Change app language\n2. Change name\n3. Change description\n4. Add or remove languages you speak\n5. Change country\n6. Change city\n7. Change reason for using the bot\n8. Change age\n9. Change your gender\n10. Change profile photo\n11. Languages the encountered users speak\n12. Country the encountered users are located\n13. Encountered users age\n14. Preferred gender\n15. Communication preferences\n16. Change tags\n\n{final_msg}"
 
         if not acceptMode:
-            self.bot.send_photo(self.current_user, self.data["userPhoto"], f"That is how you profile will look like\nSome parameters:{self.profile_constructor()}")
+            self.bot.send_photo(self.current_user, self.data["userPhoto"], f"That is how you profile will look like:\n*Some parameters such as tags will be hidden*\n{self.profile_constructor()}")
             self.bot.send_message(self.current_user, f"Wanna change something ?\n\n{change_text}", reply_markup=change_markup)
             self.bot.register_next_step_handler(msg, self.checkout_step, acceptMode=True, chat_id=self.current_user)
         else:
@@ -750,29 +818,46 @@ class Registrator:
             elif msg.text == "15":
                 self.communication_preferences_step(msg, editMode=True)
             elif msg.text == "16":
-                self.tests_step(msg)
+                self.tags_step(msg, editMode=True)
+            elif msg.text == "17":
+                self.tests_step(msg, editMode=self.hasVisited)
             else:
                 self.bot.send_message(self.current_user, "No such option", reply_markup=change_markup)
-                self.bot.register_next_step_handler(msg, self.checkout_step, chat_id=self.current_user)
+                self.bot.register_next_step_handler(msg, self.checkout_step, acceptMode=acceptMode, chat_id=self.current_user)
 
-    def tests_step(self, msg, acceptMode=False):
+    def tests_step(self, msg, acceptMode=False, editMode=False):
         YNmarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("yes", "no")
-        if acceptMode:
+        if not acceptMode:
             d = json.dumps(self.data)
-            userId = requests.post("https://localhost:44381/RegisterUser", d, headers={
-                "Content-Type": "application/json"}, verify=False)
+            response = None
+
+            if editMode:
+                response = requests.post("https://localhost:44381/UpdateUserProfile", d, headers={
+                    "Content-Type": "application/json"}, verify=False)
+            else:
+                response = requests.post("https://localhost:44381/RegisterUser", d, headers={
+                    "Content-Type": "application/json"}, verify=False)
 
             if self.tags:
                 updateTagsModel = json.dumps({
-                    "userId": self.data["userId"],
+                    "userId": self.data["id"],
                     "rawTags": self.tags
                 })
 
                 requests.post("https://localhost:44381/UpdateTags", updateTagsModel, d, headers={
                     "Content-Type": "application/json"}, verify=False)
 
-            self.bot.send_message(self.current_user, userId.text)
+            if self.hasVisited:
+                if response.text == "1":
+                    self.bot.send_message(self.current_user, "Changes saved successfully !")
+                    self.destruct()
+                    return False
+                self.bot.send_message(self.current_user, "Something went wrong during the attempt of saving changes!")
+                self.destruct()
+                return False
+
             self.bot.send_message(self.current_user, "Would you like to use PERSONALITY functionality?\n---Functionality Description---", reply_markup=YNmarkup)
+            self.bot.register_next_step_handler(msg, self.tests_step, acceptMode=True, editMode=editMode, chat_id=self.current_user)
 
         else:
             if msg.text == "yes":

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Server.IIS.Core;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Server.IIS.Core;
 using Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http;
 using Microsoft.EntityFrameworkCore;
 using MyWebApi.Data;
@@ -952,54 +953,64 @@ namespace MyWebApi.Repositories
 
             var user1Encounters = await GetUserEncounters(user1, (int)SystemEnums.Sections.RT);
 
-            if (user1Encounters.Where(e => e.UserId1 == user2).SingleOrDefault() == null)
-            {            
-                if((bool)userInfo1.ShouldConsiderLanguages && (bool)userInfo2.ShouldConsiderLanguages)
-                {
+            //Checl if users are in each others blacklists
+            var usersAreNotInBlackList =
+                (await _contx.USER_BLACKLISTS.Where(l => l.UserId == user1 && l.UserId1 == user2).FirstOrDefaultAsync()) == null
+                &&
+                (await _contx.USER_BLACKLISTS.Where(l => l.UserId == user2 && l.UserId1 == user1).FirstOrDefaultAsync()) == null;
+
+            if (usersAreNotInBlackList)
+            {
+                if (user1Encounters.Where(e => e.UserId1 == user2).SingleOrDefault() == null)
+                {            
+                    if((bool)userInfo1.ShouldConsiderLanguages && (bool)userInfo2.ShouldConsiderLanguages)
+                    {
+                        await AddUserTrustProgressAsync(user1, 0.000005 * (double)userInfo1.BonusIndex);
+                        await AddUserTrustProgressAsync(user2, 0.000005 * (double)userInfo2.BonusIndex);
+
+                        return (await _contx.SYSTEM_USERS
+                            .Where(u => u.UserId == user2)
+                            .Where(u => userInfo1.UserDataInfo.UserLanguages.Any(l => u.UserPreferences.UserLanguagePreferences.Contains(l)))
+                            .Where(u => u.UserDataInfo.UserLanguages.Any(l => userInfo1.UserPreferences.UserLanguagePreferences.Contains(l)))
+                            .SingleOrDefaultAsync()) != null;
+                    }
+                    else if ((bool)userInfo1.ShouldConsiderLanguages)
+                    {
+                        await AddUserTrustProgressAsync(user1, 0.000005 * (double)userInfo1.BonusIndex);
+                        await AddUserTrustProgressAsync(user2, 0.000005 * (double)userInfo2.BonusIndex);
+
+                        return (await _contx.SYSTEM_USERS
+                            .Where(u => u.UserId == user2)
+                            .Where(u => u.UserDataInfo.UserLanguages.Any(l => userInfo1.UserPreferences.UserLanguagePreferences.Contains(l)))
+                            .SingleOrDefaultAsync()) != null;
+                    }
+                    else if ((bool)userInfo2.ShouldConsiderLanguages)
+                    {
+                        await AddUserTrustProgressAsync(user1, 0.000005 * (double)userInfo1.BonusIndex);
+                        await AddUserTrustProgressAsync(user2, 0.000005 * (double)userInfo2.BonusIndex);
+
+                        return (await _contx.SYSTEM_USERS
+                            .Where(u => u.UserId == user2)
+                            .Where(u => userInfo1.UserDataInfo.UserLanguages.Any(l => u.UserPreferences.UserLanguagePreferences.Contains(l)))
+                            .SingleOrDefaultAsync()) != null;
+                    }
+
                     await AddUserTrustProgressAsync(user1, 0.000005 * (double)userInfo1.BonusIndex);
                     await AddUserTrustProgressAsync(user2, 0.000005 * (double)userInfo2.BonusIndex);
 
-                    return (await _contx.SYSTEM_USERS
-                        .Where(u => u.UserId == user2)
-                        .Where(u => userInfo1.UserDataInfo.UserLanguages.Any(l => u.UserPreferences.UserLanguagePreferences.Contains(l)))
-                        .Where(u => u.UserDataInfo.UserLanguages.Any(l => userInfo1.UserPreferences.UserLanguagePreferences.Contains(l)))
-                        .SingleOrDefaultAsync()) != null;
+                    if (await CheckUserHasTasksInSectionAsync(user1, (int)Sections.RT))
+                    {
+                        //TODO find and topup user's task progress
+                    }
+
+                    if (await CheckUserHasTasksInSectionAsync(user2, (int)Sections.RT))
+                    {
+                        //TODO find and topup user's task progress
+                    }
+
+                    return true;
                 }
-                else if ((bool)userInfo1.ShouldConsiderLanguages)
-                {
-                    await AddUserTrustProgressAsync(user1, 0.000005 * (double)userInfo1.BonusIndex);
-                    await AddUserTrustProgressAsync(user2, 0.000005 * (double)userInfo2.BonusIndex);
-
-                    return (await _contx.SYSTEM_USERS
-                        .Where(u => u.UserId == user2)
-                        .Where(u => u.UserDataInfo.UserLanguages.Any(l => userInfo1.UserPreferences.UserLanguagePreferences.Contains(l)))
-                        .SingleOrDefaultAsync()) != null;
-                }
-                else if ((bool)userInfo2.ShouldConsiderLanguages)
-                {
-                    await AddUserTrustProgressAsync(user1, 0.000005 * (double)userInfo1.BonusIndex);
-                    await AddUserTrustProgressAsync(user2, 0.000005 * (double)userInfo2.BonusIndex);
-
-                    return (await _contx.SYSTEM_USERS
-                        .Where(u => u.UserId == user2)
-                        .Where(u => userInfo1.UserDataInfo.UserLanguages.Any(l => u.UserPreferences.UserLanguagePreferences.Contains(l)))
-                        .SingleOrDefaultAsync()) != null;
-                }
-
-                await AddUserTrustProgressAsync(user1, 0.000005 * (double)userInfo1.BonusIndex);
-                await AddUserTrustProgressAsync(user2, 0.000005 * (double)userInfo2.BonusIndex);
-
-                if (await CheckUserHasTasksInSectionAsync(user1, (int)Sections.RT))
-                {
-                    //TODO find and topup user's task progress
-                }
-
-                if (await CheckUserHasTasksInSectionAsync(user2, (int)Sections.RT))
-                {
-                    //TODO find and topup user's task progress
-                }
-
-                return true;
+                return false;
             }
             return false;
         }
@@ -1148,9 +1159,15 @@ namespace MyWebApi.Repositories
         public async Task<bool> CheckUserHasPremium(long userId)
         {
             var timeNow = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
-            var user = await GetUserWithPremium(userId, timeNow);
 
-            return user != null;
+            var user = await _contx.SYSTEM_USERS.Where(u => u.UserId == userId).SingleOrDefaultAsync();
+
+            if ((bool)user.HasPremium && user.PremiumExpirationDate > timeNow)
+                user.HasPremium = false;
+
+            //TODO: Notify user that his premium access has expired
+
+            return user.HasPremium;
         }
 
         public async Task<DateTime> GetPremiumExpirationDate(long userId)
@@ -1162,7 +1179,7 @@ namespace MyWebApi.Repositories
             { 
                 if (user.PremiumExpirationDate != null)
                     return user.PremiumExpirationDate.Value;
-                return DateTime.MinValue; //TODO: Change return data in that case
+                return (DateTime)user.PremiumExpirationDate;
             }
             else
                 return DateTime.MinValue;
@@ -1219,33 +1236,37 @@ namespace MyWebApi.Repositories
             {
                 var userData = await _contx.SYSTEM_USERS_DATA.Where(u => u.Id == userId).SingleOrDefaultAsync();
 
-                if (userData.LanguageId != appLanguage) // Check if user changes app language to a different one
+                if (userData != null)
                 {
-                    var userAchievements = await _contx.USER_ACHIEVEMENTS.Where(a => a.UserBaseInfoId == userId).ToListAsync();
-                    userAchievements.ForEach(async a =>
+                    if (userData.LanguageId != appLanguage) // Check if user changes app language to a different one
                     {
-                        a.AchievementClassLocalisationId = appLanguage;
-                        var achievement = await _contx.SYSTEM_ACHIEVEMENTS
-                        .Where(achievement => achievement.Id == a.AchievementId && achievement.ClassLocalisationId == appLanguage)
-                        .SingleOrDefaultAsync();
+                        var userAchievements = await _contx.USER_ACHIEVEMENTS.Where(a => a.UserBaseInfoId == userId).ToListAsync();
+                        userAchievements.ForEach(async a =>
+                        {
+                            a.AchievementClassLocalisationId = appLanguage;
+                            var achievement = await _contx.SYSTEM_ACHIEVEMENTS
+                            .Where(achievement => achievement.Id == a.AchievementId && achievement.ClassLocalisationId == appLanguage)
+                            .SingleOrDefaultAsync();
 
-                        a.RetranslateAquireMessage(achievement, appLanguage);
-                    });
-                    _contx.USER_ACHIEVEMENTS.UpdateRange(userAchievements);
-                    await _contx.SaveChangesAsync();
+                            a.RetranslateAquireMessage(achievement, appLanguage);
+                        });
+                        _contx.USER_ACHIEVEMENTS.UpdateRange(userAchievements);
+                        await _contx.SaveChangesAsync();
 
-                    var userLocation = await _contx.USER_LOCATIONS.Where(l => l.Id == userId).SingleOrDefaultAsync();
-                    userLocation.CountryClassLocalisationId = appLanguage;
-                    //userLocation.CityCountryClassLocalisationId = appLanguage; // Uncomment when Cities will be translated on another languages
+                        var userLocation = await _contx.USER_LOCATIONS.Where(l => l.Id == userId).SingleOrDefaultAsync();
+                        userLocation.CountryClassLocalisationId = appLanguage;
+                        //userLocation.CityCountryClassLocalisationId = appLanguage; // Uncomment when Cities will be translated on another languages
 
-                    _contx.USER_LOCATIONS.Update(userLocation);
-                    await _contx.SaveChangesAsync();
+                        _contx.USER_LOCATIONS.Update(userLocation);
+                        await _contx.SaveChangesAsync();
 
-                    userData.LanguageId = appLanguage;
-                    _contx.SYSTEM_USERS_DATA.Update(userData);
-                    await _contx.SaveChangesAsync();
+                        userData.LanguageId = appLanguage;
+                        _contx.SYSTEM_USERS_DATA.Update(userData);
+                        await _contx.SaveChangesAsync();
+                    }
+                    return 1;
                 }
-                return 1;
+                return 0;
             }
             catch { return 0; }
         }
@@ -1265,7 +1286,14 @@ namespace MyWebApi.Repositories
         {
             try
             {
-                _contx.SYSTEM_USERS_DATA.Update(user);
+                var data = await _contx.SYSTEM_USERS_DATA.FindAsync(user.Id);
+
+                data.UserAge = user.UserAge;
+                data.UserGender = user.UserGender;
+                data.UserLanguages = user.UserLanguages;
+                data.ReasonId = user.ReasonId;
+
+                _contx.SYSTEM_USERS_DATA.Update(data);
                 await _contx.SaveChangesAsync();
                 return 1;
             }

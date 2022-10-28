@@ -116,6 +116,22 @@ def get_user_language_limit(userId):
         return None
 
 
+def get_user_tag_limit(userId):
+    try:
+        return int(
+            json.loads(requests.get(f"https://localhost:44381/GetMaxTagCount/{userId}", verify=False).text))
+    except:
+        return None
+
+
+def get_user_app_language(userId):
+    try:
+        return int(
+            json.loads(requests.get(f"https://localhost:44381/GetUserLanguagePrefs/{userId}", verify=False).text))
+    except:
+        return None
+
+
 def get_user_request(requestId):
     try:
         return json.loads(requests.get(f"https://localhost:44381/CheckUserHasRequest/{requestId}", verify=False).text)
@@ -179,10 +195,10 @@ def delete_user_request(requestId):
         return None
 
 
-def delete_user_notifications(notificationId):
+def delete_user_notification(notificationId):
     try:
         return bool(
-            json.loads(requests.delete(f"https://localhost:44381/DeleteUserNotification/{notificationId}", verify=False).text))
+            json.loads(requests.delete(f"https://localhost:44381/SendNotificationConfirmationCode/{notificationId}", verify=False).text))
     except:
         return None
 
