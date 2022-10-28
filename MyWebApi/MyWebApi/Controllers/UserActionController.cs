@@ -81,6 +81,53 @@ namespace MyWebApi.Controllers
             return await _repository.GetUserInfoAsync(userId);
         }
 
+        [HttpPost("/UpdateUserProfile")]
+        public async Task<byte> UpdateUserProfile(UserRegistrationModel model)
+        {
+            var langCount = await GetUserMaximumLanguageCount(model.Id);
+            if (model.UserLanguages.Count > langCount)
+                throw new Exception($"This user cannot have more than {langCount} languages !");
+
+            var location = new Location { Id = model.Id, CityId = model.UserCityCode, CountryId = model.UserCountryCode };
+            var uBase = new UserBaseInfo(model.Id, model.UserName, model.UserRealName, model.UserDescription, model.UserPhoto);
+            var uData = new UserDataInfo
+            {
+                Id = model.Id,
+                UserLanguages = model.UserLanguages,
+                ReasonId = model.ReasonId,
+                UserAge = model.UserAge,
+                UserGender = model.UserGender,
+                LanguageId = model.UserAppLanguageId,
+                LocationId = location.Id,
+            };
+            var uPrefs = new UserPreferences(model.Id, model.UserLanguagePreferences, model.UserLocationPreferences, model.AgePrefs, model.CommunicationPrefs, model.UserGenderPrefs, model.ShouldUserPersonalityFunc);
+            var m = new User(model.Id)
+            {
+                IsBusy = false,
+                IsDeleted = false,
+                IsBanned = false,
+                ShouldConsiderLanguages = false,
+                HasPremium = false,
+                HadReceivedReward = false,
+                IsFree = false,
+                DailyRewardPoint = 0,
+                BonusIndex = 1,
+                ProfileViewsCount = 0,
+                InvitedUsersCount = 0,
+                InvitedUsersBonus = 0,
+                TagSearchesCount = 0,
+            };
+
+            if ((await _repository.UpdateUserAppLanguageAsync(model.Id, model.UserAppLanguageId)) == 1)
+                if((await _repository.UpdateUserLocationAsync(location)) == 1)
+                    if ((await _repository.UpdateUserBaseAsync(uBase)) == 1)
+                        if ((await _repository.UpdateUserDataAsync(uData)) == 1)
+                            if ((await _repository.UpdateUserPreferencesAsync(uPrefs)) == 1)
+                                return 1;
+
+            return 0;
+        }
+
         [HttpGet("/UpdateUserAppLanguage/{userId}/{appLanguage}")]
         public async Task<ActionResult<byte>> UpdateUserAppLanguage(long userId, int appLanguage)
         {
@@ -221,7 +268,7 @@ namespace MyWebApi.Controllers
                 LanguageId = model.UserAppLanguageId,
                 LocationId = location.Id,
             };
-            var uPrefs = new UserPreferences(model.Id, model.UserLanguagePreferences, model.UserLocationPreferences, Entities.UserInfoEntities.User.CalculateAgeList(model.UserAge, model.AgePrefs), model.CommunicationPrefs, model.UserGenderPrefs, model.ShouldUserPersonalityFunc);
+            var uPrefs = new UserPreferences(model.Id, model.UserLanguagePreferences, model.UserLocationPreferences, model.AgePrefs, model.CommunicationPrefs, model.UserGenderPrefs, model.ShouldUserPersonalityFunc);
             var m = new User(model.Id)
             {
                 IsBusy = false,
@@ -298,7 +345,7 @@ namespace MyWebApi.Controllers
         }
 
         [HttpGet("/AddUserToBlackList/{userId}/{bannedUserId}")]
-        public async Task<long> AddUser(long userId, long bannedUserId)
+        public async Task<long> AddUserToBlackList(long userId, long bannedUserId)
         {
             return await _repository.AddUserToBlackListAsync(userId, bannedUserId);
         }
@@ -703,6 +750,16 @@ namespace MyWebApi.Controllers
         public async Task<User> GetUserListByTags(long userId)
         {
             return await _repository.GetUserListByTagsAsync(userId);
+        }
+
+        [HttpGet("/GetMaxTagCount/{userId}")]
+        public async Task<int> GetMaxTagCount(long userId)
+        {
+            if (await _repository.CheckUserHasPremium(userId))
+            {
+                return 50;
+            }
+            return 25;
         }
     }
 }
