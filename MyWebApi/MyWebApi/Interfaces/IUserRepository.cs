@@ -61,8 +61,9 @@ namespace MyWebApi.Interfaces
         Task<List<Feedback>> GetMostRecentFeedbacks();
         Task<Feedback> GetFeedbackById(long id);
         Task<List<Feedback>> GetMostRecentFeedbacksByUserId(long userId);
-        Task<long> AddUserToBlackListAsync(long userId, long bannedUserId);
-        Task<long> RemoveUserFromBlackListAsync(long userId, long bannedUserId);
+        Task<bool> AddUserToBlackListAsync(long userId, long bannedUserId);
+        Task<bool> RemoveUserFromBlackListAsync(long userId, long bannedUserId);
+        Task<List<BlackList>> GetBlackList (long userId);
         Task<byte> RemoveUserAsync(long userId);
         Task<byte> ReRegisterUser(long userId);
         Task<byte> BanUserAsync(long userId);
@@ -83,7 +84,7 @@ namespace MyWebApi.Interfaces
         Task<DateTime> GetPremiumExpirationDate(long userId);
         Task<DateTime> GrantPremiumToUser(long userId, int cost, int dayDuration, short currency);
         Task<long> RegisterUserEncounter(Encounter model);
-        Task<Encounter> GetUserEncounter(long userId, long encounterId, int sectionId);
+        Task<Encounter> GetUserEncounter(long encounterId);
         Task<List<Encounter>> GetUserEncounters(long userId, int sectionId);
         Task<int> AddUserTrustProgressAsync(long userId, double progress);
         Task<int> UpdateUserTrustLevelAsync(long userId, int level);
@@ -129,9 +130,11 @@ namespace MyWebApi.Interfaces
         Task<UserPersonalityStats> GetUserPersonalityStats(long userId);
         Task<UserPersonalityPoints> GetUserPersonalityPoints(long userId);
         Task<bool> SwitchPersonalityUsage(long userId);
+        Task<bool?> CheckUserUsesPersonality(long userId);
         Task<bool> RegisterTestPassingAsync(TestPayload model);
         Task<bool> UpdateTags(UpdateTags model);
         Task<List<string>> GetTags(long userId);
         Task<User> GetUserListByTagsAsync(long userId);
+        Task<bool> CheckEncounteredUserIsInBlackList(long userId, long encounteredUser);
     }
 }

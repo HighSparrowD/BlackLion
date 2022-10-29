@@ -108,6 +108,22 @@ def check_user_has_premium(userId):
         return None
 
 
+def check_user_uses_personality(userId):
+    try:
+        return bool(
+            json.loads(requests.get(f"https://localhost:44381/CheckUserUsesPersonality/{userId}", verify=False).text))
+    except:
+        return None
+
+
+def check_user_in_a_blacklist(userId, encounteredUser):
+    try:
+        return bool(
+            json.loads(requests.get(f"https://localhost:44381/CheckEncounteredUserIsInBlackList/{userId}/{encounteredUser}", verify=False).text))
+    except:
+        return None
+
+
 def get_user_language_limit(userId):
     try:
         return int(
@@ -309,6 +325,16 @@ def switch_admin_status(userId):
 
     return admin_switch_result[int(json.loads(requests.get(f"https://localhost:44381/SwitchAdminStatus/{userId}",
                                                            verify=False).text))]
+
+
+def switch_personality_status(userId):
+    return requests.get(f"https://localhost:44381/SwitchPersonalityUsage/{userId}",
+                                                           verify=False)
+
+
+def update_user_status(userId, status):
+    return bool(json.loads(
+        requests.get(f"https://localhost:44381/UpdateUserNickname/{userId}/{status}", verify=False).text))
 
 
 def get_admin_status(userId):

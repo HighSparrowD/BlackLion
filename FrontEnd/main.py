@@ -3,6 +3,7 @@ from telebot import *
 import Common.Menues as Menus
 from Familiator import *
 from RandomTalker import *
+from Settings import *
 from Registration import *
 from FeedbackModule import FeedbackModule
 from Shop import *
@@ -103,15 +104,13 @@ def EnterAdminCabinet(message):
 
 @bot.message_handler(commands=["test"])
 def test(message):
-    m = InlineKeyboardMarkup().add(InlineKeyboardButton("LLALA", callback_data=1))
-    bot.send_message(message.from_user.id, "Try", reply_markup=m)
+    if not Helpers.check_user_is_busy(message.from_user.id):
+        Settings(bot, message)
 
 
 def create_registrator(message):
     visit = Helpers.check_user_has_visited_section(message.from_user.id, 1)
-    return Registrator(bot, message, registrators, visit)
-    #TODO: check if user exists, convert bool to short, pass it to registrator creating;
-    # Add additional buttons depending on whether or not user exists
+    return Registrator(bot, message, visit)
 
 
 def create_familiator(message, userId):

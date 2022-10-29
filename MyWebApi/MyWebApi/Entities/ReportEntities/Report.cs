@@ -4,6 +4,8 @@ using System.ComponentModel.DataAnnotations;
 using System;
 using System.ComponentModel.DataAnnotations.Schema;
 
+#nullable enable
+
 namespace MyWebApi.Entities.ReportEntities
 {
     public class Report
@@ -12,14 +14,14 @@ namespace MyWebApi.Entities.ReportEntities
         public long Id { get; set; }
         public long UserBaseInfoId { get; set; }
         public long UserBaseInfoId1 { get; set; }
-        public string Text { get; set; }
+        public string? Text { get; set; }
         public short ReasonId { get; set; }
         public int ReasonClassLocalisationId { get; set; }
         public DateTime InsertedUtc { get; set; }
-        public virtual ReportReason Reason { get; set; }
+        public virtual ReportReason? Reason { get; set; }
         [ForeignKey("UserBaseInfoId")]
-        public virtual UserBaseInfo Sender { get; set; }
+        public virtual UserBaseInfo? Sender { get; set; }
         [ForeignKey("UserBaseInfoId1")]
-        public virtual UserBaseInfo User { get; set; }
+        public virtual UserBaseInfo? User { get; set; }
     }
 }

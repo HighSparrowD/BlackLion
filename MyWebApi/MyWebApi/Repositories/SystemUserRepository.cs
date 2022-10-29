@@ -48,7 +48,8 @@ namespace MyWebApi.Repositories
             var country = (await _contx.COUNTRIES.Where(c => c.Id == location.CountryId && c.ClassLocalisationId == dataModel.LanguageId).SingleOrDefaultAsync()).CountryName;
             var city = (await _contx.CITIES.Where(c => c.Id == location.CountryId && c.CountryClassLocalisationId == dataModel.LanguageId).SingleOrDefaultAsync()).CityName;
 
-            baseModel.UserDescription = model.GenerateUserDescription(baseModel.UserRealName, dataModel.UserAge, country, city, baseModel.UserDescription);
+            baseModel.UserRawDescription = baseModel.UserDescription;
+            baseModel.UserDescription = baseModel.GenerateUserDescription(baseModel.UserRealName, dataModel.UserAge, country, city, baseModel.UserDescription);
 
             model.HadReceivedReward = false;
             model.DailyRewardPoint = 1;
@@ -81,19 +82,21 @@ namespace MyWebApi.Repositories
                 var invitor = invitation.InvitorCredentials.Invitor;
                 invitor.InvitedUsersCount++;
 
+                var bonus = invitor.HasPremium ? 0.05 : 0;
+
                 if (invitor.InvitedUsersCount == 3)
                 {
-                    invitor.InvitedUsersBonus = 0.25;
+                    invitor.InvitedUsersBonus = 0.25 + bonus;
                     await TopUpUserWalletPointsBalance(invitor.UserId, 1199, $"User {invitor.UserId} has invited 3 users");
                 }
                 else if (invitor.InvitedUsersCount == 7)
                 {
-                    invitor.InvitedUsersBonus = 0.45;
+                    invitor.InvitedUsersBonus = 0.45 + bonus;
                     await TopUpUserWalletPointsBalance(invitor.UserId, 1499, $"User {invitor.UserId} has invited 7 users");
                 }
                 else if (invitor.InvitedUsersBonus == 10)
                 {
-                    invitor.InvitedUsersBonus = 0.7;
+                    invitor.InvitedUsersBonus = 0.7 + bonus;
                     // 1499 will then turn into 1999 due to premium purchase reward
                     await TopUpUserWalletPointsBalance(invitor.UserId, 1499, $"User {invitor.UserId} has invited 10 users");
                     //TODO: apply effect later
@@ -101,7 +104,7 @@ namespace MyWebApi.Repositories
                 }
                 else
                 {
-                    await TopUpUserWalletPointsBalance(invitor.UserId, 200, $"User {model.UserId} was invited by user {invitor.UserId}");
+                    await TopUpUserWalletPointsBalance(invitor.UserId, (int)(200 + (200 * bonus)), $"User {model.UserId} was invited by user {invitor.UserId}");
                 }
 
                 model.BonusIndex = 1.5;
@@ -187,8 +190,8 @@ namespace MyWebApi.Repositories
             data = data.Where(u => !currentUser.CheckIfHasEncountered(currentUserEncounters, u.UserId)).ToList();
 
             //Check if users are in each others black lists
-            data = data.Where(u => u.UserBlackList.Where(u => u.UserId1 == userId).SingleOrDefault() == null).ToList();
-            data = data.Where(u => currentUser.UserBlackList.Where(l => l.UserId1 == u.UserId).SingleOrDefault() == null).ToList();
+            data = data.Where(u => u.UserBlackList.Where(u => u.BannedUserId == userId).SingleOrDefault() == null).ToList();
+            data = data.Where(u => currentUser.UserBlackList.Where(l => l.BannedUserId == u.UserId).SingleOrDefault() == null).ToList();
 
             //Check if request already exists
             data = data.Where(u => !CheckRequestExists(userId, u.UserId)).ToList();
@@ -608,28 +611,34 @@ namespace MyWebApi.Repositories
             catch { throw new ArgumentException("Localisation was not supplied"); }
         }
 
-        public async Task<long> AddUserToBlackListAsync(long userId, long bannedUserId)
+        public async Task<bool> AddUserToBlackListAsync(long userId, long bannedUserId)
         {
-            long id = await _contx.USER_BLACKLISTS.Where(l => l.UserId == userId).CountAsync() +1;
-            await _contx.USER_BLACKLISTS.AddAsync(new BlackList {Id = id, UserId = userId, UserId1 = bannedUserId });
-            await _contx.SaveChangesAsync();
-            return bannedUserId;
+            try
+            {
+                long id = await _contx.USER_BLACKLISTS.Where(l => l.UserId == userId).CountAsync() +1;
+                await _contx.USER_BLACKLISTS.AddAsync(new BlackList {Id = id, UserId = userId, BannedUserId = bannedUserId });
+                await _contx.SaveChangesAsync();
+                return true;
+            }
+            catch {
+                return false; 
+            }
         }
 
-        public async Task<long> RemoveUserFromBlackListAsync(long userId, long bannedUserId)
+        public async Task<bool> RemoveUserFromBlackListAsync(long userId, long bannedUserId)
         {
             var bannedUser = await _contx.USER_BLACKLISTS
-                .Where(u => u.UserId == userId && u.UserId1 == bannedUserId)
+                .Where(u => u.UserId == userId && u.BannedUserId == bannedUserId)
                 .SingleOrDefaultAsync();
 
             if(bannedUser != null)
             {
                 _contx.USER_BLACKLISTS.Remove(bannedUser);
                 await _contx.SaveChangesAsync();
-                return bannedUserId;
+                return true;
             }
 
-            return 0;
+            return false;
         }
 
         public async Task<byte> RemoveUserAsync(long userId)
@@ -951,48 +960,77 @@ namespace MyWebApi.Repositories
             var userInfo1 = await GetUserInfoAsync(user1);
             var userInfo2 = await GetUserInfoAsync(user2);
 
-            var user1Encounters = await GetUserEncounters(user1, (int)SystemEnums.Sections.RT);
+            var user1Encounters = await GetUserEncounters(user1, (int)Sections.RT);
 
-            //Checl if users are in each others blacklists
+            //Check if users are not in each others blacklists
             var usersAreNotInBlackList =
-                (await _contx.USER_BLACKLISTS.Where(l => l.UserId == user1 && l.UserId1 == user2).FirstOrDefaultAsync()) == null
+                (await _contx.USER_BLACKLISTS.Where(l => l.UserId == user1 && l.BannedUserId == user2).FirstOrDefaultAsync()) == null
                 &&
-                (await _contx.USER_BLACKLISTS.Where(l => l.UserId == user2 && l.UserId1 == user1).FirstOrDefaultAsync()) == null;
+                (await _contx.USER_BLACKLISTS.Where(l => l.UserId == user2 && l.BannedUserId == user1).FirstOrDefaultAsync()) == null;
 
             if (usersAreNotInBlackList)
             {
-                if (user1Encounters.Where(e => e.UserId1 == user2).SingleOrDefault() == null)
-                {            
+                //Check if user1 has encountered user2
+                //In that case, checking 1 encounter is enough
+                if (user1Encounters.Where(e => e.EncounteredUserId == user2).SingleOrDefault() == null)
+                {   
+                    //If both consider having the same languages
                     if((bool)userInfo1.ShouldConsiderLanguages && (bool)userInfo2.ShouldConsiderLanguages)
                     {
                         await AddUserTrustProgressAsync(user1, 0.000005 * (double)userInfo1.BonusIndex);
                         await AddUserTrustProgressAsync(user2, 0.000005 * (double)userInfo2.BonusIndex);
-
-                        return (await _contx.SYSTEM_USERS
+                        
+                        var result = (await _contx.SYSTEM_USERS
                             .Where(u => u.UserId == user2)
                             .Where(u => userInfo1.UserDataInfo.UserLanguages.Any(l => u.UserPreferences.UserLanguagePreferences.Contains(l)))
                             .Where(u => u.UserDataInfo.UserLanguages.Any(l => userInfo1.UserPreferences.UserLanguagePreferences.Contains(l)))
                             .SingleOrDefaultAsync()) != null;
+
+                        if (result)
+                        {
+                            await RegisterUserEncounter(new Encounter { UserId = user1, EncounteredUserId = user2 });
+                            await RegisterUserEncounter(new Encounter { UserId = user2, EncounteredUserId = user1 });
+                        }
+
+                        return result;
                     }
+                    //If user1 considers having the same languages
                     else if ((bool)userInfo1.ShouldConsiderLanguages)
                     {
                         await AddUserTrustProgressAsync(user1, 0.000005 * (double)userInfo1.BonusIndex);
                         await AddUserTrustProgressAsync(user2, 0.000005 * (double)userInfo2.BonusIndex);
 
-                        return (await _contx.SYSTEM_USERS
+                        var result = (await _contx.SYSTEM_USERS
                             .Where(u => u.UserId == user2)
                             .Where(u => u.UserDataInfo.UserLanguages.Any(l => userInfo1.UserPreferences.UserLanguagePreferences.Contains(l)))
                             .SingleOrDefaultAsync()) != null;
+
+                        if (result)
+                        {
+                            await RegisterUserEncounter(new Encounter { UserId = user1, EncounteredUserId = user2 });
+                            await RegisterUserEncounter(new Encounter { UserId = user2, EncounteredUserId = user1 });
+                        }
+
+                        return result;
                     }
+                    //If user2 considers having the same languages
                     else if ((bool)userInfo2.ShouldConsiderLanguages)
                     {
                         await AddUserTrustProgressAsync(user1, 0.000005 * (double)userInfo1.BonusIndex);
                         await AddUserTrustProgressAsync(user2, 0.000005 * (double)userInfo2.BonusIndex);
 
-                        return (await _contx.SYSTEM_USERS
+                        var result = (await _contx.SYSTEM_USERS
                             .Where(u => u.UserId == user2)
                             .Where(u => userInfo1.UserDataInfo.UserLanguages.Any(l => u.UserPreferences.UserLanguagePreferences.Contains(l)))
-                            .SingleOrDefaultAsync()) != null;
+                            .SingleOrDefaultAsync()) != null; ;
+
+                        if (result)
+                        {
+                            await RegisterUserEncounter(new Encounter { UserId = user1, EncounteredUserId = user2 });
+                            await RegisterUserEncounter(new Encounter { UserId = user2, EncounteredUserId = user1 });
+                        }
+
+                        return result;
                     }
 
                     await AddUserTrustProgressAsync(user1, 0.000005 * (double)userInfo1.BonusIndex);
@@ -1008,6 +1046,10 @@ namespace MyWebApi.Repositories
                         //TODO find and topup user's task progress
                     }
 
+                    await RegisterUserEncounter(new Encounter { UserId = user1, EncounteredUserId = user2 });
+                    await RegisterUserEncounter(new Encounter { UserId = user2, EncounteredUserId = user1 });
+
+                    //If neither considers having the same languages
                     return true;
                 }
                 return false;
@@ -1275,7 +1317,23 @@ namespace MyWebApi.Repositories
         {
             try
             {
-                _contx.SYSTEM_USERS_BASES.Update(user);
+                var model = await _contx.SYSTEM_USERS_BASES.FindAsync(user.Id);
+                var data = await _contx.SYSTEM_USERS_DATA.FindAsync(user.Id);
+                var location = await _contx.USER_LOCATIONS.Where(l => l.Id == user.Id)
+                    .SingleOrDefaultAsync();
+
+                var country = await _contx.COUNTRIES.Where(c => c.ClassLocalisationId == location.CountryClassLocalisationId && c.Id == location.CountryId)
+                    .SingleOrDefaultAsync();
+                var city = await _contx.CITIES.Where(c => c.CountryClassLocalisationId == location.CityCountryClassLocalisationId && c.Id == location.CityId)
+                    .SingleOrDefaultAsync();
+
+                model.UserRawDescription = user.UserRawDescription;
+                model.UserDescription = user.GenerateUserDescription(user.UserName, data.UserAge, country.CountryName, city.CityName, user.UserRawDescription);
+                model.UserPhoto = user.UserPhoto;
+                model.UserName = user.UserName;
+                model.UserRealName = user.UserRealName;
+
+                _contx.SYSTEM_USERS_BASES.Update(model);
                 await _contx.SaveChangesAsync();
                 return 1;
             }
@@ -1304,7 +1362,15 @@ namespace MyWebApi.Repositories
         {
             try
             {
-                _contx.SYSTEM_USERS_PREFERENCES.Update(user);
+                var prefs = await _contx.SYSTEM_USERS_PREFERENCES.FindAsync(user.Id);
+
+                prefs.AgePrefs = user.AgePrefs;
+                prefs.UserLanguagePreferences = user.UserLanguagePreferences;
+                prefs.UserLocationPreferences = user.UserLocationPreferences;
+                prefs.CommunicationPrefs = user.CommunicationPrefs;
+                prefs.UserGenderPrefs = user.UserGenderPrefs;
+
+                _contx.SYSTEM_USERS_PREFERENCES.Update(prefs);
                 await _contx.SaveChangesAsync();
                 return 1;
             }
@@ -1315,7 +1381,14 @@ namespace MyWebApi.Repositories
         {
             try
             {
-                _contx.USER_LOCATIONS.Update(location);
+                var model = await _contx.USER_LOCATIONS.FindAsync(location.Id);
+
+                model.CityId = location.CityId;
+                model.CityCountryClassLocalisationId = location.CityCountryClassLocalisationId;
+                model.CountryId = location.CountryId;
+                model.CountryClassLocalisationId = location.CountryClassLocalisationId;
+
+                _contx.USER_LOCATIONS.Update(model);
                 await _contx.SaveChangesAsync();
                 return 1;
             }
@@ -1486,21 +1559,20 @@ namespace MyWebApi.Repositories
             return model.Id;
         }
 
-        public async Task<Encounter> GetUserEncounter(long userId, long encounterId, int sectionId)
+        public async Task<Encounter> GetUserEncounter(long encounterId)
         {
-            return await _contx.USER_ENCOUNTERS
-                .Where(e => e.UserId == userId || e.UserId1 == userId)
-                .Where(e => e.Id == encounterId)
-                .Where(e => e.SectionId == sectionId)
-                .SingleOrDefaultAsync();
+            return await _contx.USER_ENCOUNTERS.FindAsync(encounterId);
         }
 
         public async Task<List<Encounter>> GetUserEncounters(long userId, int sectionId)
         {
-            return await _contx.USER_ENCOUNTERS
-                .Where(e => e.UserId == userId || e.UserId1 == userId)
+            var encounters = await _contx.USER_ENCOUNTERS
+                .Where(e => e.UserId == userId)
                 .Where(e => e.SectionId == sectionId)
+                .Include(e => e.EncounteredUser)
                 .ToListAsync();
+
+            return encounters != null ? encounters : new List<Encounter>();
         }
 
         public bool CheckRequestExists(long senderId, long recieverId)
@@ -1606,17 +1678,17 @@ namespace MyWebApi.Repositories
 
             if ((bool)currentUser.HasPremium)
             {
+                //Possible task -> Update your nickname
+                //Only for premium users
+                if (await CheckUserHasTasksInSectionAsync(userId, (int)Sections.Registration))
+                {
+                    //TODO find and topup user's task progress
+                }
+
                 currentUser.Nickname = nickname;
                 _contx.SYSTEM_USERS.Update(currentUser);
                 await _contx.SaveChangesAsync();
                 return true;
-            }
-
-            //Possible task -> Update your nickname
-            //Only for premium users
-            if (await CheckUserHasTasksInSectionAsync(userId, (int)Sections.Registration))
-            {
-                //TODO find and topup user's task progress
             }
 
             return false;
@@ -2455,8 +2527,8 @@ namespace MyWebApi.Repositories
             data = data.Where(u => !currentUser.CheckIfHasEncountered(currentUserEncounters, u.UserId)).ToList();
 
             //Check if users are in each others black lists
-            data = data.Where(u => u.UserBlackList.Where(u => u.UserId1 == userId).SingleOrDefault() == null).ToList();
-            data = data.Where(u => currentUser.UserBlackList.Where(l => l.UserId1 == u.UserId).SingleOrDefault() == null).ToList();
+            data = data.Where(u => u.UserBlackList.Where(u => u.BannedUserId == userId).SingleOrDefault() == null).ToList();
+            data = data.Where(u => currentUser.UserBlackList.Where(l => l.BannedUserId == u.UserId).SingleOrDefault() == null).ToList();
 
             //Check if request already exists
             data = data.Where(u => !CheckRequestExists(userId, u.UserId)).ToList();
@@ -2500,6 +2572,28 @@ namespace MyWebApi.Repositories
                 .FirstOrDefault();
 
             return user;
+        }
+
+        public async Task<bool?> CheckUserUsesPersonality(long userId)
+        {
+            return await _contx.SYSTEM_USERS_PREFERENCES
+                .Where(p => p.Id == userId)
+                .Select(p => p.ShouldUsePersonalityFunc)
+                .SingleOrDefaultAsync();
+        }
+
+        public async Task<List<BlackList>> GetBlackList(long userId)
+        {
+            return await _contx.USER_BLACKLISTS.Where(l => l.UserId == userId)
+                .Include(l => l.BannedUser)
+                .ToListAsync();
+        }
+
+        public async Task<bool> CheckEncounteredUserIsInBlackList(long userId, long encounteredUser)
+        {
+            return await _contx.USER_BLACKLISTS
+                .Where(l => l.UserId == userId && l.BannedUserId == encounteredUser)
+                .FirstOrDefaultAsync() != null;
         }
     }
 }
