@@ -11,9 +11,10 @@ from TestModule import TestModule
 
 
 class Registrator:
-    def __init__(self, bot=None, msg=None, registrators=None, hasVisited=False):
+    def __init__(self, bot=None, msg=None, hasVisited=False, return_method=None):
         self.bot = bot
         self.msg = msg
+        self.return_method = return_method
         self.previous_item = '' #Is used to remove a tick from single-type items (country, city, etc..)
         self.current_inline_message_id = 0 #Represents current message with inline markup
         self.current_user = self.msg.from_user.id
@@ -63,8 +64,6 @@ class Registrator:
         self.communication_pref = {}
         self.app_langs = {}
 
-        self.registrators = registrators
-        self.registrators.append(self)
         self.chosen_langs = []
         self.pref_langs = []
         self.pref_countries = []
@@ -88,7 +87,7 @@ class Registrator:
                 self.data["userName"] = base["userName"]
                 self.data["id"] = self.current_user
                 self.data["userRealName"] = base["userRealName"]
-                self.data["userDescription"] = base["userDescription"]
+                self.data["userDescription"] = base["userRawDescription"]
                 self.data["userPhoto"] = base["userPhoto"]
                 self.data["reasonId"] = data["reasonId"]
                 self.data["userAge"] = data["userAge"]
@@ -585,13 +584,13 @@ class Registrator:
                     self.bot.register_next_step_handler(msg, self.language_preferences_step, acceptMode=acceptMode, editMode=editMode,
                                                         chat_id=self.current_user)
                     return False
-            elif msg_text == "Same as mine":
-                self.pref_langs = copy.copy(self.chosen_langs)
-                self.bot.send_message(self.current_user,
-                                      "Got it! Press OK to move to the next step or add more languages if you want ;-)",
-                                      reply_markup=self.okMarkup)
-                self.bot.register_next_step_handler(msg, self.language_preferences_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
-                return False
+            # elif msg_text == "Same as mine":
+            #     self.pref_langs = copy.copy(self.chosen_langs)
+            #     self.bot.send_message(self.current_user,
+            #                           "Got it! Press OK to move to the next step or add more languages if you want ;-)",
+            #                           reply_markup=self.okMarkup)
+            #     self.bot.register_next_step_handler(msg, self.language_preferences_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
+            #     return False
 
             if self.pref_langs:
                 self.old_queries.append(self.current_query)
@@ -774,7 +773,7 @@ class Registrator:
                     self.bot.register_next_step_handler(msg, self.tags_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
 
     def checkout_step(self, msg, acceptMode=False):
-        change_markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17W")
+        change_markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17")
         final_msg = "17. ✨Finish the registration✨"
 
         if self.hasVisited:
@@ -1062,14 +1061,10 @@ class Registrator:
 
     def destruct(self):
         self.bot.callback_query_handlers.remove(self.chCode)
-        self.registrators.remove(self)
         if self.hasVisited:
             Helpers.switch_user_busy_status(self.current_user)
-        go_back_to_main_menu(self.bot, self.current_user, self.msg)
+        if self.return_method:
+            self.return_method()
+        else:
+            go_back_to_main_menu(self.bot, self.current_user, self.msg)
         del self
-
-    def __del__(self):
-        self.bot.callback_query_handlers.remove(self.chCode)
-        self.registrators.remove(self)
-        del self
-        # TODO: Make it work

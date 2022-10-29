@@ -16,6 +16,7 @@ using MyWebApi.Entities.UserActionEntities;
 using MyWebApi.Entities.SponsorEntities;
 using MyWebApi.Entities.DailyTaskEntities;
 using MyWebApi.Entities.TestEntities;
+using static MyWebApi.Enums.SystemEnums;
 
 namespace MyWebApi.Controllers
 {
@@ -62,7 +63,7 @@ namespace MyWebApi.Controllers
         {
             return await _repository.CheckUserIsBanned(userId);
         }
-        
+
         [HttpGet("/CheckUsersAreCombinableRT/{user1}/{user2}")]
         public async Task<bool> CheckUsersAreCombinableRT(long user1, long user2)
         {
@@ -89,7 +90,8 @@ namespace MyWebApi.Controllers
                 throw new Exception($"This user cannot have more than {langCount} languages !");
 
             var location = new Location { Id = model.Id, CityId = model.UserCityCode, CountryId = model.UserCountryCode };
-            var uBase = new UserBaseInfo(model.Id, model.UserName, model.UserRealName, model.UserDescription, model.UserPhoto);
+            var uBase = new UserBaseInfo(model.Id, model.UserName, model.UserRealName, "", model.UserPhoto);
+            uBase.UserRawDescription = model.UserDescription;
             var uData = new UserDataInfo
             {
                 Id = model.Id,
@@ -119,9 +121,9 @@ namespace MyWebApi.Controllers
             };
 
             if ((await _repository.UpdateUserAppLanguageAsync(model.Id, model.UserAppLanguageId)) == 1)
-                if((await _repository.UpdateUserLocationAsync(location)) == 1)
-                    if ((await _repository.UpdateUserBaseAsync(uBase)) == 1)
-                        if ((await _repository.UpdateUserDataAsync(uData)) == 1)
+                if ((await _repository.UpdateUserLocationAsync(location)) == 1)
+                    if ((await _repository.UpdateUserDataAsync(uData)) == 1)
+                        if ((await _repository.UpdateUserBaseAsync(uBase)) == 1)
                             if ((await _repository.UpdateUserPreferencesAsync(uPrefs)) == 1)
                                 return 1;
 
@@ -300,8 +302,8 @@ namespace MyWebApi.Controllers
         public async Task<List<Feedback>> GetRecentFeedbacks()
         {
             return await _repository.GetMostRecentFeedbacks();
-        }        
-        
+        }
+
         [HttpGet("/GetMostRecentReports")]
         public async Task<List<Report>> GetMostRecentReports()
         {
@@ -318,8 +320,8 @@ namespace MyWebApi.Controllers
         public async Task<Report> GetSingleUserReportByIdAsync(long id)
         {
             return await _repository.GetSingleUserReportByIdAsync(id);
-        }  
-        
+        }
+
         [HttpGet("/GetAllReportsOnUser/{id}")]
         public async Task<List<Report>> GetAllReportsOnUser(long id)
         {
@@ -345,13 +347,13 @@ namespace MyWebApi.Controllers
         }
 
         [HttpGet("/AddUserToBlackList/{userId}/{bannedUserId}")]
-        public async Task<long> AddUserToBlackList(long userId, long bannedUserId)
+        public async Task<bool> AddUserToBlackList(long userId, long bannedUserId)
         {
             return await _repository.AddUserToBlackListAsync(userId, bannedUserId);
         }
 
         [HttpDelete("/RemoveUserFromBlackList/{userId}/{bannedUserId}")]
-        public async Task<long> RemoveUserFromBlackList(long userId, long bannedUserId)
+        public async Task<bool> RemoveUserFromBlackList(long userId, long bannedUserId)
         {
             return await _repository.RemoveUserFromBlackListAsync(userId, bannedUserId);
         }
@@ -432,8 +434,8 @@ namespace MyWebApi.Controllers
         public async Task<bool> CheckUserHasPremium(long userId)
         {
             return await _repository.CheckUserHasPremium(userId);
-        } 
-        
+        }
+
         [HttpGet("/CheckBalanceIsSufficient/{userId}/{cost}")]
         public async Task<bool> CheckBalanceIsSufficient(long userId, int cost)
         {
@@ -481,7 +483,7 @@ namespace MyWebApi.Controllers
         {
             return await _repository.GetUserRequests(userId);
         }
-        
+
         [HttpGet("/CheckUserHasRequests/{userId}")]
         public async Task<bool> CheckUserHasRequests(long userId)
         {
@@ -512,16 +514,25 @@ namespace MyWebApi.Controllers
             return await _repository.RegisterUserEncounter(model);
         }
 
-        [HttpGet("/GetUserEncounter/{userId}/{encounterId}/{sectionId}")]
-        public async Task<Encounter> GetUserEncounter(long userId, long encounterId, int sectionId)
+        [HttpGet("/GetUserEncounter/{encounterId}")]
+        public async Task<Encounter> GetUserEncounter(long encounterId)
         {
-            return await _repository.GetUserEncounter(userId, encounterId, sectionId);
+            return await _repository.GetUserEncounter(encounterId);
         }
 
         [HttpGet("/GetUserEncounters/{userId}/{sectionId}")]
         public async Task<List<Encounter>> GetUserEncounters(long userId, int sectionId)
         {
             return await _repository.GetUserEncounters(userId, sectionId);
+        }
+
+        [HttpGet("/GetUserProfileEncounters/{userId}")]
+        public async Task<List<Encounter>> GetUserProfileEncounters(long userId)
+        {
+            var familiatorEncounters = await _repository.GetUserEncounters(userId, (int)Sections.Familiator);
+            familiatorEncounters.AddRange(await _repository.GetUserEncounters(userId, (int)Sections.Requester));
+
+            return familiatorEncounters;
         }
 
         [HttpGet("/GetUserTrustLevel/{userId}")]
@@ -709,7 +720,7 @@ namespace MyWebApi.Controllers
         {
             return await _repository.UpdateUserPersonalityStats(model);
         }
-        
+
         [HttpPost("/UpdateUserPersonalityPoints")]
         public async Task<UserPersonalityPoints> UpdateUserPersonalityPoints(UserPersonalityPoints model)
         {
@@ -760,6 +771,24 @@ namespace MyWebApi.Controllers
                 return 50;
             }
             return 25;
+        }
+
+        [HttpGet("/CheckUserUsesPersonality/{userId}")]
+        public async Task<bool?> CheckUserUsesPersonality(long userId)
+        {
+            return await _repository.CheckUserUsesPersonality(userId);
+        }
+
+        [HttpGet("/GetBlackList/{userId}")]
+        public async Task<List<BlackList>> GetBlackList(long userId)
+        {
+            return await _repository.GetBlackList(userId);
+        }
+
+        [HttpGet("/CheckEncounteredUserIsInBlackList/{userId}/{encounteredUser}")]
+        public async Task<bool> CheckEncounteredUserIsInBlackList(long userId, long encounteredUser)
+        {
+            return await _repository.CheckEncounteredUserIsInBlackList(userId, encounteredUser);
         }
     }
 }

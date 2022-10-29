@@ -10,6 +10,7 @@ namespace MyWebApi.Entities.UserInfoEntities
         public string? UserName { get; set; }
         public string? UserRealName { get; set; }
         public string? UserDescription { get; set; }
+        public string? UserRawDescription { get; set; }
         public string? UserPhoto { get; set; }
 
         public UserBaseInfo(long id, string? userName, string? userRealName, string? userDescription, string? userPhoto)
@@ -19,6 +20,11 @@ namespace MyWebApi.Entities.UserInfoEntities
             UserRealName = userRealName;
             UserDescription = userDescription;
             UserPhoto = userPhoto;
+        }
+
+        public string GenerateUserDescription(string? name, int age, string? country, string? city, string? description)
+        {
+            return $"{name}, {age},\n({country} - {city})\n\n{description}";
         }
     }
 }

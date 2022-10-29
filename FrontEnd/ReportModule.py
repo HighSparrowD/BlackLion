@@ -9,12 +9,14 @@ from Core import HelpersMethodes as Helpers
 
 class ReportModule:
     #return_method represents a certain method, that will be called upon reporter destruction. Thus allowing user to proceed in his bot usage
-    def __init__(self, bot, msg, active_user, return_method):
+    def __init__(self, bot, msg, active_user, return_method, dontAddToBlackList=True):
         self.bot = bot
         self.message = msg
         self.current_user = msg.from_user.id
         self.return_method = return_method
         Helpers.switch_user_busy_status(self.current_user)
+
+        self.dontAddToBlackList = dontAddToBlackList
 
         self.reasons_markup = None
         self.report_reasons = {}
@@ -89,7 +91,10 @@ class ReportModule:
             elif message.text == "3":
                 self.bot.send_message(self.current_user, "Thank you for your report. We will process it as soon as possible\n\n<b>Personality Administration</b>", parse_mode=telegram.ParseMode.HTML)
                 self.send_report()
-                self.add_user_to_blacklist_step(message)
+                if not self.dontAddToBlackList:
+                    self.add_user_to_blacklist_step(message)
+                else:
+                    self.destruct()
             elif message.text == "4":
                 self.destruct()
             else:

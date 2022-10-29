@@ -50,7 +50,7 @@ namespace MyWebApi.Entities.UserInfoEntities
 
         public bool CheckIfHasEncountered(List<Encounter> encounters, long userId)
         {
-            bool result = encounters.Where(e => e.UserId == userId).SingleOrDefault() != null || encounters.Where(e => e.UserId1 == userId).SingleOrDefault() != null;
+            bool result = encounters.Where(e => e.UserId == userId).SingleOrDefault() != null || encounters.Where(e => e.EncounteredUserId == userId).SingleOrDefault() != null;
             return result;
         }
 
@@ -73,11 +73,6 @@ namespace MyWebApi.Entities.UserInfoEntities
                 default:
                     return null;
             }
-        }
-
-        public string GenerateUserDescription(string? name, int age, string? country, string? city, string? description)
-        {
-            return $"{name}, {age},\n({country} - {city})\n\n{description}";
         }
 
         public static User? CreateDummyUser()
