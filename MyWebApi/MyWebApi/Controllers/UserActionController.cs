@@ -601,10 +601,16 @@ namespace MyWebApi.Controllers
             return await _repository.GetInvitationCredentialsByUserIdAsync(userId);
         }
 
-        [HttpGet("/GetQRCode/{data}/{userId}")]
-        public async Task<string> GetQRCode(string data, long userId)
+        [HttpGet("/GetInvitationLink/{userId}")]
+        public async Task<string> GetUserInvitationLinkAsync(long userId)
         {
-            return await _repository.GetQRCode(data, userId);
+            return await _repository.GetUserInvitationLinkAsync(userId);
+        }
+
+        [HttpGet("/GetQRCode/{userId}")]
+        public async Task<string> GetQRCode(long userId)
+        {
+            return await _repository.GetQRCode(userId);
         }
 
         [HttpGet("/InviteUser/{invitationId}/{userId}")]

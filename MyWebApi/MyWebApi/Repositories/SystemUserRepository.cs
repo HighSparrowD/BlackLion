@@ -1780,7 +1780,7 @@ namespace MyWebApi.Repositories
         }
 
         //Generate QR code on user request 
-        public async Task<string> GetQRCode(string link, long userId)
+        public async Task<string> GetQRCode(long userId)
         {
             string data;
 
@@ -1792,7 +1792,7 @@ namespace MyWebApi.Repositories
                 if (creds.QRCode != null)
                     return creds.QRCode;
 
-                link = link.Replace("%2F", "/");
+                string link = creds.Link.Replace("%2F", "/");
 
                 var generator = new QRCodeGenerator();
                 var d = generator.CreateQrCode(link, QRCodeGenerator.ECCLevel.Q);
@@ -1810,7 +1810,7 @@ namespace MyWebApi.Repositories
             {
                 //If credentials do not exist. Create them and try generationg QrCode again
                 await GenerateInvitationCredentialsAsync(userId);
-                return await GetQRCode(link, userId);
+                return await GetQRCode(userId);
             }
             return "";
         }
@@ -1829,7 +1829,10 @@ namespace MyWebApi.Repositories
             if (invitation != null)
                 return invitation.Link;
 
-            return null;
+            //Generate link if it wast generated earlier for some reason
+            invitation = await GenerateInvitationCredentialsAsync(userId);
+
+            return invitation.Link;
         }
 
         public async Task<string> GetUserInvitationQRCodeAsync(long userId)
