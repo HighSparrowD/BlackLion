@@ -136,5 +136,6 @@ namespace MyWebApi.Interfaces
         Task<List<string>> GetTags(long userId);
         Task<User> GetUserListByTagsAsync(long userId);
         Task<bool> CheckEncounteredUserIsInBlackList(long userId, long encounteredUser);
+        Task<string> RetreiveCommonLanguagesAsync(long user1Iq, long user2Id, int localisationId);
     }
 }

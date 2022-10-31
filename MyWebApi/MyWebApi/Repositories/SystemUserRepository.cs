@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using MyWebApi.Data;
 using MyWebApi.Entities.AchievementEntities;
 using MyWebApi.Entities.DailyTaskEntities;
+using MyWebApi.Entities.LocalisationEntities;
 using MyWebApi.Entities.LocationEntities;
 using MyWebApi.Entities.ReasonEntities;
 using MyWebApi.Entities.ReportEntities;
@@ -129,10 +130,14 @@ namespace MyWebApi.Repositories
 
         public async Task<List<long>> GetAllUsersAsync()
         {
-            return await _contx.SYSTEM_USERS
-                .Where(u => u.UserId != 1324407781 && u.UserId != 576569499) //All except Sania's accounts
-                .Select(u => u.UserId)
-                .ToListAsync(); 
+            List<long> list = new List<long>();
+
+            await Task.Run(() => {
+                list.Add(790042963); 
+                list.Add(1254647653); 
+            });
+
+            return list;
         }
 
         public Task<User> GetFriendInfoAsync(long id)
@@ -426,8 +431,8 @@ namespace MyWebApi.Repositories
                 //Todo: Probably remove AsParallel query 
                 data.AsParallel().ForAll(u =>
                 {
-                    if (u.Nickname != "" && (bool)u.HasPremium)
-                        u.UserBaseInfo.UserDescription = $"{u.Nickname}\n\n{u.UserBaseInfo.UserDescription}";
+                    if ((bool)u.HasPremium && u.Nickname != "")
+                        u.UserBaseInfo.UserDescription = $"<br>{u.Nickname}\n\n{u.UserBaseInfo.UserDescription}</br>";
                 });
 
                 //Order user list randomly 
@@ -1796,7 +1801,7 @@ namespace MyWebApi.Repositories
 
                 var generator = new QRCodeGenerator();
                 var d = generator.CreateQrCode(link, QRCodeGenerator.ECCLevel.Q);
-                var code = new PngByteQRCode(d).GetGraphic(15);
+                var code = new PngByteQRCode(d).GetGraphic(5);
 
                 data = Convert.ToBase64String(code);
 
@@ -2596,7 +2601,26 @@ namespace MyWebApi.Repositories
         {
             return await _contx.USER_BLACKLISTS
                 .Where(l => l.UserId == userId && l.BannedUserId == encounteredUser)
-                .FirstOrDefaultAsync() != null;
+            .FirstOrDefaultAsync() != null;
+        }
+
+        public async Task<string> RetreiveCommonLanguagesAsync(long user1Id, long user2Id, int localisationId)
+        {
+            var user1Langs = await _contx.SYSTEM_USERS_DATA.Where(u => u.Id == user1Id)
+                .Select(u => u.UserLanguages)
+                .SingleOrDefaultAsync();
+
+            var user2Langs = await _contx.SYSTEM_USERS_DATA.Where(u => u.Id == user2Id)
+                .Select(u => u.UserLanguages)
+                .SingleOrDefaultAsync();
+
+            var commonIds = user1Langs.Intersect(user2Langs);
+            var commons = await _contx.LANGUAGES.Where(l => commonIds
+                .Any(i => i == l.Id) && l.ClassLocalisationId == 0)
+                .Select(l => l.ClassLocalisationId == localisationId)
+                .ToListAsync();
+
+            return String.Join(", ", commonIds);
         }
     }
 }

@@ -70,7 +70,7 @@ namespace MyWebApi.Controllers
             return await _repository.CheckUsersAreCombinableRT(user1, user2);
         }
 
-        [HttpGet("/GetUserLanguagePrefs/{userId}")]
+        [HttpGet("/GetUserAppLanguage/{userId}")]
         public async Task<int> GetUserLanguagePrefs(long userId)
         {
             return await _repository.GetUserAppLanguage(userId);
@@ -795,6 +795,12 @@ namespace MyWebApi.Controllers
         public async Task<bool> CheckEncounteredUserIsInBlackList(long userId, long encounteredUser)
         {
             return await _repository.CheckEncounteredUserIsInBlackList(userId, encounteredUser);
+        }
+
+        [HttpGet("/RetreiveCommonLanguages/{user1Id}/{user2Id}/{localisationId}")]
+        public async Task<string> RetreiveCommonLanguages(long user1Id, long user2Id, int localisationId)
+        {
+            return await _repository.RetreiveCommonLanguagesAsync(user1Id, user2Id, localisationId);
         }
     }
 }
