@@ -97,7 +97,7 @@ namespace MyWebApi.Interfaces
         Task<short> GetUserBonusIndex(long userId);
         Task<InvitationCredentials> GenerateInvitationCredentialsAsync(long userId);
         Task<InvitationCredentials> GetInvitationCredentialsByUserIdAsync(long userId);
-        Task<string> GetQRCode(string link, long userId);
+        Task<string> GetQRCode(long userId);
         Task<string> GetUserInvitationLinkAsync(long userId);
         Task<string> GetUserInvitationQRCodeAsync(long userId);
         Task<bool> InviteUserAsync(Guid invitationId, long userId);
@@ -136,5 +136,7 @@ namespace MyWebApi.Interfaces
         Task<List<string>> GetTags(long userId);
         Task<User> GetUserListByTagsAsync(long userId);
         Task<bool> CheckEncounteredUserIsInBlackList(long userId, long encounteredUser);
+        Task<string> RetreiveCommonLanguagesAsync(long user1Iq, long user2Id, int localisationId);
+        Task<bool> LogAdminErrorAsync(long? userId, string description, int sectioId);
     }
 }
