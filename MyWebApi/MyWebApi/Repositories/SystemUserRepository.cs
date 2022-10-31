@@ -3014,10 +3014,10 @@ namespace MyWebApi.Repositories
             var commonIds = user1Langs.Intersect(user2Langs);
             var commons = await _contx.LANGUAGES.Where(l => commonIds
                 .Any(i => i == l.Id) && l.ClassLocalisationId == 0)
-                .Select(l => l.ClassLocalisationId == localisationId)
+                .Select(l => l.LanguageName)
                 .ToListAsync();
 
-            return String.Join(", ", commonIds);
+            return String.Join(", ", commons);
         }
 
         public async Task<bool> LogAdminErrorAsync(long? userId, string description, int sectioId)
