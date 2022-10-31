@@ -71,6 +71,7 @@ namespace MyWebApi.Data
         public DbSet<UserPersonalityStats> USER_PERSONALITY_STATS { get; set; }
         public DbSet<UserPersonalityPoints> USER_PERSONALITY_POINTS { get; set; }
         public DbSet<TestPayload> USER_TESTS_RESULTS { get; set; }
+        public DbSet<AdminErrorLog> ADMIN_ERROR_LOGS { get; set; }
 
 
 
