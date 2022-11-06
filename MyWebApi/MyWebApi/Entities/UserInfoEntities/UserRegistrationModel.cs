@@ -13,8 +13,8 @@ namespace MyWebApi.Entities.UserInfoEntities
         public string? UserDescription { get; set; }
         public int UserAppLanguageId { get; set; }
         public string? UserPhoto { get; set; }
-        public int UserCountryCode { get; set; }
-        public int UserCityCode { get; set; }
+        public int? UserCountryCode { get; set; }
+        public int? UserCityCode { get; set; }
         public List<int>? UserLanguages { get; set; }
         public short ReasonId { get; set; }
         public int UserAge { get; set; }

@@ -1,4 +1,5 @@
 ﻿using MyWebApi.Entities.UserInfoEntities;
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -8,7 +9,7 @@ namespace MyWebApi.Entities.UserActionEntities
     public class UserNotification
     {
         [Key]
-        public long Id { get; set; }
+        public Guid Id { get; set; }
         public long? UserId { get; set; }
         public long UserId1 { get; set; }
         public bool IsLikedBack { get; set; }

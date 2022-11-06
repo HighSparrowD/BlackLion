@@ -48,10 +48,15 @@ namespace MyWebApi.Repositories
         {
             try
             {
-                await _contx.USER_LOCATIONS.AddAsync(location);
+                var country = "---";
+                var city = "---";
 
-                var country = (await _contx.COUNTRIES.Where(c => c.Id == location.CountryId && c.ClassLocalisationId == dataModel.LanguageId).SingleOrDefaultAsync()).CountryName;
-                var city = (await _contx.CITIES.Where(c => c.Id == location.CountryId && c.CountryClassLocalisationId == dataModel.LanguageId).SingleOrDefaultAsync()).CityName;
+                if (location != null)
+                {
+                    await _contx.USER_LOCATIONS.AddAsync(location);
+                    country = (await _contx.COUNTRIES.Where(c => c.Id == location.CountryId && c.ClassLocalisationId == dataModel.LanguageId).Select(c => c.CountryName).SingleOrDefaultAsync());
+                    city = (await _contx.CITIES.Where(c => c.Id == location.CountryId && c.CountryClassLocalisationId == dataModel.LanguageId).Select(c => c.CityName).SingleOrDefaultAsync());
+                }
 
                 baseModel.UserRawDescription = baseModel.UserDescription;
                 baseModel.UserDescription = baseModel.GenerateUserDescription(baseModel.UserRealName, dataModel.UserAge, country, city, baseModel.UserDescription);
@@ -1469,13 +1474,17 @@ namespace MyWebApi.Repositories
                 var timeNow = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
 
                 var user = await _contx.SYSTEM_USERS.Where(u => u.UserId == userId).SingleOrDefaultAsync();
+                
+                if (user != null)
+                {
+                    if ((bool)user.HasPremium && user.PremiumExpirationDate > timeNow)
+                        user.HasPremium = false;
 
-                if ((bool)user.HasPremium && user.PremiumExpirationDate > timeNow)
-                    user.HasPremium = false;
+                    //TODO: Notify user that his premium access has expired
 
-                //TODO: Notify user that his premium access has expired
-
-                return user.HasPremium;
+                    return user.HasPremium;
+                }
+                return false;
             }
             catch (Exception ex)
             {
@@ -1723,7 +1732,12 @@ namespace MyWebApi.Repositories
         {
             try
             {
-                var user = await _contx.SYSTEM_USERS.Where(u => u.UserId == userId).SingleOrDefaultAsync();
+                var user = await _contx.SYSTEM_USERS.Where(u => u.UserId == userId)
+                    .SingleOrDefaultAsync();
+
+                if (user != null)
+                    return false;
+
                 return (bool)user.IsBusy;
             }
             catch (Exception ex)
@@ -1780,7 +1794,7 @@ namespace MyWebApi.Repositories
             }
         }
 
-        public async Task<UserNotification> GetUserRequest(long requestId)
+        public async Task<UserNotification> GetUserRequest(Guid requestId)
         {
             try
             {
@@ -1797,7 +1811,7 @@ namespace MyWebApi.Repositories
             }
         }
 
-        public async Task<long> RegisterUserRequest(UserNotification request)
+        public async Task<Guid?> RegisterUserRequest(UserNotification request)
         {
             try
             {
@@ -1815,7 +1829,7 @@ namespace MyWebApi.Repositories
             catch (Exception ex)
             {
                 await LogAdminErrorAsync(request.UserId, ex.Message, (int)Sections.Requester);
-                return 0;
+                return null;
             }
         }
 
@@ -1840,7 +1854,7 @@ namespace MyWebApi.Repositories
             }
         }
 
-        public async Task<byte> DeleteUserRequest(long requestId)
+        public async Task<byte> DeleteUserRequest(Guid requestId)
         {
             try
             {
@@ -1899,11 +1913,11 @@ namespace MyWebApi.Repositories
             }
         }
 
-        public async Task<long> RegisterUserEncounter(Encounter model)
+        public async Task<Guid?> RegisterUserEncounter(Encounter model)
         {
             try
             {
-                model.Id = await _contx.USER_ENCOUNTERS.CountAsync() + 1;
+                model.Id = Guid.NewGuid();
                 model.EncounterDate = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
 
                 if (model.SectionId == (int)Sections.Familiator || model.SectionId == (int)Sections.Requester)
@@ -1927,7 +1941,7 @@ namespace MyWebApi.Repositories
             catch (Exception ex)
             {
                 await LogAdminErrorAsync(model.UserId, ex.Message, (int)Sections.Familiator);
-                return 0;
+                return null;
             }
         }
 
@@ -2314,7 +2328,7 @@ namespace MyWebApi.Repositories
         {
             try
             {
-                model.Id = await _contx.USER_NOTIFICATIONS.CountAsync() + 1;
+                model.Id = Guid.NewGuid();
                 await _contx.USER_NOTIFICATIONS.AddAsync(model);
                 await _contx.SaveChangesAsync();
 
@@ -2347,7 +2361,7 @@ namespace MyWebApi.Repositories
                 .ToListAsync();
         }
 
-        public async Task<bool> DeleteUserNotification(long userId, long notificationId)
+        public async Task<bool> DeleteUserNotification(long userId, Guid notificationId)
         {
             try
             {
@@ -2635,7 +2649,7 @@ namespace MyWebApi.Repositories
             return 250; //TODO: Think if value should be hardcoded 
         }
 
-        public async Task<UserNotification> GetUserNotificationAsync(long userId, long notificationId)
+        public async Task<UserNotification> GetUserNotificationAsync(long userId, Guid notificationId)
         {
             var notification = await _contx.USER_NOTIFICATIONS.Where(n => n.UserId1 == userId && n.Id == notificationId)
                 .FirstOrDefaultAsync();
@@ -2643,7 +2657,7 @@ namespace MyWebApi.Repositories
             return notification;
         }
 
-        public async Task<byte> SendNotificationConfirmationCodeAsync(long userId, long notificationId)
+        public async Task<byte> SendNotificationConfirmationCodeAsync(long userId, Guid notificationId)
         {
             var notification = await _contx.USER_NOTIFICATIONS.Where(n => n.UserId1 == userId && n.Id == notificationId)
                 .FirstOrDefaultAsync();
@@ -2657,7 +2671,7 @@ namespace MyWebApi.Repositories
             return 0;
         }
 
-        public async Task<List<long>> GetUserNotificationsIdsAsync(long userId)
+        public async Task<List<Guid>> GetUserNotificationsIdsAsync(long userId)
         {
             var ids = await _contx.USER_NOTIFICATIONS.Where(n => n.UserId1 == userId)
                 .Select(n => n.Id)

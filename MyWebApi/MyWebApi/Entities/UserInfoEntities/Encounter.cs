@@ -7,7 +7,7 @@ namespace MyWebApi.Entities.UserInfoEntities
     public class Encounter
     {
         [Key]
-        public long Id{ get; set; }
+        public Guid Id{ get; set; }
         public long UserId{ get; set; }
         public long EncounteredUserId{ get; set; }
         public int SectionId { get; set; }

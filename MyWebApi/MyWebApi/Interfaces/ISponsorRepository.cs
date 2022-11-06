@@ -1,6 +1,7 @@
 ﻿using MyWebApi.Entities.SponsorEntities;
 using MyWebApi.Entities.UserActionEntities;
 using MyWebApi.Entities.UserInfoEntities;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 namespace MyWebApi.Interfaces
@@ -32,7 +33,7 @@ namespace MyWebApi.Interfaces
         Task<Sponsor> GetSponsorInfo(long userId);
         Task<Event> GetEventInfo(long eventId);
         Task<List<User>> GetEventAttendees(long eventId);
-        Task<long> RegisterUserEventNotification(UserNotification model);
+        Task<Guid> RegisterUserEventNotification(UserNotification model);
         Task<long> RegisterSponsorEventNotification(SponsorNotification model);
         Task<long> UpdateSponsorAsync(Sponsor model);
         Task<long> UpdateAdAsync(Ad model);

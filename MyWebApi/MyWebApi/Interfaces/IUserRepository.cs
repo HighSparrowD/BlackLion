@@ -29,11 +29,11 @@ namespace MyWebApi.Interfaces
         Task<bool> SetDebugProperties(); //TODO: remove in production
         Task<User> GetUserInfoAsync(long id);
         Task<List<UserNotification>> GetUserRequests(long userId);
-        Task<UserNotification> GetUserRequest(long requestId);
+        Task<UserNotification> GetUserRequest(Guid requestId);
         bool CheckRequestExists(long senderId, long recieverId);
-        Task<long> RegisterUserRequest(UserNotification request);
+        Task<Guid?> RegisterUserRequest(UserNotification request);
         Task<byte> DeleteUserRequests(long userId);
-        Task<byte> DeleteUserRequest(long requestId);
+        Task<byte> DeleteUserRequest(Guid requestId);
         Task<User> GetUserInfoByUsrnameAsync(string username);
         Task<byte> UpdateUserAppLanguageAsync(long userId, int appLanguage);
         Task<byte> UpdateUserBaseAsync(UserBaseInfo user);
@@ -83,7 +83,7 @@ namespace MyWebApi.Interfaces
         Task<bool> CheckBalanceIsSufficient(long userId, int cost);
         Task<DateTime> GetPremiumExpirationDate(long userId);
         Task<DateTime> GrantPremiumToUser(long userId, int cost, int dayDuration, short currency);
-        Task<long> RegisterUserEncounter(Encounter model);
+        Task<Guid?> RegisterUserEncounter(Encounter model);
         Task<Encounter> GetUserEncounter(long encounterId);
         Task<List<Encounter>> GetUserEncounters(long userId, int sectionId);
         Task<int> AddUserTrustProgressAsync(long userId, double progress);
@@ -107,10 +107,10 @@ namespace MyWebApi.Interfaces
         Task<int> GetInvitedUsersCountAsync(long userId);
         Task<bool> CheckUserHasNotificationsAsync(long userId);
         Task<List<UserNotification>> GetUserNotifications(long userId);
-        Task<List<long>> GetUserNotificationsIdsAsync(long userId);
-        Task<UserNotification> GetUserNotificationAsync(long userId, long notificationId);
-        Task<byte> SendNotificationConfirmationCodeAsync(long userId, long notidicationId);
-        Task<bool> DeleteUserNotification(long userId, long notificationId);
+        Task<List<Guid>> GetUserNotificationsIdsAsync(long userId);
+        Task<UserNotification> GetUserNotificationAsync(long userId, Guid notificationId);
+        Task<byte> SendNotificationConfirmationCodeAsync(long userId, Guid notidicationId);
+        Task<bool> DeleteUserNotification(long userId, Guid notificationId);
         Task<bool> DeleteUserNotification(UserNotification notification);
         Task<List<UserAchievement>> GetRandomAchievements(long userId);
         Task<double> CalculateSimilarityAsync(double param1, double param2);

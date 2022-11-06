@@ -89,7 +89,13 @@ namespace MyWebApi.Controllers
             if (model.UserLanguages.Count > langCount)
                 throw new Exception($"This user cannot have more than {langCount} languages !");
 
-            var location = new Location { Id = model.Id, CityId = model.UserCityCode, CountryId = model.UserCountryCode };
+            Location location = null;
+
+            if(model.UserCityCode != null && model.UserCountryCode != null)
+            {
+                location = new Location { Id = model.Id, CityId = (int)model.UserCityCode, CountryId = (int)model.UserCountryCode };
+            }
+
             var uBase = new UserBaseInfo(model.Id, model.UserName, model.UserRealName, "", model.UserPhoto);
             uBase.UserRawDescription = model.UserDescription;
             var uData = new UserDataInfo
@@ -121,7 +127,7 @@ namespace MyWebApi.Controllers
             };
 
             if ((await _repository.UpdateUserAppLanguageAsync(model.Id, model.UserAppLanguageId)) == 1)
-                if ((await _repository.UpdateUserLocationAsync(location)) == 1)
+                if (location== null || (await _repository.UpdateUserLocationAsync(location)) == 1)
                     if ((await _repository.UpdateUserDataAsync(uData)) == 1)
                         if ((await _repository.UpdateUserBaseAsync(uBase)) == 1)
                             if ((await _repository.UpdateUserPreferencesAsync(uPrefs)) == 1)
@@ -258,7 +264,7 @@ namespace MyWebApi.Controllers
             if (model.UserLanguages.Count > langCount)
                 throw new Exception($"This user cannot have more than {langCount} languages !");
 
-            var location = new Location { Id = model.Id, CityId = model.UserCityCode, CountryId = model.UserCountryCode };
+            Location location = null;
             var uBase = new UserBaseInfo(model.Id, model.UserName, model.UserRealName, model.UserDescription, model.UserPhoto);
             var uData = new UserDataInfo
             {
@@ -268,7 +274,6 @@ namespace MyWebApi.Controllers
                 UserAge = model.UserAge,
                 UserGender = model.UserGender,
                 LanguageId = model.UserAppLanguageId,
-                LocationId = location.Id,
             };
             var uPrefs = new UserPreferences(model.Id, model.UserLanguagePreferences, model.UserLocationPreferences, model.AgePrefs, model.CommunicationPrefs, model.UserGenderPrefs, model.ShouldUserPersonalityFunc);
             var m = new User(model.Id)
@@ -287,6 +292,13 @@ namespace MyWebApi.Controllers
                 InvitedUsersBonus = 0,
                 TagSearchesCount = 0,
             };
+
+            if (model.UserCityCode != null && model.UserCountryCode != null)
+            { 
+                location = new Location { Id = model.Id, CityId = (int)model.UserCityCode, CountryId = (int)model.UserCountryCode };
+                uData.LocationId = location.Id;
+            }
+
 
             var id = await _repository.RegisterUserAsync(m, uBase, uData, uPrefs, location);
             return id;
@@ -473,7 +485,7 @@ namespace MyWebApi.Controllers
         }
 
         [HttpGet("/GetUserRequest/{requestId}")]
-        public async Task<UserNotification> GetUserRequest(long requestId)
+        public async Task<UserNotification> GetUserRequest(Guid requestId)
         {
             return await _repository.GetUserRequest(requestId);
         }
@@ -491,13 +503,13 @@ namespace MyWebApi.Controllers
         }
 
         [HttpPost("/RegisterUserRequest")]
-        public async Task<long> RegisterUserRequest(UserNotification request)
+        public async Task<Guid?> RegisterUserRequest(UserNotification request)
         {
             return await _repository.RegisterUserRequest(request);
         }
 
         [HttpDelete("/DeleteUserRequest/{requestId}")]
-        public async Task<byte> DeleteUserRequest(long requestId)
+        public async Task<byte> DeleteUserRequest(Guid requestId)
         {
             return await _repository.DeleteUserRequest(requestId);
         }
@@ -509,7 +521,7 @@ namespace MyWebApi.Controllers
         }
 
         [HttpPost("/RegisterUserEncounter")]
-        public async Task<long> RegisterUserEncounter(Encounter model)
+        public async Task<Guid?> RegisterUserEncounter(Encounter model)
         {
             return await _repository.RegisterUserEncounter(model);
         }
@@ -632,7 +644,7 @@ namespace MyWebApi.Controllers
         }
 
         [HttpGet("/DeleteUserNotification/{userId}/{notificationId}")]
-        public async Task<bool> DeleteUserNotification(long userId, long notificationId)
+        public async Task<bool> DeleteUserNotification(long userId, Guid notificationId)
         {
             return await _repository.DeleteUserNotification(userId, notificationId);
         }
@@ -698,19 +710,19 @@ namespace MyWebApi.Controllers
         }
 
         [HttpGet("/GetUserNotificationsIds/{userId}")]
-        public async Task<List<long>> GetUserNotificationsIds(long userId)
+        public async Task<List<Guid>> GetUserNotificationsIds(long userId)
         {
             return await _repository.GetUserNotificationsIdsAsync(userId);
         }
 
         [HttpGet("/GetUserNotification/{userId}/{notificationId}")]
-        public async Task<UserNotification> GetUserNotification(long userId, long notificationId)
+        public async Task<UserNotification> GetUserNotification(long userId, Guid notificationId)
         {
             return await _repository.GetUserNotificationAsync(userId, notificationId);
         }
 
         [HttpGet("/SendNotificationConfirmationCode/{userId}/{notificationId}")]
-        public async Task<int> SendNotificationConfirmationCode(long userId, long notificationId)
+        public async Task<int> SendNotificationConfirmationCode(long userId, Guid notificationId)
         {
             return await _repository.SendNotificationConfirmationCodeAsync(userId, notificationId);
         }
