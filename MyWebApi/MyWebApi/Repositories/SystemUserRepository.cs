@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Connections.Features;
+using Microsoft.EntityFrameworkCore;
 using MyWebApi.Data;
 using MyWebApi.Entities.AchievementEntities;
 using MyWebApi.Entities.AdminEntities;
@@ -250,8 +251,8 @@ namespace MyWebApi.Repositories
                 {
                     var deviation = 0.15;
 
-                    //var currentValueMax = 0;
-                    //var currentValueMin = 0;
+                    var currentValueMax = 0d;
+                    var currentValueMin = 0d;
 
                     //TODO: do not apply if users parameter percentage will be negative as the result
                     var minDeviation = 0.05;
@@ -287,144 +288,221 @@ namespace MyWebApi.Repositories
 
                         //TODO: create its own deviation variable depending on the number of personalities (It is likely to be grater than the nornal one)
                         var personalitySim = await CalculateSimilarityAsync(userStats.Personality, user2Stats.Personality);
+
+                        currentValueMax = ApplyMaxDeviation(userPoints.PersonalityPercentage, deviation);
+                        currentValueMin = ApplyMinDeviation(userPoints.PersonalityPercentage, minDeviation);
+
                         //Negative conditions are applied, cuz this is an exclussive condition
-                        if (personalitySim >= userPoints.PersonalityPercentage + deviation || personalitySim <= userPoints.PersonalityPercentage - minDeviation)
+                        if (personalitySim >= currentValueMax || personalitySim <= currentValueMin)
                         {
                             data.Remove(u);
                             continue;
                         }
 
-                        if (personalitySim >= user2Points.PersonalityPercentage + deviation || personalitySim <= user2Points.PersonalityPercentage - minDeviation)
+                        currentValueMax = ApplyMaxDeviation(user2Points.PersonalityPercentage, deviation);
+                        currentValueMin = ApplyMinDeviation(user2Points.PersonalityPercentage, minDeviation);
+
+                        if (personalitySim >= currentValueMax || personalitySim <= currentValueMin)
                         {
                             data.Remove(u);
                             continue; 
                         }
 
                         var emIntellectSim = await CalculateSimilarityAsync(userStats.EmotionalIntellect, user2Stats.EmotionalIntellect);
-                        if (emIntellectSim >= userPoints.EmotionalIntellectPercentage + deviation || emIntellectSim <= userPoints.EmotionalIntellectPercentage - minDeviation)
+
+                        currentValueMax = ApplyMaxDeviation(userPoints.EmotionalIntellectPercentage, deviation);
+                        currentValueMin = ApplyMinDeviation(userPoints.EmotionalIntellectPercentage, minDeviation);
+
+                        if (emIntellectSim >= currentValueMax || emIntellectSim <= currentValueMin)
                         {
                             data.Remove(u);
                             continue;
                         }
 
-                        if (emIntellectSim >= user2Points.EmotionalIntellectPercentage + deviation || emIntellectSim <= user2Points.EmotionalIntellectPercentage - minDeviation)
+                        currentValueMax = ApplyMaxDeviation(user2Points.EmotionalIntellectPercentage, deviation);
+                        currentValueMin = ApplyMinDeviation(user2Points.EmotionalIntellectPercentage, minDeviation);
+
+                        if (emIntellectSim >= currentValueMax || emIntellectSim <= currentValueMin)
                         {
                             data.Remove(u);
                             continue;
                         }
 
                         var reliabilitySim = await CalculateSimilarityAsync(userStats.Reliability, user2Stats.Reliability);
-                        if (reliabilitySim >= userPoints.ReliabilityPercentage + deviation || reliabilitySim <= userPoints.ReliabilityPercentage - minDeviation)
+
+                        currentValueMax = ApplyMaxDeviation(userPoints.ReliabilityPercentage, deviation);
+                        currentValueMin = ApplyMinDeviation(userPoints.ReliabilityPercentage, minDeviation);
+
+                        if (reliabilitySim >= currentValueMax || reliabilitySim <= currentValueMin)
                         {
                             data.Remove(u);
                             continue;
                         }
 
-                        if (reliabilitySim >= user2Points.ReliabilityPercentage + deviation || reliabilitySim <= user2Points.ReliabilityPercentage - minDeviation)
+                        currentValueMax = ApplyMaxDeviation(user2Points.ReliabilityPercentage, deviation);
+                        currentValueMin = ApplyMinDeviation(user2Points.ReliabilityPercentage, minDeviation);
+
+                        if (reliabilitySim >= currentValueMax || reliabilitySim <= currentValueMin)
                         {
                             data.Remove(u);
                             continue;
                         }
 
                         var compassionSim = await CalculateSimilarityAsync(userStats.Reliability, user2Stats.Reliability);
-                        if (compassionSim >= userPoints.CompassionPercentage + deviation || compassionSim <= userPoints.CompassionPercentage - minDeviation)
+
+                        currentValueMax = ApplyMaxDeviation(userPoints.CompassionPercentage, deviation);
+                        currentValueMin = ApplyMinDeviation(userPoints.CompassionPercentage, minDeviation);
+
+                        if (compassionSim >= currentValueMax || compassionSim <= currentValueMin)
                         {
                             data.Remove(u);
                             continue;
                         }
 
-                        if (compassionSim >= user2Points.CompassionPercentage + deviation || compassionSim <= user2Points.CompassionPercentage - minDeviation)
+                        currentValueMax = ApplyMaxDeviation(user2Points.CompassionPercentage, deviation);
+                        currentValueMin = ApplyMinDeviation(user2Points.CompassionPercentage, minDeviation);
+
+                        if (compassionSim >= currentValueMax || compassionSim <= currentValueMin)
                         {
                             data.Remove(u);
                             continue;
                         }
 
                         var openMindSim = await CalculateSimilarityAsync(userStats.OpenMindedness, user2Stats.OpenMindedness);
-                        if (openMindSim >= userPoints.OpenMindednessPercentage + deviation || openMindSim <= userPoints.OpenMindednessPercentage - minDeviation)
+
+                        currentValueMax = ApplyMaxDeviation(userPoints.OpenMindednessPercentage, deviation);
+                        currentValueMin = ApplyMinDeviation(userPoints.OpenMindednessPercentage, minDeviation);
+
+                        if (openMindSim >= currentValueMax || openMindSim <= currentValueMin)
                         {
                             data.Remove(u);
                             continue;
                         }
 
-                        if (openMindSim >= user2Points.OpenMindednessPercentage + deviation || openMindSim <= user2Points.OpenMindednessPercentage - minDeviation)
+                        currentValueMax = ApplyMaxDeviation(user2Points.OpenMindednessPercentage, deviation);
+                        currentValueMin = ApplyMinDeviation(user2Points.OpenMindednessPercentage, minDeviation);
+
+                        if (openMindSim >= currentValueMax || openMindSim <= currentValueMin)
                         {
                             data.Remove(u);
                             continue;
                         }
 
                         var agreeablenessSim = await CalculateSimilarityAsync(userStats.Agreeableness, user2Stats.Agreeableness);
-                        if (agreeablenessSim >= userPoints.AgreeablenessPercentage + deviation || agreeablenessSim <= userPoints.AgreeablenessPercentage - minDeviation)
+
+                        currentValueMax = ApplyMaxDeviation(userPoints.AgreeablenessPercentage, deviation);
+                        currentValueMin = ApplyMinDeviation(userPoints.AgreeablenessPercentage, minDeviation);
+
+                        if (agreeablenessSim >= currentValueMax || agreeablenessSim <= currentValueMin)
                         {
                             data.Remove(u);
                             continue;
                         }
 
-                        if (agreeablenessSim >= user2Points.AgreeablenessPercentage + deviation || agreeablenessSim <= user2Points.AgreeablenessPercentage - minDeviation)
+                        currentValueMax = ApplyMaxDeviation(user2Points.AgreeablenessPercentage, deviation);
+                        currentValueMin = ApplyMinDeviation(user2Points.AgreeablenessPercentage, minDeviation);
+
+                        if (agreeablenessSim >= currentValueMax || agreeablenessSim <= currentValueMin)
                         {
                             data.Remove(u);
                             continue;
                         }
 
                         var selfAwerenessSim = await CalculateSimilarityAsync(userStats.SelfAwareness, user2Stats.SelfAwareness);
-                        if (selfAwerenessSim >= userPoints.AgreeablenessPercentage + deviation || selfAwerenessSim <= userPoints.AgreeablenessPercentage - minDeviation)
+
+                        currentValueMax = ApplyMaxDeviation(userPoints.SelfAwarenessPercentage, deviation);
+                        currentValueMin = ApplyMinDeviation(userPoints.SelfAwarenessPercentage, minDeviation);
+
+                        if (selfAwerenessSim >= currentValueMax || selfAwerenessSim <= currentValueMin)
                         {
                             data.Remove(u);
                             continue;
                         }
 
-                        if (selfAwerenessSim >= user2Points.AgreeablenessPercentage + deviation || selfAwerenessSim <= user2Points.AgreeablenessPercentage - minDeviation)
+                        currentValueMax = ApplyMaxDeviation(user2Points.SelfAwarenessPercentage, deviation);
+                        currentValueMin = ApplyMinDeviation(user2Points.SelfAwarenessPercentage, minDeviation);
+
+                        if (selfAwerenessSim >= currentValueMax || selfAwerenessSim <= currentValueMin)
                         {
                             data.Remove(u);
                             continue;
                         }
 
                         var levelOfSense = await CalculateSimilarityAsync(userStats.LevelOfSense, user2Stats.LevelOfSense);
-                        if (levelOfSense >= userPoints.LevelOfSensePercentage + deviation || levelOfSense <= userPoints.LevelOfSensePercentage - minDeviation)
+
+                        currentValueMax = ApplyMaxDeviation(userPoints.LevelOfSensePercentage, deviation);
+                        currentValueMin = ApplyMinDeviation(userPoints.LevelOfSensePercentage, minDeviation);
+
+                        if (levelOfSense >= currentValueMax || levelOfSense <= currentValueMin)
                         {
                             data.Remove(u);
                             continue;
                         }
 
-                        if (levelOfSense >= user2Points.LevelOfSensePercentage + deviation || levelOfSense <= user2Points.LevelOfSensePercentage - minDeviation)
+                        currentValueMax = ApplyMaxDeviation(user2Points.LevelOfSensePercentage, deviation);
+                        currentValueMin = ApplyMinDeviation(user2Points.LevelOfSensePercentage, minDeviation);
+
+                        if (levelOfSense >= currentValueMax || levelOfSense <= currentValueMin)
                         {
                             data.Remove(u);
                             continue;
                         }
 
                         var intellectSim = await CalculateSimilarityAsync(userStats.Intellect, user2Points.Intellect);
-                        if (intellectSim >= userPoints.IntellectPercentage + deviation || intellectSim <= userPoints.IntellectPercentage - minDeviation)
+
+                        currentValueMax = ApplyMaxDeviation(userPoints.IntellectPercentage, deviation);
+                        currentValueMin = ApplyMinDeviation(userPoints.IntellectPercentage, minDeviation);
+
+                        if (intellectSim >= currentValueMax || intellectSim <= currentValueMin)
                         {
                             data.Remove(u);
                             continue;
                         }
 
-                        if (intellectSim >= user2Points.IntellectPercentage + deviation || intellectSim <= user2Points.IntellectPercentage - minDeviation)
+                        currentValueMax = ApplyMaxDeviation(user2Points.IntellectPercentage, deviation);
+                        currentValueMin = ApplyMinDeviation(user2Points.IntellectPercentage, minDeviation);
+
+                        if (intellectSim >= currentValueMax || intellectSim <= currentValueMin)
                         {
                             data.Remove(u);
                             continue;
                         }
 
                         var natureSim = await CalculateSimilarityAsync(userStats.Nature, user2Stats.Nature);
-                        if (natureSim >= userPoints.Nature + deviation || natureSim <= userPoints.Nature - minDeviation)
+
+                        currentValueMax = ApplyMaxDeviation(userPoints.NaturePercentage, deviation);
+                        currentValueMin = ApplyMinDeviation(userPoints.NaturePercentage, minDeviation);
+
+                        if (natureSim >= currentValueMax || natureSim <= currentValueMin)
                         {
                             data.Remove(u);
                             continue;
                         }
 
-                        if (natureSim >= user2Points.NaturePercentage + deviation || natureSim <= user2Points.NaturePercentage - minDeviation)
+                        currentValueMax = ApplyMaxDeviation(user2Points.NaturePercentage, deviation);
+                        currentValueMin = ApplyMinDeviation(user2Points.NaturePercentage, minDeviation);
+
+                        if (natureSim >= currentValueMax || natureSim <= currentValueMin)
                         {
                             data.Remove(u);
                             continue;
                         }
 
                         var creativitySim = await CalculateSimilarityAsync(userStats.Creativity, user2Stats.Creativity);
-                        if (creativitySim >= userPoints.CreativityPercentage + deviation || creativitySim <= userPoints.CreativityPercentage - minDeviation)
+
+                        currentValueMax = ApplyMaxDeviation(userPoints.CreativityPercentage, deviation);
+                        currentValueMin = ApplyMinDeviation(userPoints.CreativityPercentage, minDeviation);
+
+                        if (creativitySim >= currentValueMax || creativitySim <= currentValueMin)
                         {
                             data.Remove(u);
                             continue;
                         }
 
-                        if (creativitySim >= user2Points.CreativityPercentage + deviation || creativitySim <= user2Points.CreativityPercentage - minDeviation)
+                        currentValueMax = ApplyMaxDeviation(user2Points.CreativityPercentage, deviation);
+                        currentValueMin = ApplyMinDeviation(user2Points.CreativityPercentage, minDeviation);
+
+                        if (creativitySim >= currentValueMax || creativitySim <= currentValueMin)
                         {
                             data.Remove(u);
                             continue;
@@ -521,6 +599,26 @@ namespace MyWebApi.Repositories
                 await LogAdminErrorAsync(report.UserBaseInfoId, ex.Message, (int)Sections.Reporter);
                 return 0;
             }
+        }
+
+        private double ApplyMaxDeviation(double value, double deviation)
+        {
+            var currentValueMax = value + deviation;
+
+            if (currentValueMax > 1)
+                currentValueMax = 1;
+
+            return currentValueMax;
+        }
+
+        private double ApplyMinDeviation(double value, double deviation)
+        {
+            var currentValueMin = value - deviation;
+
+            if (currentValueMin < 0)
+                currentValueMin = 0;
+
+            return currentValueMin;
         }
 
         public async Task<bool> CheckUserExists(long id)
