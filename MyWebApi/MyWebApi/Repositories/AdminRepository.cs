@@ -6,11 +6,9 @@ using MyWebApi.Entities.LocationEntities;
 using MyWebApi.Entities.ReasonEntities;
 using MyWebApi.Entities.ReportEntities;
 using MyWebApi.Entities.SecondaryEntities;
-using MyWebApi.Entities.UserInfoEntities;
 using MyWebApi.Interfaces;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection.Metadata.Ecma335;
 using System.Threading.Tasks;
 
 namespace MyWebApi.Repositories
@@ -18,10 +16,12 @@ namespace MyWebApi.Repositories
     public class AdminRepository : IAdminRepository
     {
         private UserContext _contx { get; set; }
+        private IUserRepository _userRep { get; set; }
 
-        public AdminRepository(UserContext context)
+        public AdminRepository(UserContext context, IUserRepository userRepository)
         {
             _contx = context;
+            _userRep = userRepository;
         }
 
         public async Task<long> UploadCities(List<City> cities)
@@ -231,6 +231,7 @@ namespace MyWebApi.Repositories
             catch { return -1; }
         }
 
+        //DO NOT use that method in production
         public async Task<byte> UploadAchievements(List<Achievement> achievements)
         {
             try
@@ -243,7 +244,10 @@ namespace MyWebApi.Repositories
                 await _contx.SYSTEM_ACHIEVEMENTS.AddRangeAsync(achievements);
                 await _contx.SaveChangesAsync();
 
-                return 1;
+                if (await UpdateUsersAchievements(achievements, shouldDeleteAll:true))
+                    return 1;
+
+                return 0;
             }
             catch { return 0; }
         }
@@ -254,9 +258,45 @@ namespace MyWebApi.Repositories
             {
                 await _contx.SYSTEM_ACHIEVEMENTS.AddRangeAsync(achievements);
                 await _contx.SaveChangesAsync();
-                return 1;
+
+                if (await UpdateUsersAchievements(achievements))
+                    return 1;
+
+                return 0;
             }
             catch { return 0; }
+        }
+
+        //Used when new achievements added to DB
+        private async Task<bool> UpdateUsersAchievements(List<Achievement> achievements, bool shouldDeleteAll=false)
+        {
+            try
+            {
+                if (shouldDeleteAll)
+                {
+                    _contx.USER_ACHIEVEMENTS.RemoveRange(await _contx.USER_ACHIEVEMENTS.ToListAsync());
+                    await _contx.SaveChangesAsync();
+                }
+
+                await Task.Run(async() => {             
+                    foreach (var achievement in achievements)
+                    {
+                        var users = await _contx.SYSTEM_USERS_DATA.ToListAsync();
+                        foreach (var user in users)
+                        {
+                            if (achievement.ClassLocalisationId == user.LanguageId)
+                            {
+                                var a = new UserAchievement(achievement.Id, user.Id, achievement.ClassLocalisationId, achievement.Name, achievement.Description, achievement.Value, achievement.ClassLocalisationId);
+                                _contx.USER_ACHIEVEMENTS.Add(a);
+                                await _contx.SaveChangesAsync();
+                            }
+                        }
+                    }
+                });
+
+                return true;
+            }
+            catch { return false; }
         }
 
         public async Task<byte> AddDailyTaskAsync(DailyTask model)

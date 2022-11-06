@@ -1,12 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Server.IIS.Core;
-using Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http;
+﻿using Microsoft.AspNetCore.Connections.Features;
 using Microsoft.EntityFrameworkCore;
 using MyWebApi.Data;
 using MyWebApi.Entities.AchievementEntities;
 using MyWebApi.Entities.AdminEntities;
 using MyWebApi.Entities.DailyTaskEntities;
-using MyWebApi.Entities.LocalisationEntities;
 using MyWebApi.Entities.LocationEntities;
 using MyWebApi.Entities.ReasonEntities;
 using MyWebApi.Entities.ReportEntities;
@@ -19,14 +16,9 @@ using MyWebApi.Interfaces;
 using QRCoder;
 using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.IO;
 using System.Linq;
-using System.Net;
-using System.Text;
 using System.Threading.Tasks;
 using static MyWebApi.Enums.SystemEnums;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace MyWebApi.Repositories
 {
@@ -48,10 +40,15 @@ namespace MyWebApi.Repositories
         {
             try
             {
-                await _contx.USER_LOCATIONS.AddAsync(location);
+                var country = "---";
+                var city = "---";
 
-                var country = (await _contx.COUNTRIES.Where(c => c.Id == location.CountryId && c.ClassLocalisationId == dataModel.LanguageId).SingleOrDefaultAsync()).CountryName;
-                var city = (await _contx.CITIES.Where(c => c.Id == location.CountryId && c.CountryClassLocalisationId == dataModel.LanguageId).SingleOrDefaultAsync()).CityName;
+                if (location != null)
+                {
+                    await _contx.USER_LOCATIONS.AddAsync(location);
+                    country = (await _contx.COUNTRIES.Where(c => c.Id == location.CountryId && c.ClassLocalisationId == dataModel.LanguageId).Select(c => c.CountryName).SingleOrDefaultAsync());
+                    city = (await _contx.CITIES.Where(c => c.Id == location.CountryId && c.CountryClassLocalisationId == dataModel.LanguageId).Select(c => c.CityName).SingleOrDefaultAsync());
+                }
 
                 baseModel.UserRawDescription = baseModel.UserDescription;
                 baseModel.UserDescription = baseModel.GenerateUserDescription(baseModel.UserRealName, dataModel.UserAge, country, city, baseModel.UserDescription);
@@ -89,19 +86,24 @@ namespace MyWebApi.Repositories
 
                     var bonus = invitor.HasPremium ? 0.05 : 0;
 
-                    if (invitor.InvitedUsersCount == 3)
+                    if (invitor.InvitedUsersCount == 1)
                     {
-                        invitor.InvitedUsersBonus = 0.25 + bonus;
+                        await TopUpUserWalletPointsBalance(invitor.UserId, 250, $"User {invitor.UserId} has invited his firs user");
+                        await GrantPremiumToUser(invitor.UserId, 0, 1, (short)Currencies.Points);
+                    }
+                    else if (invitor.InvitedUsersCount == 3)
+                    {
+                        invitor.InvitedUsersBonus = 0.15 + bonus;
                         await TopUpUserWalletPointsBalance(invitor.UserId, 1199, $"User {invitor.UserId} has invited 3 users");
                     }
                     else if (invitor.InvitedUsersCount == 7)
                     {
-                        invitor.InvitedUsersBonus = 0.45 + bonus;
+                        invitor.InvitedUsersBonus = 0.35 + bonus;
                         await TopUpUserWalletPointsBalance(invitor.UserId, 1499, $"User {invitor.UserId} has invited 7 users");
                     }
                     else if (invitor.InvitedUsersBonus == 10)
                     {
-                        invitor.InvitedUsersBonus = 0.7 + bonus;
+                        invitor.InvitedUsersBonus = 0.5 + bonus;
                         // 1499 will then turn into 1999 due to premium purchase reward
                         await TopUpUserWalletPointsBalance(invitor.UserId, 1499, $"User {invitor.UserId} has invited 10 users");
                         //TODO: apply effect later
@@ -247,8 +249,10 @@ namespace MyWebApi.Repositories
                 //If user uses PERSONALITY functionality and free search is disabled
                 if (currentUser.UserPreferences.ShouldUsePersonalityFunc && !isFreeSearch)
                 {
-                    //TODO: Change it for users with premium ?
                     var deviation = 0.15;
+
+                    var currentValueMax = 0d;
+                    var currentValueMin = 0d;
 
                     //TODO: do not apply if users parameter percentage will be negative as the result
                     var minDeviation = 0.05;
@@ -271,7 +275,10 @@ namespace MyWebApi.Repositories
 
                         //Check if user uses personality functionality and remove him from the list if he does not
                         if (!u.UserPreferences.ShouldUsePersonalityFunc)
+                        {
                             data.Remove(u);
+                            continue;
+                        }
 
                         var user2Points = await _contx.USER_PERSONALITY_POINTS.Where(p => p.UserId == u.UserId)
                         .SingleOrDefaultAsync();
@@ -281,144 +288,221 @@ namespace MyWebApi.Repositories
 
                         //TODO: create its own deviation variable depending on the number of personalities (It is likely to be grater than the nornal one)
                         var personalitySim = await CalculateSimilarityAsync(userStats.Personality, user2Stats.Personality);
+
+                        currentValueMax = ApplyMaxDeviation(userPoints.PersonalityPercentage, deviation);
+                        currentValueMin = ApplyMinDeviation(userPoints.PersonalityPercentage, minDeviation);
+
                         //Negative conditions are applied, cuz this is an exclussive condition
-                        if (personalitySim >= userPoints.PersonalityPercentage + deviation || personalitySim <= userPoints.PersonalityPercentage - minDeviation)
+                        if (personalitySim >= currentValueMax || personalitySim <= currentValueMin)
                         {
                             data.Remove(u);
                             continue;
                         }
 
-                        if (personalitySim >= user2Points.PersonalityPercentage + deviation || personalitySim <= user2Points.PersonalityPercentage - minDeviation)
+                        currentValueMax = ApplyMaxDeviation(user2Points.PersonalityPercentage, deviation);
+                        currentValueMin = ApplyMinDeviation(user2Points.PersonalityPercentage, minDeviation);
+
+                        if (personalitySim >= currentValueMax || personalitySim <= currentValueMin)
                         {
                             data.Remove(u);
                             continue; 
                         }
 
                         var emIntellectSim = await CalculateSimilarityAsync(userStats.EmotionalIntellect, user2Stats.EmotionalIntellect);
-                        if (emIntellectSim >= userPoints.EmotionalIntellectPercentage + deviation || emIntellectSim <= userPoints.EmotionalIntellectPercentage - minDeviation)
+
+                        currentValueMax = ApplyMaxDeviation(userPoints.EmotionalIntellectPercentage, deviation);
+                        currentValueMin = ApplyMinDeviation(userPoints.EmotionalIntellectPercentage, minDeviation);
+
+                        if (emIntellectSim >= currentValueMax || emIntellectSim <= currentValueMin)
                         {
                             data.Remove(u);
                             continue;
                         }
 
-                        if (emIntellectSim >= user2Points.EmotionalIntellectPercentage + deviation || emIntellectSim <= user2Points.EmotionalIntellectPercentage - minDeviation)
+                        currentValueMax = ApplyMaxDeviation(user2Points.EmotionalIntellectPercentage, deviation);
+                        currentValueMin = ApplyMinDeviation(user2Points.EmotionalIntellectPercentage, minDeviation);
+
+                        if (emIntellectSim >= currentValueMax || emIntellectSim <= currentValueMin)
                         {
                             data.Remove(u);
                             continue;
                         }
 
                         var reliabilitySim = await CalculateSimilarityAsync(userStats.Reliability, user2Stats.Reliability);
-                        if (reliabilitySim >= userPoints.ReliabilityPercentage + deviation || reliabilitySim <= userPoints.ReliabilityPercentage - minDeviation)
+
+                        currentValueMax = ApplyMaxDeviation(userPoints.ReliabilityPercentage, deviation);
+                        currentValueMin = ApplyMinDeviation(userPoints.ReliabilityPercentage, minDeviation);
+
+                        if (reliabilitySim >= currentValueMax || reliabilitySim <= currentValueMin)
                         {
                             data.Remove(u);
                             continue;
                         }
 
-                        if (reliabilitySim >= user2Points.ReliabilityPercentage + deviation || reliabilitySim <= user2Points.ReliabilityPercentage - minDeviation)
+                        currentValueMax = ApplyMaxDeviation(user2Points.ReliabilityPercentage, deviation);
+                        currentValueMin = ApplyMinDeviation(user2Points.ReliabilityPercentage, minDeviation);
+
+                        if (reliabilitySim >= currentValueMax || reliabilitySim <= currentValueMin)
                         {
                             data.Remove(u);
                             continue;
                         }
 
                         var compassionSim = await CalculateSimilarityAsync(userStats.Reliability, user2Stats.Reliability);
-                        if (compassionSim >= userPoints.CompassionPercentage + deviation || compassionSim <= userPoints.CompassionPercentage - minDeviation)
+
+                        currentValueMax = ApplyMaxDeviation(userPoints.CompassionPercentage, deviation);
+                        currentValueMin = ApplyMinDeviation(userPoints.CompassionPercentage, minDeviation);
+
+                        if (compassionSim >= currentValueMax || compassionSim <= currentValueMin)
                         {
                             data.Remove(u);
                             continue;
                         }
 
-                        if (compassionSim >= user2Points.CompassionPercentage + deviation || compassionSim <= user2Points.CompassionPercentage - minDeviation)
+                        currentValueMax = ApplyMaxDeviation(user2Points.CompassionPercentage, deviation);
+                        currentValueMin = ApplyMinDeviation(user2Points.CompassionPercentage, minDeviation);
+
+                        if (compassionSim >= currentValueMax || compassionSim <= currentValueMin)
                         {
                             data.Remove(u);
                             continue;
                         }
 
                         var openMindSim = await CalculateSimilarityAsync(userStats.OpenMindedness, user2Stats.OpenMindedness);
-                        if (openMindSim >= userPoints.OpenMindednessPercentage + deviation || openMindSim <= userPoints.OpenMindednessPercentage - minDeviation)
+
+                        currentValueMax = ApplyMaxDeviation(userPoints.OpenMindednessPercentage, deviation);
+                        currentValueMin = ApplyMinDeviation(userPoints.OpenMindednessPercentage, minDeviation);
+
+                        if (openMindSim >= currentValueMax || openMindSim <= currentValueMin)
                         {
                             data.Remove(u);
                             continue;
                         }
 
-                        if (openMindSim >= user2Points.OpenMindednessPercentage + deviation || openMindSim <= user2Points.OpenMindednessPercentage - minDeviation)
+                        currentValueMax = ApplyMaxDeviation(user2Points.OpenMindednessPercentage, deviation);
+                        currentValueMin = ApplyMinDeviation(user2Points.OpenMindednessPercentage, minDeviation);
+
+                        if (openMindSim >= currentValueMax || openMindSim <= currentValueMin)
                         {
                             data.Remove(u);
                             continue;
                         }
 
                         var agreeablenessSim = await CalculateSimilarityAsync(userStats.Agreeableness, user2Stats.Agreeableness);
-                        if (agreeablenessSim >= userPoints.AgreeablenessPercentage + deviation || agreeablenessSim <= userPoints.AgreeablenessPercentage - minDeviation)
+
+                        currentValueMax = ApplyMaxDeviation(userPoints.AgreeablenessPercentage, deviation);
+                        currentValueMin = ApplyMinDeviation(userPoints.AgreeablenessPercentage, minDeviation);
+
+                        if (agreeablenessSim >= currentValueMax || agreeablenessSim <= currentValueMin)
                         {
                             data.Remove(u);
                             continue;
                         }
 
-                        if (agreeablenessSim >= user2Points.AgreeablenessPercentage + deviation || agreeablenessSim <= user2Points.AgreeablenessPercentage - minDeviation)
+                        currentValueMax = ApplyMaxDeviation(user2Points.AgreeablenessPercentage, deviation);
+                        currentValueMin = ApplyMinDeviation(user2Points.AgreeablenessPercentage, minDeviation);
+
+                        if (agreeablenessSim >= currentValueMax || agreeablenessSim <= currentValueMin)
                         {
                             data.Remove(u);
                             continue;
                         }
 
                         var selfAwerenessSim = await CalculateSimilarityAsync(userStats.SelfAwareness, user2Stats.SelfAwareness);
-                        if (selfAwerenessSim >= userPoints.AgreeablenessPercentage + deviation || selfAwerenessSim <= userPoints.AgreeablenessPercentage - minDeviation)
+
+                        currentValueMax = ApplyMaxDeviation(userPoints.SelfAwarenessPercentage, deviation);
+                        currentValueMin = ApplyMinDeviation(userPoints.SelfAwarenessPercentage, minDeviation);
+
+                        if (selfAwerenessSim >= currentValueMax || selfAwerenessSim <= currentValueMin)
                         {
                             data.Remove(u);
                             continue;
                         }
 
-                        if (selfAwerenessSim >= user2Points.AgreeablenessPercentage + deviation || selfAwerenessSim <= user2Points.AgreeablenessPercentage - minDeviation)
+                        currentValueMax = ApplyMaxDeviation(user2Points.SelfAwarenessPercentage, deviation);
+                        currentValueMin = ApplyMinDeviation(user2Points.SelfAwarenessPercentage, minDeviation);
+
+                        if (selfAwerenessSim >= currentValueMax || selfAwerenessSim <= currentValueMin)
                         {
                             data.Remove(u);
                             continue;
                         }
 
                         var levelOfSense = await CalculateSimilarityAsync(userStats.LevelOfSense, user2Stats.LevelOfSense);
-                        if (levelOfSense >= userPoints.LevelOfSensePercentage + deviation || levelOfSense <= userPoints.LevelOfSensePercentage - minDeviation)
+
+                        currentValueMax = ApplyMaxDeviation(userPoints.LevelOfSensePercentage, deviation);
+                        currentValueMin = ApplyMinDeviation(userPoints.LevelOfSensePercentage, minDeviation);
+
+                        if (levelOfSense >= currentValueMax || levelOfSense <= currentValueMin)
                         {
                             data.Remove(u);
                             continue;
                         }
 
-                        if (levelOfSense >= user2Points.LevelOfSensePercentage + deviation || levelOfSense <= user2Points.LevelOfSensePercentage - minDeviation)
+                        currentValueMax = ApplyMaxDeviation(user2Points.LevelOfSensePercentage, deviation);
+                        currentValueMin = ApplyMinDeviation(user2Points.LevelOfSensePercentage, minDeviation);
+
+                        if (levelOfSense >= currentValueMax || levelOfSense <= currentValueMin)
                         {
                             data.Remove(u);
                             continue;
                         }
 
                         var intellectSim = await CalculateSimilarityAsync(userStats.Intellect, user2Points.Intellect);
-                        if (intellectSim >= userPoints.IntellectPercentage + deviation || intellectSim <= userPoints.IntellectPercentage - minDeviation)
+
+                        currentValueMax = ApplyMaxDeviation(userPoints.IntellectPercentage, deviation);
+                        currentValueMin = ApplyMinDeviation(userPoints.IntellectPercentage, minDeviation);
+
+                        if (intellectSim >= currentValueMax || intellectSim <= currentValueMin)
                         {
                             data.Remove(u);
                             continue;
                         }
 
-                        if (intellectSim >= user2Points.IntellectPercentage + deviation || intellectSim <= user2Points.IntellectPercentage - minDeviation)
+                        currentValueMax = ApplyMaxDeviation(user2Points.IntellectPercentage, deviation);
+                        currentValueMin = ApplyMinDeviation(user2Points.IntellectPercentage, minDeviation);
+
+                        if (intellectSim >= currentValueMax || intellectSim <= currentValueMin)
                         {
                             data.Remove(u);
                             continue;
                         }
 
                         var natureSim = await CalculateSimilarityAsync(userStats.Nature, user2Stats.Nature);
-                        if (natureSim >= userPoints.Nature + deviation || natureSim <= userPoints.Nature - minDeviation)
+
+                        currentValueMax = ApplyMaxDeviation(userPoints.NaturePercentage, deviation);
+                        currentValueMin = ApplyMinDeviation(userPoints.NaturePercentage, minDeviation);
+
+                        if (natureSim >= currentValueMax || natureSim <= currentValueMin)
                         {
                             data.Remove(u);
                             continue;
                         }
 
-                        if (natureSim >= user2Points.NaturePercentage + deviation || natureSim <= user2Points.NaturePercentage - minDeviation)
+                        currentValueMax = ApplyMaxDeviation(user2Points.NaturePercentage, deviation);
+                        currentValueMin = ApplyMinDeviation(user2Points.NaturePercentage, minDeviation);
+
+                        if (natureSim >= currentValueMax || natureSim <= currentValueMin)
                         {
                             data.Remove(u);
                             continue;
                         }
 
                         var creativitySim = await CalculateSimilarityAsync(userStats.Creativity, user2Stats.Creativity);
-                        if (creativitySim >= userPoints.CreativityPercentage + deviation || creativitySim <= userPoints.CreativityPercentage - minDeviation)
+
+                        currentValueMax = ApplyMaxDeviation(userPoints.CreativityPercentage, deviation);
+                        currentValueMin = ApplyMinDeviation(userPoints.CreativityPercentage, minDeviation);
+
+                        if (creativitySim >= currentValueMax || creativitySim <= currentValueMin)
                         {
                             data.Remove(u);
                             continue;
                         }
 
-                        if (creativitySim >= user2Points.CreativityPercentage + deviation || creativitySim <= user2Points.CreativityPercentage - minDeviation)
+                        currentValueMax = ApplyMaxDeviation(user2Points.CreativityPercentage, deviation);
+                        currentValueMin = ApplyMinDeviation(user2Points.CreativityPercentage, minDeviation);
+
+                        if (creativitySim >= currentValueMax || creativitySim <= currentValueMin)
                         {
                             data.Remove(u);
                             continue;
@@ -429,7 +513,7 @@ namespace MyWebApi.Repositories
                 {
                     if(!isFreeSearch)
                     {
-                        //Remove users using PERSONALITY fucntionality
+                        //Remove users, using PERSONALITY fucntionality
                         data.AsParallel().ForAll(u =>
                         {
                             if (u.UserPreferences.ShouldUsePersonalityFunc)
@@ -515,6 +599,26 @@ namespace MyWebApi.Repositories
                 await LogAdminErrorAsync(report.UserBaseInfoId, ex.Message, (int)Sections.Reporter);
                 return 0;
             }
+        }
+
+        private double ApplyMaxDeviation(double value, double deviation)
+        {
+            var currentValueMax = value + deviation;
+
+            if (currentValueMax > 1)
+                currentValueMax = 1;
+
+            return currentValueMax;
+        }
+
+        private double ApplyMinDeviation(double value, double deviation)
+        {
+            var currentValueMin = value - deviation;
+
+            if (currentValueMin < 0)
+                currentValueMin = 0;
+
+            return currentValueMin;
         }
 
         public async Task<bool> CheckUserExists(long id)
@@ -1469,13 +1573,17 @@ namespace MyWebApi.Repositories
                 var timeNow = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
 
                 var user = await _contx.SYSTEM_USERS.Where(u => u.UserId == userId).SingleOrDefaultAsync();
+                
+                if (user != null)
+                {
+                    if ((bool)user.HasPremium && user.PremiumExpirationDate > timeNow)
+                        user.HasPremium = false;
 
-                if ((bool)user.HasPremium && user.PremiumExpirationDate > timeNow)
-                    user.HasPremium = false;
+                    //TODO: Notify user that his premium access has expired
 
-                //TODO: Notify user that his premium access has expired
-
-                return user.HasPremium;
+                    return user.HasPremium;
+                }
+                return false;
             }
             catch (Exception ex)
             {
@@ -1538,6 +1646,9 @@ namespace MyWebApi.Repositories
 
                 _contx.Update(user);
                 await _contx.SaveChangesAsync();
+
+                await AddUserNotificationAsync(new UserNotification { UserId = user.UserId, IsLikedBack = false, Severity = (short)Severities.Moderate, SectionId = (int)Sections.Neutral, Description = $"You have been granted premium access. Enjoy your benefits :)\nPremium expiration {user.PremiumExpirationDate.Value.ToShortTimeString()}" });
+
                 return user.PremiumExpirationDate.Value;
             }
             catch (Exception ex)
@@ -1723,7 +1834,12 @@ namespace MyWebApi.Repositories
         {
             try
             {
-                var user = await _contx.SYSTEM_USERS.Where(u => u.UserId == userId).SingleOrDefaultAsync();
+                var user = await _contx.SYSTEM_USERS.Where(u => u.UserId == userId)
+                    .SingleOrDefaultAsync();
+
+                if (user != null)
+                    return false;
+
                 return (bool)user.IsBusy;
             }
             catch (Exception ex)
@@ -1780,7 +1896,7 @@ namespace MyWebApi.Repositories
             }
         }
 
-        public async Task<UserNotification> GetUserRequest(long requestId)
+        public async Task<UserNotification> GetUserRequest(Guid requestId)
         {
             try
             {
@@ -1797,7 +1913,7 @@ namespace MyWebApi.Repositories
             }
         }
 
-        public async Task<long> RegisterUserRequest(UserNotification request)
+        public async Task<Guid?> RegisterUserRequest(UserNotification request)
         {
             try
             {
@@ -1815,7 +1931,7 @@ namespace MyWebApi.Repositories
             catch (Exception ex)
             {
                 await LogAdminErrorAsync(request.UserId, ex.Message, (int)Sections.Requester);
-                return 0;
+                return null;
             }
         }
 
@@ -1840,7 +1956,7 @@ namespace MyWebApi.Repositories
             }
         }
 
-        public async Task<byte> DeleteUserRequest(long requestId)
+        public async Task<byte> DeleteUserRequest(Guid requestId)
         {
             try
             {
@@ -1899,11 +2015,11 @@ namespace MyWebApi.Repositories
             }
         }
 
-        public async Task<long> RegisterUserEncounter(Encounter model)
+        public async Task<Guid?> RegisterUserEncounter(Encounter model)
         {
             try
             {
-                model.Id = await _contx.USER_ENCOUNTERS.CountAsync() + 1;
+                model.Id = Guid.NewGuid();
                 model.EncounterDate = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
 
                 if (model.SectionId == (int)Sections.Familiator || model.SectionId == (int)Sections.Requester)
@@ -1927,7 +2043,7 @@ namespace MyWebApi.Repositories
             catch (Exception ex)
             {
                 await LogAdminErrorAsync(model.UserId, ex.Message, (int)Sections.Familiator);
-                return 0;
+                return null;
             }
         }
 
@@ -2314,7 +2430,7 @@ namespace MyWebApi.Repositories
         {
             try
             {
-                model.Id = await _contx.USER_NOTIFICATIONS.CountAsync() + 1;
+                model.Id = Guid.NewGuid();
                 await _contx.USER_NOTIFICATIONS.AddAsync(model);
                 await _contx.SaveChangesAsync();
 
@@ -2347,7 +2463,7 @@ namespace MyWebApi.Repositories
                 .ToListAsync();
         }
 
-        public async Task<bool> DeleteUserNotification(long userId, long notificationId)
+        public async Task<bool> DeleteUserNotification(long userId, Guid notificationId)
         {
             try
             {
@@ -2635,7 +2751,7 @@ namespace MyWebApi.Repositories
             return 250; //TODO: Think if value should be hardcoded 
         }
 
-        public async Task<UserNotification> GetUserNotificationAsync(long userId, long notificationId)
+        public async Task<UserNotification> GetUserNotificationAsync(long userId, Guid notificationId)
         {
             var notification = await _contx.USER_NOTIFICATIONS.Where(n => n.UserId1 == userId && n.Id == notificationId)
                 .FirstOrDefaultAsync();
@@ -2643,7 +2759,7 @@ namespace MyWebApi.Repositories
             return notification;
         }
 
-        public async Task<byte> SendNotificationConfirmationCodeAsync(long userId, long notificationId)
+        public async Task<byte> SendNotificationConfirmationCodeAsync(long userId, Guid notificationId)
         {
             var notification = await _contx.USER_NOTIFICATIONS.Where(n => n.UserId1 == userId && n.Id == notificationId)
                 .FirstOrDefaultAsync();
@@ -2657,7 +2773,7 @@ namespace MyWebApi.Repositories
             return 0;
         }
 
-        public async Task<List<long>> GetUserNotificationsIdsAsync(long userId)
+        public async Task<List<Guid>> GetUserNotificationsIdsAsync(long userId)
         {
             var ids = await _contx.USER_NOTIFICATIONS.Where(n => n.UserId1 == userId)
                 .Select(n => n.Id)
@@ -2788,7 +2904,7 @@ namespace MyWebApi.Repositories
         private async Task<double> CalculateSimilarityPreferences(int points, double similarityCoefficient)
         {
             if (points == 0)
-                return 0;
+                return 1;
 
             await Task.Run(() =>
             {
@@ -3014,10 +3130,10 @@ namespace MyWebApi.Repositories
             var commonIds = user1Langs.Intersect(user2Langs);
             var commons = await _contx.LANGUAGES.Where(l => commonIds
                 .Any(i => i == l.Id) && l.ClassLocalisationId == 0)
-                .Select(l => l.ClassLocalisationId == localisationId)
+                .Select(l => l.LanguageName)
                 .ToListAsync();
 
-            return String.Join(", ", commonIds);
+            return String.Join(", ", commons);
         }
 
         public async Task<bool> LogAdminErrorAsync(long? userId, string description, int sectioId)

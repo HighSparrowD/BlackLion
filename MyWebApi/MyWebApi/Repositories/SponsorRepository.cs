@@ -334,9 +334,9 @@ namespace MyWebApi.Repositories
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<long> RegisterUserEventNotification(UserNotification model)
+        public async Task<Guid> RegisterUserEventNotification(UserNotification model)
         {
-            model.Id = (await _contx.USER_NOTIFICATIONS.CountAsync()) +1;
+            model.Id = Guid.NewGuid();
             await _contx.USER_NOTIFICATIONS.AddAsync(model);
             await _contx.SaveChangesAsync();
 
