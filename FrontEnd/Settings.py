@@ -1,5 +1,8 @@
+import base64
+
 from Registration import *
 from ReportModule import *
+from telebot.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardButton, InlineKeyboardMarkup
 
 
 class Settings:
@@ -23,12 +26,13 @@ class Settings:
         self.add_to_blacklist_text = "Add user to a blacklist"
         self.remove_from_blacklist_text = "Remove user from a blacklist"
 
-        self.setting_message = "1. View the blacklist\n2. Manage PERSONALITY points\n3. Turn off / on PERSONALITY\n4. Change profile properties\n5. ⭐Set profile status⭐\n6. Manage recently encountered users\n7. Exit"
+        self.setting_message = "1. View the blacklist\n2. Manage PERSONALITY points\n3. Turn off / on PERSONALITY\n4. Change profile properties\n5. ⭐Set profile status⭐\n6. Manage recently encountered users\n7. Get my invitation credentials\n\n8.Exit"
         self.encounter_options_message = f"1. Use 💥Second chance💥 to send like to a user once again. You have SECOND_CHANCE_COUNT\n2. Report user\n3. Abort\n4." #TODO: replace caps message to a real "second chance" effect amount
-        self.settingMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4", "5", "6", "7")
+        self.settingMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4", "5", "6", "7", "8")
         self.YNMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("yes", "no")
         self.abortMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("abort")
         self.encounterOptionMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4")
+        self.credsMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3")
 
         self.setting_choice(message)
 
@@ -40,7 +44,7 @@ class Settings:
             if message.text == "1":
                 self.black_list_management(message)
             elif message.text == "2":
-                pass
+                self.personality_points(message)
             elif message.text == "3":
                 self.personality_switch(message)
             elif message.text == "4":
@@ -50,10 +54,69 @@ class Settings:
             elif message.text == "6":
                 self.encounter_list_management(message)
             elif message.text == "7":
+                self.credentials_management(message)
+            elif message.text == "8":
                 self.destruct()
             else:
                 self.bot.send_message(self.current_user, "No such option", reply_markup=self.settingMarkup)
                 self.bot.register_next_step_handler(message, self.setting_choice, acceptMode=acceptMode, chat_id=self.current_user)
+
+    def personality_points(self, message, acceptMode=False):
+        if not acceptMode:
+            markup = InlineKeyboardMarkup()\
+                .add(InlineKeyboardButton("Personality", callback_data="1"))\
+                .add(InlineKeyboardButton("-", callback_data="1"), InlineKeyboardButton("0", callback_data="1"), InlineKeyboardButton("+", callback_data="1")) \
+                .add(InlineKeyboardButton("Emotional intellect", callback_data="1")) \
+                .add(InlineKeyboardButton("-", callback_data="1"), InlineKeyboardButton("0", callback_data="1"), InlineKeyboardButton("+", callback_data="1")) \
+                .add(InlineKeyboardButton("Reliability", callback_data="1")) \
+                .add(InlineKeyboardButton("-", callback_data="1"), InlineKeyboardButton("0", callback_data="1"), InlineKeyboardButton("+", callback_data="1")) \
+                .add(InlineKeyboardButton("Compassion", callback_data="1")) \
+                .add(InlineKeyboardButton("-", callback_data="1"), InlineKeyboardButton("0", callback_data="1"), InlineKeyboardButton("+", callback_data="1")) \
+                .add(InlineKeyboardButton("Open-Mindedness", callback_data="1")) \
+                .add(InlineKeyboardButton("-", callback_data="1"), InlineKeyboardButton("0", callback_data="1"), InlineKeyboardButton("+", callback_data="1")) \
+                .add(InlineKeyboardButton("Self-Awareness", callback_data="1")) \
+                .add(InlineKeyboardButton("-", callback_data="1"), InlineKeyboardButton("0", callback_data="1"), InlineKeyboardButton("+", callback_data="1")) \
+                .add(InlineKeyboardButton("Levels of sense", callback_data="1")) \
+                .add(InlineKeyboardButton("-", callback_data="1"), InlineKeyboardButton("0", callback_data="1"), InlineKeyboardButton("+", callback_data="1")) \
+                .add(InlineKeyboardButton("Intellect", callback_data="1")) \
+                .add(InlineKeyboardButton("-", callback_data="1"), InlineKeyboardButton("0", callback_data="1"), InlineKeyboardButton("+", callback_data="1")) \
+                .add(InlineKeyboardButton("Self-Awareness", callback_data="1")) \
+                .add(InlineKeyboardButton("-", callback_data="1"), InlineKeyboardButton("0", callback_data="1"), InlineKeyboardButton("+", callback_data="1")) \
+                .add(InlineKeyboardButton("Levels of sense", callback_data="1")) \
+                .add(InlineKeyboardButton("-", callback_data="1"), InlineKeyboardButton("0", callback_data="1"), InlineKeyboardButton("+", callback_data="1")) \
+                .add(InlineKeyboardButton("Intellect", callback_data="1")) \
+                .add(InlineKeyboardButton("-", callback_data="1"), InlineKeyboardButton("0", callback_data="1"), InlineKeyboardButton("+", callback_data="1"))
+
+            self.bot.send_message(self.current_user, "sds", reply_markup=markup)
+
+    def credentials_management(self, message, acceptMode=False):
+        if not acceptMode:
+            self.bot.send_message(self.current_user, "1. Get an Invitation link\n2. Get an Invitation QR code\n3. Abort", reply_markup=self.credsMarkup)
+            self.bot.register_next_step_handler(message, self.credentials_management, acceptMode=True, chat_id=self.current_user)
+        else:
+            if message.text == "1":
+                link = requests.get(f"https://localhost:44381/GetInvitationLink/{self.current_user}", verify=False).text
+                if link:
+                    self.bot.send_message(self.current_user, f"Here you go:\n\n{link}")
+                    self.credentials_management(message)
+                else:
+                    self.bot.send_message(self.current_user, "Something went wrong. Please, contact the administration")
+                    self.credentials_management(message)
+            elif message.text == "2":
+                qrcode = requests.get(f"https://localhost:44381/GetQRCode/{self.current_user}", verify=False).text
+                if qrcode:
+                    self.bot.send_message(self.current_user, f"Here you go:")
+                    self.bot.send_photo(self.current_user, base64.b64decode(qrcode))
+                    self.credentials_management(message)
+                else:
+                    self.bot.send_message(self.current_user, "Something went wrong. Please, contact the administration")
+                    self.credentials_management(message)
+            elif message.text == "3":
+                self.proceed()
+            else:
+                self.bot.send_message(self.current_user, "No such option", reply_markup=self.credsMarkup)
+                self.bot.register_next_step_handler(message, self.credentials_management, acceptMode=acceptMode, chat_id=self.current_user)
+
 
     def encounter_list_management(self, message, acceptMode=False):
         if not acceptMode:
@@ -71,7 +134,7 @@ class Settings:
 
                 reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page,
                             self.markup_pages_count)
-                count_pages(self.encounter_list, self.current_markup_elements, self.markup_pages_count)
+                self.markup_pages_count = count_pages(self.encounter_list, self.current_markup_elements, self.markup_pages_count)
                 markup = assemble_markup(self.markup_page, self.current_markup_elements, 0)
 
                 self.bot.send_message(self.current_user, "There are all your recent encounters", reply_markup=markup)
@@ -133,7 +196,7 @@ class Settings:
 
                 reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page,
                             self.markup_pages_count)
-                count_pages(self.black_list, self.current_markup_elements, self.markup_pages_count)
+                self.markup_pages_count = count_pages(self.black_list, self.current_markup_elements, self.markup_pages_count)
                 markup = assemble_markup(self.markup_page, self.current_markup_elements, 0)
 
                 self.bot.send_message(self.current_user, "There are all users you have in your black list", reply_markup=markup)

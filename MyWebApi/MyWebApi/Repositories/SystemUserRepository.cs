@@ -46,8 +46,8 @@ namespace MyWebApi.Repositories
                 if (location != null)
                 {
                     await _contx.USER_LOCATIONS.AddAsync(location);
-                    country = (await _contx.COUNTRIES.Where(c => c.Id == location.CountryId && c.ClassLocalisationId == dataModel.LanguageId).Select(c => c.CountryName).SingleOrDefaultAsync());
-                    city = (await _contx.CITIES.Where(c => c.Id == location.CountryId && c.CountryClassLocalisationId == dataModel.LanguageId).Select(c => c.CityName).SingleOrDefaultAsync());
+                    country = (await _contx.COUNTRIES.Where(c => c.Id == location.CountryId && c.ClassLocalisationId == location.CountryClassLocalisationId).Select(c => c.CountryName).SingleOrDefaultAsync());
+                    city = (await _contx.CITIES.Where(c => c.Id == location.CountryId && c.CountryClassLocalisationId == location.CityCountryClassLocalisationId).Select(c => c.CityName).SingleOrDefaultAsync());
                 }
 
                 baseModel.UserRawDescription = baseModel.UserDescription;
@@ -206,12 +206,10 @@ namespace MyWebApi.Repositories
                     .Where(u => u.UserDataInfo.ReasonId == currentUser.UserDataInfo.ReasonId)
                     .Where(u => u.UserPreferences.CommunicationPrefs == currentUser.UserPreferences.CommunicationPrefs)
                     .Where(u => u.UserPreferences.AgePrefs.Contains(currentUser.UserDataInfo.UserAge))
-                    .Where(u => u.UserPreferences.UserLocationPreferences.Contains(currentUser.UserDataInfo.Location.CountryId))
                     //Check if users gender preferences correspond to current user gender prefs or are equal to 'Does not matter'
                     .Where(u => u.UserPreferences.UserGenderPrefs == currentUser.UserDataInfo.UserGender || u.UserPreferences.UserGenderPrefs == 2)
                     .Where(u => u.UserDataInfo.UserLanguages.Any(l => currentUser.UserPreferences.UserLanguagePreferences.Contains(l)))
                     .Where(u => currentUser.UserPreferences.AgePrefs.Contains(u.UserDataInfo.UserAge))
-                    .Where(u => currentUser.UserPreferences.UserLocationPreferences.Contains(u.UserDataInfo.Location.CountryId))
                     .Where(u => currentUser.UserDataInfo.UserLanguages.Any(l => u.UserPreferences.UserLanguagePreferences.Contains(l)))
                     .Include(u => u.UserBaseInfo)
                     .Include(u => u.UserDataInfo)
@@ -219,6 +217,13 @@ namespace MyWebApi.Repositories
                     .Include(u => u.UserPreferences)
                     .Include(u => u.UserBlackList)
                     .ToListAsync();
+                
+                if (currentUser.UserDataInfo.Location.CountryId != null)
+                {
+                    data.Where(u => u.UserDataInfo.Location.CountryId != null)
+                            .Where(u => u.UserPreferences.UserLocationPreferences.Contains((int)currentUser.UserDataInfo.Location.CountryId))
+                            .Where(u => currentUser.UserPreferences.UserLocationPreferences.Contains((int)u.UserDataInfo.Location.CountryId));
+                }
 
                 //Check if users had encountered one another
                 data = data.Where(u => !currentUser.CheckIfHasEncountered(currentUserEncounters, u.UserId)).ToList();
@@ -250,12 +255,11 @@ namespace MyWebApi.Repositories
                 if (currentUser.UserPreferences.ShouldUsePersonalityFunc && !isFreeSearch)
                 {
                     var deviation = 0.15;
+                    var minDeviation = 0.05;
 
                     var currentValueMax = 0d;
                     var currentValueMin = 0d;
 
-                    //TODO: do not apply if users parameter percentage will be negative as the result
-                    var minDeviation = 0.05;
 
                     if (isRepeated)
                     {
@@ -1736,18 +1740,30 @@ namespace MyWebApi.Repositories
         {
             try
             {
+                var country = "---";
+                var city = "---";
+
                 var model = await _contx.SYSTEM_USERS_BASES.FindAsync(user.Id);
                 var data = await _contx.SYSTEM_USERS_DATA.FindAsync(user.Id);
                 var location = await _contx.USER_LOCATIONS.Where(l => l.Id == user.Id)
+                    .Include(l => l.Country)
+                    .Include(l => l.City)
                     .SingleOrDefaultAsync();
 
-                var country = await _contx.COUNTRIES.Where(c => c.ClassLocalisationId == location.CountryClassLocalisationId && c.Id == location.CountryId)
-                    .SingleOrDefaultAsync();
-                var city = await _contx.CITIES.Where(c => c.CountryClassLocalisationId == location.CityCountryClassLocalisationId && c.Id == location.CityId)
-                    .SingleOrDefaultAsync();
+                if (location.CountryId != null)
+                {
+                    country = await _contx.COUNTRIES
+                        .Where(c => c.Id == location.CountryId && c.ClassLocalisationId == location.CountryClassLocalisationId)
+                        .Select(c => c.CountryName)
+                        .SingleOrDefaultAsync();
+                    city = await _contx.CITIES
+                        .Where(c => c.Id == location.CityId && c.CountryClassLocalisationId == location.CityCountryClassLocalisationId)
+                        .Select(c => c.CityName)
+                        .SingleOrDefaultAsync(); ;
+                }
 
                 model.UserRawDescription = user.UserRawDescription;
-                model.UserDescription = user.GenerateUserDescription(user.UserName, data.UserAge, country.CountryName, city.CityName, user.UserRawDescription);
+                model.UserDescription = user.GenerateUserDescription(user.UserName, data.UserAge, country, city, user.UserRawDescription);
                 model.UserPhoto = user.UserPhoto;
                 model.UserName = user.UserName;
                 model.UserRealName = user.UserRealName;
@@ -1815,9 +1831,9 @@ namespace MyWebApi.Repositories
                 var model = await _contx.USER_LOCATIONS.FindAsync(location.Id);
 
                 model.CityId = location.CityId;
-                model.CityCountryClassLocalisationId = location.CityCountryClassLocalisationId;
+                model.CityCountryClassLocalisationId = location.CountryId != null? location.CountryClassLocalisationId : null;
                 model.CountryId = location.CountryId;
-                model.CountryClassLocalisationId = location.CountryClassLocalisationId;
+                model.CountryClassLocalisationId = location.CityId != null ? location.CountryClassLocalisationId : null;
 
                 _contx.USER_LOCATIONS.Update(model);
                 await _contx.SaveChangesAsync();

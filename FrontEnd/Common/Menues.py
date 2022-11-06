@@ -9,9 +9,7 @@ menu_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True) 
     .add(KeyboardButton("/search"),
          KeyboardButton("/random"),
          KeyboardButton("/feedback"),
-         KeyboardButton("/sponsoraccount"),
-         KeyboardButton("/random"),
-         KeyboardButton("/shop"))
+         KeyboardButton("/settings"))
 
 admin_menu_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True) \
     .add(KeyboardButton("/switchstatus"),
@@ -46,7 +44,7 @@ def start_program_in_debug_mode(bot): # TODO: remove in production
         go_back_to_main_menu(bot, user, None)
 
 
-def count_pages(section_elements, current_markup_elements, markup_pages_count, prefs=False):
+def count_pages(section_elements, current_markup_elements, markup_pages_count, prefs=False, additionalButton=False, buttonText="", buttonData=0):
     current_markup_elements.clear()
     section_elements = copy.copy(section_elements)
     markup = InlineKeyboardMarkup()
@@ -56,6 +54,9 @@ def count_pages(section_elements, current_markup_elements, markup_pages_count, p
     isLastElement = False
 
     count = ceil(len(section_elements) / 5)
+
+    if additionalButton:
+        markup.add(InlineKeyboardButton(buttonText, callback_data=buttonData))
 
     if prefs:
         markup.add(InlineKeyboardButton("Same as mine", callback_data=-5))
@@ -67,7 +68,7 @@ def count_pages(section_elements, current_markup_elements, markup_pages_count, p
 
         isLastElement = len(elements_to_delete) >= element_count_on_page - 1
 
-        if len(markup.keyboard) < element_count_on_page and not isLastElement:  # TODO: List is loosing few last elements, make it work
+        if len(markup.keyboard) < element_count_on_page and not isLastElement:
             markup.add(InlineKeyboardButton(section_elements[element].capitalize(), callback_data=f"{element}"))
             elements_to_delete.append(element)
         elif isLastElement:
@@ -84,6 +85,7 @@ def count_pages(section_elements, current_markup_elements, markup_pages_count, p
             for e in elements_to_delete:
                 section_elements.pop(e)
             elements_to_delete.clear()
+    return markup_pages_count
 
 
 def assemble_markup(markup_page, current_markup_elements, index):

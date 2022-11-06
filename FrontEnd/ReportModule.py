@@ -9,12 +9,11 @@ from Core import HelpersMethodes as Helpers
 
 class ReportModule:
     #return_method represents a certain method, that will be called upon reporter destruction. Thus allowing user to proceed in his bot usage
-    def __init__(self, bot, msg, active_user, return_method, dontAddToBlackList=True):
+    def __init__(self, bot, msg, active_user, return_method, dontAddToBlackList=False):
         self.bot = bot
         self.message = msg
         self.current_user = msg.from_user.id
         self.return_method = return_method
-        Helpers.switch_user_busy_status(self.current_user)
 
         self.dontAddToBlackList = dontAddToBlackList
 

@@ -17,8 +17,8 @@ class RandomTalker:
         self.stop_message2 = "Finding a new person.\nHit /exit to exit this mode"
         self.exit_message = ""
         self.current_user = message.chat.id
+        self.app_language = Helpers.get_user_app_language(self.current_user)
         Helpers.switch_user_busy_status(self.current_user)
-        #self.current_user_lang_prefs = Helpers.get_user_language_prefs(self.current_user) #TODO: Use another method from API, that retrieves an array of spoken languages and language preferences
         self.random_talkers = random_talkers
         self.user2 = 0
         self.user2_base = None
@@ -46,9 +46,18 @@ class RandomTalker:
         if len(self.random_talkers) > 1:
             for rt in self.random_talkers:
                 if Helpers.check_users_are_combinable(self.current_user, rt.current_user) and self.current_user != rt.current_user and not rt.isConversing:
-                    rt.start(self)
                     self.start(rt)
+                    rt.start(self)
+                    try:
+                        self.send_common_languages(rt.current_user)
+                        rt.send_common_languages(self.current_user)
+                    except:
+                        pass
                     break
+
+    def send_common_languages(self, user2Id):
+        comm_langs = Helpers.get_common_langs(self.current_user, user2Id, self.app_language)
+        self.bot.send_message(self.current_user, f"There are languages you have in common {comm_langs}")
 
     def language_prefs_step(self, message):
         if message.text == "yes":
@@ -113,9 +122,8 @@ class RandomTalker:
 
     def proceed(self):
         self.isConversing = False
-        if self.user2_base:
-            self.bot.send_message(self.current_user, self.stop_message2, reply_markup=self.exit_markup)
-            self.user2_base = None
+        self.bot.send_message(self.current_user, self.stop_message2, reply_markup=self.exit_markup)
+        self.user2_base = None
 
     def set_rt_language_prefs(self, shouldBeConsidered):
         requests.get(f"https://localhost:44381/SetUserRtLanguagePrefs/{self.current_user}/{shouldBeConsidered}", verify=False)

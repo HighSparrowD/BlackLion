@@ -17,6 +17,7 @@ using MyWebApi.Entities.SponsorEntities;
 using MyWebApi.Entities.DailyTaskEntities;
 using MyWebApi.Entities.TestEntities;
 using static MyWebApi.Enums.SystemEnums;
+using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 
 namespace MyWebApi.Controllers
 {
@@ -89,11 +90,14 @@ namespace MyWebApi.Controllers
             if (model.UserLanguages.Count > langCount)
                 throw new Exception($"This user cannot have more than {langCount} languages !");
 
-            Location location = null;
+            Location location = new Location { Id = model.Id};
 
             if(model.UserCityCode != null && model.UserCountryCode != null)
             {
-                location = new Location { Id = model.Id, CityId = (int)model.UserCityCode, CountryId = (int)model.UserCountryCode };
+                location.CityId = (int)model.UserCityCode;
+                location.CityCountryClassLocalisationId = model.UserAppLanguageId;
+                location.CountryId = (int)model.UserCountryCode;
+                location.CountryClassLocalisationId = model.UserAppLanguageId;
             }
 
             var uBase = new UserBaseInfo(model.Id, model.UserName, model.UserRealName, "", model.UserPhoto);
@@ -294,11 +298,11 @@ namespace MyWebApi.Controllers
             };
 
             if (model.UserCityCode != null && model.UserCountryCode != null)
-            { 
-                location = new Location { Id = model.Id, CityId = (int)model.UserCityCode, CountryId = (int)model.UserCountryCode };
-                uData.LocationId = location.Id;
-            }
+                location = new Location { Id = model.Id, CityId = (int)model.UserCityCode, CountryId = (int)model.UserCountryCode, CityCountryClassLocalisationId = model.UserAppLanguageId, CountryClassLocalisationId = model.UserAppLanguageId};
+            else
+                location = new Location { Id = model.Id };
 
+            uData.LocationId = location.Id;
 
             var id = await _repository.RegisterUserAsync(m, uBase, uData, uPrefs, location);
             return id;
