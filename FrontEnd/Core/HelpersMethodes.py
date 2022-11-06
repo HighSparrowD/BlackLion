@@ -84,6 +84,10 @@ def check_users_are_combinable(user1, user2):
         json.loads(requests.get(f"https://localhost:44381/CheckUsersAreCombinableRT/{user1}/{user2}", verify=False).text))
 
 
+def get_common_langs(user1Id, user2Id, localisationId):
+    return requests.get(f"https://localhost:44381/RetreiveCommonLanguages/{user1Id}/{user2Id}/{localisationId}", verify=False).text
+
+
 def check_user_has_requests(userId):
     try:
         return bool(
@@ -143,7 +147,7 @@ def get_user_tag_limit(userId):
 def get_user_app_language(userId):
     try:
         return int(
-            json.loads(requests.get(f"https://localhost:44381/GetUserLanguagePrefs/{userId}", verify=False).text))
+            json.loads(requests.get(f"https://localhost:44381/GetUserAppLanguage/{userId}", verify=False).text))
     except:
         return None
 

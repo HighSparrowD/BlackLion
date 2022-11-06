@@ -29,22 +29,22 @@ shops = []
 
 @bot.message_handler(commands=["start"], is_multihandler=True)
 def Start(message):
-    invitorId = get_invitor_id(message.html_text)
-    if invitorId:
-        if Helpers.user_invitation_link(invitorId, message.from_user.id):
-            create_registrator(message)
-            return False
-        bot.send_message(message.from_user.id, "Sorry. Something went wrong")
-    return False
-    #TODO: add normal start here (description message, blah blah blah). Leave it for later, it is not that important
+    #Allow only if user is not registered
+    if not Helpers.check_user_is_registered(message.from_user.id):
+        invitorId = get_invitor_id(message.html_text)
+        if invitorId:
+            if Helpers.user_invitation_link(invitorId, message.from_user.id):
+                bot.send_message(message.from_user.id, f"Registered on behalf of {invitorId}")
+            #bot.send_message(message.from_user.id, "Sorry. Something went wrong")
+        bot.send_message(message.from_user.id, "Hello and welcome to Personality bot\n---More description IT IS NOT MY TASK lalala---\nHit /registration to start you journey :)")
+        #TODO: Maybe send a sticker or smth
+        #TODO: Add normal start here (description message, blah blah blah). Leave it for later, it is not that important
+    else:
+        Menus.go_back_to_main_menu(bot, message.from_user.id, message)
 
 
 @bot.message_handler(commands=["registration"], is_multihandler=True)
 def Greet(message):
-    if Helpers.check_user_is_registered(message.from_user.id):
-        if not Helpers.check_user_is_busy(message.from_user.id):
-            create_registrator(message)
-        return False
     create_registrator(message)
 
 
@@ -102,7 +102,7 @@ def EnterAdminCabinet(message):
         create_admin_cabinet(message)
 
 
-@bot.message_handler(commands=["test"])
+@bot.message_handler(commands=["settings"])
 def test(message):
     if not Helpers.check_user_is_busy(message.from_user.id):
         Settings(bot, message)
