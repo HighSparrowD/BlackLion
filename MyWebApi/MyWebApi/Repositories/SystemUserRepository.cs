@@ -1,12 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Server.IIS.Core;
-using Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using MyWebApi.Data;
 using MyWebApi.Entities.AchievementEntities;
 using MyWebApi.Entities.AdminEntities;
 using MyWebApi.Entities.DailyTaskEntities;
-using MyWebApi.Entities.LocalisationEntities;
 using MyWebApi.Entities.LocationEntities;
 using MyWebApi.Entities.ReasonEntities;
 using MyWebApi.Entities.ReportEntities;
@@ -19,14 +15,9 @@ using MyWebApi.Interfaces;
 using QRCoder;
 using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.IO;
 using System.Linq;
-using System.Net;
-using System.Text;
 using System.Threading.Tasks;
 using static MyWebApi.Enums.SystemEnums;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace MyWebApi.Repositories
 {
@@ -94,19 +85,24 @@ namespace MyWebApi.Repositories
 
                     var bonus = invitor.HasPremium ? 0.05 : 0;
 
-                    if (invitor.InvitedUsersCount == 3)
+                    if (invitor.InvitedUsersCount == 1)
                     {
-                        invitor.InvitedUsersBonus = 0.25 + bonus;
+                        await TopUpUserWalletPointsBalance(invitor.UserId, 250, $"User {invitor.UserId} has invited his firs user");
+                        await GrantPremiumToUser(invitor.UserId, 0, 1, (short)Currencies.Points);
+                    }
+                    else if (invitor.InvitedUsersCount == 3)
+                    {
+                        invitor.InvitedUsersBonus = 0.15 + bonus;
                         await TopUpUserWalletPointsBalance(invitor.UserId, 1199, $"User {invitor.UserId} has invited 3 users");
                     }
                     else if (invitor.InvitedUsersCount == 7)
                     {
-                        invitor.InvitedUsersBonus = 0.45 + bonus;
+                        invitor.InvitedUsersBonus = 0.35 + bonus;
                         await TopUpUserWalletPointsBalance(invitor.UserId, 1499, $"User {invitor.UserId} has invited 7 users");
                     }
                     else if (invitor.InvitedUsersBonus == 10)
                     {
-                        invitor.InvitedUsersBonus = 0.7 + bonus;
+                        invitor.InvitedUsersBonus = 0.5 + bonus;
                         // 1499 will then turn into 1999 due to premium purchase reward
                         await TopUpUserWalletPointsBalance(invitor.UserId, 1499, $"User {invitor.UserId} has invited 10 users");
                         //TODO: apply effect later
@@ -252,8 +248,10 @@ namespace MyWebApi.Repositories
                 //If user uses PERSONALITY functionality and free search is disabled
                 if (currentUser.UserPreferences.ShouldUsePersonalityFunc && !isFreeSearch)
                 {
-                    //TODO: Change it for users with premium ?
                     var deviation = 0.15;
+
+                    //var currentValueMax = 0;
+                    //var currentValueMin = 0;
 
                     //TODO: do not apply if users parameter percentage will be negative as the result
                     var minDeviation = 0.05;
@@ -276,7 +274,10 @@ namespace MyWebApi.Repositories
 
                         //Check if user uses personality functionality and remove him from the list if he does not
                         if (!u.UserPreferences.ShouldUsePersonalityFunc)
+                        {
                             data.Remove(u);
+                            continue;
+                        }
 
                         var user2Points = await _contx.USER_PERSONALITY_POINTS.Where(p => p.UserId == u.UserId)
                         .SingleOrDefaultAsync();
@@ -434,7 +435,7 @@ namespace MyWebApi.Repositories
                 {
                     if(!isFreeSearch)
                     {
-                        //Remove users using PERSONALITY fucntionality
+                        //Remove users, using PERSONALITY fucntionality
                         data.AsParallel().ForAll(u =>
                         {
                             if (u.UserPreferences.ShouldUsePersonalityFunc)
@@ -1547,6 +1548,9 @@ namespace MyWebApi.Repositories
 
                 _contx.Update(user);
                 await _contx.SaveChangesAsync();
+
+                await AddUserNotificationAsync(new UserNotification { UserId = user.UserId, IsLikedBack = false, Severity = (short)Severities.Moderate, SectionId = (int)Sections.Neutral, Description = $"You have been granted premium access. Enjoy your benefits :)\nPremium expiration {user.PremiumExpirationDate.Value.ToShortTimeString()}" });
+
                 return user.PremiumExpirationDate.Value;
             }
             catch (Exception ex)
@@ -2802,7 +2806,7 @@ namespace MyWebApi.Repositories
         private async Task<double> CalculateSimilarityPreferences(int points, double similarityCoefficient)
         {
             if (points == 0)
-                return 0;
+                return 1;
 
             await Task.Run(() =>
             {
