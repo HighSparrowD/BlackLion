@@ -6,6 +6,8 @@ using MyWebApi.Entities.ReasonEntities;
 using MyWebApi.Entities.LocationEntities;
 using MyWebApi.Entities.AchievementEntities;
 using MyWebApi.Entities.DailyTaskEntities;
+using MyWebApi.Entities.AdminEntities;
+using System;
 
 namespace MyWebApi.Interfaces
 {
@@ -24,5 +26,8 @@ namespace MyWebApi.Interfaces
         Task<byte> UploadAchievements(List<Achievement> achievements);
         Task<byte> AddNewAchievements(List<Achievement> achievements);
         Task<byte> AddDailyTaskAsync(DailyTask model);
+        Task<List<TickRequest>> GetTickRequestsAsync();
+        Task<TickRequest> GetTickRequestAsync(Guid requestId);
+        Task<bool> ResolveTickRequestAsync(Guid requestId, long adminId, bool isAccepted);
     }
 }

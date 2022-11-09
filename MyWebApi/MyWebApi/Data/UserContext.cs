@@ -3,6 +3,7 @@ using MyWebApi.Entities.AchievementEntities;
 using MyWebApi.Entities.AdminEntities;
 using MyWebApi.Entities.DailyRewardEntities;
 using MyWebApi.Entities.DailyTaskEntities;
+using MyWebApi.Entities.EffectEntities;
 using MyWebApi.Entities.LocalisationEntities;
 using MyWebApi.Entities.LocationEntities;
 using MyWebApi.Entities.ReasonEntities;
@@ -72,6 +73,8 @@ namespace MyWebApi.Data
         public DbSet<UserPersonalityPoints> USER_PERSONALITY_POINTS { get; set; }
         public DbSet<TestPayload> USER_TESTS_RESULTS { get; set; }
         public DbSet<AdminErrorLog> ADMIN_ERROR_LOGS { get; set; }
+        public DbSet<ActiveEffect> USER_ACTIVE_EFFECTS { get; set; }
+        public DbSet<TickRequest> tick_requests { get; set; }
 
 
 

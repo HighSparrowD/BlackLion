@@ -1,9 +1,10 @@
-﻿using Microsoft.AspNetCore.Connections.Features;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualBasic;
 using MyWebApi.Data;
 using MyWebApi.Entities.AchievementEntities;
 using MyWebApi.Entities.AdminEntities;
 using MyWebApi.Entities.DailyTaskEntities;
+using MyWebApi.Entities.EffectEntities;
 using MyWebApi.Entities.LocationEntities;
 using MyWebApi.Entities.ReasonEntities;
 using MyWebApi.Entities.ReportEntities;
@@ -16,9 +17,11 @@ using MyWebApi.Interfaces;
 using QRCoder;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 using static MyWebApi.Enums.SystemEnums;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace MyWebApi.Repositories
 {
@@ -195,6 +198,7 @@ namespace MyWebApi.Repositories
                 const byte miminalProfileCount = 5;
 
                 var currentUser = await GetUserInfoAsync(userId);
+
                 var currentUserEncounters = await GetUserEncounters(userId, (int)SystemEnums.Sections.Familiator); //I am not sure if it is 2 or 3 section
 
                 //If user has elected to temporarily dissable PERSONALITY functionality (Change shold NOT be changed in th DB) 
@@ -254,12 +258,21 @@ namespace MyWebApi.Repositories
                 //If user uses PERSONALITY functionality and free search is disabled
                 if (currentUser.UserPreferences.ShouldUsePersonalityFunc && !isFreeSearch)
                 {
+                    var userActiveEffects = await GetUserActiveEffects(userId);
+
                     var deviation = 0.15;
                     var minDeviation = 0.05;
 
                     var currentValueMax = 0d;
                     var currentValueMin = 0d;
 
+                    var valentineBonus = 1d;
+
+                    var hasActiveValentine = userActiveEffects.Where(e => e.EffectId == (int)Currencies.TheValentine)
+                        .SingleOrDefault() != null;
+
+                    if (hasActiveValentine)
+                        valentineBonus = 2;
 
                     if (isRepeated)
                     {
@@ -291,7 +304,7 @@ namespace MyWebApi.Repositories
                         .SingleOrDefaultAsync();
 
                         //TODO: create its own deviation variable depending on the number of personalities (It is likely to be grater than the nornal one)
-                        var personalitySim = await CalculateSimilarityAsync(userStats.Personality, user2Stats.Personality);
+                        var personalitySim = await CalculateSimilarityAsync(userStats.Personality * valentineBonus, user2Stats.Personality);
 
                         currentValueMax = ApplyMaxDeviation(userPoints.PersonalityPercentage, deviation);
                         currentValueMin = ApplyMinDeviation(userPoints.PersonalityPercentage, minDeviation);
@@ -312,7 +325,7 @@ namespace MyWebApi.Repositories
                             continue; 
                         }
 
-                        var emIntellectSim = await CalculateSimilarityAsync(userStats.EmotionalIntellect, user2Stats.EmotionalIntellect);
+                        var emIntellectSim = await CalculateSimilarityAsync(userStats.EmotionalIntellect * valentineBonus, user2Stats.EmotionalIntellect);
 
                         currentValueMax = ApplyMaxDeviation(userPoints.EmotionalIntellectPercentage, deviation);
                         currentValueMin = ApplyMinDeviation(userPoints.EmotionalIntellectPercentage, minDeviation);
@@ -332,7 +345,7 @@ namespace MyWebApi.Repositories
                             continue;
                         }
 
-                        var reliabilitySim = await CalculateSimilarityAsync(userStats.Reliability, user2Stats.Reliability);
+                        var reliabilitySim = await CalculateSimilarityAsync(userStats.Reliability * valentineBonus, user2Stats.Reliability);
 
                         currentValueMax = ApplyMaxDeviation(userPoints.ReliabilityPercentage, deviation);
                         currentValueMin = ApplyMinDeviation(userPoints.ReliabilityPercentage, minDeviation);
@@ -352,7 +365,7 @@ namespace MyWebApi.Repositories
                             continue;
                         }
 
-                        var compassionSim = await CalculateSimilarityAsync(userStats.Reliability, user2Stats.Reliability);
+                        var compassionSim = await CalculateSimilarityAsync(userStats.Compassion * valentineBonus, user2Stats.Compassion);
 
                         currentValueMax = ApplyMaxDeviation(userPoints.CompassionPercentage, deviation);
                         currentValueMin = ApplyMinDeviation(userPoints.CompassionPercentage, minDeviation);
@@ -372,7 +385,7 @@ namespace MyWebApi.Repositories
                             continue;
                         }
 
-                        var openMindSim = await CalculateSimilarityAsync(userStats.OpenMindedness, user2Stats.OpenMindedness);
+                        var openMindSim = await CalculateSimilarityAsync(userStats.OpenMindedness * valentineBonus, user2Stats.OpenMindedness);
 
                         currentValueMax = ApplyMaxDeviation(userPoints.OpenMindednessPercentage, deviation);
                         currentValueMin = ApplyMinDeviation(userPoints.OpenMindednessPercentage, minDeviation);
@@ -392,7 +405,7 @@ namespace MyWebApi.Repositories
                             continue;
                         }
 
-                        var agreeablenessSim = await CalculateSimilarityAsync(userStats.Agreeableness, user2Stats.Agreeableness);
+                        var agreeablenessSim = await CalculateSimilarityAsync(userStats.Agreeableness * valentineBonus, user2Stats.Agreeableness);
 
                         currentValueMax = ApplyMaxDeviation(userPoints.AgreeablenessPercentage, deviation);
                         currentValueMin = ApplyMinDeviation(userPoints.AgreeablenessPercentage, minDeviation);
@@ -412,7 +425,7 @@ namespace MyWebApi.Repositories
                             continue;
                         }
 
-                        var selfAwerenessSim = await CalculateSimilarityAsync(userStats.SelfAwareness, user2Stats.SelfAwareness);
+                        var selfAwerenessSim = await CalculateSimilarityAsync(userStats.SelfAwareness * valentineBonus, user2Stats.SelfAwareness);
 
                         currentValueMax = ApplyMaxDeviation(userPoints.SelfAwarenessPercentage, deviation);
                         currentValueMin = ApplyMinDeviation(userPoints.SelfAwarenessPercentage, minDeviation);
@@ -432,7 +445,7 @@ namespace MyWebApi.Repositories
                             continue;
                         }
 
-                        var levelOfSense = await CalculateSimilarityAsync(userStats.LevelOfSense, user2Stats.LevelOfSense);
+                        var levelOfSense = await CalculateSimilarityAsync(userStats.LevelOfSense * valentineBonus, user2Stats.LevelOfSense);
 
                         currentValueMax = ApplyMaxDeviation(userPoints.LevelOfSensePercentage, deviation);
                         currentValueMin = ApplyMinDeviation(userPoints.LevelOfSensePercentage, minDeviation);
@@ -452,7 +465,7 @@ namespace MyWebApi.Repositories
                             continue;
                         }
 
-                        var intellectSim = await CalculateSimilarityAsync(userStats.Intellect, user2Points.Intellect);
+                        var intellectSim = await CalculateSimilarityAsync(userStats.Intellect * valentineBonus, user2Points.Intellect);
 
                         currentValueMax = ApplyMaxDeviation(userPoints.IntellectPercentage, deviation);
                         currentValueMin = ApplyMinDeviation(userPoints.IntellectPercentage, minDeviation);
@@ -472,7 +485,7 @@ namespace MyWebApi.Repositories
                             continue;
                         }
 
-                        var natureSim = await CalculateSimilarityAsync(userStats.Nature, user2Stats.Nature);
+                        var natureSim = await CalculateSimilarityAsync(userStats.Nature * valentineBonus, user2Stats.Nature);
 
                         currentValueMax = ApplyMaxDeviation(userPoints.NaturePercentage, deviation);
                         currentValueMin = ApplyMinDeviation(userPoints.NaturePercentage, minDeviation);
@@ -492,7 +505,7 @@ namespace MyWebApi.Repositories
                             continue;
                         }
 
-                        var creativitySim = await CalculateSimilarityAsync(userStats.Creativity, user2Stats.Creativity);
+                        var creativitySim = await CalculateSimilarityAsync(userStats.Creativity * valentineBonus, user2Stats.Creativity);
 
                         currentValueMax = ApplyMaxDeviation(userPoints.CreativityPercentage, deviation);
                         currentValueMin = ApplyMinDeviation(userPoints.CreativityPercentage, minDeviation);
@@ -546,8 +559,10 @@ namespace MyWebApi.Repositories
                     //Todo: Probably remove AsParallel query 
                     data.AsParallel().ForAll(u =>
                     {
-                        if ((bool)u.HasPremium && u.Nickname != "")
-                            u.UserBaseInfo.UserDescription = $"<br>{u.Nickname}\n\n{u.UserBaseInfo.UserDescription}</br>";
+                        if (u.HasPremium && u.Nickname != "")
+                            u.UserBaseInfo.UserDescription = $"<br>{u.Nickname}</br>\n\n{u.UserBaseInfo.UserDescription}";
+                        if (u.IsIdentityConfirmed)
+                            u.UserBaseInfo.UserDescription = $"✔️{u.UserBaseInfo.UserDescription}";
                     });
 
                     //Order user list randomly 
@@ -558,7 +573,7 @@ namespace MyWebApi.Repositories
                         .ToList();
                 }
 
-                await _contx.SaveChangesAsync();
+                //await _contx.SaveChangesAsync();
                 return data;
             }
             catch (Exception ex)
@@ -1401,14 +1416,12 @@ namespace MyWebApi.Repositories
             }
         }
 
-        public async Task<Balance> GetUserWalletBalance(long userId, DateTime pointInTime)
+        public async Task<Balance> GetUserWalletBalance(long userId)
         {
             try
             {
-                var time = DateTime.SpecifyKind(pointInTime, DateTimeKind.Utc);
                 return await _contx.USER_WALLET_BALANCES
-                    .Where(b => b.UserId == userId && b.PointInTime <= time)
-                    .OrderByDescending(b => b.PointInTime)
+                    .Where(b => b.UserId == userId)
                     .FirstOrDefaultAsync();
             }
             catch (Exception ex)
@@ -1423,7 +1436,7 @@ namespace MyWebApi.Repositories
             try
             {
                 var time = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
-                var userBalance = await GetUserWalletBalance(userId, time);
+                var userBalance = await GetUserWalletBalance(userId);
 
                 if (userBalance != null)
                 {            
@@ -1441,17 +1454,7 @@ namespace MyWebApi.Repositories
                 }
                 else
                 {
-                    userBalance = new Balance
-                    {
-                        Id = Guid.NewGuid(),
-                        Points = points,
-                        PersonalityPoints = 15,
-                        UserId = userId,
-                        PointInTime = time
-                    };
-
-                    await _contx.USER_WALLET_BALANCES.AddAsync(userBalance);
-                    await _contx.SaveChangesAsync();
+                    await CreateUserBalance(userId, points, time);
                 }
 
                 var userParentId = (await _contx.SYSTEM_USERS.FindAsync(userId)).ParentId;
@@ -1476,12 +1479,20 @@ namespace MyWebApi.Repositories
             }
         }
 
+        private async Task CreateUserBalance(long userId, int points, DateTime time)
+        {
+           var userBalance = new Balance(userId, points, time);
+
+            await _contx.USER_WALLET_BALANCES.AddAsync(userBalance);
+            await _contx.SaveChangesAsync();
+        }
+
         public async Task<int> TopUpUserWalletPPBalance(long userId, int points, string description = "")
         {
             try
             {
                 var time = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
-                var userBalance = await GetUserWalletBalance(userId, time);
+                var userBalance = await GetUserWalletBalance(userId);
 
                 if (userBalance != null)
                 {
@@ -1499,17 +1510,7 @@ namespace MyWebApi.Repositories
                 }
                 else
                 {
-                    userBalance = new Balance
-                    {
-                        Id = Guid.NewGuid(),
-                        Points = points,
-                        PersonalityPoints = 15,
-                        UserId = userId,
-                        PointInTime = time
-                    };
-
-                    await _contx.USER_WALLET_BALANCES.AddAsync(userBalance);
-                    await _contx.SaveChangesAsync();
+                    await CreateUserBalance(userId, points, time);
                 }
 
                 var userParentId = (await _contx.SYSTEM_USERS.FindAsync(userId)).ParentId;
@@ -1682,7 +1683,7 @@ namespace MyWebApi.Repositories
             try
             {
                 cost = cost < 0 ? cost * -1 : cost; //Makes sure the cost amount wasnt minus value
-                return (await GetUserWalletBalance(userId, DateTime.Now)).Points >= cost;
+                return (await GetUserWalletBalance(userId)).Points >= cost;
             }
             catch (Exception ex)
             {
@@ -1940,9 +1941,9 @@ namespace MyWebApi.Repositories
                 else
                     request.SectionId = (short)SystemEnums.Sections.Familiator;
 
-                await AddUserNotificationAsync(request);
+                var id = await AddUserNotificationAsync(request);
 
-                return request.Id;
+                return id;
             }
             catch (Exception ex)
             {
@@ -2415,14 +2416,17 @@ namespace MyWebApi.Repositories
             if (await CheckUserIsRegistered(userId))
             {
                 var invitedUsersCount = await GetInvitedUsersCountAsync(userId);
-                return await AddUserNotificationAsync(new UserNotification
-                    {
-                        UserId1 = userId,
-                        IsLikedBack = false,
-                        Description = $"Hey! new user had been registered via your link. Thanks for helping us grow!\nSo far, you have invited: {invitedUsersCount} people. \nYou receive 1p for every action they are maiking ;-)",
-                        SectionId = (int)Sections.Registration,
-                        Severity = (short)Severities.Moderate
-                    });
+
+                await AddUserNotificationAsync(new UserNotification
+                {
+                    UserId1 = userId,
+                    IsLikedBack = false,
+                    Description = $"Hey! new user had been registered via your link. Thanks for helping us grow!\nSo far, you have invited: {invitedUsersCount} people. \nYou receive 1p for every action they are maiking ;-)",
+                    SectionId = (int)Sections.Registration,
+                    Severity = (short)Severities.Moderate
+                });
+
+                return true;
             }
 
             return false;
@@ -2442,7 +2446,7 @@ namespace MyWebApi.Repositories
             }
         }
 
-        public async Task<bool> AddUserNotificationAsync(UserNotification model)
+        public async Task<Guid> AddUserNotificationAsync(UserNotification model)
         {
             try
             {
@@ -2453,7 +2457,7 @@ namespace MyWebApi.Repositories
                 if (model.UserId != null)
                     await AddUserTrustProgressAsync((long)model.UserId, 0.000002);
 
-                return true;
+                return model.Id;
             }
             catch { throw new Exception("Something went wrong when adding notification"); }
         }
@@ -2676,14 +2680,14 @@ namespace MyWebApi.Repositories
 
             //Take common tasks
             var tasks = (await _contx.DAILY_TASKS
-                .Where(t => t.TaskType == (byte)TaskType.Common)
+                .Where(t => t.TaskType == (byte)TaskTypes.Common)
                 .ToListAsync())
                 .OrderBy(t => rand.Next())
                 .Take(35)
                 .ToList();
 
             //Take rare tasks
-            tasks.AddRange((await _contx.DAILY_TASKS.Where(t => t.TaskType == (byte)TaskType.Rare)
+            tasks.AddRange((await _contx.DAILY_TASKS.Where(t => t.TaskType == (byte)TaskTypes.Rare)
                 .ToListAsync())
                 .OrderBy(t => rand.Next())
                 .Take(15)
@@ -2696,7 +2700,7 @@ namespace MyWebApi.Repositories
                 taskCount = 3;
 
                 //Add 8 premium tasks to a list
-                tasks.AddRange((await _contx.DAILY_TASKS.Where(t => t.TaskType == (byte)TaskType.Premium)
+                tasks.AddRange((await _contx.DAILY_TASKS.Where(t => t.TaskType == (byte)TaskTypes.Premium)
                     .ToListAsync())
                     .OrderBy(t => rand.Next())
                     .Take(8)
@@ -2706,7 +2710,7 @@ namespace MyWebApi.Repositories
             else
             {
                 //Add only 2 premium tasks to a list
-                tasks.AddRange((await _contx.DAILY_TASKS.Where(t => t.TaskType == (byte)TaskType.Premium)
+                tasks.AddRange((await _contx.DAILY_TASKS.Where(t => t.TaskType == (byte)TaskTypes.Premium)
                     .ToListAsync())
                     .OrderBy(t => rand.Next())
                     .Take(2)
@@ -3108,6 +3112,11 @@ namespace MyWebApi.Repositories
             var user = data.OrderByDescending(u => u.UserDataInfo.Tags.Intersect(tags).Count())
                 .FirstOrDefault();
 
+            if(user.HasPremium && user.Nickname != null)
+                user.UserBaseInfo.UserDescription = $"<br>{user.Nickname}</br>\n\n{user.UserBaseInfo.UserDescription}";
+            if(user.IsIdentityConfirmed)
+                user.UserBaseInfo.UserDescription = $"✔️{user.UserBaseInfo.UserDescription}";
+
             return user;
         }
 
@@ -3167,6 +3176,326 @@ namespace MyWebApi.Repositories
             await _contx.SaveChangesAsync();
 
             return true;
+        }
+
+        public async Task<bool> SetAutoReplyTextAsync(long userId, string text)
+        {
+            try
+            {
+                var user = await _contx.SYSTEM_USERS_DATA.Where(u => u.Id == userId)
+                    .SingleOrDefaultAsync();
+
+                user.AutoReplyText = text;
+
+                _contx.SYSTEM_USERS_DATA.Update(user);
+                await _contx.SaveChangesAsync();
+
+                return true;
+            }
+            catch { return false; }
+        }
+
+        public async Task<bool> SetAutoReplyVoiceAsync(long userId, string voice)
+        {
+            try
+            {
+                if (await CheckUserHasPremium(userId))
+                {
+                    var user = await _contx.SYSTEM_USERS_DATA.Where(u => u.Id == userId)
+                        .SingleOrDefaultAsync();
+
+                    user.AutoReplyVoice = voice;
+
+                    _contx.SYSTEM_USERS_DATA.Update(user);
+                    await _contx.SaveChangesAsync();
+
+                    return true;
+
+                }
+                return false;
+            }
+            catch { return false; }
+        }
+
+        public async Task<ActiveAutoReply> GetActiveAutoReplyAsync(long userId)
+        {
+            var reply = new ActiveAutoReply();
+            var replyData = await _contx.SYSTEM_USERS_DATA.Where(d => d.Id == userId)
+                .Select(d => new { d.AutoReplyText, d.AutoReplyVoice })
+                .SingleOrDefaultAsync();
+
+            if (await CheckUserHasPremium(userId))
+            {
+                if (replyData.AutoReplyVoice != null)
+                {
+                    reply.AutoReply = replyData.AutoReplyVoice;
+                    reply.IsText = false;
+                    reply.IsEmpty = false;
+                }
+                else if (replyData.AutoReplyText != null)
+                {
+                    reply.AutoReply = replyData.AutoReplyText;
+                    reply.IsText = true;
+                    reply.IsEmpty = true;
+                }
+                else
+                {
+                    reply.IsEmpty = true;
+                }
+                return reply;
+            }
+
+            else if (replyData.AutoReplyText != null)
+            {
+                reply.AutoReply = replyData.AutoReplyText;
+                reply.IsText = true;
+                reply.IsEmpty = true;
+
+                return reply;
+            }
+
+            reply.IsEmpty = true;
+
+            return reply;
+        }
+
+        public async Task<bool> CheckUserHasEffectAsync(long userId, int effectId)
+        {
+            try
+            {
+                var balance = await GetUserWalletBalance(userId);
+                var value = false;
+
+                if (balance != null)
+                {
+                    switch (effectId)
+                    {
+                        case 5:
+                            value = balance.SecondChances > 0;
+                            break;
+                        case 6:
+                            value = balance.Valentines > 0;
+                            break;
+                        case 7:
+                            value = balance.Detectors > 0;
+                            break;
+                        case 8:
+                            value = balance.WhiteDetectors > 0;
+                            break;
+                        case 9:
+                            value = balance.CardDecksMini > 0;
+                            break;
+                        case 10:
+                            value = balance.CardDecksPlatinum > 0;
+                            break;
+                        case 11:
+                            value = balance.ThePersonalities > 0;
+                            break;
+                        default:
+                            break;
+                            
+                    }
+                    return value;
+                }
+
+                await CreateUserBalance(userId, 0, DateTime.Now);
+                return false;
+            }
+            catch { return false; }
+        }
+
+        public async Task<DateTime?> ActivateDurableEffectAsync(long userId, int effectId)
+        {
+            try
+            {
+                ActiveEffect effect;
+
+                switch (effectId)
+                {
+                    case 6:
+                        var userPoints = await _contx.USER_PERSONALITY_POINTS.Where(p => p.UserId == userId)
+                            .SingleOrDefaultAsync();
+                        if (userPoints != null)
+                        {
+                            if (AtLeastOneIsNotZero(userPoints))
+                            {
+                                effect = new TheValentine(userId);
+                            }
+                            return null;
+                        }
+                        return null;
+                    case 7:
+                        if (!(bool)await CheckUserUsesPersonality(userId))
+                            return null;
+                        effect = new TheDetector(userId);
+                        break;
+                    case 8:
+                        if (!(bool)await CheckUserUsesPersonality(userId))
+                            return null;
+                        effect = new TheWhiteDetector(userId);
+                        break;
+                    default:
+                        return null;
+                }
+
+                await _contx.USER_ACTIVE_EFFECTS.AddAsync(effect);
+                return effect.ExpirationTime;
+            }
+            catch { return null; }
+        }
+
+        public async Task<bool> ActivateToggleEffectAsync(long userId, int effectId, long? user2Id = null, string description=null)
+        {
+            try
+            {
+                switch (effectId)
+                {
+                    case 5:
+                        await RegisterUserRequest(new UserNotification
+                        {
+                            UserId = userId,
+                            UserId1 = (long)user2Id,
+                            IsLikedBack = false,
+                            Description = description,
+                            SectionId = (int)Sections.Registration,
+                            Severity = (short)Severities.Moderate
+                        });
+                        return true;
+                    case 9:
+                        await AddMaxUserProfileViewCount(userId, 20);
+                        return true;
+                    case 10:
+                        await AddMaxUserProfileViewCount(userId, 50);
+                        return true;
+                    default:
+                        return false;
+                }
+            }
+            catch { return false; }
+        }
+
+        private bool AtLeastOneIsNotZero(UserPersonalityPoints points)
+        {
+            if (points.Intellect > 0 || points.SelfAwareness > 0 || 
+                points.Agreeableness > 0 || points.Compassion > 0 ||
+                points.Creativity > 0 || points.EmotionalIntellect > 0 ||
+                points.Reliability > 0 || points.Personality > 0 || points.LevelOfSense > 0 ||
+                points.Nature > 0 || points.OpenMindedness > 0)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        public async Task<List<ActiveEffect>> GetUserActiveEffects(long userId)
+        {
+            try
+            {
+                var effects = await _contx.USER_ACTIVE_EFFECTS.Where(e => e.UserId == userId)
+                    .ToListAsync();
+
+                if(effects != null)
+                {
+                    for (int i = 0; i < effects.Count; i++)
+                    {
+                        var effect = effects[i];
+                        if (effect.ExpirationTime <= DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc))
+                            effects.Remove(effect);
+                    }
+                    await _contx.SaveChangesAsync();
+                    return effects;
+                }
+                return null;
+            }
+            catch {
+                return null;
+            }
+        }
+
+        
+
+        public async Task<bool> DeactivateEffectAsync(long userId, Guid activeEffectId)
+        {
+            try
+            {
+                var effect = await _contx.USER_ACTIVE_EFFECTS.Where(e => e.UserId == userId && e.Id == activeEffectId)
+                    .SingleOrDefaultAsync();
+
+                if (effect == null)
+                    return false;
+
+                _contx.USER_ACTIVE_EFFECTS.Remove(effect);
+                await _contx.SaveChangesAsync();
+                return true;
+            }
+            catch { return false; }
+        }
+
+        public async Task<int> AddMaxUserProfileViewCount(long userId, int profileCount)
+        {
+            var userInfo = await _contx.SYSTEM_USERS.FindAsync(userId);
+            userInfo.MaxProfileViewsCount += profileCount;
+            await _contx.SaveChangesAsync();
+
+            return userInfo.MaxProfileViewsCount;
+        }
+
+        public async Task<bool> CheckEffectIsActiveAsync(long userId, int effectId)
+        {
+            var effects = await GetUserActiveEffects(userId);
+
+            if (effects == null)
+                return false;
+
+            return effects.Where(e => e.EffectId == effectId).SingleOrDefault() != null;
+        }
+
+        public async Task<bool> SendTickRequestAsync(SendTickRequest request)
+        {
+            try
+            {
+                if (request == null)
+                    throw new NullReferenceException("Request is null");
+
+
+                var existingRequest = await _contx.tick_requests.Where(r => r.UserId == request.UserId)
+                    .SingleOrDefaultAsync();
+
+                //Update existing request if one already exists
+                if (existingRequest != null)
+                {
+                    //If previous reqeust was not accepted
+                    if (existingRequest.State == null || !(bool)existingRequest.State)
+                    {
+                        existingRequest.Video = request.Video;
+                        existingRequest.Photo = request.Photo;
+                        existingRequest.Circle = request.Circle;
+
+                        _contx.tick_requests.Update(existingRequest);
+                        await _contx.SaveChangesAsync();
+                        return true;
+                    }
+                    return false;
+                }
+
+                var model = new TickRequest
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = request.UserId,
+                    AdminId = null,
+                    State = null,
+                    Circle = request.Circle,
+                    Video = request.Video,
+                    Photo = request.Photo
+                };
+
+                await _contx.tick_requests.AddAsync(model);
+                await _contx.SaveChangesAsync();
+
+                return true;
+            }
+            catch { return false; }
         }
     }
 }

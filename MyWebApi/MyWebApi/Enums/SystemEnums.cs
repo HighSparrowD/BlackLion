@@ -75,14 +75,26 @@
             Points = 1,
             PersonalityPoints = 2,
             Premium = 3, // Maybe remove in the future
-            RealMoney = 4
+            RealMoney = 4,
+            SecondChance = 5,
+            TheValentine = 6,
+            TheDetector = 7,
+            TheWhiteDetector = 8,
+            CardDeckMini = 9,
+            CardDeckPlatinum = 10,
+            ThePersonality = 11
         }
 
-        public enum TaskType
+        public enum TaskTypes
         {
             Common = 1,
             Rare = 2,
             Premium = 3
+        }
+
+        public enum AdminMessages
+        {
+            TickRequest = 1
         }
     }
 }
