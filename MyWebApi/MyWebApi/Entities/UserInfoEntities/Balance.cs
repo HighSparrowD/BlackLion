@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using System.Drawing;
 
 namespace MyWebApi.Entities.UserInfoEntities
 {
@@ -10,6 +11,32 @@ namespace MyWebApi.Entities.UserInfoEntities
         public long UserId { get; set; }
         public int Points { get; set; }
         public int PersonalityPoints { get; set; }
+        public int SecondChances { get; set; }
+        public int Valentines { get; set; }
+        public int Detectors { get; set; }
+        public int WhiteDetectors { get; set; }
+        public int CardDecksMini { get; set; }
+        public int CardDecksPlatinum { get; set; }
+        public int ThePersonalities { get; set; }
         public DateTime PointInTime { get; set; }
+
+        public Balance()
+        {}
+
+        public Balance(long userId, int points, DateTime pointInTime)
+        {
+            Id = Guid.NewGuid();
+            UserId = userId;
+            Points = points;
+            PersonalityPoints = 15;
+            PointInTime = pointInTime;
+            SecondChances = 0;
+            Valentines = 0;
+            Detectors = 0;
+            WhiteDetectors = 0;
+            CardDecksMini = 0;
+            CardDecksPlatinum = 0;
+            ThePersonalities = 0;
+        }
     }
 }

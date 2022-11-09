@@ -14,6 +14,8 @@ using MyWebApi.Enums;
 using static MyWebApi.Enums.SystemEnums;
 using MyWebApi.Entities.TestEntities;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using MyWebApi.Entities.EffectEntities;
+using MyWebApi.Entities.AdminEntities;
 
 namespace MyWebApi.Interfaces
 {
@@ -76,7 +78,7 @@ namespace MyWebApi.Interfaces
         Task<UserAchievement> GetSingleUserAchievement(long userId, long achievementId);
         Task<bool> SetUserRtLanguagePrefs(long userId, bool shouldBeConcidered);
         Task<bool> CheckUsersAreCombinableRT(long user1, long user2);
-        Task<Balance> GetUserWalletBalance(long userId, DateTime pointInTime);
+        Task<Balance> GetUserWalletBalance(long userId);
         Task<int> TopUpUserWalletPointsBalance(long userId, int points, string description);
         Task<int> TopUpUserWalletPPBalance(long userId, int points, string description);
         Task<bool> CheckUserHasPremium(long userId);
@@ -103,7 +105,7 @@ namespace MyWebApi.Interfaces
         Task<bool> InviteUserAsync(Guid invitationId, long userId);
         Task<Invitation> GetInvitationAsync(long userId);
         Task<bool> NotifyUserAboutReferentialRegistrationAsync(long userId, long invitedUserId);
-        Task<bool> AddUserNotificationAsync(UserNotification model);
+        Task<Guid> AddUserNotificationAsync(UserNotification model);
         Task<int> GetInvitedUsersCountAsync(long userId);
         Task<bool> CheckUserHasNotificationsAsync(long userId);
         Task<List<UserNotification>> GetUserNotifications(long userId);
@@ -138,5 +140,16 @@ namespace MyWebApi.Interfaces
         Task<bool> CheckEncounteredUserIsInBlackList(long userId, long encounteredUser);
         Task<string> RetreiveCommonLanguagesAsync(long user1Iq, long user2Id, int localisationId);
         Task<bool> LogAdminErrorAsync(long? userId, string description, int sectioId);
+        Task<bool> SetAutoReplyTextAsync(long userId, string text);
+        Task<bool> SetAutoReplyVoiceAsync(long userId, string voice);
+        Task<ActiveAutoReply> GetActiveAutoReplyAsync(long userId);
+        Task<bool> CheckUserHasEffectAsync(long userId, int effectId);
+        Task<DateTime?> ActivateDurableEffectAsync(long userId, int effectId);
+        Task<bool> ActivateToggleEffectAsync(long userId, int effectId, long? user2Id=null, string description=null);
+        Task<List<ActiveEffect>> GetUserActiveEffects(long userId);
+        Task<bool> DeactivateEffectAsync(long userId, Guid activeEffectId);
+        Task<int> AddMaxUserProfileViewCount(long userId, int profileCount);
+        Task<bool> CheckEffectIsActiveAsync(long userId, int effectId);
+        Task<bool> SendTickRequestAsync(SendTickRequest request);
     }
 }

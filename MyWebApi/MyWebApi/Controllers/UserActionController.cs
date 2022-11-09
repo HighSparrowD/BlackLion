@@ -1,12 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using MyWebApi.Core;
 using MyWebApi.Interfaces;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using MyWebApi.Data;
 using MyWebApi.Entities.UserInfoEntities;
 using MyWebApi.Entities.ReportEntities;
 using MyWebApi.Entities.LocationEntities;
@@ -17,7 +14,7 @@ using MyWebApi.Entities.SponsorEntities;
 using MyWebApi.Entities.DailyTaskEntities;
 using MyWebApi.Entities.TestEntities;
 using static MyWebApi.Enums.SystemEnums;
-using Microsoft.EntityFrameworkCore.Metadata.Conventions;
+using MyWebApi.Entities.AdminEntities;
 
 namespace MyWebApi.Controllers
 {
@@ -295,6 +292,8 @@ namespace MyWebApi.Controllers
                 InvitedUsersCount = 0,
                 InvitedUsersBonus = 0,
                 TagSearchesCount = 0,
+                MaxProfileViewsCount = 50,
+                IsIdentityConfirmed = false,
             };
 
             if (model.UserCityCode != null && model.UserCountryCode != null)
@@ -431,7 +430,7 @@ namespace MyWebApi.Controllers
         [HttpGet("/GetActiveUserWalletBalance/{userId}")]
         public async Task<Balance> GetActiveUserWalletBalance(long userId)
         {
-            return await _repository.GetUserWalletBalance(userId, DateTime.Now);
+            return await _repository.GetUserWalletBalance(userId);
         }
 
         [HttpGet("/TopUpUserWalletBalance/{userId}/{points}/{description}")]
@@ -817,6 +816,30 @@ namespace MyWebApi.Controllers
         public async Task<string> RetreiveCommonLanguages(long user1Id, long user2Id, int localisationId)
         {
             return await _repository.RetreiveCommonLanguagesAsync(user1Id, user2Id, localisationId);
+        }
+
+        [HttpGet("/SetAutoReplyText/{userId}/{text}")]
+        public async Task<bool> SetAutoReplyText(long userId, string text)
+        {
+            return await _repository.SetAutoReplyTextAsync(userId, text);
+        }
+
+        [HttpGet("/SetAutoReplyVoice/{userId}/{voice}")]
+        public async Task<bool> SetAutoReplyVoice(long userId, string voice)
+        {
+            return await _repository.SetAutoReplyVoiceAsync(userId, voice);
+        }
+
+        [HttpGet("/GetActiveAutoReply/{userId}")]
+        public async Task<ActiveAutoReply> GetActiveAutoReply(long userId)
+        {
+            return await _repository.GetActiveAutoReplyAsync(userId);
+        }
+
+        [HttpPost("/SendTickRequest")]
+        public async Task<bool> SendTickRequest(SendTickRequest request)
+        {
+            return await _repository.SendTickRequestAsync(request);
         }
     }
 }

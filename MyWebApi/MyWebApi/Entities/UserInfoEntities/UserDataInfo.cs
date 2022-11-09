@@ -18,6 +18,8 @@ namespace MyWebApi.Entities.UserInfoEntities
         public long LocationId { get; set; }
         public int ReasonClassLocalisationId { get; set; }
         public List<string>? Tags { get; set; }
+        public string? AutoReplyText { get; set; }
+        public string? AutoReplyVoice { get; set; }
         public virtual Location? Location { get; set; }
         public virtual UserReason? Reason { get; set; }
         //public virtual Language? Language { get; set; }

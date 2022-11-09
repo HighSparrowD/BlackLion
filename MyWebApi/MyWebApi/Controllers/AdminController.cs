@@ -2,11 +2,13 @@
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using MyWebApi.Entities.AchievementEntities;
+using MyWebApi.Entities.AdminEntities;
 using MyWebApi.Entities.LocationEntities;
 using MyWebApi.Entities.ReasonEntities;
 using MyWebApi.Entities.ReportEntities;
 using MyWebApi.Entities.SecondaryEntities;
 using MyWebApi.Interfaces;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -118,6 +120,24 @@ namespace MyWebApi.Controllers
         public async Task<int> AddNewAchievements(List<Achievement> achievements)
         {
             return await _repository.AddNewAchievements(achievements);
+        }
+
+        [HttpGet("/GetTickRequests")]
+        public async Task<List<TickRequest>> GetTickRequests()
+        {
+            return await _repository.GetTickRequestsAsync();
+        }
+
+        [HttpGet("/GetTickRequest/{id}")]
+        public async Task<TickRequest> GetTickRequest(Guid id)
+        {
+            return await _repository.GetTickRequestAsync(id);
+        }
+
+        [HttpGet("/ResolveTickRequest/{id}/{adminId}/{isAccepted}")]
+        public async Task<bool> ResolveTickRequest(Guid id, long adminId, bool isAccepted)
+        {
+            return await _repository.ResolveTickRequestAsync(id, adminId, isAccepted);
         }
     }
 }

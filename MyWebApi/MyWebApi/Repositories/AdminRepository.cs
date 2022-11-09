@@ -1,12 +1,15 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using MyWebApi.Data;
 using MyWebApi.Entities.AchievementEntities;
+using MyWebApi.Entities.AdminEntities;
 using MyWebApi.Entities.DailyTaskEntities;
 using MyWebApi.Entities.LocationEntities;
 using MyWebApi.Entities.ReasonEntities;
 using MyWebApi.Entities.ReportEntities;
 using MyWebApi.Entities.SecondaryEntities;
+using MyWebApi.Enums;
 using MyWebApi.Interfaces;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -310,6 +313,51 @@ namespace MyWebApi.Repositories
                 return 1;
             }
             catch { return 0; }
+        }
+
+        public async Task<List<TickRequest>> GetTickRequestsAsync()
+        {
+            return await _contx.tick_requests.Take(15)
+                .ToListAsync();
+        }
+
+        public async Task<TickRequest> GetTickRequestAsync(Guid requestId)
+        {
+            return await _contx.tick_requests.Where(r => r.Id == requestId && r.State != true)
+                .Include(r => r.User)
+                .SingleOrDefaultAsync();
+        }
+
+        public async Task<bool> ResolveTickRequestAsync(Guid requestId, long adminId, bool isAccepted)
+        {
+            var request = await GetTickRequestAsync(requestId);
+
+            if (request == null)
+                throw new NullReferenceException("Request was not found");
+
+            request.State = isAccepted;
+            request.AdminId = adminId;
+            request.User.IsIdentityConfirmed = isAccepted;
+            await _contx.SaveChangesAsync();
+
+            if (isAccepted)
+                await _userRep.AddUserNotificationAsync(new Entities.UserActionEntities.UserNotification
+                {
+                    Description = "Your tick request had been accepted :)",
+                    UserId1 = request.UserId,
+                    Severity = (short)SystemEnums.Severities.Urgent,
+                    SectionId = (int)SystemEnums.Sections.Neutral,
+                });
+            else
+                await _userRep.AddUserNotificationAsync(new Entities.UserActionEntities.UserNotification
+                {
+                    Description = "Sorry, your tick request had been denied.\nPlease contact the administration and try again",
+                    UserId1 = request.UserId,
+                    Severity = (short)SystemEnums.Severities.Urgent,
+                    SectionId = (int)SystemEnums.Sections.Neutral,
+                });
+
+            return isAccepted;
         }
     }
 }
