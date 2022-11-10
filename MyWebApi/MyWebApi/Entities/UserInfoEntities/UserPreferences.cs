@@ -16,6 +16,7 @@ namespace MyWebApi.Entities.UserInfoEntities
         public List<int>? AgePrefs { get; set; }
         public int CommunicationPrefs { get; set; }
         public short UserGenderPrefs { get; set; }
+        public bool ShouldFilterUsersWithoutRealPhoto { get; set; }
 
         public UserPreferences(long id, List<int>? userLanguagePreferences, List<int>? userLocationPreferences, List<int>? agePrefs, int communicationPrefs, short userGenderPrefs, bool shouldUsePersonalityFunc)
         {

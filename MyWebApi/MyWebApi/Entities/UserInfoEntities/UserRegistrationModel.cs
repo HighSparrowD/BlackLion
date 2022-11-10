@@ -25,5 +25,6 @@ namespace MyWebApi.Entities.UserInfoEntities
         public int CommunicationPrefs { get; set; }
         public short UserGenderPrefs { get; set; }
         public bool ShouldUserPersonalityFunc { get; set; }
+        public bool IsPhotoReal { get; set; }
     }
 }

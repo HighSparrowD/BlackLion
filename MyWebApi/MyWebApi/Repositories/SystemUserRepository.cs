@@ -199,6 +199,9 @@ namespace MyWebApi.Repositories
 
                 var currentUser = await GetUserInfoAsync(userId);
 
+                //Check if user STILL has premium
+                await CheckUserHasPremium(currentUser.UserId);
+
                 var currentUserEncounters = await GetUserEncounters(userId, (int)SystemEnums.Sections.Familiator); //I am not sure if it is 2 or 3 section
 
                 //If user has elected to temporarily dissable PERSONALITY functionality (Change shold NOT be changed in th DB) 
@@ -221,6 +224,12 @@ namespace MyWebApi.Repositories
                     .Include(u => u.UserPreferences)
                     .Include(u => u.UserBlackList)
                     .ToListAsync();
+
+                if (currentUser.UserPreferences.ShouldFilterUsersWithoutRealPhoto && currentUser.HasPremium)
+                {
+                    data.Where(u => u.UserBaseInfo.IsPhotoReal)
+                        .ToList();
+                }    
                 
                 if (currentUser.UserDataInfo.Location.CountryId != null)
                 {
@@ -3496,6 +3505,30 @@ namespace MyWebApi.Repositories
                 return true;
             }
             catch { return false; }
+        }
+
+        public async Task<bool> SwitchUserFilteringByPhotoAsync(long userId)
+        {
+            var userPrefs = await _contx.SYSTEM_USERS_PREFERENCES.Where(p => p.Id == userId)
+                .SingleOrDefaultAsync();
+
+            if (userPrefs == null)
+                throw new NullReferenceException($"User {userId} was not found");
+
+            userPrefs.ShouldFilterUsersWithoutRealPhoto = !userPrefs.ShouldFilterUsersWithoutRealPhoto;
+
+            return userPrefs.ShouldFilterUsersWithoutRealPhoto;
+        }
+
+        public async Task<bool> GetUserFilteringByPhotoStatusAsync(long userId)
+        {
+            var userPrefs = await _contx.SYSTEM_USERS_PREFERENCES.Where(p => p.Id == userId)
+                .SingleOrDefaultAsync();
+
+            if (userPrefs == null)
+                throw new NullReferenceException($"User {userId} was not found");
+
+            return userPrefs.ShouldFilterUsersWithoutRealPhoto;
         }
     }
 }
