@@ -106,6 +106,16 @@ class Requester:
     def accept_current_request(self, isStack=False):
         sender = self.current_request["sender"]["userBaseInfo"]
         i = random.Random().randint(0, 1)
+
+        active_reply = Helpers.get_user_active_reply(sender["id"])
+        if active_reply:
+            if not active_reply["isEmpty"]:
+                self.bot.send_message(self.receiver, "⬇ This user has a message for you ;-) ⬇")
+                if active_reply["isText"]:
+                    self.bot.send_message(self.receiver, f'"{active_reply["autoReply"]}"')
+                else:
+                    self.bot.send_voice(self.receiver, active_reply["autoReply"])
+
         if i == 0:  # TODO: Optimize!!!
             msg = f"{self.m1}\n@{self.receiver_data['userName']}"
             Helpers.register_user_request(self.receiver, sender["id"], True, msg)

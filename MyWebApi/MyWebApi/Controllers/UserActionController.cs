@@ -850,9 +850,12 @@ namespace MyWebApi.Controllers
         }
 
         [HttpGet("/GetUserFilteringByPhotoStatus/{userId}")]
-        public async Task<bool> GetUserFilteringByPhotoStatus(long userId)
+        public async Task<string> GetUserFilteringByPhotoStatus(long userId)
         {
-            return await _repository.GetUserFilteringByPhotoStatusAsync(userId);
+            //TODO: Get string from localizer !!!
+            if (await _repository.GetUserFilteringByPhotoStatusAsync(userId) == false)
+                return "Filtering is currently Off. Would you like to turn it on ?";
+            return "Filtering is currently On. Would you like to turn it off ?";
         }
     }
 }

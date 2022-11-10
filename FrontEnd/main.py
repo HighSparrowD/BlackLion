@@ -103,13 +103,21 @@ def EnterAdminCabinet(message):
 
 
 @bot.message_handler(commands=["settings"])
-def test(message):
+def settings(message):
     if not Helpers.check_user_is_busy(message.from_user.id):
         Settings(bot, message)
 
 
+@bot.message_handler(content_types=["voice"])
+def test(message):
+    if message.voice:
+        if message.voice.duration < 15:
+            bot.send_voice(message.from_user.id, message.voice.file_id)
+
+
 def create_registrator(message):
-    visit = Helpers.check_user_has_visited_section(message.from_user.id, 1)
+    visit = Helpers.check_user_is_registered(message.from_user.id)
+    #visit = Helpers.check_user_has_visited_section(message.from_user.id, 1)
     return Registrator(bot, message, visit)
 
 

@@ -26,7 +26,7 @@ class Settings:
         self.add_to_blacklist_text = "Add user to a blacklist"
         self.remove_from_blacklist_text = "Remove user from a blacklist"
 
-        self.setting_message = "1. View the blacklist\n2. Manage PERSONALITY points\n3. Turn off / on PERSONALITY\n4. Change profile properties\n5. ⭐Set profile status⭐\n6. Manage recently encountered users\n7. Get my invitation credentials\n\n8.Exit"
+        self.setting_message = "1. View the blacklist\n2. Manage PERSONALITY points\n3. Turn off / on PERSONALITY\n4. Change profile properties\n5. ⭐Set profile status⭐\n6. Manage recently encountered users\n7. Get my invitation credentials\n8. ⭐Turn on/off filtering by real photo⭐\n\n9. Exit"
         self.encounter_options_message = f"1. Use 💥Second chance💥 to send like to a user once again. You have SECOND_CHANCE_COUNT\n2. Report user\n3. Abort\n4." #TODO: replace caps message to a real "second chance" effect amount
         self.settingMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4", "5", "6", "7", "8")
         self.YNMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("yes", "no")
@@ -56,6 +56,8 @@ class Settings:
             elif message.text == "7":
                 self.credentials_management(message)
             elif message.text == "8":
+                pass
+            elif message.text == "9":
                 self.destruct()
             else:
                 self.bot.send_message(self.current_user, "No such option", reply_markup=self.settingMarkup)
@@ -116,7 +118,6 @@ class Settings:
             else:
                 self.bot.send_message(self.current_user, "No such option", reply_markup=self.credsMarkup)
                 self.bot.register_next_step_handler(message, self.credentials_management, acceptMode=acceptMode, chat_id=self.current_user)
-
 
     def encounter_list_management(self, message, acceptMode=False):
         if not acceptMode:
@@ -304,6 +305,23 @@ class Settings:
                 except:
                     self.bot.send_message(self.current_user, "Something went wrong, please contact the administration")
                     self.proceed()
+
+    def switch_user_filtering(self, message, acceptMode=False):
+        if not acceptMode:
+            status_string = requests.get(f"https://localhost:44381/GetUserFilteringByPhotoStatus/{self.current_user}", verify=False)
+            self.bot.send_message(self.current_user, status_string, reply_markup=self.YNMarkup)
+            self.bot.register_next_step_handler(message, self.switch_user_filtering, acceptMode=True, chat_id=self.current_user)
+        else:
+            if message.text == "Yes":
+                requests.get(f"https://localhost:44381/GetUserFilteringByPhotoStatus/{self.current_user}", verify=False)
+            elif message.text == "No":
+                pass
+            else:
+                self.bot.send_message(self.current_user, "No such option", reply_markup=self.YNMarkup)
+                self.bot.register_next_step_handler(message, self.switch_user_filtering, acceptMode=True, chat_id=self.current_user)
+                return False
+        self.bot.send_message(self.current_user, "Done :)")
+        self.proceed()
 
     def encounters_callback_handler(self, call):
         if call.message.id not in self.old_queries:

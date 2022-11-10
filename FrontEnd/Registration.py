@@ -1,3 +1,5 @@
+import copy
+
 from telebot.types import KeyboardButton, ReplyKeyboardMarkup
 from Core import HelpersMethodes as Helpers
 from Common.Menues import count_pages, assemble_markup, reset_pages, add_tick_to_element, remove_tick_from_element
@@ -41,6 +43,7 @@ class Registrator:
         self.reason_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
         self.communication_pref_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
         self.age_pref_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        self.skip_markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("skip")
 
         self.app_language = None
 
@@ -66,6 +69,9 @@ class Registrator:
         self.pref_langs = []
         self.pref_countries = []
 
+        self.reply_voice = ""
+        self.reply_text = ""
+
         if not hasVisited:
             self.app_language_step(msg)
         else:
@@ -76,6 +82,8 @@ class Registrator:
                 prefs = self.current_user_data["userPreferences"]
 
                 self.country = data["location"]["countryId"]
+                self.pref_countries = prefs["userLocationPreferences"]
+                self.pref_langs = prefs["userLanguagePreferences"]
                 self.city = data["location"]["cityId"]
                 self.chosen_langs = data["userLanguages"]
                 self.app_language = data["languageId"]
@@ -93,12 +101,13 @@ class Registrator:
                 self.data["userCountryCode"] = self.country
                 self.data["userCityCode"] = self.city
                 self.data["userGender"] = data["userGender"]
-                self.data["userLanguagePreferences"] = prefs["userLanguagePreferences"]
-                self.data["userLocationPreferences"] = prefs["userLocationPreferences"]
+                self.data["userLanguagePreferences"] = self.pref_langs
+                self.data["userLocationPreferences"] = self.pref_countries
                 self.data["agePrefs"] = prefs["agePrefs"]
                 self.data["communicationPrefs"] = prefs["communicationPrefs"]
                 self.data["userGenderPrefs"] = prefs["userGenderPrefs"]
                 self.data["tags"] = self.tags
+                self.data["isPhotoReal"] = base["isPhotoReal"]
 
                 self.get_localisations()
 
@@ -235,7 +244,10 @@ class Registrator:
 
             self.gender_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
 
-            for g in self.genders.keys():
+            genders = copy.copy(self.genders)
+            genders.pop(3)
+
+            for g in genders.keys():
                 self.gender_markup.row().add(KeyboardButton(self.genders[g]))
 
             self.bot.send_message(self.msg.chat.id, "What is your gender?", reply_markup=self.gender_markup)
@@ -271,7 +283,7 @@ class Registrator:
                 self.data["reasonId"] = reason
 
                 if not editMode:
-                    self.location_step(msg)
+                    self.communication_preferences_step(msg)
                 else:
                     self.checkout_step(msg)
 
@@ -561,15 +573,30 @@ class Registrator:
             if msg.photo:
                 self.msg = msg
                 self.data["userPhoto"] = msg.photo[len(msg.photo) - 1].file_id  # TODO: troubleshoot photos
-
-                if not editMode:
-                    self.gender_preferences_step(msg)
-                else:
-                    self.checkout_step(msg)
-
+                self.bot.register_next_step_handler(msg, self.photo_confirmation_step, editMode=editMode, chat_id=self.current_user)
             else:
                 self.bot.send_message(self.current_user, "I can't find a photo in your message")
                 self.bot.register_next_step_handler(msg, self.photo_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
+
+    def photo_confirmation_step(self, msg, acceptMode=False, editMode=False):
+        if not acceptMode:
+            m = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("yes", "no")
+            self.bot.send_message(self.current_user, "Is that your photo ? ", reply_markup=m)
+            self.bot.register_next_step_handler(msg, self.photo_step, acceptMode=True, editMode=editMode, chat_id=self.current_user)
+        else:
+            if msg.text == "yes":
+                self.data["isPhotoReal"] = True
+            elif msg.text == "no":
+                self.data["isPhotoReal"] = False
+            else:
+                self.bot.send_message(self.current_user, "No such option")
+                self.bot.register_next_step_handler(msg, self.photo_confirmation_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
+                return False
+
+            if not editMode:
+                self.gender_preferences_step(msg)
+            else:
+                self.checkout_step(msg)
 
     def gender_preferences_step(self, msg, acceptMode=False, editMode=False):
         if not acceptMode:
@@ -781,46 +808,89 @@ class Registrator:
                 self.bot.register_next_step_handler(msg, self.age_pref_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
 
     def tags_step(self, msg, acceptMode=False, editMode=False):
-        m = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("skip")
         if not acceptMode:
 
             if not self.hasVisited:
-                self.bot.send_message(self.current_user, "Ok, now to the, final part. To be able to search people by tags you have to have your own as well.\nHow it works: -----------\nIf you want to use that functionality: type a few tags (up to 25) that describe you, your interests etc... Note that using tags which go against our policies can lead your account to be banned ---------\nIf you dont want to use that functionality: just hit 'skip' :-)", reply_markup=m)
+                self.bot.send_message(self.current_user, "Ok, now to the, final part. To be able to search people by tags you have to have your own as well.\nHow it works: -----------\nIf you want to use that functionality: type a few tags (up to 25) that describe you, your interests etc... Note that using tags which go against our policies can lead your account to be banned ---------\nIf you dont want to use that functionality: just hit 'skip' :-)", reply_markup=self.skip_markup)
             else:
-                self.bot.send_message(self.current_user, "Type a few tags (up to 25) that describe you, your interests etc... Note that using tags which go against our policies can lead your account to be banned. \nYour previous tag list will be overwritten", reply_markup=m)
+                self.bot.send_message(self.current_user, "Type a few tags (up to 25) that describe you, your interests etc... Note that using tags which go against our policies can lead your account to be banned. \nYour previous tag list will be overwritten", reply_markup=self.skip_markup)
 
             self.bot.register_next_step_handler(msg, self.tags_step, acceptMode=True, editMode=editMode, chat_id=self.current_user)
         else:
             if msg.text == "skip":
                 self.bot.send_message(self.current_user, "Gotcha")
-                self.checkout_step(msg)
+                if not editMode:
+                    self.auto_reply_step(msg)
+                else:
+                    self.checkout_step(msg)
             else:
                 if msg.text:
                     try:
-                        s = len(msg.text.split())
                         if len(msg.text.split()) <= self.maxTagCount:
                             self.tags = msg.text.lower().strip()
-                            self.checkout_step(msg)
+
+                            if not editMode:
+                                self.auto_reply_step(msg)
+                            else:
+                                self.checkout_step(msg)
                         else:
-                            self.bot.send_message(self.current_user, f"You cannot use more than {self.maxTagCount} tags", reply_markup=m)
+                            self.bot.send_message(self.current_user, f"You cannot use more than {self.maxTagCount} tags", reply_markup=self.skip_markup)
                             self.bot.register_next_step_handler(msg, self.tags_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
                     except:
-                        self.bot.send_message(self.current_user, "Please, dont use any special characters apart from #", reply_markup=m)
+                        self.bot.send_message(self.current_user, "Please, dont use any special characters apart from #", reply_markup=self.skip_markup)
                         self.bot.register_next_step_handler(msg, self.tags_step, acceptMode=acceptMode,
                                                             editMode=editMode, chat_id=self.current_user)
 
                 else:
-                    self.bot.send_message(self.current_user, "No tags found", reply_markup=m)
+                    self.bot.send_message(self.current_user, "No tags found", reply_markup=self.skip_markup)
                     self.bot.register_next_step_handler(msg, self.tags_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
 
+    def auto_reply_step(self, message, acceptMode=False, editMode=False):
+        if not acceptMode:
+            description_message = "---Functionality description---\n"
+            question_message = "Would you like to use auto reply functionality? Send me a text message (up to 300 characters) or a ⭐Voice message (Up to 15 seconds)⭐ that will be sent to every user who likes your profile"
+
+            if self.hasVisited:
+                question_message = description_message + question_message
+
+            self.bot.send_message(self.current_user, question_message, reply_markup=self.skip_markup)
+            self.bot.register_next_step_handler(message, self.auto_reply_step, acceptMode=True, editMode=editMode, chat_id=self.current_user)
+        else:
+            if message.text == "skip":
+                self.bot.send_message(self.current_user, "Gotcha")
+                self.checkout_step(message)
+
+            elif message.voice:
+                if Helpers.check_user_has_premium(self.current_user):
+                    if message.voice.duration < 15:
+                        self.reply_voice = message.voice.file_id
+                        self.checkout_step(message)
+                    else:
+                        self.bot.send_message(self.current_user, "Up to 15 seconds, my friend", reply_markup=self.skip_markup)
+                        self.bot.register_next_step_handler(message, self.auto_reply_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
+                else:
+                    self.bot.send_message(self.current_user, "Sorry, only users with premium access can perform that action", reply_markup=self.skip_markup)
+                    self.bot.register_next_step_handler(message, self.auto_reply_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
+
+            elif message.text:
+                if len(message.text) < 300:
+                    self.reply_text = message.text
+                    self.checkout_step(message)
+                else:
+                    self.bot.send_message(self.current_user, "Up to 300 characters please", reply_markup=self.skip_markup)
+                    self.bot.register_next_step_handler(message, self.auto_reply_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
+            else:
+                self.bot.send_message(self.current_user, "Empty message :(", reply_markup=self.skip_markup)
+                self.bot.register_next_step_handler(message, self.auto_reply_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
+
     def checkout_step(self, msg, acceptMode=False):
-        change_markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17")
-        final_msg = "17. ✨Finish the registration✨"
+        change_markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18")
+        final_msg = "18. ✨Finish the registration✨"
 
         if self.hasVisited:
-            final_msg = "17. ✨Save changes✨"
+            final_msg = "18. ✨Save changes✨"
 
-        change_text = f"1. Change app language\n2. Change name\n3. Change description\n4. Add or remove languages you speak\n5. Change country\n6. Change city\n7. Change reason for using the bot\n8. Change age\n9. Change your gender\n10. Change profile photo\n11. Languages the encountered users speak\n12. Country the encountered users are located\n13. Encountered users age\n14. Preferred gender\n15. Communication preferences\n16. Change tags\n\n{final_msg}"
+        change_text = f"1. Change app language\n2. Change name\n3. Change description\n4. Add or remove languages you speak\n5. Change country\n6. Change city\n7. Change reason for using the bot\n8. Change age\n9. Change your gender\n10. Change profile photo\n11. Languages the encountered users speak\n12. Country the encountered users are located\n13. Encountered users age\n14. Preferred gender\n15. Communication preferences\n16. Change tags\n17. Change Auto-reply message\n{final_msg}"
 
         if not acceptMode:
             self.bot.send_photo(self.current_user, self.data["userPhoto"], f"That is how you profile will look like:\n*Some parameters such as tags will be hidden*\n{self.profile_constructor()}")
@@ -860,6 +930,8 @@ class Registrator:
             elif msg.text == "16":
                 self.tags_step(msg, editMode=True)
             elif msg.text == "17":
+                self.auto_reply_step(msg, editMode=True)
+            elif msg.text == "18":
                 self.tests_step(msg, editMode=self.hasVisited)
             else:
                 self.bot.send_message(self.current_user, "No such option", reply_markup=change_markup)
@@ -886,6 +958,11 @@ class Registrator:
 
                 requests.post("https://localhost:44381/UpdateTags", updateTagsModel, d, headers={
                     "Content-Type": "application/json"}, verify=False)
+
+            if self.reply_voice:
+                requests.get(f"https://localhost:44381/SetAutoReplyVoice/{self.current_user}/{self.reply_voice}", verify=False)
+            elif self.reply_text:
+                requests.get(f"https://localhost:44381/SetAutoReplyText/{self.current_user}/{self.reply_text}", verify=False)
 
             if self.hasVisited:
                 if response.text == "1":

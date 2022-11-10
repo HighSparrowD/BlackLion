@@ -60,6 +60,16 @@ class Familiator:
     def message_handler(self, message):
         if message.text == self.btnYes:
             Helpers.register_user_request(self.current_user, self.active_user_id, False)
+
+            active_reply = Helpers.get_user_active_reply(self.active_user_id)
+            if active_reply:
+                if not active_reply["isEmpty"]:
+                    self.bot.send_message(self.current_user, "⬇ This user has a message for you ;-) ⬇")
+                    if active_reply["isText"]:
+                        self.bot.send_message(self.current_user, f'"{active_reply["autoReply"]}"')
+                    else:
+                        self.bot.send_voice(self.current_user, active_reply["autoReply"])
+
             if not Helpers.check_user_is_busy(self.active_user_id):
                 req_list = Helpers.get_user_requests(self.active_user_id)
                 Requester(self.bot, message, self.active_user_id, req_list)
