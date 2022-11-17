@@ -214,7 +214,7 @@ namespace MyWebApi.Repositories
                     .Where(u => u.UserPreferences.CommunicationPrefs == currentUser.UserPreferences.CommunicationPrefs)
                     .Where(u => u.UserPreferences.AgePrefs.Contains(currentUser.UserDataInfo.UserAge))
                     //Check if users gender preferences correspond to current user gender prefs or are equal to 'Does not matter'
-                    .Where(u => u.UserPreferences.UserGenderPrefs == currentUser.UserDataInfo.UserGender || u.UserPreferences.UserGenderPrefs == 2)
+                    .Where(u => u.UserPreferences.UserGenderPrefs == currentUser.UserDataInfo.UserGender || u.UserPreferences.UserGenderPrefs == 3)
                     .Where(u => u.UserDataInfo.UserLanguages.Any(l => currentUser.UserPreferences.UserLanguagePreferences.Contains(l)))
                     .Where(u => currentUser.UserPreferences.AgePrefs.Contains(u.UserDataInfo.UserAge))
                     .Where(u => currentUser.UserDataInfo.UserLanguages.Any(l => u.UserPreferences.UserLanguagePreferences.Contains(l)))
@@ -252,7 +252,7 @@ namespace MyWebApi.Repositories
                 data = data.Where(u => !CheckRequestExists(u.UserId, userId)).ToList();
 
                 //If user does NOT have gender prederences
-                if (currentUser.UserPreferences.UserGenderPrefs != 2)
+                if (currentUser.UserPreferences.UserGenderPrefs != 3)
                 {
                     data = data.Where(u => u.UserDataInfo.UserGender == currentUser.UserPreferences.UserGenderPrefs)
                     .Where(u => currentUser.UserPreferences.UserGenderPrefs == u.UserDataInfo.UserGender)

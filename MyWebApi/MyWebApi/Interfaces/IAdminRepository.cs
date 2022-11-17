@@ -8,6 +8,7 @@ using MyWebApi.Entities.AchievementEntities;
 using MyWebApi.Entities.DailyTaskEntities;
 using MyWebApi.Entities.AdminEntities;
 using System;
+using MyWebApi.Entities.TestEntities;
 
 namespace MyWebApi.Interfaces
 {
@@ -19,6 +20,8 @@ namespace MyWebApi.Interfaces
         Task<long> UploadCountries(List<Country> countries);
         Task<long> UploadCities(List<City> cities);
         Task<long> UploadLanguages(List<Language> langs);
+        Task<long> UploadPsTestAsync(UploadPsychologicalTest model);
+        //Task<long> UploadInTest(UploadInTest model);
         Task<long> UploadFeedbackReasons(List<FeedbackReason> reasons);
         Task<List<Feedback>> GetFeedbacks ();
         Task<long> DeleteUser (long userId);

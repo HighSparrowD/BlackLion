@@ -97,12 +97,19 @@ namespace MyWebApi.Controllers
             return tests;
         }
 
-        [HttpGet("/GetIntellectualTests")]
-        public async Task<List<IntellectualTest>> GetIntellectualTests()
+        [HttpGet("/GetSinglePsychologicalTest/{id}/{locId}")]
+        public async Task<PsychologicalTest> GetSinglePsychologicalTest(long id, int locId)
         {
-            var tests = await _repository.GetIntellectualTestsAsync();
+            var tests = await _repository.GetSinglePsychologicalTestAsync(id, locId);
             return tests;
         }
+
+        //[HttpGet("/GetIntellectualTests")]
+        //public async Task<List<IntellectualTest>> GetIntellectualTests()
+        //{
+        //    var tests = await _repository.GetIntellectualTestsAsync();
+        //    return tests;
+        //}
 
     }
 }

@@ -7,6 +7,7 @@ using MyWebApi.Entities.LocationEntities;
 using MyWebApi.Entities.ReasonEntities;
 using MyWebApi.Entities.ReportEntities;
 using MyWebApi.Entities.SecondaryEntities;
+using MyWebApi.Entities.TestEntities;
 using MyWebApi.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -138,6 +139,12 @@ namespace MyWebApi.Controllers
         public async Task<bool> ResolveTickRequest(Guid id, long adminId, bool isAccepted)
         {
             return await _repository.ResolveTickRequestAsync(id, adminId, isAccepted);
+        }
+
+        [HttpPost("/UploadPsTest")]
+        public async Task<long> UploadPsTest(UploadPsychologicalTest model)
+        {
+            return await _repository.UploadPsTestAsync(model);
         }
     }
 }

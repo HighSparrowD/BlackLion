@@ -8,6 +8,7 @@ using MyWebApi.Entities.TestEntities;
 using MyWebApi.Entities.SecondaryEntities;
 using System.Linq;
 using MyWebApi.Entities.LocationEntities;
+using Microsoft.VisualBasic;
 
 namespace MyWebApi.Repositories
 {
@@ -52,13 +53,16 @@ namespace MyWebApi.Repositories
 
         public async Task<List<PsychologicalTest>> GetPsychologicalTestsAsync()
         {
-            return await _contx.PSYCHOLOGICAL_TESTS.Include(p => p.Questions).ThenInclude(q => q.Answers).ToListAsync();
+            var tests = await _contx.psychological_tests
+                .ToListAsync();
+
+            return tests;
         }
 
-        public async Task<List<IntellectualTest>> GetIntellectualTestsAsync()
-        {
-            return await _contx.INTELLECTUAL_TESTS.Include(i => i.Questions).ThenInclude(q => q.Answers).ToListAsync();
-        }
+        //public async Task<List<IntellectualTest>> GetIntellectualTestsAsync()
+        //{
+        //    return await _contx.INTELLECTUAL_TESTS.Include(i => i.Questions).ThenInclude(q => q.Answers).ToListAsync();
+        //}
 
         public async Task<List<Gender>> GetGenders(int localisationId)
         {
@@ -97,6 +101,15 @@ namespace MyWebApi.Repositories
                 .Where(l => l.ClassLocalisationId == localisationId)
                 .OrderByDescending(l => l.Priority)
                 .ToListAsync();
+        }
+
+        public async Task<PsychologicalTest> GetSinglePsychologicalTestAsync(long testId, int localisationId)
+        {
+            return await _contx.psychological_tests
+                .Where(t => t.Id == testId && t.ClassLocalisationId == localisationId)
+                .Include(t => t.Questions)
+                .ThenInclude(q => q.Answers)
+                .SingleOrDefaultAsync();
         }
     }
 }

@@ -47,12 +47,12 @@ namespace MyWebApi.Data
         public DbSet<Gender> SYSTEM_GENDERS { get; set; }
         public DbSet<AgePreference> AGE_PREFERENCES { get; set; }
         public DbSet<CommunicationPreference> COMMUNICATION_PREFERENCES { get; set; }
-        public DbSet<PsychologicalTest> PSYCHOLOGICAL_TESTS { get; set; }
-        public DbSet<PsychologicalTestQuestion> PSYCHOLOGICAL_TESTS_QUESTIONS { get; set; }
-        public DbSet<PsychologicalTestAnswer> PSYCHOLOGICAL_TESTS_ANSWERS { get; set; }
-        public DbSet<IntellectualTest> INTELLECTUAL_TESTS { get; set; }
-        public DbSet<IntellectualTestQuestion> INTELLECTUAL_TESTS_QUESTIONS { get; set; }
-        public DbSet<IntellectualTestAnswer> INTELLECTUAL_TESTS_ANSWERS { get; set; }
+        public DbSet<PsychologicalTest> psychological_tests { get; set; }
+        public DbSet<PsychologicalTestQuestion> psychological_tests_questions { get; set; }
+        public DbSet<PsychologicalTestAnswer> psychological_tests_answers { get; set; }
+        //public DbSet<IntellectualTest> INTELLECTUAL_TESTS { get; set; }
+        //public DbSet<IntellectualTestQuestion> INTELLECTUAL_TESTS_QUESTIONS { get; set; }
+        //public DbSet<IntellectualTestAnswer> INTELLECTUAL_TESTS_ANSWERS { get; set; }
         public DbSet<Ad> SPONSOR_ADS { get; set; }
         public DbSet<Sponsor> SYSTEM_SPONSORS { get; set; }
         public DbSet<SponsorLanguage> SPONSOR_LANGUAGES { get; set; }
@@ -98,9 +98,10 @@ namespace MyWebApi.Data
             builder.Entity<Country>().HasMany(c => c.Cities);
             builder.Entity<Sponsor>().HasMany(s => s.SponsorAds);
             builder.Entity<PsychologicalTest>().HasMany(t => t.Questions);
-            builder.Entity<IntellectualTest>().HasMany(t => t.Questions);
+            builder.Entity<PsychologicalTest>().HasKey(t => new {t.Id, t.ClassLocalisationId});
+            //builder.Entity<IntellectualTest>().HasMany(t => t.Questions);
+            //builder.Entity<IntellectualTestQuestion>().HasMany(q => q.Answers);
             builder.Entity<PsychologicalTestQuestion>().HasMany(q => q.Answers);
-            builder.Entity<IntellectualTestQuestion>().HasMany(q => q.Answers);
 
             builder.Entity<Country>().HasKey(c => new {c.Id, c.ClassLocalisationId});
             builder.Entity<Language>().HasKey(l => new {l.Id, l.ClassLocalisationId});

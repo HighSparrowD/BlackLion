@@ -7,6 +7,7 @@ using MyWebApi.Entities.LocationEntities;
 using MyWebApi.Entities.ReasonEntities;
 using MyWebApi.Entities.ReportEntities;
 using MyWebApi.Entities.SecondaryEntities;
+using MyWebApi.Entities.TestEntities;
 using MyWebApi.Enums;
 using MyWebApi.Interfaces;
 using System;
@@ -359,5 +360,74 @@ namespace MyWebApi.Repositories
 
             return isAccepted;
         }
+
+        public async Task<long> UploadPsTestAsync(UploadPsychologicalTest model)
+        {
+            long testId = 0;
+
+            //Check if a version of test already exists
+            var existingTest = await _contx.psychological_tests.Where(t => t.Id == model.Id)
+                .SingleOrDefaultAsync();
+            if (existingTest != null)
+            {
+                if (existingTest.ClassLocalisationId == model.ClassLocalisationId)
+                    throw new Exception("This version of test already exists");
+
+                testId = model.Id;
+            }
+            else
+                testId = await _contx.psychological_tests.CountAsync() + 1;
+
+            var lastQuestionId = await _contx.psychological_tests_questions.CountAsync();
+            var lastAnswerId = await _contx.psychological_tests_answers.CountAsync() + 1;
+
+            var questions = new List<PsychologicalTestQuestion>();
+            var answers = new List<PsychologicalTestAnswer>();
+            var test = new PsychologicalTest
+            {
+                Id = testId,
+                ClassLocalisationId = model.ClassLocalisationId,
+                Name = model.Name,
+                Description = model.Description,
+            };
+
+            foreach (var question in model.Questions)
+            {
+                lastQuestionId++;
+
+                questions.Add(new PsychologicalTestQuestion
+                {
+                    Id = lastQuestionId,
+                    PsychologicalTestClassLocalisationId = test.ClassLocalisationId,
+                    PsychologicalTestId = testId,
+                    Text = question.Text
+                });
+
+                foreach (var answer in question.Answers)
+                {
+                    lastAnswerId++;
+
+                    answers.Add(new PsychologicalTestAnswer
+                    {
+                        Id = lastAnswerId,
+                        Text = answer.Text,
+                        Value = answer.Value,
+                        PsychologicalTestQuestionId = lastQuestionId
+                    });
+                }
+            }
+
+            await _contx.psychological_tests.AddAsync(test);
+            await _contx.psychological_tests_questions.AddRangeAsync(questions);
+            await _contx.psychological_tests_answers.AddRangeAsync(answers);
+            await _contx.SaveChangesAsync();
+
+            return test.Id;
+        }
+
+        //public Task<long> UploadInTest(UploadInTest model)
+        //{
+        //    throw new NotImplementedException();
+        //}
     }
 }
