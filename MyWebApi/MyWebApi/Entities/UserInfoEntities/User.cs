@@ -4,6 +4,8 @@ using System.Linq;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
+using System.Data;
 #nullable enable
 
 namespace MyWebApi.Entities.UserInfoEntities

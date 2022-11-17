@@ -1,4 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using static MyWebApi.Enums.SystemEnums;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Threading.Tasks;
 
 namespace MyWebApi.Entities.UserInfoEntities
 {
@@ -57,6 +60,78 @@ namespace MyWebApi.Entities.UserInfoEntities
             NaturePercentage = 1;
             Creativity = 1;
             CreativityPercentage = 1;
+        }
+
+        public async Task<List<PersonalityStats>> GetImportantParams()
+        {
+            var importantParams = new List<PersonalityStats>();
+            var theBiggest = 0;
+
+            await Task.Run(() =>
+            {
+                for (int i = 0; i < 3; i++)
+                { 
+                    if(Personality > theBiggest && !importantParams.Contains(PersonalityStats.PersonalityType))
+                    {
+                        importantParams.Add(PersonalityStats.PersonalityType);
+                        theBiggest = Personality;
+                    }
+                    else if (EmotionalIntellect > theBiggest && !importantParams.Contains(PersonalityStats.EmotionalIntellect))
+                    {
+                        importantParams.Add(PersonalityStats.EmotionalIntellect);
+                        theBiggest = EmotionalIntellect;
+                    }
+                    else if (Reliability > theBiggest && !importantParams.Contains(PersonalityStats.Reliability))
+                    {
+                        importantParams.Add(PersonalityStats.Reliability);
+                        theBiggest = Reliability;
+                    }
+                    else if (Compassion > theBiggest && !importantParams.Contains(PersonalityStats.Compassion))
+                    {
+                        importantParams.Add(PersonalityStats.Compassion);
+                        theBiggest = Compassion;
+                    }
+                    else if (OpenMindedness > theBiggest && !importantParams.Contains(PersonalityStats.OpenMindedness))
+                    {
+                        importantParams.Add(PersonalityStats.OpenMindedness);
+                        theBiggest = OpenMindedness;
+                    }
+                    else if (Agreeableness > theBiggest && !importantParams.Contains(PersonalityStats.Agreeableness))
+                    {
+                        importantParams.Add(PersonalityStats.Agreeableness);
+                        theBiggest = Agreeableness;
+                    }
+                    else if (SelfAwareness > theBiggest && !importantParams.Contains(PersonalityStats.SelfAwareness))
+                    {
+                        importantParams.Add(PersonalityStats.SelfAwareness);
+                        theBiggest = SelfAwareness;
+                    }
+                    else if (LevelOfSense > theBiggest && !importantParams.Contains(PersonalityStats.LevelsOfSense))
+                    {
+                        importantParams.Add(PersonalityStats.LevelsOfSense);
+                        theBiggest = LevelOfSense;
+                    }
+                    else if (Intellect > theBiggest && !importantParams.Contains(PersonalityStats.Intellect))
+                    {
+                        importantParams.Add(PersonalityStats.Intellect);
+                        theBiggest = Intellect;
+                    }
+                    else if (Nature > theBiggest && !importantParams.Contains(PersonalityStats.Nature))
+                    {
+                        importantParams.Add(PersonalityStats.Nature);
+                        theBiggest = Nature;
+                    }
+                    else if (Creativity > theBiggest && !importantParams.Contains(PersonalityStats.Creativity))
+                    {
+                        importantParams.Add(PersonalityStats.Creativity);
+                        theBiggest = Creativity;
+                    }
+
+                    theBiggest = 0;
+                }
+            });
+
+            return importantParams;
         }
     }
 }
