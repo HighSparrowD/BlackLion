@@ -10,42 +10,46 @@ answers_file_name = "TestUploadTemplate - Answers"
 
 
 def add_ps_test():
-    test_template = {}
+    test_template = []
 
     test_template = load_test_data(test_template)
-    test_template = load_questions(test_template)
 
     data = json.dumps(test_template)
-    print(requests.post("https://localhost:44381/UploadPsTest", data, headers={"Content-Type": "application/json"}, verify=False).text)
+    print(requests.post("https://localhost:44381/UploadPsTests", data, headers={"Content-Type": "application/json"}, verify=False).text)
 
 
 def load_test_data(testTemplate):
     file = pandas.read_csv(f"{test_file_name}.csv")
-    file = get_file_data(file)[0]
+    file = get_file_data(file)
+    test_data = {}
 
-    testTemplate["id"] = file[0]
-    testTemplate["classLocalisationId"] = file[1]
-    testTemplate["name"] = file[2]
-    testTemplate["description"] = file[3]
+    for test in file:
+        test_data = {
+            "id": test[0],
+            "classLocalisationId": test[1],
+            "name": test[2],
+            "description": test[3],
+            "questions": load_questions(test[0])
+        }
+        testTemplate.append(test_data)
 
     return testTemplate
 
 
-def load_questions(testTemplate):
+def load_questions(testId):
     file = pandas.read_csv(f"{questions_file_name}.csv")
     file = get_file_data(file)
 
     questions = []
 
     for question in file:
-        questions.append({
-            "text": question[0],
-            "answers": load_answers(question[1])
-        })
+        if question[2] == testId:
+            questions.append({
+                "text": question[0],
+                "answers": load_answers(question[1])
+            })
 
-    testTemplate["questions"] = questions
-
-    return testTemplate
+    return questions
 
 
 def load_answers(questionId):

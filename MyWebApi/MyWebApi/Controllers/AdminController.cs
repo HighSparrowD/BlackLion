@@ -141,10 +141,10 @@ namespace MyWebApi.Controllers
             return await _repository.ResolveTickRequestAsync(id, adminId, isAccepted);
         }
 
-        [HttpPost("/UploadPsTest")]
-        public async Task<long> UploadPsTest(UploadPsychologicalTest model)
+        [HttpPost("/UploadPsTests")]
+        public async Task<byte> UploadPsTests(List<UploadPsychologicalTest> model)
         {
-            return await _repository.UploadPsTestAsync(model);
+            return await _repository.UploadPsTestsAsync(model);
         }
     }
 }
