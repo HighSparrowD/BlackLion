@@ -180,19 +180,19 @@ namespace MyWebApi.Controllers
         }
 
         [HttpGet("/GetUserList/{userId}")]
-        public async Task<List<User>> GetUserList(long userId)
+        public async Task<List<GetUserData>> GetUserList(long userId)
         {
             return await _repository.GetUsersAsync(userId);
         }
 
         [HttpGet("/GetUserList/TurnOffP/{userId}")]
-        public async Task<List<User>> GetUserList2(long userId)
+        public async Task<List<GetUserData>> GetUserList2(long userId)
         {
             return await _repository.GetUsersAsync(userId, turnOffPersonalityFunc: true);
         }
 
         [HttpGet("/GetUserList/FreeSearch/{userId}")]
-        public async Task<List<User>> GetUserList3(long userId)
+        public async Task<List<GetUserData>> GetUserList3(long userId)
         {
             return await _repository.GetUsersAsync(userId, isFreeSearch: true);
         }

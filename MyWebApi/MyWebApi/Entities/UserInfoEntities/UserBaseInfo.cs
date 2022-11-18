@@ -24,6 +24,16 @@ namespace MyWebApi.Entities.UserInfoEntities
             IsPhotoReal = isPhotoReal;
         }
 
+        public UserBaseInfo(UserBaseInfo model)
+        {
+            Id = model.Id;
+            UserName = model.UserName;
+            UserRealName = model.UserRealName;
+            UserDescription = model.UserDescription;
+            UserPhoto = model.UserPhoto;
+            IsPhotoReal = model.IsPhotoReal;
+        }
+
         public string GenerateUserDescription(string? name, int age, string? country, string? city, string? description)
         {
             return $"{name}, {age},\n({country} - {city})\n\n{description}";
