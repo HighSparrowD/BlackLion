@@ -152,6 +152,13 @@ def get_user_app_language(userId):
         return None
 
 
+def get_user_active_reply(userId):
+    try:
+        return json.loads(requests.get(f"https://localhost:44381/GetActiveAutoReply/{userId}", verify=False).text)
+    except:
+        return None
+
+
 def get_user_request(requestId):
     try:
         return json.loads(requests.get(f"https://localhost:44381/CheckUserHasRequest/{requestId}", verify=False).text)

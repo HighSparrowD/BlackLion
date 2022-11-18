@@ -151,5 +151,7 @@ namespace MyWebApi.Interfaces
         Task<int> AddMaxUserProfileViewCount(long userId, int profileCount);
         Task<bool> CheckEffectIsActiveAsync(long userId, int effectId);
         Task<bool> SendTickRequestAsync(SendTickRequest request);
+        Task<bool> SwitchUserFilteringByPhotoAsync(long userId);
+        Task<bool> GetUserFilteringByPhotoStatusAsync(long userId);
     }
 }

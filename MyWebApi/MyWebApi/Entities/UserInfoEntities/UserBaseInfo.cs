@@ -12,14 +12,16 @@ namespace MyWebApi.Entities.UserInfoEntities
         public string? UserDescription { get; set; }
         public string? UserRawDescription { get; set; }
         public string? UserPhoto { get; set; }
+        public bool IsPhotoReal { get; set; }
 
-        public UserBaseInfo(long id, string? userName, string? userRealName, string? userDescription, string? userPhoto)
+        public UserBaseInfo(long id, string? userName, string? userRealName, string? userDescription, string? userPhoto, bool isPhotoReal)
         {
             Id = id;
             UserName = userName;
             UserRealName = userRealName;
             UserDescription = userDescription;
             UserPhoto = userPhoto;
+            IsPhotoReal = isPhotoReal;
         }
 
         public string GenerateUserDescription(string? name, int age, string? country, string? city, string? description)

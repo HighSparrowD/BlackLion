@@ -97,7 +97,7 @@ namespace MyWebApi.Controllers
                 location.CountryClassLocalisationId = model.UserAppLanguageId;
             }
 
-            var uBase = new UserBaseInfo(model.Id, model.UserName, model.UserRealName, "", model.UserPhoto);
+            var uBase = new UserBaseInfo(model.Id, model.UserName, model.UserRealName, "", model.UserPhoto, model.IsPhotoReal);
             uBase.UserRawDescription = model.UserDescription;
             var uData = new UserDataInfo
             {
@@ -266,7 +266,7 @@ namespace MyWebApi.Controllers
                 throw new Exception($"This user cannot have more than {langCount} languages !");
 
             Location location = null;
-            var uBase = new UserBaseInfo(model.Id, model.UserName, model.UserRealName, model.UserDescription, model.UserPhoto);
+            var uBase = new UserBaseInfo(model.Id, model.UserName, model.UserRealName, model.UserDescription, model.UserPhoto, model.IsPhotoReal);
             var uData = new UserDataInfo
             {
                 Id = model.Id,
@@ -277,6 +277,7 @@ namespace MyWebApi.Controllers
                 LanguageId = model.UserAppLanguageId,
             };
             var uPrefs = new UserPreferences(model.Id, model.UserLanguagePreferences, model.UserLocationPreferences, model.AgePrefs, model.CommunicationPrefs, model.UserGenderPrefs, model.ShouldUserPersonalityFunc);
+            uPrefs.ShouldFilterUsersWithoutRealPhoto = false;
             var m = new User(model.Id)
             {
                 IsBusy = false,
@@ -840,6 +841,21 @@ namespace MyWebApi.Controllers
         public async Task<bool> SendTickRequest(SendTickRequest request)
         {
             return await _repository.SendTickRequestAsync(request);
+        }
+
+        [HttpGet("/SwitchUserFilteringByPhoto/{userId}")]
+        public async Task<bool> SwitchUserFilteringByPhoto(long userId)
+        {
+            return await _repository.SwitchUserFilteringByPhotoAsync(userId);
+        }
+
+        [HttpGet("/GetUserFilteringByPhotoStatus/{userId}")]
+        public async Task<string> GetUserFilteringByPhotoStatus(long userId)
+        {
+            //TODO: Get string from localizer !!!
+            if (await _repository.GetUserFilteringByPhotoStatusAsync(userId) == false)
+                return "Filtering is currently Off. Would you like to turn it on ?";
+            return "Filtering is currently On. Would you like to turn it off ?";
         }
     }
 }
