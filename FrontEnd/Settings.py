@@ -323,6 +323,39 @@ class Settings:
         self.bot.send_message(self.current_user, "Done :)")
         self.proceed()
 
+    def send_confirmation_request(self, message, acceptMode=False):
+        if not acceptMode:
+            self.bot.send_message(self.current_user, "You can confirm your identity by sending us:\n1. Your photo with a passport (Passport data and your face must be visible)\n2. Video or 'Circle' with you saying the code frase 'LALALA'")
+            self.bot.register_next_step_handler(message, self.send_confirmation_request, acceptMode=True, chat_id=self.current_user)
+        else:
+            if message.text == "abort":
+                self.proceed()
+
+            data = {
+                "userId": self.current_user
+            }
+            if message.photo:
+                data["photo"] = message.photo[len(message.photo) - 1].file_id
+                d = json.dumps(data)
+                if bool(json.loads(requests.post(f"https://localhost:44381/SendTickRequest", d, headers={"Content-Type": "application/json"}, verify=False).text)):
+                    self.bot.send_message(self.current_user, "Done :)")
+                    self.proceed()
+                else:
+                    self.bot.send_message()
+            elif message.video:
+                data["video"] = message.photo[len(message.video) - 1].file_id
+                d = json.dumps(data)
+                if bool(json.loads(requests.post(f"https://localhost:44381/SendTickRequest", d, headers={"Content-Type": "application/json"}, verify=False).text)):
+                    self.bot.send_message(self.current_user, "Done :)")
+                    self.proceed()
+            elif message.circle:
+                pass
+            #TODO: Circle handler
+            else:
+                self.bot.send_message(self.current_user, "This type of data cannot be accepted to confirm your identity", reply_markup=self.abortMarkup)
+                self.bot.register_next_step_handler(message, self.send_confirmation_request, acceptMode=acceptMode, chat_id=self.current_user)
+
+
     def encounters_callback_handler(self, call):
         if call.message.id not in self.old_queries:
             self.current_query = call.message.id

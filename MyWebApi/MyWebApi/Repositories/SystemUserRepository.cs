@@ -3571,7 +3571,6 @@ namespace MyWebApi.Repositories
                     if (existingRequest.State == null || !(bool)existingRequest.State)
                     {
                         existingRequest.Video = request.Video;
-                        existingRequest.Photo = request.Photo;
                         existingRequest.Circle = request.Circle;
 
                         _contx.tick_requests.Update(existingRequest);
@@ -3588,8 +3587,7 @@ namespace MyWebApi.Repositories
                     AdminId = null,
                     State = null,
                     Circle = request.Circle,
-                    Video = request.Video,
-                    Photo = request.Photo
+                    Video = request.Video
                 };
 
                 await _contx.tick_requests.AddAsync(model);

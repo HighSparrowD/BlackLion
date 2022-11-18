@@ -7,7 +7,6 @@ namespace MyWebApi.Entities.UserActionEntities
     { 
         public long UserId { get; set; }
         public string? Video { get; set; }
-        public string? Photo { get; set; }
         public string? Circle { get; set; }
     }
 }
