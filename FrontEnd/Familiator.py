@@ -1,5 +1,6 @@
 from telebot.types import *
 
+from Core import HelpersMethodes as Helpers
 from Common.Menues import go_back_to_main_menu
 from ReportModule import ReportModule
 from Requester import *
@@ -76,6 +77,9 @@ class Familiator:
         elif message.text == self.btnReport:
             ReportModule(self.bot, self.msg, self.current_user, self.proceed)
 
+        requests = Helpers.get_user_requests(self.current_user)
+        if requests:
+            Requester(self.bot, self.msg, self.current_user, requests)
         self.proceed()
 
     def proceed(self):
@@ -99,9 +103,5 @@ class Familiator:
         self.familiators.remove(self)
         self.bot.message_handlers.remove(self.eh)
         Helpers.switch_user_busy_status(self.current_user)
-        if Helpers.check_user_has_requests(self.current_user):
-            request_list = Helpers.get_user_requests(self.current_user)
-            Requester(self.bot, self.msg, self.current_user, request_list)
-            return False
         go_back_to_main_menu(self.bot, self.current_user, self.msg)
         del self

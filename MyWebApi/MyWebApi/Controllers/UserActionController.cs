@@ -81,60 +81,64 @@ namespace MyWebApi.Controllers
         }
 
         [HttpPost("/UpdateUserProfile")]
-        public async Task<byte> UpdateUserProfile(UserRegistrationModel model)
+        public async Task<byte> UpdateUserProfile(UpdateUserProfile model)
         {
-            var langCount = await GetUserMaximumLanguageCount(model.Id);
-            if (model.UserLanguages.Count > langCount)
-                throw new Exception($"This user cannot have more than {langCount} languages !");
-
-            Location location = new Location { Id = model.Id};
-
-            if(model.UserCityCode != null && model.UserCountryCode != null)
+            if (model.WasChanged)
             {
-                location.CityId = (int)model.UserCityCode;
-                location.CityCountryClassLocalisationId = model.UserAppLanguageId;
-                location.CountryId = (int)model.UserCountryCode;
-                location.CountryClassLocalisationId = model.UserAppLanguageId;
+                var langCount = await GetUserMaximumLanguageCount(model.Id);
+                if (model.UserLanguages.Count > langCount)
+                    throw new Exception($"This user cannot have more than {langCount} languages !");
+
+                Location location = new Location { Id = model.Id};
+
+                if(model.UserCityCode != null && model.UserCountryCode != null)
+                {
+                    location.CityId = (int)model.UserCityCode;
+                    location.CityCountryClassLocalisationId = model.UserAppLanguageId;
+                    location.CountryId = (int)model.UserCountryCode;
+                    location.CountryClassLocalisationId = model.UserAppLanguageId;
+                }
+
+                var uBase = new UserBaseInfo(model.Id, model.UserName, model.UserRealName, "", model.UserPhoto, model.IsPhotoReal);
+                uBase.UserRawDescription = model.UserDescription;
+                var uData = new UserDataInfo
+                {
+                    Id = model.Id,
+                    UserLanguages = model.UserLanguages,
+                    ReasonId = model.ReasonId,
+                    UserAge = model.UserAge,
+                    UserGender = model.UserGender,
+                    LanguageId = model.UserAppLanguageId,
+                    LocationId = location.Id,
+                };
+                var uPrefs = new UserPreferences(model.Id, model.UserLanguagePreferences, model.UserLocationPreferences, model.AgePrefs, model.CommunicationPrefs, model.UserGenderPrefs, model.ShouldUserPersonalityFunc);
+                var m = new User(model.Id)
+                {
+                    IsBusy = false,
+                    IsDeleted = false,
+                    IsBanned = false,
+                    ShouldConsiderLanguages = false,
+                    HasPremium = false,
+                    HadReceivedReward = false,
+                    IsFree = false,
+                    DailyRewardPoint = 0,
+                    BonusIndex = 1,
+                    ProfileViewsCount = 0,
+                    InvitedUsersCount = 0,
+                    InvitedUsersBonus = 0,
+                    TagSearchesCount = 0,
+                };
+
+                if ((await _repository.UpdateUserAppLanguageAsync(model.Id, model.UserAppLanguageId)) == 1)
+                    if (location== null || (await _repository.UpdateUserLocationAsync(location)) == 1)
+                        if ((await _repository.UpdateUserDataAsync(uData)) == 1)
+                            if ((await _repository.UpdateUserBaseAsync(uBase)) == 1)
+                                if ((await _repository.UpdateUserPreferencesAsync(uPrefs)) == 1)
+                                    return 1;
+            return 0;
             }
 
-            var uBase = new UserBaseInfo(model.Id, model.UserName, model.UserRealName, "", model.UserPhoto, model.IsPhotoReal);
-            uBase.UserRawDescription = model.UserDescription;
-            var uData = new UserDataInfo
-            {
-                Id = model.Id,
-                UserLanguages = model.UserLanguages,
-                ReasonId = model.ReasonId,
-                UserAge = model.UserAge,
-                UserGender = model.UserGender,
-                LanguageId = model.UserAppLanguageId,
-                LocationId = location.Id,
-            };
-            var uPrefs = new UserPreferences(model.Id, model.UserLanguagePreferences, model.UserLocationPreferences, model.AgePrefs, model.CommunicationPrefs, model.UserGenderPrefs, model.ShouldUserPersonalityFunc);
-            var m = new User(model.Id)
-            {
-                IsBusy = false,
-                IsDeleted = false,
-                IsBanned = false,
-                ShouldConsiderLanguages = false,
-                HasPremium = false,
-                HadReceivedReward = false,
-                IsFree = false,
-                DailyRewardPoint = 0,
-                BonusIndex = 1,
-                ProfileViewsCount = 0,
-                InvitedUsersCount = 0,
-                InvitedUsersBonus = 0,
-                TagSearchesCount = 0,
-            };
-
-            if ((await _repository.UpdateUserAppLanguageAsync(model.Id, model.UserAppLanguageId)) == 1)
-                if (location== null || (await _repository.UpdateUserLocationAsync(location)) == 1)
-                    if ((await _repository.UpdateUserDataAsync(uData)) == 1)
-                        if ((await _repository.UpdateUserBaseAsync(uBase)) == 1)
-                            if ((await _repository.UpdateUserPreferencesAsync(uPrefs)) == 1)
-                                return 1;
-
-            return 0;
+            return 1;
         }
 
         [HttpGet("/UpdateUserAppLanguage/{userId}/{appLanguage}")]
@@ -180,19 +184,19 @@ namespace MyWebApi.Controllers
         }
 
         [HttpGet("/GetUserList/{userId}")]
-        public async Task<List<User>> GetUserList(long userId)
+        public async Task<List<GetUserData>> GetUserList(long userId)
         {
             return await _repository.GetUsersAsync(userId);
         }
 
         [HttpGet("/GetUserList/TurnOffP/{userId}")]
-        public async Task<List<User>> GetUserList2(long userId)
+        public async Task<List<GetUserData>> GetUserList2(long userId)
         {
             return await _repository.GetUsersAsync(userId, turnOffPersonalityFunc: true);
         }
 
         [HttpGet("/GetUserList/FreeSearch/{userId}")]
-        public async Task<List<User>> GetUserList3(long userId)
+        public async Task<List<GetUserData>> GetUserList3(long userId)
         {
             return await _repository.GetUsersAsync(userId, isFreeSearch: true);
         }

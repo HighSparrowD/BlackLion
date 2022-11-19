@@ -573,7 +573,7 @@ class Registrator:
             if msg.photo:
                 self.msg = msg
                 self.data["userPhoto"] = msg.photo[len(msg.photo) - 1].file_id  # TODO: troubleshoot photos
-                self.bot.register_next_step_handler(msg, self.photo_confirmation_step, editMode=editMode, chat_id=self.current_user)
+                self.photo_confirmation_step(msg, editMode=editMode)
             else:
                 self.bot.send_message(self.current_user, "I can't find a photo in your message")
                 self.bot.register_next_step_handler(msg, self.photo_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
@@ -898,38 +898,55 @@ class Registrator:
             self.bot.register_next_step_handler(msg, self.checkout_step, acceptMode=True, chat_id=self.current_user)
         else:
             if msg.text == "1":
+                self.data["wasChanged"] = True
                 self.app_language_step(msg, editMode=True)
             elif msg.text == "2":
+                self.data["wasChanged"] = True
                 self.name_step(msg, editMode=True)
             elif msg.text == "3":
+                self.data["wasChanged"] = True
                 self.description_step(msg, editMode=True)
             elif msg.text == "4":
+                self.data["wasChanged"] = True
                 self.spoken_language_step(msg, editMode=True)
             elif msg.text == "5":
+                self.data["wasChanged"] = True
                 self.location_step(msg, editMode=True)
             elif msg.text == "6":
+                self.data["wasChanged"] = True
                 self.city_step(msg, editMode=True)
             elif msg.text == "7":
+                self.data["wasChanged"] = True
                 self.reason_step(msg, editMode=True)
             elif msg.text == "8":
+                self.data["wasChanged"] = True
                 self.age_step(msg, editMode=True)
             elif msg.text == "9":
+                self.data["wasChanged"] = True
                 self.gender_step(msg, editMode=True)
             elif msg.text == "10":
+                self.data["wasChanged"] = True
                 self.photo_step(msg, editMode=True)
             elif msg.text == "11":
+                self.data["wasChanged"] = True
                 self.language_preferences_step(msg, editMode=True)
             elif msg.text == "12":
+                self.data["wasChanged"] = True
                 self.location_preferences_step(msg, editMode=True)
             elif msg.text == "13":
+                self.data["wasChanged"] = True
                 self.age_pref_step(msg, editMode=True)
             elif msg.text == "14":
+                self.data["wasChanged"] = True
                 self.gender_preferences_step(msg, editMode=True)
             elif msg.text == "15":
+                self.data["wasChanged"] = True
                 self.communication_preferences_step(msg, editMode=True)
             elif msg.text == "16":
+                self.data["wasChanged"] = True
                 self.tags_step(msg, editMode=True)
             elif msg.text == "17":
+                self.data["wasChanged"] = True
                 self.auto_reply_step(msg, editMode=True)
             elif msg.text == "18":
                 self.tests_step(msg, editMode=self.hasVisited)
@@ -947,6 +964,7 @@ class Registrator:
                 response = requests.post("https://localhost:44381/UpdateUserProfile", d, headers={
                     "Content-Type": "application/json"}, verify=False)
             else:
+                del self.data["wasChanged"]
                 response = requests.post("https://localhost:44381/RegisterUser", d, headers={
                     "Content-Type": "application/json"}, verify=False)
 

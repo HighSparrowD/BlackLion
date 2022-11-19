@@ -191,11 +191,12 @@ namespace MyWebApi.Repositories
             }
         }
 
-        public async Task<List<User>> GetUsersAsync(long userId, bool turnOffPersonalityFunc = false, bool isRepeated=false, bool isFreeSearch = false)
+        public async Task<List<GetUserData>> GetUsersAsync(long userId, bool turnOffPersonalityFunc = false, bool isRepeated=false, bool isFreeSearch = false)
         {
             try
             {
                 const byte miminalProfileCount = 5;
+                var returnData = new List<GetUserData>();
 
                 var currentUser = await GetUserInfoAsync(userId);
 
@@ -610,10 +611,9 @@ namespace MyWebApi.Repositories
                         {
                             data.Remove(u);
                             continue;
-                        }
-                        _contx.Entry(u).State = EntityState.Detached;
-                        u.UserBaseInfo.UserDescription = $"<br>{matchedBy}</br>\n{u.UserBaseInfo.UserDescription}";
-                        _contx.Entry(u).State = EntityState.Detached;
+                        };
+
+                        returnData.Add(new GetUserData(u, $"<br>{matchedBy}</br>\n{u.UserBaseInfo.UserDescription}"));
                     }
                 }
                 else
@@ -634,7 +634,9 @@ namespace MyWebApi.Repositories
                 {
                     //Check if users count is less than the limit
                     if (data.Count <= miminalProfileCount)
-                        data = await GetUsersAsync(userId, turnOffPersonalityFunc:turnOffPersonalityFunc, isRepeated: true, isFreeSearch:isFreeSearch);
+                    {
+                        returnData = await GetUsersAsync(userId, turnOffPersonalityFunc:turnOffPersonalityFunc, isRepeated: true, isFreeSearch:isFreeSearch);
+                    }
 
                     //Add user trust exp only if method was not repeated
                     await AddUserTrustProgressAsync(userId, 0.000003);
@@ -646,25 +648,35 @@ namespace MyWebApi.Repositories
                         await _contx.SaveChangesAsync();
                     }
 
-                    //Todo: Probably remove AsParallel query 
-                    data.AsParallel().ForAll(u =>
+                    //Fill-up return data if it wasnt filled in PERSONALITY check
+                    if (!currentUser.UserPreferences.ShouldUsePersonalityFunc)
                     {
-                        if (u.HasPremium && u.Nickname != "")
-                            u.UserBaseInfo.UserDescription = $"<br>{u.Nickname}</br>\n\n{u.UserBaseInfo.UserDescription}";
-                        if (u.IsIdentityConfirmed)
-                            u.UserBaseInfo.UserDescription = $"✔️{u.UserBaseInfo.UserDescription}";
-                    });
+                        await Task.Run(() =>
+                        {
+                            for (int i = 0; i < data.Count; i++)
+                            {
+                                var u = data[i];
+                                string bonus = "";
+
+                                if (u.IsIdentityConfirmed)
+                                    bonus += $"✔️\n\n";
+                                if (u.HasPremium && u.Nickname != "")
+                                    bonus += $"<br>{u.Nickname}</br>\n";
+                                returnData.Add(new GetUserData(u, bonus));
+                            }
+                        });
+                    }
 
                     //Order user list randomly 
-                    data = data.OrderBy(u => new Random().Next())
+                    returnData = returnData.OrderBy(u => new Random().Next())
                         .ToList();
 
-                    data.OrderByDescending(u => u.UserDataInfo.Location.CityId == currentUser.UserDataInfo.Location.CityId)
+                    returnData.OrderByDescending(u => u.UserDataInfo.Location.CityId == currentUser.UserDataInfo.Location.CityId)
                         .ToList();
                 }
 
                 //await _contx.SaveChangesAsync();
-                return data;
+                return returnData;
             }
             catch (Exception ex)
             {
@@ -3555,18 +3567,13 @@ namespace MyWebApi.Repositories
                 //Update existing request if one already exists
                 if (existingRequest != null)
                 {
-                    //If previous reqeust was not accepted
-                    if (existingRequest.State == null || !(bool)existingRequest.State)
-                    {
-                        existingRequest.Video = request.Video;
-                        existingRequest.Photo = request.Photo;
-                        existingRequest.Circle = request.Circle;
+                    existingRequest.Video = request.Video;
+                    existingRequest.Circle = request.Circle;
+                    existingRequest.State = (short)TickRequestStatus.Changed;
 
-                        _contx.tick_requests.Update(existingRequest);
-                        await _contx.SaveChangesAsync();
-                        return true;
-                    }
-                    return false;
+                    _contx.tick_requests.Update(existingRequest);
+                    await _contx.SaveChangesAsync();
+                    return true;
                 }
 
                 var model = new TickRequest
@@ -3576,8 +3583,7 @@ namespace MyWebApi.Repositories
                     AdminId = null,
                     State = null,
                     Circle = request.Circle,
-                    Video = request.Video,
-                    Photo = request.Photo
+                    Video = request.Video
                 };
 
                 await _contx.tick_requests.AddAsync(model);

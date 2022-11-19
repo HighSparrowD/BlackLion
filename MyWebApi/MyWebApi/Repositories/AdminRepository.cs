@@ -322,21 +322,44 @@ namespace MyWebApi.Repositories
                 .ToListAsync();
         }
 
-        public async Task<TickRequest> GetTickRequestAsync(Guid requestId)
+        public async Task<TickRequest> GetTickRequestAsync(Guid? requestId = null)
         {
-            return await _contx.tick_requests.Where(r => r.Id == requestId && r.State != true)
+            if (requestId != null)
+            {
+                //Returns only new, aborted or changed requests
+                return await _contx.tick_requests.Where(r => r.Id == requestId && (r.State == 1 || r.State == 2 || r.State == 6))
+                    .Include(r => r.User)
+                    .SingleOrDefaultAsync();
+            }
+
+            //Return any request if id wasnt supplied. (Method is used on the frontend)
+            var request = await _contx.tick_requests.Where(r => r.State == 1 || r.State == 2 || r.State == 6)
                 .Include(r => r.User)
-                .SingleOrDefaultAsync();
+                .FirstOrDefaultAsync();
+
+            if (request != null)
+            {
+                request.State = (short)SystemEnums.TickRequestStatus.InProcess;
+                await _contx.SaveChangesAsync();
+            }
+
+            return request;
         }
 
         public async Task<bool> ResolveTickRequestAsync(Guid requestId, long adminId, bool isAccepted)
         {
-            var request = await GetTickRequestAsync(requestId);
+            var request = await _contx.tick_requests.Where(r => r.Id == requestId && (r.State == 3))
+                .Include(r => r.User)
+                .SingleOrDefaultAsync();
 
             if (request == null)
                 throw new NullReferenceException("Request was not found");
 
-            request.State = isAccepted;
+            if (isAccepted)
+                request.State = (short)SystemEnums.TickRequestStatus.Accepted;
+            else
+                request.State = (short)SystemEnums.TickRequestStatus.Declined;
+
             request.AdminId = adminId;
             request.User.IsIdentityConfirmed = isAccepted;
             await _contx.SaveChangesAsync();
@@ -430,6 +453,61 @@ namespace MyWebApi.Repositories
                 return 1;
             }
             catch { return 0; }
+        }
+
+        public async Task<string> GetNewNotificationsCountAsync(long adminId)
+        {
+            string returnData = "";
+
+            returnData = $"Recent feedbacks: {(await _userRep.GetMostRecentFeedbacks()).Count}\nActive tick requests {(await _contx.tick_requests.Where(r => (r.State == 1 || r.State == 2 || r.State == 6) && r.AdminId == null).ToListAsync()).Count}";
+
+            return returnData;
+        }
+
+        public async Task<string> GetUserPhotoAsync(long userId)
+        {
+            return await _contx.SYSTEM_USERS_BASES.Where(b => b.Id == userId)
+                .Select(u => u.UserPhoto)
+                .FirstOrDefaultAsync();
+        }
+
+        public async Task<bool> AbortTickRequestAsync(Guid requestId)
+        {
+            try
+            {
+                //Get request if it was marked as processed
+                var request = await _contx.tick_requests.Where(r => r.Id == requestId && (r.State == 3))
+                        .SingleOrDefaultAsync(); ;
+
+                if (request == null)
+                    throw new NullReferenceException($"Request {requestId} is not in process rigt now");
+
+                request.State = (short)SystemEnums.TickRequestStatus.Aborted;
+                await _contx.SaveChangesAsync();
+
+                return true;
+            }
+            catch { return false; }
+        }
+
+        public async Task<bool> NotifyFailierTickRequestAsync(Guid requestId, long adminId)
+        {
+            try
+            {
+                var request = await _contx.tick_requests.Where(r => r.Id == requestId)
+                        .SingleOrDefaultAsync(); ;
+
+                if (request == null)
+                    throw new NullReferenceException($"Request {requestId} does not exist");
+
+                request.State = (short)SystemEnums.TickRequestStatus.Failed;
+                request.AdminId = adminId;
+
+                await _contx.SaveChangesAsync();
+
+                return true;
+            }
+            catch { return false; }
         }
 
         //public Task<long> UploadInTest(UploadInTest model)

@@ -95,7 +95,6 @@ def SwitchAdminStatus(message):
     if msg:
         bot.send_message(message.from_user.id, f"Your current admin status is: -> {msg} <-", reply_markup=Menus.admin_menu_markup)
 
-
 @bot.message_handler(commands=["enteradmincabinet"])
 def EnterAdminCabinet(message):
     if not Helpers.check_user_is_busy(message.from_user.id):
@@ -108,7 +107,7 @@ def settings(message):
         Settings(bot, message)
 
 
-@bot.message_handler(content_types=["voice"])
+@bot.message_handler(content_types=["video_note"])
 def test(message):
     if message.voice:
         if message.voice.duration < 15:
