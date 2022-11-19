@@ -47,12 +47,10 @@ namespace MyWebApi.Data
         public DbSet<Gender> SYSTEM_GENDERS { get; set; }
         public DbSet<AgePreference> AGE_PREFERENCES { get; set; }
         public DbSet<CommunicationPreference> COMMUNICATION_PREFERENCES { get; set; }
-        public DbSet<PsychologicalTest> psychological_tests { get; set; }
-        public DbSet<PsychologicalTestQuestion> psychological_tests_questions { get; set; }
-        public DbSet<PsychologicalTestAnswer> psychological_tests_answers { get; set; }
-        //public DbSet<IntellectualTest> INTELLECTUAL_TESTS { get; set; }
-        //public DbSet<IntellectualTestQuestion> INTELLECTUAL_TESTS_QUESTIONS { get; set; }
-        //public DbSet<IntellectualTestAnswer> INTELLECTUAL_TESTS_ANSWERS { get; set; }
+        public DbSet<Test> tests { get; set; }
+        public DbSet<TestQuestion> tests_questions { get; set; }
+        public DbSet<TestAnswer> tests_answers { get; set; }
+        public DbSet<UserTest> user_tests { get; set; }
         public DbSet<Ad> SPONSOR_ADS { get; set; }
         public DbSet<Sponsor> SYSTEM_SPONSORS { get; set; }
         public DbSet<SponsorLanguage> SPONSOR_LANGUAGES { get; set; }
@@ -71,7 +69,6 @@ namespace MyWebApi.Data
         public DbSet<UserDailyTask> USER_DAILY_TASKS { get; set; }
         public DbSet<UserPersonalityStats> USER_PERSONALITY_STATS { get; set; }
         public DbSet<UserPersonalityPoints> USER_PERSONALITY_POINTS { get; set; }
-        public DbSet<TestPayload> USER_TESTS_RESULTS { get; set; }
         public DbSet<AdminErrorLog> ADMIN_ERROR_LOGS { get; set; }
         public DbSet<ActiveEffect> USER_ACTIVE_EFFECTS { get; set; }
         public DbSet<TickRequest> tick_requests { get; set; }
@@ -97,11 +94,10 @@ namespace MyWebApi.Data
             builder.Entity<Localisation>().HasMany(l => l.Loc);
             builder.Entity<Country>().HasMany(c => c.Cities);
             builder.Entity<Sponsor>().HasMany(s => s.SponsorAds);
-            builder.Entity<PsychologicalTest>().HasMany(t => t.Questions);
-            builder.Entity<PsychologicalTest>().HasKey(t => new {t.Id, t.ClassLocalisationId});
-            //builder.Entity<IntellectualTest>().HasMany(t => t.Questions);
-            //builder.Entity<IntellectualTestQuestion>().HasMany(q => q.Answers);
-            builder.Entity<PsychologicalTestQuestion>().HasMany(q => q.Answers);
+            builder.Entity<Test>().HasMany(t => t.Questions);
+            builder.Entity<Test>().HasKey(t => new {t.Id, t.ClassLocalisationId});
+            builder.Entity<UserTest>().HasKey(t => new {t.TestId, t.UserId});
+            builder.Entity<TestQuestion>().HasMany(q => q.Answers);
 
             builder.Entity<Country>().HasKey(c => new {c.Id, c.ClassLocalisationId});
             builder.Entity<Language>().HasKey(l => new {l.Id, l.ClassLocalisationId});
@@ -121,8 +117,6 @@ namespace MyWebApi.Data
             builder.Entity<CommunicationPreference>().HasKey(g => new { g.Id, g.ClassLocalisationId });
             builder.Entity<DailyTask>().HasKey(t => new { t.Id, t.ClassLocalisationId });
             builder.Entity<UserDailyTask>().HasKey(t => new { t.UserId, t.DailyTaskId });
-
-            builder.Entity<TestPayload>().HasKey(p => new { p.UserId, p.TestId });
 
             builder.Entity<Ad>();
 

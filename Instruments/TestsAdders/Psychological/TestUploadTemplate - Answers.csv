@@ -1,2 +1,2 @@
-Text,Value,QuestionId
-asada,55,40
+Text,Value,QuestionId,IsCorrect
+asada,55,40,True

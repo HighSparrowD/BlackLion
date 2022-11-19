@@ -4,9 +4,7 @@ namespace MyWebApi.Entities.TestEntities
 {
     public class TestPayload
     {
-        [Key]
         public long UserId { get; set; }
-        [Key]
         public long TestId { get; set; }
         public int Personality { get; set; }
         public int EmotionalIntellect { get; set; }

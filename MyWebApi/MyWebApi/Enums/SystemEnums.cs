@@ -92,11 +92,6 @@
             Premium = 3
         }
 
-        public enum AdminMessages
-        {
-            TickRequest = 1
-        }
-
         public enum PersonalityStats
         {
             PersonalityType = 1,

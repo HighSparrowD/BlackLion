@@ -2920,7 +2920,7 @@ namespace MyWebApi.Repositories
         {
             try
             {
-                //Breake if test result wasnt saved
+                //Break if test result wasnt saved
                 if (!await RegisterTestPassingAsync(model))
                     return false;
 
@@ -2994,7 +2994,7 @@ namespace MyWebApi.Repositories
                 .SingleOrDefaultAsync();
 
             //If user have passed some test before - set the devider to 2, to find an average value
-            if ((await _contx.USER_TESTS_RESULTS.Where(r => r.UserId == model.UserId).ToListAsync()).Count > 1)
+            if ((await _contx.user_tests.Where(r => r.UserId == model.UserId).ToListAsync()).Count > 1)
                 devider = 2;
 
             if (model.Personality != 0)
@@ -3089,7 +3089,12 @@ namespace MyWebApi.Repositories
         {
             try
             {
-                await _contx.USER_TESTS_RESULTS.AddAsync(model);
+                var userTest = await _contx.user_tests.Where(t => t.UserId == model.UserId && t.TestId == model.TestId)
+                    .SingleOrDefaultAsync();
+
+                userTest.PassedOn = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
+
+                _contx.user_tests.Update(userTest);
                 await _contx.SaveChangesAsync();
 
                 return true;
@@ -3616,6 +3621,72 @@ namespace MyWebApi.Repositories
                 throw new NullReferenceException($"User {userId} was not found");
 
             return userPrefs.ShouldFilterUsersWithoutRealPhoto;
+        }
+
+        public async Task<List<GetTestShortData>> GetTestDataByPropertyAsync(long userId, int localisation, short param)
+        {
+            //Get tests user already has
+            var userTests = await _contx.user_tests.Where(t => t.UserId == userId && t.TestType == param)
+                .Select(t => t.TestId)
+                .ToListAsync();
+
+            return await _contx.tests
+                .Where(t => t.TestType == param && !userTests.Contains(t.Id) && t.ClassLocalisationId == localisation)
+                .Select(t => new GetTestShortData { Id = t.Id, Name = t.Name })
+                .ToListAsync();
+        }
+
+        public Task<GetFullTestData> GetTestFullDataByIdAsync(long testId, int localisation)
+        {
+            return _contx.tests.Where(t => t.Id == testId && t.ClassLocalisationId == localisation)
+                .Select(t => new GetFullTestData {Id = t.Id, Name = t.Name, Description = t.Description, Price = t.Price, TestType = t.TestType})
+                .SingleOrDefaultAsync();
+        }
+
+        public async Task<UserTest> GetUserTestAsync(long userId, long testId)
+        {
+            return await _contx.user_tests.Where(t => t.UserId == userId && t.TestId == testId)
+                .Include(t => t.Test)
+                .SingleOrDefaultAsync();
+        }
+
+        public async Task<bool> CheckUserCanPassTest(long userId, long testId)
+        {
+            var test = await GetUserTestAsync(userId, testId);
+
+            if (test == null)
+                throw new NullReferenceException($"User #{userId} does not have test #{testId} available");
+
+            //If date is passing is equal to null => test want passed so far
+            if (test.PassedOn == null)
+                return true;
+
+            return (test.PassedOn - DateTime.Now).Value.TotalDays > 90;
+
+        }
+
+        public async Task<bool> PurchaseTestAsync(long userId, long testId, int localisation, int price)
+        {
+            var balance = await GetUserWalletBalance(userId);
+
+            if (balance.Points >= price)
+            {
+                var test = _contx.tests.Where(t => t.Id == testId && t.ClassLocalisationId == localisation)
+                    .SingleOrDefaultAsync();
+
+                if (test == null)
+                    throw new NullReferenceException($"Test #{testId} with localisation #{localisation} was not found");
+
+                await _contx.user_tests.AddAsync(new UserTest
+                {
+                    UserId = userId,
+                    TestClassLocalisationId = localisation
+                });
+                
+                await _contx.SaveChangesAsync();
+            }
+
+            return false;
         }
     }
 }

@@ -1,2 +1,2 @@
-Id,ClassLocalisationId,Name,Description
-10,0,"NewTest","LALALALA"
+Id,ClassLocalisationId,Name,Description,TestType,Price
+10,0,"NewTest","LALALALA",1,800

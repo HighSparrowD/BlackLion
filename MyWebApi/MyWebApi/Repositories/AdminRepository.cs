@@ -384,7 +384,7 @@ namespace MyWebApi.Repositories
             return isAccepted;
         }
 
-        public async Task<byte> UploadPsTestsAsync(List<UploadPsychologicalTest> tests)
+        public async Task<byte> UploadPsTestsAsync(List<UploadTest> tests)
         {
             try
             {
@@ -394,7 +394,7 @@ namespace MyWebApi.Repositories
                 {
                     var model = tests[i];
                     //Check if a version of test already exists
-                    var existingTest = await _contx.psychological_tests.Where(t => t.Id == model.Id)
+                    var existingTest = await _contx.tests.Where(t => t.Id == model.Id)
                         .SingleOrDefaultAsync();
                     if (existingTest != null)
                     {
@@ -404,30 +404,32 @@ namespace MyWebApi.Repositories
                         testId = model.Id;
                     }
                     else
-                        testId = await _contx.psychological_tests.CountAsync() + 1;
+                        testId = await _contx.tests.CountAsync() + 1;
 
-                    var lastQuestionId = await _contx.psychological_tests_questions.CountAsync();
-                    var lastAnswerId = await _contx.psychological_tests_answers.CountAsync() + 1;
+                    var lastQuestionId = await _contx.tests_questions.CountAsync();
+                    var lastAnswerId = await _contx.tests_answers.CountAsync() + 1;
 
-                    var questions = new List<PsychologicalTestQuestion>();
-                    var answers = new List<PsychologicalTestAnswer>();
-                    var test = new PsychologicalTest
+                    var questions = new List<TestQuestion>();
+                    var answers = new List<TestAnswer>();
+                    var test = new Test
                     {
                         Id = testId,
                         ClassLocalisationId = model.ClassLocalisationId,
                         Name = model.Name,
                         Description = model.Description,
+                        TestType = model.TestType,
+                        Price = model.Price
                     };
 
                     foreach (var question in model.Questions)
                     {
                         lastQuestionId++;
 
-                        questions.Add(new PsychologicalTestQuestion
+                        questions.Add(new TestQuestion
                         {
                             Id = lastQuestionId,
-                            PsychologicalTestClassLocalisationId = test.ClassLocalisationId,
-                            PsychologicalTestId = testId,
+                            TestClassLocalisationId = test.ClassLocalisationId,
+                            TestId = testId,
                             Text = question.Text
                         });
 
@@ -435,18 +437,19 @@ namespace MyWebApi.Repositories
                         {
                             lastAnswerId++;
 
-                            answers.Add(new PsychologicalTestAnswer
+                            answers.Add(new TestAnswer
                             {
                                 Id = lastAnswerId,
                                 Text = answer.Text,
                                 Value = answer.Value,
-                                PsychologicalTestQuestionId = lastQuestionId
+                                IsCorrect = answer.IsCorrect,
+                                TestQuestionId = lastQuestionId
                             });
                         }
                     }
-                    await _contx.psychological_tests.AddAsync(test);
-                    await _contx.psychological_tests_questions.AddRangeAsync(questions);
-                    await _contx.psychological_tests_answers.AddRangeAsync(answers);
+                    await _contx.tests.AddAsync(test);
+                    await _contx.tests_questions.AddRangeAsync(questions);
+                    await _contx.tests_answers.AddRangeAsync(answers);
                     await _contx.SaveChangesAsync();
                 }
 

@@ -861,5 +861,35 @@ namespace MyWebApi.Controllers
                 return "Filtering is currently Off. Would you like to turn it on ?";
             return "Filtering is currently On. Would you like to turn it off ?";
         }
+
+        [HttpGet("/GetTestDataByProperty/{userId}/{localisation}/{param}")]
+        public async Task<List<GetTestShortData>> GetTestDataByProperty(long userId, int localisation, short param)
+        {
+            return await _repository.GetTestDataByPropertyAsync(userId, localisation, param);
+        }
+
+        [HttpGet("/GetTestFullDataById/{userId}/{localisation}")]
+        public async Task<GetFullTestData> GetTestFullDataById(long userId, int localisation, short param)
+        {
+            return await _repository.GetTestFullDataByIdAsync(userId, localisation);
+        }
+
+        [HttpGet("/GetUserTest/{userId}/{testId}")]
+        public async Task<UserTest> GetUserTest(long userId, long testId)
+        {
+            return await _repository.GetUserTestAsync(userId, testId);
+        }
+
+        [HttpGet("/CheckUserCanPass/{userId}/{testId}")]
+        public async Task<bool> CheckUserCanPass(long userId, long testId)
+        {
+            return await _repository.CheckUserCanPassTest(userId, testId);
+        }
+
+        [HttpGet("/PurchaseTest/{userId}/{testId}/{localisation}/{price}")]
+        public async Task<bool> PurchaseTest(long userId, long testId, int localisation, int price)
+        {
+            return await _repository.PurchaseTestAsync(userId, testId, localisation, price);
+        }
     }
 }
