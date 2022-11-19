@@ -129,8 +129,8 @@ namespace MyWebApi.Controllers
             return await _repository.GetTickRequestsAsync();
         }
 
-        [HttpGet("/GetTickRequest/{id}")]
-        public async Task<TickRequest> GetTickRequest(Guid id)
+        [HttpGet("/GetTickRequest/{id?}")]
+        public async Task<TickRequest> GetTickRequest(Guid? id = null)
         {
             return await _repository.GetTickRequestAsync(id);
         }
@@ -141,10 +141,34 @@ namespace MyWebApi.Controllers
             return await _repository.ResolveTickRequestAsync(id, adminId, isAccepted);
         }
 
+        [HttpGet("/AbortTickRequest/{id}")]
+        public async Task<bool> AbortTickRequest(Guid id)
+        {
+            return await _repository.AbortTickRequestAsync(id);
+        }
+
+        [HttpGet("/NotifyFailierTickRequest/{id}/{adminId}")]
+        public async Task<bool> NotifyFailierTickRequest(Guid id, long adminId)
+        {
+            return await _repository.NotifyFailierTickRequestAsync(id, adminId);
+        }
+
         [HttpPost("/UploadPsTests")]
         public async Task<byte> UploadPsTests(List<UploadPsychologicalTest> model)
         {
             return await _repository.UploadPsTestsAsync(model);
+        }
+
+        [HttpGet("/GetNewNotificationsCount/{adminId}")]
+        public async Task<string> GetNewNotificationsCount(long adminId)
+        {
+            return await _repository.GetNewNotificationsCountAsync(adminId);
+        }
+
+        [HttpGet("/GetUserPhoto/{userId}")]
+        public async Task<string> GetUserPhoto(long userId)
+        {
+            return await _repository.GetUserPhotoAsync(userId);
         }
     }
 }

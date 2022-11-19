@@ -26,9 +26,20 @@ class Settings:
         self.add_to_blacklist_text = "Add user to a blacklist"
         self.remove_from_blacklist_text = "Remove user from a blacklist"
 
-        self.setting_message = "1. View the blacklist\n2. Manage PERSONALITY points\n3. Turn off / on PERSONALITY\n4. Change profile properties\n5. ⭐Set profile status⭐\n6. Manage recently encountered users\n7. Get my invitation credentials\n8. ⭐Turn on/off filtering by real photo⭐\n\n9. Exit"
+        self.chooseOption_message = "Choose the option:"
+        self.setting_message = "1. My Profile\n2. Personality Settings\n3. Filter Settings\n4. My Statistics\n5. Additional Actions\n\n6. Exit"
+        self.settingMyProfile_message = f"{self.chooseOption_message}\n1. View the blacklist\n2. Manage recently encountered users\n3. Change profile properties\n4. ⭐Set profile status⭐\n\n5. Go back"
+        self.settingPersonalitySettings_message = f"{self.chooseOption_message}\n1. Turn On / Turn Off PERSONALITY\n2. Manage PERSONALITY points\n3. View previously passed tests\n\n4. Go back"
+        self.settingFiltersSettings_message = f"{self.chooseOption_message}\n1. Turn On / Turn Off language consideration (Random Conversation)\n2. ⭐Turn on / Turn off filtration by a real photo⭐\n\n3. Go back"
+        self.settingStatistics_message = f"{self.chooseOption_message}\n1. View Achievements\n2. 💎Top-Up coin balance💎\n3. 💎Top-Up Personality points balance💎\n4. 💎Buy premium access💎\n\n5. Go back"
+        self.settingAdditionalActions_message = f"{self.chooseOption_message}\n1. Get invitation credentials\n2. Confirm my identity\n\n3. Go back"
         self.encounter_options_message = f"1. Use 💥Second chance💥 to send like to a user once again. You have SECOND_CHANCE_COUNT\n2. Report user\n3. Abort\n4." #TODO: replace caps message to a real "second chance" effect amount
         self.settingMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4", "5", "6", "7", "8")
+        self.settingMyProfileMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4", "5")
+        self.settingPersonalitySettingsMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4")
+        self.settingFiltersSettingsMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3")
+        self.settingStatisticsMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4", "5")
+        self.settingAdditionalActionsMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3")
         self.YNMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("yes", "no")
         self.abortMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("abort")
         self.encounterOptionMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4")
@@ -42,26 +53,125 @@ class Settings:
             self.bot.register_next_step_handler(message, self.setting_choice, acceptMode=True, chat_id=self.current_user)
         else:
             if message.text == "1":
-                self.black_list_management(message)
+                self.my_profile_settings_choice(message)
             elif message.text == "2":
-                self.personality_points(message)
+                self.personality_settings_choice(message)
             elif message.text == "3":
-                self.personality_switch(message)
+                self.filters_settings_choice(message)
             elif message.text == "4":
-                Registrator(self.bot, self.message, Helpers.check_user_has_visited_section(self.current_user, 1), self.proceed)
+                self.my_statistics_settings_choice(message)
             elif message.text == "5":
-                self.set_profile_status(message)
+                self.additional_actions_settings_choice(message)
             elif message.text == "6":
-                self.encounter_list_management(message)
-            elif message.text == "7":
-                self.credentials_management(message)
-            elif message.text == "8":
-                pass
-            elif message.text == "9":
                 self.destruct()
             else:
                 self.bot.send_message(self.current_user, "No such option", reply_markup=self.settingMarkup)
                 self.bot.register_next_step_handler(message, self.setting_choice, acceptMode=acceptMode, chat_id=self.current_user)
+
+    def my_profile_settings_choice(self, message, acceptMode=False):
+        if not acceptMode:
+            self.bot.send_message(self.current_user, f"{self.settingMyProfile_message}", reply_markup=self.settingMyProfileMarkup)
+            self.bot.register_next_step_handler(message, self.my_profile_settings_choice, acceptMode=True, chat_id=self.current_user)
+        else:
+            if message.text == "1":
+                self.black_list_management(message)
+            elif message.text == "2":
+                self.encounter_list_management(message)
+            elif message.text == "3":
+                Registrator(self.bot, self.message, Helpers.check_user_has_visited_section(self.current_user, 1), self.proceed)
+            elif message.text == "4":
+                self.set_profile_status(message)
+            elif message.text == "5":
+                self.proceed()
+            else:
+                self.bot.send_message(self.current_user, "No such option", reply_markup=self.settingMyProfileMarkup)
+                self.bot.register_next_step_handler(message, self.my_profile_settings_choice, acceptMode=acceptMode, chat_id=self.current_user)
+
+    def personality_settings_choice(self, message, acceptMode=False):
+        if not acceptMode:
+            self.bot.send_message(self.current_user, f"{self.settingPersonalitySettings_message}", reply_markup=self.settingPersonalitySettingsMarkup)
+            self.bot.register_next_step_handler(message, self.personality_settings_choice, acceptMode=True, chat_id=self.current_user)
+        else:
+            if message.text == "1":
+                self.personality_switch(message)
+            elif message.text == "2":
+                self.personality_points(message)
+            elif message.text == "3":
+                #TODO: implement
+                self.bot.send_message(self.current_user, "Not implemented yet!")
+                self.proceed()
+                pass
+            elif message.text == "4":
+                self.proceed()
+            else:
+                self.bot.send_message(self.current_user, "No such option", reply_markup=self.settingPersonalitySettingsMarkup)
+                self.bot.register_next_step_handler(message, self.personality_settings_choice, acceptMode=acceptMode, chat_id=self.current_user)
+
+
+    def filters_settings_choice(self, message, acceptMode=False):
+        if not acceptMode:
+            self.bot.send_message(self.current_user, f"{self.settingFiltersSettings_message}", reply_markup=self.settingFiltersSettingsMarkup)
+            self.bot.register_next_step_handler(message, self.filters_settings_choice, acceptMode=True, chat_id=self.current_user)
+        else:
+            if message.text == "1":
+                # TODO: implement
+                self.bot.send_message(self.current_user, "Not implemented yet!")
+                self.proceed()
+            elif message.text == "2":
+                # TODO: implement
+                self.bot.send_message(self.current_user, "Not implemented yet!")
+                self.proceed()
+            elif message.text == "3":
+                self.proceed()
+            else:
+                self.bot.send_message(self.current_user, "No such option", reply_markup=self.settingFiltersSettingsMarkup)
+                self.bot.register_next_step_handler(message, self.filters_settings_choice, acceptMode=acceptMode, chat_id=self.current_user)
+
+
+    def my_statistics_settings_choice(self, message, acceptMode=False):
+        if not acceptMode:
+            #TODO: Send a message, containing user coins, PP, effects and so on
+            self.bot.send_message(self.current_user, f"{self.settingStatistics_message}", reply_markup=self.settingStatisticsMarkup)
+            self.bot.register_next_step_handler(message, self.my_statistics_settings_choice, acceptMode=True, chat_id=self.current_user)
+        else:
+            if message.text == "1":
+                # TODO: implement
+                self.bot.send_message(self.current_user, "Not implemented yet!")
+                self.proceed()
+            elif message.text == "2":
+                # TODO: implement
+                self.bot.send_message(self.current_user, "Not implemented yet!")
+                self.proceed()
+            elif message.text == "3":
+                # TODO: implement
+                self.bot.send_message(self.current_user, "Not implemented yet!")
+                self.proceed()
+            elif message.text == "4":
+                # TODO: implement
+                self.bot.send_message(self.current_user, "Not implemented yet!")
+                self.proceed()
+            elif message.text == "5":
+                self.proceed()
+            else:
+                self.bot.send_message(self.current_user, "No such option", reply_markup=self.settingStatisticsMarkup)
+                self.bot.register_next_step_handler(message, self.my_statistics_settings_choice, acceptMode=acceptMode, chat_id=self.current_user)
+
+
+    def additional_actions_settings_choice(self, message, acceptMode=False):
+        if not acceptMode:
+            self.bot.send_message(self.current_user, f"{self.settingAdditionalActions_message}", reply_markup=self.settingAdditionalActionsMarkup)
+            self.bot.register_next_step_handler(message, self.additional_actions_settings_choice, acceptMode=True, chat_id=self.current_user)
+        else:
+            if message.text == "1":
+                self.credentials_management(message)
+            elif message.text == "2":
+                self.send_confirmation_request(message)
+            elif message.text == "3":
+                self.proceed()
+            else:
+                self.bot.send_message(self.current_user, "No such option", reply_markup=self.settingAdditionalActionsMarkup)
+                self.bot.register_next_step_handler(message, self.additional_actions_settings_choice, acceptMode=acceptMode, chat_id=self.current_user)
+
 
     def personality_points(self, message, acceptMode=False):
         if not acceptMode:
@@ -325,7 +435,7 @@ class Settings:
 
     def send_confirmation_request(self, message, acceptMode=False):
         if not acceptMode:
-            self.bot.send_message(self.current_user, "You can confirm your identity by sending us:\n1. Your photo with a passport (Passport data and your face must be visible)\n2. Video or 'Circle' with you saying the code frase 'LALALA'")
+            self.bot.send_message(self.current_user, "You can confirm your identity by sending us:\nVideo or 'Circle' (15 seconds max) in which you are saying the code frase 'LALALA'.\n!Your face have to be visible!")
             self.bot.register_next_step_handler(message, self.send_confirmation_request, acceptMode=True, chat_id=self.current_user)
         else:
             if message.text == "abort":
@@ -334,25 +444,29 @@ class Settings:
             data = {
                 "userId": self.current_user
             }
-            if message.photo:
-                data["photo"] = message.photo[len(message.photo) - 1].file_id
+            if message.video:
+                if message.video.duration > 15:
+                    self.bot.send_message(self.current_user, "To long video")
+                    self.bot.register_next_step_handler(message, self.send_confirmation_request, acceptMode=acceptMode, chat_id=self.current_user)
+
+                data["video"] = message.video[len(message.video) - 1].file_id
                 d = json.dumps(data)
                 if bool(json.loads(requests.post(f"https://localhost:44381/SendTickRequest", d, headers={"Content-Type": "application/json"}, verify=False).text)):
                     self.bot.send_message(self.current_user, "Done :)")
                     self.proceed()
-                else:
-                    self.bot.send_message()
-            elif message.video:
-                data["video"] = message.photo[len(message.video) - 1].file_id
+            elif message.video_note:
+                if message.video_note.duration > 15:
+                    self.bot.send_message(self.current_user, "To long video")
+                    self.bot.register_next_step_handler(message, self.send_confirmation_request, acceptMode=acceptMode, chat_id=self.current_user)
+
+                data["circle"] = message.video_note.file_id
                 d = json.dumps(data)
-                if bool(json.loads(requests.post(f"https://localhost:44381/SendTickRequest", d, headers={"Content-Type": "application/json"}, verify=False).text)):
+                if bool(json.loads(requests.post(f"https://localhost:44381/SendTickRequest", d,
+                                                 headers={"Content-Type": "application/json"}, verify=False).text)):
                     self.bot.send_message(self.current_user, "Done :)")
                     self.proceed()
-            elif message.circle:
-                pass
-            #TODO: Circle handler
             else:
-                self.bot.send_message(self.current_user, "This type of data cannot be accepted to confirm your identity", reply_markup=self.abortMarkup)
+                self.bot.send_message(self.current_user, "This type of data cannot be accepted as your identity confirmation", reply_markup=self.abortMarkup)
                 self.bot.register_next_step_handler(message, self.send_confirmation_request, acceptMode=acceptMode, chat_id=self.current_user)
 
 

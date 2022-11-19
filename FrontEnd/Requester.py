@@ -5,13 +5,14 @@ from Core import HelpersMethodes as Helpers
 
 
 class Requester:
-    def __init__(self, bot, message, receiver, request_list):
+    def __init__(self, bot, message, receiver, request_list, returnMethod=None):
         self.bot = bot
         self.message = message
         self.receiver = receiver
         self.receiver_data = Helpers.get_user_base_info(receiver)
         self.current_request = None
         self.request_list = request_list
+        self.returnMethod = returnMethod
 
         Helpers.switch_user_busy_status(self.receiver)
 

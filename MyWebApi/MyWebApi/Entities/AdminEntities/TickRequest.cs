@@ -11,9 +11,8 @@ namespace MyWebApi.Entities.AdminEntities
         public Guid Id { get; set; }
         public long UserId { get; set; }
         public long? AdminId { get; set; }
-        public bool? State { get; set; }
+        public short? State { get; set; }
         public string? Video { get; set; }
-        public string? Photo { get; set; }
         public string? Circle { get; set; }
         public virtual User? User{ get; set; }
     }

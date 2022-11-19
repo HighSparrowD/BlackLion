@@ -30,7 +30,11 @@ namespace MyWebApi.Interfaces
         Task<byte> AddNewAchievements(List<Achievement> achievements);
         Task<byte> AddDailyTaskAsync(DailyTask model);
         Task<List<TickRequest>> GetTickRequestsAsync();
-        Task<TickRequest> GetTickRequestAsync(Guid requestId);
+        Task<TickRequest> GetTickRequestAsync(Guid? requestId = null);
+        Task<string> GetNewNotificationsCountAsync(long adminId);
+        Task<string> GetUserPhotoAsync(long userId);
         Task<bool> ResolveTickRequestAsync(Guid requestId, long adminId, bool isAccepted);
+        Task<bool> AbortTickRequestAsync(Guid requestId);
+        Task<bool> NotifyFailierTickRequestAsync(Guid requestId, long adminId);
     }
 }

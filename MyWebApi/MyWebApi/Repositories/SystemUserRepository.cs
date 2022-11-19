@@ -3567,17 +3567,13 @@ namespace MyWebApi.Repositories
                 //Update existing request if one already exists
                 if (existingRequest != null)
                 {
-                    //If previous reqeust was not accepted
-                    if (existingRequest.State == null || !(bool)existingRequest.State)
-                    {
-                        existingRequest.Video = request.Video;
-                        existingRequest.Circle = request.Circle;
+                    existingRequest.Video = request.Video;
+                    existingRequest.Circle = request.Circle;
+                    existingRequest.State = (short)TickRequestStatus.Changed;
 
-                        _contx.tick_requests.Update(existingRequest);
-                        await _contx.SaveChangesAsync();
-                        return true;
-                    }
-                    return false;
+                    _contx.tick_requests.Update(existingRequest);
+                    await _contx.SaveChangesAsync();
+                    return true;
                 }
 
                 var model = new TickRequest

@@ -17,15 +17,18 @@ class AdminCabinet:
                                    "\n\n/viewreports command is used to view all recent reports IF specified like that: /vievreports USERID -> retrieves recent reports about specific user" \
                                    "\n\n/getuserbyid command allows you to get and then manage user by his id: /getuserbyid USERID" \
                                    "\n\n/getuserbyusername command allows you to get and then manage user by his username: /getuserbyusername USERNAME" \
+                                   "\n\n/managetickrequests command allows you to go through active tick requests and resolve them. FUN!" \
                                    "\n\n/exit"
 
         self.admin_cabinets = admin_cabinets
         self.admin_cabinets.append(self)
+        self.current_request = None
 
         #self.start_markup = ReplyKeyboardMarkup(KeyboardButton(""))
         self.markup1 = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
         self.feedbacks_markup = InlineKeyboardMarkup()
         self.YNmarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(KeyboardButton("Yes"), KeyboardButton("No"))
+        self.YNExitmarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(KeyboardButton("Yes"), KeyboardButton("No"), KeyboardButton("Exit"))
 
         self.isCheckout = False
 
@@ -48,12 +51,61 @@ class AdminCabinet:
 
         self.ch = self.bot.register_callback_query_handler("", self.callback_handler, user_id=self.current_user)
 
-        self.mh = bot.register_message_handler(self.message_handler, commands=["sendmessage", "viewreports", "getuserbyid", "getuserbyusername"], user_id=self.current_user)
+        self.mh = bot.register_message_handler(self.message_handler, commands=["sendmessage", "viewreports", "getuserbyid", "getuserbyusername", "managetickrequests"], user_id=self.current_user)
         self.eh = bot.register_message_handler(self.exit_handler, commands=["exit"], user_id=self.current_user)
 
+
+        self.bot.send_message(self.current_user, self.show_new_data_count())
         self.bot.send_message(self.current_user, self.admin_greet_message)
 
         self.get_recent_feedbacks()
+
+    def show_new_data_count(self):
+        return requests.get(f"https://localhost:44381/GetNewNotificationsCount/{self.current_user}", verify=False).text
+
+    def tick_request_handler(self, message, acceptMode=False):
+        if not acceptMode:
+            requestText = requests.get(f"https://localhost:44381/GetTickRequest", verify=False).text
+            if requestText:
+                self.current_request = json.loads(requestText)
+                photo = requests.get(f"https://localhost:44381/GetUserPhoto/{self.current_request['userId']}", verify=False).text
+
+                #Proceed if we were unable to read user photo
+                if not photo:
+                    response = requests.get(f"https://localhost:44381/NotifyFailierTickRequest/{self.current_request['id']}/{self.current_user}", verify=False).text
+                    self.bot.send_message(self.current_user, "Unable to load user photo")
+                    self.tick_request_handler(message)
+                    return False
+
+                self.bot.send_photo(self.current_user, photo, "That is how the user looks like")
+
+                if self.current_request["video"]:
+                    self.bot.send_video(self.current_user, video=self.current_request["video"], caption="That is the message, confirming his identity")
+                elif self.current_request["circle"]:
+                    self.bot.send_message(self.current_user, "That is the message, confirming his identity")
+                    self.bot.send_video_note(self.current_user, data=self.current_request["circle"])
+
+                self.bot.send_message(self.current_user, "Would you like to confirm his identity ?", reply_markup=self.YNExitmarkup)
+                self.bot.register_next_step_handler(message, self.tick_request_handler, acceptMode=True, chat_id=self.current_user)
+            else:
+                self.bot.send_message(self.current_user, "No more requests to handle :)")
+                self.bot.send_message(self.current_user, self.admin_greet_message)
+        else:
+            isResolved = False
+            if message.text == "Yes":
+                isResolved = True
+            elif message.text == "Exit":
+                response = requests.get(f"https://localhost:44381/AbortTickRequest/{self.current_request['id']}", verify=False).text
+                self.bot.send_message(self.current_user, self.admin_greet_message)
+                return False
+            else:
+                self.bot.send_message(self.current_user, "No such option", reply_markup=self.YNExitmarkup)
+                self.bot.register_next_step_handler(message, self.tick_request_handler, acceptMode=acceptMode, chat_id=self.current_user)
+                return False
+
+            response = requests.get(f"https://localhost:44381/ResolveTickRequest/{self.current_request['id']}/{self.current_user}/{isResolved}", verify=False).text
+
+            self.tick_request_handler(message)
 
     def message_handler(self, message):
         if not self.isCheckout:
@@ -90,6 +142,8 @@ class AdminCabinet:
                         self.bot.send_message(self.current_user, "User was not found")
                 else:
                     self.bot.send_message(self.current_user, "Wrong command consistence")
+            elif command[0] == "/managetickrequests":
+                self.tick_request_handler(message)
 
     def exit_handler(self, message):
         self.destruct()
