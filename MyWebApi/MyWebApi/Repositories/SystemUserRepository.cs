@@ -281,6 +281,9 @@ namespace MyWebApi.Repositories
                     var hasActiveValentine = userActiveEffects.Where(e => e.EffectId == (int)Currencies.TheValentine)
                         .SingleOrDefault() != null;
 
+                    var userHasDetectorOn = userActiveEffects.Where(e => e.EffectId == (int)Currencies.TheDetector)
+                        .SingleOrDefault() != null;
+
                     if (hasActiveValentine)
                         valentineBonus = 2;
 
@@ -613,7 +616,12 @@ namespace MyWebApi.Repositories
                             continue;
                         };
 
-                        returnData.Add(new GetUserData(u, $"<br>{matchedBy}</br>\n{u.UserBaseInfo.UserDescription}"));
+                        var returnUser = new GetUserData(u, $"{u.UserBaseInfo.UserDescription}");
+
+                        if (userHasDetectorOn)
+                            returnUser.AddDescriptionBonus("<br>{matchedBy}</br>");
+
+                        returnData.Add(returnUser);
                     }
                 }
                 else
@@ -3623,8 +3631,10 @@ namespace MyWebApi.Repositories
             return userPrefs.ShouldFilterUsersWithoutRealPhoto;
         }
 
-        public async Task<List<GetTestShortData>> GetTestDataByPropertyAsync(long userId, int localisation, short param)
+        public async Task<List<GetTestShortData>> GetTestDataByPropertyAsync(long userId, short param)
         {
+            var localisation = await GetUserAppLanguage(userId);
+
             //Get tests user already has
             var userTests = await _contx.user_tests.Where(t => t.UserId == userId && t.TestType == param)
                 .Select(t => t.TestId)
@@ -3650,28 +3660,36 @@ namespace MyWebApi.Repositories
                 .SingleOrDefaultAsync();
         }
 
-        public async Task<bool> CheckUserCanPassTest(long userId, long testId)
+        public async Task<int> GetPossibleTestPassRangeAsync(long userId, long testId)
         {
             var test = await GetUserTestAsync(userId, testId);
 
             if (test == null)
                 throw new NullReferenceException($"User #{userId} does not have test #{testId} available");
 
-            //If date is passing is equal to null => test want passed so far
+            //If date is passing is equal to null => test had not been passed so far
             if (test.PassedOn == null)
-                return true;
+                return 0;
 
-            return (test.PassedOn - DateTime.Now).Value.TotalDays > 90;
+            if ((test.PassedOn - DateTime.Now).Value.TotalDays > 90)
+                return 0;
+
+            return (int)(90 - (test.PassedOn - DateTime.Now).Value.TotalDays);
 
         }
 
-        public async Task<bool> PurchaseTestAsync(long userId, long testId, int localisation, int price)
+        public async Task<bool> PurchaseTestAsync(long userId, long testId, int localisation)
         {
             var balance = await GetUserWalletBalance(userId);
+            var sysTest = await _contx.tests.Where(t => t.Id == testId && t.ClassLocalisationId == localisation)
+                .SingleOrDefaultAsync();
 
-            if (balance.Points >= price)
+            if (sysTest == null)
+                throw new NullReferenceException($"Test #{testId} with localisation #{localisation} does not exist");
+
+            if (balance.Points >= sysTest.Price)
             {
-                var test = _contx.tests.Where(t => t.Id == testId && t.ClassLocalisationId == localisation)
+                var test = await _contx.tests.Where(t => t.Id == testId && t.ClassLocalisationId == localisation)
                     .SingleOrDefaultAsync();
 
                 if (test == null)
@@ -3680,13 +3698,25 @@ namespace MyWebApi.Repositories
                 await _contx.user_tests.AddAsync(new UserTest
                 {
                     UserId = userId,
+                    TestId = testId,
+                    TestType = test.TestType,
                     TestClassLocalisationId = localisation
                 });
                 
                 await _contx.SaveChangesAsync();
+                return true;
             }
 
             return false;
+        }
+
+        public async Task<List<GetTestShortData>> GetUserTestDataByPropertyAsync(long userId, short param)
+        {
+            //Get users tests
+            return await _contx.user_tests.Where(t => t.UserId == userId && t.TestType == param)
+                .Include(t => t.Test)
+                .Select(t => new GetTestShortData { Id = t.TestId, Name = t.Test.Name })
+                .ToListAsync();
         }
     }
 }

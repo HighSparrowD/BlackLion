@@ -29,7 +29,7 @@ class Settings:
         self.chooseOption_message = "Choose the option:"
         self.setting_message = "1. My Profile\n2. Personality Settings\n3. Filter Settings\n4. My Statistics\n5. Additional Actions\n\n6. Exit"
         self.settingMyProfile_message = f"{self.chooseOption_message}\n1. View the blacklist\n2. Manage recently encountered users\n3. Change profile properties\n4. ⭐Set profile status⭐\n\n5. Go back"
-        self.settingPersonalitySettings_message = f"{self.chooseOption_message}\n1. Turn On / Turn Off PERSONALITY\n2. Manage PERSONALITY points\n3. View previously passed tests\n\n4. Go back"
+        self.settingPersonalitySettings_message = f"{self.chooseOption_message}\n1. Turn On / Turn Off PERSONALITY\n2. Manage PERSONALITY points\n3. View my tests\n\n4. Go back"
         self.settingFiltersSettings_message = f"{self.chooseOption_message}\n1. Turn On / Turn Off language consideration (Random Conversation)\n2. ⭐Turn on / Turn off filtration by a real photo⭐\n\n3. Go back"
         self.settingStatistics_message = f"{self.chooseOption_message}\n1. View Achievements\n2. 💎Top-Up coin balance💎\n3. 💎Top-Up Personality points balance💎\n4. 💎Buy premium access💎\n\n5. Go back"
         self.settingAdditionalActions_message = f"{self.chooseOption_message}\n1. Get invitation credentials\n2. Confirm my identity\n\n3. Go back"
@@ -97,10 +97,7 @@ class Settings:
             elif message.text == "2":
                 self.personality_points(message)
             elif message.text == "3":
-                #TODO: implement
-                self.bot.send_message(self.current_user, "Not implemented yet!")
-                self.proceed()
-                pass
+                TestModule(self.bot, self.message, isActivatedFromShop=False, returnMethod=self.proceed)
             elif message.text == "4":
                 self.proceed()
             else:
@@ -186,17 +183,17 @@ class Settings:
                 .add(InlineKeyboardButton("-", callback_data="1"), InlineKeyboardButton("0", callback_data="1"), InlineKeyboardButton("+", callback_data="1")) \
                 .add(InlineKeyboardButton("Open-Mindedness", callback_data="1")) \
                 .add(InlineKeyboardButton("-", callback_data="1"), InlineKeyboardButton("0", callback_data="1"), InlineKeyboardButton("+", callback_data="1")) \
-                .add(InlineKeyboardButton("Self-Awareness", callback_data="1")) \
-                .add(InlineKeyboardButton("-", callback_data="1"), InlineKeyboardButton("0", callback_data="1"), InlineKeyboardButton("+", callback_data="1")) \
-                .add(InlineKeyboardButton("Levels of sense", callback_data="1")) \
-                .add(InlineKeyboardButton("-", callback_data="1"), InlineKeyboardButton("0", callback_data="1"), InlineKeyboardButton("+", callback_data="1")) \
-                .add(InlineKeyboardButton("Intellect", callback_data="1")) \
+                .add(InlineKeyboardButton("Agreeableness", callback_data="1")) \
                 .add(InlineKeyboardButton("-", callback_data="1"), InlineKeyboardButton("0", callback_data="1"), InlineKeyboardButton("+", callback_data="1")) \
                 .add(InlineKeyboardButton("Self-Awareness", callback_data="1")) \
                 .add(InlineKeyboardButton("-", callback_data="1"), InlineKeyboardButton("0", callback_data="1"), InlineKeyboardButton("+", callback_data="1")) \
-                .add(InlineKeyboardButton("Levels of sense", callback_data="1")) \
+                .add(InlineKeyboardButton("Levels Of Sense", callback_data="1")) \
                 .add(InlineKeyboardButton("-", callback_data="1"), InlineKeyboardButton("0", callback_data="1"), InlineKeyboardButton("+", callback_data="1")) \
                 .add(InlineKeyboardButton("Intellect", callback_data="1")) \
+                .add(InlineKeyboardButton("-", callback_data="1"), InlineKeyboardButton("0", callback_data="1"), InlineKeyboardButton("+", callback_data="1")) \
+                .add(InlineKeyboardButton("Nature", callback_data="1")) \
+                .add(InlineKeyboardButton("-", callback_data="1"), InlineKeyboardButton("0", callback_data="1"), InlineKeyboardButton("+", callback_data="1")) \
+                .add(InlineKeyboardButton("Creativity", callback_data="1")) \
                 .add(InlineKeyboardButton("-", callback_data="1"), InlineKeyboardButton("0", callback_data="1"), InlineKeyboardButton("+", callback_data="1"))
 
             self.bot.send_message(self.current_user, "sds", reply_markup=markup)

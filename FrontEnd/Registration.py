@@ -25,7 +25,7 @@ class Registrator:
         self.localisation = json.loads(requests.get("https://localhost:44381/GetLocalisation/0", verify=False).text)
         self.lang_limit = Helpers.get_user_language_limit(self.current_user)
 
-        self.question_index = 0 #Represents a current question index
+        self.question_index = 0 #Represents current question index
 
         self.current_query = 0
         self.old_queries = []
@@ -996,7 +996,7 @@ class Registrator:
 
         else:
             if msg.text == "yes":
-                TestModule(self.bot, self.msg)
+                TestModule(self.bot, self.msg, isActivatedFromShop=False)
                 self.destruct()
             elif msg.text == "no":
                 self.destruct()
@@ -1064,12 +1064,15 @@ class Registrator:
             self.current_query = call.message.id
 
             if call.data == "-1" or call.data == "-2":
-                index = self.index_converter(call.data)
-                if self.markup_page + index <= self.markup_pages_count or self.markup_page + index >= 1:
-                    markup = assemble_markup(self.markup_page, self.current_markup_elements, index)
-                    self.bot.edit_message_reply_markup(chat_id=call.message.chat.id, reply_markup=markup,
-                                                       message_id=call.message.id)
-                    self.markup_page += index
+                try:
+                    index = self.index_converter(call.data)
+                    if self.markup_page + index <= self.markup_pages_count or self.markup_page + index >= 1:
+                        markup = assemble_markup(self.markup_page, self.current_markup_elements, index)
+                        self.bot.edit_message_reply_markup(chat_id=call.message.chat.id, reply_markup=markup,
+                                                           message_id=call.message.id)
+                        self.markup_page += index
+                except:
+                    pass
 
             elif "/" in call.data:      #TODO: Make it work another way... maybe
                 self.bot.answer_callback_query(call.id, call.data)

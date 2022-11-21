@@ -103,7 +103,7 @@ namespace MyWebApi.Repositories
                 .ToListAsync();
         }
 
-        public async Task<Test> GetSinglePsychologicalTestAsync(long testId, int localisationId)
+        public async Task<Test> GetSingleTestAsync(long testId, int localisationId)
         {
             return await _contx.tests
                 .Where(t => t.Id == testId && t.ClassLocalisationId == localisationId)

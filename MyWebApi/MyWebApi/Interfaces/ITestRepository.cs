@@ -21,7 +21,7 @@ namespace MyWebApi.Interfaces
         Task<List<Country>> GetCountries(int localisationId);
         Task<List<Language>> GetLanguagesAsync(int localisationId);
         Task<List<Test>> GetPsychologicalTestsAsync();
-        Task<Test> GetSinglePsychologicalTestAsync(long testId, int localisationId);
+        Task<Test> GetSingleTestAsync(long testId, int localisationId);
         //Task<List<IntellectualTest>> GetIntellectualTestsAsync();
     }
 }

@@ -55,9 +55,6 @@ def count_pages(section_elements, current_markup_elements, markup_pages_count, p
 
     count = ceil(len(section_elements) / 5)
 
-    if additionalButton:
-        markup.add(InlineKeyboardButton(buttonText, callback_data=buttonData))
-
     if prefs:
         markup.add(InlineKeyboardButton("Same as mine", callback_data=-5))
     for element in list(section_elements):
@@ -85,11 +82,17 @@ def count_pages(section_elements, current_markup_elements, markup_pages_count, p
             for e in elements_to_delete:
                 section_elements.pop(e)
             elements_to_delete.clear()
+
+    if additionalButton:
+        markup.add(InlineKeyboardButton(buttonText, callback_data=buttonData))
+
     return markup_pages_count
 
 
 def assemble_markup(markup_page, current_markup_elements, index):
-    return current_markup_elements[(markup_page + index) - 1]
+    if len(current_markup_elements) -1 >= (markup_page + index) - 1:
+        return current_markup_elements[(markup_page + index) - 1]
+    return current_markup_elements[-1]
 
 
 def reset_pages(current_markup_elements, markup_last_element, markup_page, markup_pages_count):

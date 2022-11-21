@@ -153,10 +153,11 @@ namespace MyWebApi.Interfaces
         Task<bool> SendTickRequestAsync(SendTickRequest request);
         Task<bool> SwitchUserFilteringByPhotoAsync(long userId);
         Task<bool> GetUserFilteringByPhotoStatusAsync(long userId);
-        Task<List<GetTestShortData>> GetTestDataByPropertyAsync(long userId, int localisation, short param);
+        Task<List<GetTestShortData>> GetTestDataByPropertyAsync(long userId, short param);
+        Task<List<GetTestShortData>> GetUserTestDataByPropertyAsync(long userId, short param);
         Task<GetFullTestData> GetTestFullDataByIdAsync(long testId, int localisation);
         Task<UserTest> GetUserTestAsync(long userId, long testId);
-        Task<bool> CheckUserCanPassTest(long userId, long testId);
-        Task<bool> PurchaseTestAsync(long userId, long testId, int localisation, int price);
+        Task<int> GetPossibleTestPassRangeAsync(long userId, long testId);
+        Task<bool> PurchaseTestAsync(long userId, long testId, int localisation);
     }
 }

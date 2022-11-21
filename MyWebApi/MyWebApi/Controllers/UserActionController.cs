@@ -862,16 +862,22 @@ namespace MyWebApi.Controllers
             return "Filtering is currently On. Would you like to turn it off ?";
         }
 
-        [HttpGet("/GetTestDataByProperty/{userId}/{localisation}/{param}")]
-        public async Task<List<GetTestShortData>> GetTestDataByProperty(long userId, int localisation, short param)
+        [HttpGet("/GetTestDataByProperty/{userId}/{param}")]
+        public async Task<List<GetTestShortData>> GetTestDataByProperty(long userId, short param)
         {
-            return await _repository.GetTestDataByPropertyAsync(userId, localisation, param);
+            return await _repository.GetTestDataByPropertyAsync(userId, param);
         }
 
-        [HttpGet("/GetTestFullDataById/{userId}/{localisation}")]
-        public async Task<GetFullTestData> GetTestFullDataById(long userId, int localisation, short param)
+        [HttpGet("/GetUserTestDataByProperty/{userId}/{param}")]
+        public async Task<List<GetTestShortData>> GetUserTestDataByProperty(long userId, short param)
         {
-            return await _repository.GetTestFullDataByIdAsync(userId, localisation);
+            return await _repository.GetUserTestDataByPropertyAsync(userId, param);
+        }
+
+        [HttpGet("/GetTestFullDataById/{testId}/{localisation}")]
+        public async Task<GetFullTestData> GetTestFullDataById(long testId, int localisation)
+        {
+            return await _repository.GetTestFullDataByIdAsync(testId, localisation);
         }
 
         [HttpGet("/GetUserTest/{userId}/{testId}")]
@@ -880,16 +886,16 @@ namespace MyWebApi.Controllers
             return await _repository.GetUserTestAsync(userId, testId);
         }
 
-        [HttpGet("/CheckUserCanPass/{userId}/{testId}")]
-        public async Task<bool> CheckUserCanPass(long userId, long testId)
+        [HttpGet("/GetPossibleTestPassRange/{userId}/{testId}")]
+        public async Task<int> GetPossibleTestPassRange(long userId, long testId)
         {
-            return await _repository.CheckUserCanPassTest(userId, testId);
+            return await _repository.GetPossibleTestPassRangeAsync(userId, testId);
         }
 
-        [HttpGet("/PurchaseTest/{userId}/{testId}/{localisation}/{price}")]
-        public async Task<bool> PurchaseTest(long userId, long testId, int localisation, int price)
+        [HttpGet("/PurchaseTest/{userId}/{testId}/{localisation}")]
+        public async Task<bool> PurchaseTest(long userId, long testId, int localisation)
         {
-            return await _repository.PurchaseTestAsync(userId, testId, localisation, price);
+            return await _repository.PurchaseTestAsync(userId, testId, localisation);
         }
     }
 }
