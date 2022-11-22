@@ -77,7 +77,7 @@ def Sponsor_Handler(message):
     if not Helpers.check_user_is_busy(message.from_user.id):
         create_sponsor_handler(message)
 
-
+bot.send_photo
 @bot.message_handler(commands=["switchstatus", "showstatus"], is_multihandler=True)
 def SwitchAdminStatus(message):
     if message.text == "/switchstatus":

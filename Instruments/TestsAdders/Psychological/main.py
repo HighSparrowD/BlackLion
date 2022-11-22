@@ -48,6 +48,7 @@ def load_questions(testId):
         if question[2] == testId:
             questions.append({
                 "text": question[0],
+                "photo": question[3],
                 "answers": load_answers(question[1])
             })
 

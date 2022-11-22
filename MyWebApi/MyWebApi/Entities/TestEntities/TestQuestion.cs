@@ -14,7 +14,7 @@ namespace MyWebApi.Entities.TestEntities
         public int TestClassLocalisationId { get; set; }
         [NotNull]
         public string Text { get; set; }
-        [NotNull]
+        public string Photo { get; set; }
         public virtual List<TestAnswer> Answers { get; set; }
     }
 }

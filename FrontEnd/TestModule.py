@@ -188,6 +188,8 @@ class TestModule:
                 self.current_question_answers[answer["id"]] = answer
                 markup.add(InlineKeyboardButton(answer["text"], callback_data=answer["id"]))
 
+            if self.current_question["photo"]:
+                self.bot.send_photo(self.current_user, self.current_question["photo"], caption=self.current_question["text"])
             self.bot.send_message(self.current_user, self.current_question["text"], reply_markup=markup)
             questions.pop(0)
         else:
