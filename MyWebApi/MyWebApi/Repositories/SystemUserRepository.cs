@@ -659,12 +659,15 @@ namespace MyWebApi.Repositories
                     //Fill-up return data if it wasnt filled in PERSONALITY check
                     if (!currentUser.UserPreferences.ShouldUsePersonalityFunc)
                     {
-                        await Task.Run(() =>
+                        await Task.Run(async () =>
                         {
                             for (int i = 0; i < data.Count; i++)
                             {
                                 var u = data[i];
                                 string bonus = "";
+
+                                //Register user encounter
+                                await RegisterUserEncounter(new Encounter { UserId = userId, EncounteredUserId = u.UserId, SectionId = (int)Sections.Familiator });
 
                                 if (u.IsIdentityConfirmed)
                                     bonus += $"✔️\n\n";
@@ -2044,12 +2047,14 @@ namespace MyWebApi.Repositories
         {
             try
             {
-                request.Severity = (short)SystemEnums.Severities.Moderate;
+                request.Severity = (short)Severities.Moderate;
 
                 if (request.IsLikedBack)
-                    request.SectionId = (short)SystemEnums.Sections.Requester;
+                    request.SectionId = (short)Sections.Requester;
                 else
-                    request.SectionId = (short)SystemEnums.Sections.Familiator;
+                    request.SectionId = (short)Sections.Familiator;
+
+                await RegisterUserEncounter(new Encounter { UserId = (long)request.UserId, EncounteredUserId = request.UserId1, SectionId = (int)Sections.Requester });
 
                 var id = await AddUserNotificationAsync(request);
 
@@ -3717,6 +3722,31 @@ namespace MyWebApi.Repositories
                 .Include(t => t.Test)
                 .Select(t => new GetTestShortData { Id = t.TestId, Name = t.Test.Name })
                 .ToListAsync();
+        }
+
+        public async Task<string> CheckTickRequestStatusÀsync(long userId)
+        {
+            var request = await _contx.tick_requests.FindAsync(userId);
+
+            if (request == null)
+                return "";
+
+            //TODO: Get status from localizer !
+            switch (request.State)
+            {
+                case 1:
+                    return "Added";
+                case 2:
+                    return "Changed";
+                case 3:
+                    return "In Process";
+                case 4:
+                    return "Declined";
+                case 5:
+                    return "1";
+                default:
+                    return "Added";
+            }
         }
     }
 }

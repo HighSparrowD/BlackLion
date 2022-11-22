@@ -159,5 +159,6 @@ namespace MyWebApi.Interfaces
         Task<UserTest> GetUserTestAsync(long userId, long testId);
         Task<int> GetPossibleTestPassRangeAsync(long userId, long testId);
         Task<bool> PurchaseTestAsync(long userId, long testId, int localisation);
+        Task<string> CheckTickRequestStatusÀsync(long userId);
     }
 }

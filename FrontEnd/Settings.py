@@ -21,7 +21,9 @@ class Settings:
         self.markup_page = 1
         self.markup_pages_count = 0
         self.current_callback_handler = None
+        self.shouldRestrictTickRequest = False
         Helpers.switch_user_busy_status(self.current_user)
+        self.requestStatus = requests.get(f"https://localhost:44381/CheckTickRequestStatus/{self.current_user}", verify=False).text
 
         self.add_to_blacklist_text = "Add user to a blacklist"
         self.remove_from_blacklist_text = "Remove user from a blacklist"
@@ -32,19 +34,30 @@ class Settings:
         self.settingPersonalitySettings_message = f"{self.chooseOption_message}\n1. Turn On / Turn Off PERSONALITY\n2. Manage PERSONALITY points\n3. View my tests\n\n4. Go back"
         self.settingFiltersSettings_message = f"{self.chooseOption_message}\n1. Turn On / Turn Off language consideration (Random Conversation)\n2. ⭐Turn on / Turn off filtration by a real photo⭐\n\n3. Go back"
         self.settingStatistics_message = f"{self.chooseOption_message}\n1. View Achievements\n2. 💎Top-Up coin balance💎\n3. 💎Top-Up Personality points balance💎\n4. 💎Buy premium access💎\n\n5. Go back"
-        self.settingAdditionalActions_message = f"{self.chooseOption_message}\n1. Get invitation credentials\n2. Confirm my identity\n\n3. Go back"
+        self.settingAdditionalActions_message = f"{self.chooseOption_message}\n1. Get invitation credentials\n"
         self.encounter_options_message = f"1. Use 💥Second chance💥 to send like to a user once again. You have SECOND_CHANCE_COUNT\n2. Report user\n3. Abort\n4." #TODO: replace caps message to a real "second chance" effect amount
         self.settingMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4", "5", "6", "7", "8")
         self.settingMyProfileMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4", "5")
         self.settingPersonalitySettingsMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4")
         self.settingFiltersSettingsMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3")
         self.settingStatisticsMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4", "5")
-        self.settingAdditionalActionsMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3")
         self.YNMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("yes", "no")
         self.abortMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("abort")
         self.encounterOptionMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4")
         self.credsMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3")
 
+        #Api return 1 if request was accepted
+        if self.requestStatus:
+            self.settingAdditionalActions_message += "2. Confirm my identity\n\n3. Go back"
+            self.settingAdditionalActionsMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3")
+        #TODO: think if confirmation request text should be changed if request exists. That is cool, but not efficient !
+        # elif not self.requestStatus != "1":
+        #     self.settingAdditionalActions_message += "2. Confirm my identity\n\n3. Go back"
+        #     self.settingAdditionalActionsMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3")
+        else:
+            self.shouldRestrictTickRequest = True
+            self.settingAdditionalActions_message += "\n2. Go back"
+            self.settingAdditionalActionsMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2")
         self.setting_choice(message)
 
     def setting_choice(self, message, acceptMode=False):
@@ -432,8 +445,15 @@ class Settings:
 
     def send_confirmation_request(self, message, acceptMode=False):
         if not acceptMode:
-            self.bot.send_message(self.current_user, "You can confirm your identity by sending us:\nVideo or 'Circle' (15 seconds max) in which you are saying the code frase 'LALALA'.\n!Your face have to be visible!")
-            self.bot.register_next_step_handler(message, self.send_confirmation_request, acceptMode=True, chat_id=self.current_user)
+
+            if not self.requestStatus:
+                self.bot.send_message(self.current_user, "You can confirm your identity by sending us:\nVideo or 'Circle' (15 seconds max) in which you are saying the code frase 'LALALA'.\n!Your face have to be visible!", reply_markup=self.abortMarkup)
+                self.bot.register_next_step_handler(message, self.send_confirmation_request, acceptMode=True, chat_id=self.current_user)
+            else:
+                self.bot.send_message(self.current_user, f"Status is: {self.requestStatus}")
+                self.bot.send_message(self.current_user, "You can update current request, you have sent by sending us:\nVideo or 'Circle' (15 seconds max) in which you are saying the code frase 'LALALA'.\n!Your face have to be visible!", reply_markup=self.abortMarkup)
+                self.bot.register_next_step_handler(message, self.send_confirmation_request, acceptMode=True, chat_id=self.current_user)
+
         else:
             if message.text == "abort":
                 self.proceed()

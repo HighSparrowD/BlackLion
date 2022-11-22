@@ -897,5 +897,11 @@ namespace MyWebApi.Controllers
         {
             return await _repository.PurchaseTestAsync(userId, testId, localisation);
         }
+
+        [HttpGet("/CheckTickRequestStatus/{userId}")]
+        public async Task<string> CheckTickRequestStatus(long userId)
+        {
+            return await _repository.CheckTickRequestStatusÀsync(userId);
+        }
     }
 }
