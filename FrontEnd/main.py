@@ -77,7 +77,7 @@ def Sponsor_Handler(message):
     if not Helpers.check_user_is_busy(message.from_user.id):
         create_sponsor_handler(message)
 
-bot.send_photo
+
 @bot.message_handler(commands=["switchstatus", "showstatus"], is_multihandler=True)
 def SwitchAdminStatus(message):
     if message.text == "/switchstatus":
@@ -126,7 +126,7 @@ def create_familiator(message, userId):
         if not Helpers.check_user_is_banned(message.from_user.id):
             if not Helpers.check_user_is_deleted(message.from_user.id):
                 visit = Helpers.check_user_has_visited_section(message.from_user.id, 2)
-                return Familiator(bot, message, userId, familiators, requesters, visit)
+                return Familiator(bot, message, userId, familiators, visit)
             else:
                 bot.send_message(message.from_user.id, "Hey! your account had been deleted recently. Would you like to pass a quick registration and save all your lost data?\n Then hit /register !")
         else:

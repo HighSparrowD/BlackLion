@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.VisualBasic;
 using MyWebApi.Data;
 using MyWebApi.Entities.AchievementEntities;
 using MyWebApi.Entities.AdminEntities;
@@ -17,7 +16,6 @@ using MyWebApi.Interfaces;
 using QRCoder;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 using static MyWebApi.Enums.SystemEnums;
@@ -262,7 +260,7 @@ namespace MyWebApi.Repositories
 
                 //If user wants to find only people who are free today
                 if (isFreeSearch)
-                    data = data.Where(u => u.IsFree).ToList();
+                    data = data.Where(u => u.IsFree != null && (bool)u.IsFree).ToList();
 
 
                 //If user uses PERSONALITY functionality and free search is disabled
@@ -3158,16 +3156,15 @@ namespace MyWebApi.Repositories
             { return null; }
         }
 
-        public async Task<User> GetUserListByTagsAsync(long userId)
+        public async Task<User> GetUserListByTagsAsync(GetUserByTags model)
         {
-            var currentUser = await GetUserInfoAsync(userId);
+            var currentUser = await GetUserInfoAsync(model.UserId);
 
             //Throw exception if user has reached his tag search limit
             if (!currentUser.HasPremium && currentUser.TagSearchesCount + 1 > 3)
-                throw new ApplicationException($"User {userId} has already reached his tag-search limit");
+                throw new ApplicationException($"User {model.UserId} has already reached his tag-search limit");
 
-            var tags = await GetTags(userId);
-            var currentUserEncounters = await GetUserEncounters(userId, (int)Sections.Familiator); //I am not sure if it is 2 or 3 section
+            var currentUserEncounters = await GetUserEncounters(model.UserId, (int)Sections.Familiator); //I am not sure if it is 2 or 3 section
 
             var data = await _contx.SYSTEM_USERS
                 .Where(u => u.UserId != currentUser.UserId)
@@ -3188,14 +3185,14 @@ namespace MyWebApi.Repositories
             data = data.Where(u => !currentUser.CheckIfHasEncountered(currentUserEncounters, u.UserId)).ToList();
 
             //Check if users are in each others black lists
-            data = data.Where(u => u.UserBlackList.Where(u => u.BannedUserId == userId).SingleOrDefault() == null).ToList();
+            data = data.Where(u => u.UserBlackList.Where(u => u.BannedUserId == model.UserId).SingleOrDefault() == null).ToList();
             data = data.Where(u => currentUser.UserBlackList.Where(l => l.BannedUserId == u.UserId).SingleOrDefault() == null).ToList();
 
             //Check if request already exists
-            data = data.Where(u => !CheckRequestExists(userId, u.UserId)).ToList();
+            data = data.Where(u => !CheckRequestExists(model.UserId, u.UserId)).ToList();
 
             //Check if current user had already recieved request from user
-            data = data.Where(u => !CheckRequestExists(u.UserId, userId)).ToList();
+            data = data.Where(u => !CheckRequestExists(u.UserId, model.UserId)).ToList();
 
             //If user does NOT have gender prederences
             if (currentUser.UserPreferences.UserGenderPrefs != 2)
@@ -3229,7 +3226,7 @@ namespace MyWebApi.Repositories
             //    Console.WriteLine(t);
             //});
 
-            var user = data.OrderByDescending(u => u.UserDataInfo.Tags.Intersect(tags).Count())
+            var user = data.OrderByDescending(u => u.UserDataInfo.Tags.Intersect(model.Tags).Count())
                 .FirstOrDefault();
 
             if(user.HasPremium && user.Nickname != null)
@@ -3747,6 +3744,47 @@ namespace MyWebApi.Repositories
                 default:
                     return "Added";
             }
+        }
+
+        public async Task<bool> SetUserFreeSearchParamAsync(long userId, bool freeStatus)
+        {
+            var user = await _contx.SYSTEM_USERS.FindAsync(userId);
+
+            if (user == null)
+                throw new NullReferenceException($"User #{userId} does not exist");
+
+            user.IsFree = freeStatus;
+            return freeStatus;
+        }
+
+        public async Task<bool> CheckUserHaveChosenFreeParamAsync(long userId)
+        {
+            var user = await _contx.SYSTEM_USERS.FindAsync(userId);
+
+            if (user == null)
+                throw new NullReferenceException($"User #{userId} does not exist");
+
+            return user.IsFree != null;
+        }
+
+        public async Task<bool> CheckShouldTurnOffPersonalityAsync(long userId)
+        {
+            var user = await _contx.SYSTEM_USERS.Where(u => u.UserId == userId)
+                .Include(u => u.UserPreferences)
+                .SingleOrDefaultAsync();
+
+            if (user == null)
+                throw new NullReferenceException($"User #{userId} does not exist");
+
+            //Return false if peofileViewCountIsAlreadyMaxed
+            if (user.ProfileViewsCount >= user.MaxProfileViewsCount)
+                return false;
+
+            //Return false if personality is not used
+            if (!user.UserPreferences.ShouldUsePersonalityFunc)
+                return false;
+
+            return true;
         }
     }
 }

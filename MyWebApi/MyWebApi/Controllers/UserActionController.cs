@@ -120,7 +120,6 @@ namespace MyWebApi.Controllers
                     ShouldConsiderLanguages = false,
                     HasPremium = false,
                     HadReceivedReward = false,
-                    IsFree = false,
                     DailyRewardPoint = 0,
                     BonusIndex = 1,
                     ProfileViewsCount = 0,
@@ -290,7 +289,6 @@ namespace MyWebApi.Controllers
                 ShouldConsiderLanguages = false,
                 HasPremium = false,
                 HadReceivedReward = false,
-                IsFree = false,
                 DailyRewardPoint = 0,
                 BonusIndex = 1,
                 ProfileViewsCount = 0,
@@ -783,10 +781,10 @@ namespace MyWebApi.Controllers
             return await _repository.GetTags(userId);
         }
 
-        [HttpGet("/GetUserListByTags/{userId}")]
-        public async Task<User> GetUserListByTags(long userId)
+        [HttpPost("/GetUserByTags")]
+        public async Task<User> GetUserByTags(GetUserByTags model)
         {
-            return await _repository.GetUserListByTagsAsync(userId);
+            return await _repository.GetUserListByTagsAsync(model);
         }
 
         [HttpGet("/GetMaxTagCount/{userId}")]
@@ -902,6 +900,24 @@ namespace MyWebApi.Controllers
         public async Task<string> CheckTickRequestStatus(long userId)
         {
             return await _repository.CheckTickRequestStatusÀsync(userId);
+        }
+
+        [HttpGet("/SetUserFreeSearchParam/{userId}/{freeSearch}")]
+        public async Task<bool> SetUserFreeSearchParam(long userId, bool freeSearch)
+        {
+            return await _repository.SetUserFreeSearchParamAsync(userId, freeSearch);
+        }
+
+        [HttpGet("/CheckUserHaveChosenFreeParam/{userId}")]
+        public async Task<bool> CheckUserHaveChosenFreeParam(long userId)
+        {
+            return await _repository.CheckUserHaveChosenFreeParamAsync(userId);
+        }
+
+        [HttpGet("/CheckShouldTurnOffPersonality/{userId}")]
+        public async Task<bool> CheckShouldTurnOffPersonality(long userId)
+        {
+            return await _repository.CheckShouldTurnOffPersonalityAsync(userId);
         }
     }
 }

@@ -28,6 +28,7 @@ class Settings:
         self.add_to_blacklist_text = "Add user to a blacklist"
         self.remove_from_blacklist_text = "Remove user from a blacklist"
 
+        #TODO: Add Free search prefs switch (settingsFiltersSettings)
         self.chooseOption_message = "Choose the option:"
         self.setting_message = "1. My Profile\n2. Personality Settings\n3. Filter Settings\n4. My Statistics\n5. Additional Actions\n\n6. Exit"
         self.settingMyProfile_message = f"{self.chooseOption_message}\n1. View the blacklist\n2. Manage recently encountered users\n3. Change profile properties\n4. ⭐Set profile status⭐\n\n5. Go back"

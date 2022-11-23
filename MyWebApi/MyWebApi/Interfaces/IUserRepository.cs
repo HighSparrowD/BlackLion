@@ -136,7 +136,7 @@ namespace MyWebApi.Interfaces
         Task<bool> RegisterTestPassingAsync(TestPayload model);
         Task<bool> UpdateTags(UpdateTags model);
         Task<List<string>> GetTags(long userId);
-        Task<User> GetUserListByTagsAsync(long userId);
+        Task<User> GetUserListByTagsAsync(GetUserByTags model);
         Task<bool> CheckEncounteredUserIsInBlackList(long userId, long encounteredUser);
         Task<string> RetreiveCommonLanguagesAsync(long user1Iq, long user2Id, int localisationId);
         Task<bool> LogAdminErrorAsync(long? userId, string description, int sectioId);
@@ -160,5 +160,8 @@ namespace MyWebApi.Interfaces
         Task<int> GetPossibleTestPassRangeAsync(long userId, long testId);
         Task<bool> PurchaseTestAsync(long userId, long testId, int localisation);
         Task<string> CheckTickRequestStatusÀsync(long userId);
+        Task<bool> CheckUserHaveChosenFreeParamAsync(long userId);
+        Task<bool> CheckShouldTurnOffPersonalityAsync(long userId);
+        Task<bool> SetUserFreeSearchParamAsync(long userId, bool freeStatus);
     }
 }
