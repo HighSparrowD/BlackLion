@@ -2943,17 +2943,23 @@ namespace MyWebApi.Repositories
             catch { return false; }
         }
 
-        public async Task<UserPersonalityPoints> UpdateUserPersonalityPoints(UserPersonalityPoints model)
+        public async Task<bool> UpdateUserPersonalityPoints(PointsPayload model)
         {
             try
             {
-                model = await RecalculateSimilarityPercentage(model);
-                _contx.Update(model);
+                var points = await RecalculateSimilarityPercentage(model);
+                var balance = await _contx.USER_WALLET_BALANCES.Where(b => b.UserId == model.UserId)
+                    .SingleOrDefaultAsync();
+
+                balance.PersonalityPoints = model.Balance;
+
+                _contx.Update(balance);
+                _contx.Update(points);
                 await _contx.SaveChangesAsync();
 
-                return model;
+                return true;
             }
-            catch { return null; }
+            catch { return false; }
         }
 
         public async Task<UserPersonalityStats> GetUserPersonalityStats(long userId)
@@ -2978,22 +2984,79 @@ namespace MyWebApi.Repositories
             catch { return null; }
         }
 
-        private async Task<UserPersonalityPoints> RecalculateSimilarityPercentage(UserPersonalityPoints model)
+        private async Task<UserPersonalityPoints> RecalculateSimilarityPercentage(PointsPayload model)
         {
             try
             {
-                model.PersonalityPercentage = await CalculateSimilarityPreferences(model.Personality, model.PersonalityPercentage);
-                model.CreativityPercentage = await CalculateSimilarityPreferences(model.Creativity, model.CreativityPercentage);
-                model.ReliabilityPercentage = await CalculateSimilarityPreferences(model.Reliability, model.ReliabilityPercentage);
-                model.NaturePercentage = await CalculateSimilarityPreferences(model.Nature, model.NaturePercentage);
-                model.AgreeablenessPercentage = await CalculateSimilarityPreferences(model.Agreeableness, model.AgreeablenessPercentage);
-                model.CompassionPercentage = await CalculateSimilarityPreferences(model.Compassion, model.CompassionPercentage);
-                model.EmotionalIntellectPercentage = await CalculateSimilarityPreferences(model.EmotionalIntellect, model.EmotionalIntellectPercentage);
-                model.IntellectPercentage = await CalculateSimilarityPreferences(model.Intellect, model.IntellectPercentage);
-                model.LevelOfSensePercentage = await CalculateSimilarityPreferences(model.LevelOfSense, model.LevelOfSensePercentage);
-                model.OpenMindednessPercentage = await CalculateSimilarityPreferences(model.OpenMindedness, model.OpenMindednessPercentage);
-                model.SelfAwarenessPercentage = await CalculateSimilarityPreferences(model.SelfAwareness, model.SelfAwarenessPercentage);
-                return model;
+                var points = await GetUserPersonalityPoints(model.UserId);
+
+                if (model.Personality != null)
+                {
+                    points.PersonalityPercentage = await CalculateSimilarityPreferences((int)model.Personality, points.PersonalityPercentage);
+                    points.Personality = (int)model.Personality;
+                }
+
+                if (model.Creativity != null)
+                {
+                    points.CreativityPercentage = await CalculateSimilarityPreferences((int)model.Creativity, points.CreativityPercentage);
+                    points.Creativity = (int)model.Creativity;
+                }
+
+                if (model.Reliability != null)
+                {
+                    points.ReliabilityPercentage = await CalculateSimilarityPreferences((int)model.Reliability, points.ReliabilityPercentage);
+                    points.Reliability = (int)model.Reliability;
+                }
+
+                if (model.Nature != null)
+                {
+                    points.NaturePercentage = await CalculateSimilarityPreferences((int)model.Nature, points.NaturePercentage);
+                    points.Nature = (int)model.Nature;
+                }
+
+                if (model.Agreeableness != null)
+                {
+                    points.AgreeablenessPercentage = await CalculateSimilarityPreferences((int)model.Agreeableness, points.AgreeablenessPercentage);
+                    points.Agreeableness = (int)model.Agreeableness;
+                }
+
+                if (model.Compassion != null)
+                {
+                    points.CompassionPercentage = await CalculateSimilarityPreferences((int)model.Compassion, points.CompassionPercentage);
+                    points.Compassion = (int)model.Compassion;
+                }
+
+                if (model.EmotionalIntellect != null)
+                {
+                    points.EmotionalIntellectPercentage = await CalculateSimilarityPreferences((int)model.EmotionalIntellect, points.EmotionalIntellectPercentage);
+                    points.EmotionalIntellect = (int)model.EmotionalIntellect;
+                }
+
+                if (model.Intellect != null)
+                {
+                    points.IntellectPercentage = await CalculateSimilarityPreferences((int)model.Intellect, points.IntellectPercentage);
+                    points.Intellect = (int)model.Intellect;
+                }
+
+                if (model.LevelOfSense != null)
+                {
+                    points.LevelOfSensePercentage = await CalculateSimilarityPreferences((int)model.LevelOfSense, points.LevelOfSensePercentage);
+                    points.LevelOfSense = (int)model.LevelOfSense;
+                }
+
+                if (model.OpenMindedness != null)
+                {
+                    points.OpenMindednessPercentage = await CalculateSimilarityPreferences((int)model.OpenMindedness, points.OpenMindednessPercentage);
+                    points.OpenMindedness = (int)model.OpenMindedness;
+                }
+
+                if (model.SelfAwareness != null)
+                {
+                    points.SelfAwarenessPercentage = await CalculateSimilarityPreferences((int)model.SelfAwareness, points.SelfAwarenessPercentage);
+                    points.SelfAwareness = (int)model.SelfAwareness;
+                }
+
+                return points;
             }
             catch { return null; }
         }
@@ -3723,7 +3786,8 @@ namespace MyWebApi.Repositories
 
         public async Task<string> CheckTickRequestStatusÀsync(long userId)
         {
-            var request = await _contx.tick_requests.FindAsync(userId);
+            var request = await _contx.tick_requests.Where(r => r.UserId == userId)
+                .SingleOrDefaultAsync();
 
             if (request == null)
                 return "";
@@ -3785,6 +3849,31 @@ namespace MyWebApi.Repositories
                 return false;
 
             return true;
+        }
+
+        public async Task<PersonalityCaps> GetUserPersonalityCapsAsync(long userId)
+        {
+            var stats = await _contx.USER_PERSONALITY_STATS.Where(s => s.UserId == userId)
+                .SingleOrDefaultAsync();
+
+            if (stats == null)
+                throw new NullReferenceException($"Use #{userId} does not have personality stats");
+
+            return new PersonalityCaps
+            {
+                CanP = stats.Personality > 0,
+                CanE = stats.EmotionalIntellect > 0,
+                CanR = stats.Reliability > 0,
+                CanS = stats.Compassion > 0,
+                CanO = stats.OpenMindedness > 0,
+                CanN = stats.Agreeableness > 0,
+                CanA = stats.SelfAwareness > 0,
+                CanL = stats.LevelOfSense > 0,
+                CanI = stats.Intellect > 0,
+                CanT = stats.Nature > 0,
+                CanY = stats.Creativity > 0,
+            };
+
         }
     }
 }

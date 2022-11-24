@@ -746,7 +746,7 @@ namespace MyWebApi.Controllers
         }
 
         [HttpPost("/UpdateUserPersonalityPoints")]
-        public async Task<UserPersonalityPoints> UpdateUserPersonalityPoints(UserPersonalityPoints model)
+        public async Task<bool> UpdateUserPersonalityPoints(PointsPayload model)
         {
             return await _repository.UpdateUserPersonalityPoints(model);
         }
@@ -918,6 +918,12 @@ namespace MyWebApi.Controllers
         public async Task<bool> CheckShouldTurnOffPersonality(long userId)
         {
             return await _repository.CheckShouldTurnOffPersonalityAsync(userId);
+        }
+
+        [HttpGet("/GetUserPersonalityCaps/{userId}")]
+        public async Task<PersonalityCaps> GetUserPersonalityCaps(long userId)
+        {
+            return await _repository.GetUserPersonalityCapsAsync(userId);
         }
     }
 }

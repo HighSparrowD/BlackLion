@@ -1,5 +1,7 @@
 import base64
 
+import requests
+
 from Registration import *
 from ReportModule import *
 from telebot.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardButton, InlineKeyboardMarkup
@@ -17,6 +19,24 @@ class Settings:
         self.old_queries = []
         self.black_list = {}
         self.encounter_list = {}
+        self.user_points = {}
+        self.user_free_points = 0
+        self.free_points_indicator = None
+        self.p_indicator = None
+        self.e_indicator = None
+        self.r_indicator = None
+        self.s_indicator = None
+        self.o_indicator = None
+        self.n_indicator = None
+        self.a_indicator = None
+        self.l_indicator = None
+        self.i_indicator = None
+        self.t_indicator = None
+        self.y_indicator = None
+        self.personalityMarkup = None
+        self.active_personality_message = 0
+        self.personality_caps = {}
+        self.personality_updated_points = {}
         self.current_markup_elements = []
         self.markup_page = 1
         self.markup_pages_count = 0
@@ -33,7 +53,7 @@ class Settings:
         self.setting_message = "1. My Profile\n2. Personality Settings\n3. Filter Settings\n4. My Statistics\n5. Additional Actions\n\n6. Exit"
         self.settingMyProfile_message = f"{self.chooseOption_message}\n1. View the blacklist\n2. Manage recently encountered users\n3. Change profile properties\n4. ⭐Set profile status⭐\n\n5. Go back"
         self.settingPersonalitySettings_message = f"{self.chooseOption_message}\n1. Turn On / Turn Off PERSONALITY\n2. Manage PERSONALITY points\n3. View my tests\n\n4. Go back"
-        self.settingFiltersSettings_message = f"{self.chooseOption_message}\n1. Turn On / Turn Off language consideration (Random Conversation)\n2. ⭐Turn on / Turn off filtration by a real photo⭐\n\n3. Go back"
+        self.settingFiltersSettings_message = f"{self.chooseOption_message}\n1. Turn On / Turn Off language consideration (Random Conversation)\n2.Change 'Free' status\n3. ⭐Turn on / Turn off filtration by a real photo⭐\n\n4. Go back"
         self.settingStatistics_message = f"{self.chooseOption_message}\n1. View Achievements\n2. 💎Top-Up coin balance💎\n3. 💎Top-Up Personality points balance💎\n4. 💎Buy premium access💎\n\n5. Go back"
         self.settingAdditionalActions_message = f"{self.chooseOption_message}\n1. Get invitation credentials\n"
         self.encounter_options_message = f"1. Use 💥Second chance💥 to send like to a user once again. You have SECOND_CHANCE_COUNT\n2. Report user\n3. Abort\n4." #TODO: replace caps message to a real "second chance" effect amount
@@ -44,6 +64,7 @@ class Settings:
         self.settingStatisticsMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4", "5")
         self.YNMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("yes", "no")
         self.abortMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("abort")
+        self.doneMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("Done")
         self.encounterOptionMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4")
         self.credsMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3")
 
@@ -109,7 +130,12 @@ class Settings:
             if message.text == "1":
                 self.personality_switch(message)
             elif message.text == "2":
-                self.personality_points(message)
+                if Helpers.check_user_uses_personality(self.current_user):
+                    self.personality_points(message)
+                else:
+                    self.bot.send_message(self.current_user, "You have to turn on PERSONALITY to do this")
+                    self.bot.send_message(self.current_user, f"{self.settingPersonalitySettings_message}", reply_markup=self.settingPersonalitySettingsMarkup)
+                    self.bot.register_next_step_handler(message, self.personality_settings_choice, acceptMode=True, chat_id=self.current_user)
             elif message.text == "3":
                 TestModule(self.bot, self.message, isActivatedFromShop=False, returnMethod=self.proceed)
             elif message.text == "4":
@@ -133,6 +159,10 @@ class Settings:
                 self.bot.send_message(self.current_user, "Not implemented yet!")
                 self.proceed()
             elif message.text == "3":
+                # TODO: implement
+                self.bot.send_message(self.current_user, "Not implemented yet!")
+                self.proceed()
+            elif message.text == "4":
                 self.proceed()
             else:
                 self.bot.send_message(self.current_user, "No such option", reply_markup=self.settingFiltersSettingsMarkup)
@@ -186,31 +216,77 @@ class Settings:
 
     def personality_points(self, message, acceptMode=False):
         if not acceptMode:
-            markup = InlineKeyboardMarkup()\
-                .add(InlineKeyboardButton("Personality", callback_data="1"))\
-                .add(InlineKeyboardButton("-", callback_data="1"), InlineKeyboardButton("0", callback_data="1"), InlineKeyboardButton("+", callback_data="1")) \
-                .add(InlineKeyboardButton("Emotional intellect", callback_data="1")) \
-                .add(InlineKeyboardButton("-", callback_data="1"), InlineKeyboardButton("0", callback_data="1"), InlineKeyboardButton("+", callback_data="1")) \
-                .add(InlineKeyboardButton("Reliability", callback_data="1")) \
-                .add(InlineKeyboardButton("-", callback_data="1"), InlineKeyboardButton("0", callback_data="1"), InlineKeyboardButton("+", callback_data="1")) \
-                .add(InlineKeyboardButton("Compassion", callback_data="1")) \
-                .add(InlineKeyboardButton("-", callback_data="1"), InlineKeyboardButton("0", callback_data="1"), InlineKeyboardButton("+", callback_data="1")) \
-                .add(InlineKeyboardButton("Open-Mindedness", callback_data="1")) \
-                .add(InlineKeyboardButton("-", callback_data="1"), InlineKeyboardButton("0", callback_data="1"), InlineKeyboardButton("+", callback_data="1")) \
-                .add(InlineKeyboardButton("Agreeableness", callback_data="1")) \
-                .add(InlineKeyboardButton("-", callback_data="1"), InlineKeyboardButton("0", callback_data="1"), InlineKeyboardButton("+", callback_data="1")) \
-                .add(InlineKeyboardButton("Self-Awareness", callback_data="1")) \
-                .add(InlineKeyboardButton("-", callback_data="1"), InlineKeyboardButton("0", callback_data="1"), InlineKeyboardButton("+", callback_data="1")) \
-                .add(InlineKeyboardButton("Levels Of Sense", callback_data="1")) \
-                .add(InlineKeyboardButton("-", callback_data="1"), InlineKeyboardButton("0", callback_data="1"), InlineKeyboardButton("+", callback_data="1")) \
-                .add(InlineKeyboardButton("Intellect", callback_data="1")) \
-                .add(InlineKeyboardButton("-", callback_data="1"), InlineKeyboardButton("0", callback_data="1"), InlineKeyboardButton("+", callback_data="1")) \
-                .add(InlineKeyboardButton("Nature", callback_data="1")) \
-                .add(InlineKeyboardButton("-", callback_data="1"), InlineKeyboardButton("0", callback_data="1"), InlineKeyboardButton("+", callback_data="1")) \
-                .add(InlineKeyboardButton("Creativity", callback_data="1")) \
-                .add(InlineKeyboardButton("-", callback_data="1"), InlineKeyboardButton("0", callback_data="1"), InlineKeyboardButton("+", callback_data="1"))
+            self.user_free_points = int(json.loads(requests.get(f"https://localhost:44381/GetUserPersonalityPointsAmount/{self.current_user}", verify=False).text))
+            self.user_points = json.loads(requests.get(f"https://localhost:44381/GetUserPersonalityPoints/{self.current_user}", verify=False).text)
+            self.personality_caps = json.loads(requests.get(f"https://localhost:44381/GetUserPersonalityCaps/{self.current_user}", verify=False).text)
 
-            self.bot.send_message(self.current_user, "sds", reply_markup=markup)
+            self.free_points_indicator = InlineKeyboardButton(self.user_free_points, callback_data="0")
+            self.current_callback_handler = self.bot.register_callback_query_handler("", self.personality_callback_handler, user_id=self.current_user)
+
+            if not self.user_points:
+                self.bot.send_message(self.current_user, "Something went wrong")
+                self.proceed()
+
+            self.p_indicator = InlineKeyboardButton(f"         {self.user_points['personality']}         ", callback_data="0")
+            self.e_indicator = InlineKeyboardButton(self.user_points["emotionalIntellect"], callback_data="0")
+            self.r_indicator = InlineKeyboardButton(self.user_points["reliability"], callback_data="0")
+            self.s_indicator = InlineKeyboardButton(self.user_points["compassion"], callback_data="0")
+            self.o_indicator = InlineKeyboardButton(self.user_points["openMindedness"], callback_data="0")
+            self.n_indicator = InlineKeyboardButton(self.user_points["agreeableness"], callback_data="0")
+            self.a_indicator = InlineKeyboardButton(self.user_points["selfAwareness"], callback_data="0")
+            self.l_indicator = InlineKeyboardButton(self.user_points["levelOfSense"], callback_data="0")
+            self.i_indicator = InlineKeyboardButton(self.user_points["intellect"], callback_data="0")
+            self.t_indicator = InlineKeyboardButton(self.user_points["nature"], callback_data="0")
+            self.y_indicator = InlineKeyboardButton(self.user_points["creativity"], callback_data="0")
+
+            self.personalityMarkup = InlineKeyboardMarkup() \
+                .add(InlineKeyboardButton("Available points:", callback_data="0"), self.free_points_indicator) \
+                .add(InlineKeyboardButton("Personality", callback_data="0"))\
+                .add(InlineKeyboardButton("-", callback_data="-1"), self.p_indicator, InlineKeyboardButton("+", callback_data="1")) \
+                .add(InlineKeyboardButton("Emotional intellect", callback_data="0")) \
+                .add(InlineKeyboardButton("-", callback_data="-2"), self.e_indicator, InlineKeyboardButton("+", callback_data="2")) \
+                .add(InlineKeyboardButton("Reliability", callback_data="0")) \
+                .add(InlineKeyboardButton("-", callback_data="-3"), self.r_indicator, InlineKeyboardButton("+", callback_data="3")) \
+                .add(InlineKeyboardButton("Compassion", callback_data="0")) \
+                .add(InlineKeyboardButton("-", callback_data="-4"), self.s_indicator, InlineKeyboardButton("+", callback_data="4")) \
+                .add(InlineKeyboardButton("Open-Mindedness", callback_data="0")) \
+                .add(InlineKeyboardButton("-", callback_data="-5"), self.o_indicator, InlineKeyboardButton("+", callback_data="5")) \
+                .add(InlineKeyboardButton("Agreeableness", callback_data="0")) \
+                .add(InlineKeyboardButton("-", callback_data="-6"), self.n_indicator, InlineKeyboardButton("+", callback_data="6")) \
+                .add(InlineKeyboardButton("Self-Awareness", callback_data="0")) \
+                .add(InlineKeyboardButton("-", callback_data="-7"), self.a_indicator, InlineKeyboardButton("+", callback_data="7")) \
+                .add(InlineKeyboardButton("Levels Of Sense", callback_data="0")) \
+                .add(InlineKeyboardButton("-", callback_data="-8"), self.l_indicator, InlineKeyboardButton("+", callback_data="8")) \
+                .add(InlineKeyboardButton("Intellect", callback_data="0")) \
+                .add(InlineKeyboardButton("-", callback_data="-9"), self.i_indicator, InlineKeyboardButton("+", callback_data="9")) \
+                .add(InlineKeyboardButton("Nature", callback_data="0")) \
+                .add(InlineKeyboardButton("-", callback_data="-10"), self.t_indicator, InlineKeyboardButton("+", callback_data="10")) \
+                .add(InlineKeyboardButton("Creativity", callback_data="0")) \
+                .add(InlineKeyboardButton("-", callback_data="-11"), self.y_indicator, InlineKeyboardButton("+", callback_data="11"))
+
+            self.bot.send_message(self.current_user, "✨", reply_markup=self.doneMarkup)
+            self.active_personality_message = self.bot.send_message(self.current_user, "Points table:", reply_markup=self.personalityMarkup).id
+            self.bot.register_next_step_handler(message, self.personality_points_save, chat_id=self.current_user)
+
+    def personality_points_save(self, message):
+        #Check if message was not sent by the bot
+        if message.from_user.id == self.current_user:
+            if message.text == "Done":
+                self.personality_updated_points["balance"] = self.user_free_points
+                self.personality_updated_points["userId"] = self.current_user
+
+                d = json.dumps(self.personality_updated_points)
+                response = requests.post(f"https://localhost:44381/UpdateUserPersonalityPoints", d,
+                                                headers={"Content-Type": "application/json"},
+                                                verify=False)
+                if response.status_code == 200:
+                    self.bot.send_message(self.current_user, "Changes are saved successfully :)")
+                    self.proceed()
+                else:
+                    self.bot.send_message(self.current_user, "Something went wrong. Please, contact the administration")
+                    self.proceed()
+            else:
+                self.bot.send_message(self.current_user, "You can leave and apply changes by typing 'Done'", reply_markup=self.doneMarkup)
 
     def credentials_management(self, message, acceptMode=False):
         if not acceptMode:
@@ -510,6 +586,313 @@ class Settings:
                 except:
                     self.bot.send_message(self.current_user, "Unable to load user data. His account may already be banned or deleted")
                     self.proceed()
+
+    def personality_callback_handler(self, call):
+        self.bot.answer_callback_query(call.id, "")
+        if call.message.id not in self.old_queries:
+
+            if call.data == "1":
+                if self.personality_caps["canP"]:
+                    if self.user_free_points > 0:
+                        self.user_free_points -= 1
+                        self.user_points["personality"] += 1
+                        self.free_points_indicator.text = self.user_free_points
+                        self.personality_updated_points["personality"] = self.user_points["personality"]
+
+                        self.p_indicator.text = f"         {self.user_points['personality']}         "
+                        self.update_personality_markup()
+                        return False
+                    self.bot.send_message(self.current_user, "You dont have any personality points left")
+                    return False
+                self.bot.send_message(self.current_user, "Pass at least one test related to that parameter first :)")
+            elif call.data == "-1":
+                if self.personality_caps["canP"]:
+                    if self.user_points["personality"] > 0:
+                        self.user_free_points += 1
+                        self.user_points["personality"] -= 1
+                        self.free_points_indicator.text = self.user_free_points
+                        self.personality_updated_points["personality"] = self.user_points["personality"]
+
+                        self.p_indicator.text = f"         {self.user_points['personality']}         "
+                        self.update_personality_markup()
+                        return False
+                    self.bot.send_message(self.current_user, "You dont have any personality points left")
+                    return False
+                self.bot.send_message(self.current_user, "Pass at least one test related to that parameter first :)")
+            elif call.data == "2":
+                if self.personality_caps["canE"]:
+                    if self.user_free_points > 0:
+                        self.user_free_points -= 1
+                        self.user_points["emotionalIntellect"] += 1
+                        self.free_points_indicator.text = self.user_free_points
+                        self.personality_updated_points["emotionalIntellect"] = self.user_points["emotionalIntellect"]
+
+                        self.e_indicator.text = self.user_points["emotionalIntellect"]
+                        self.update_personality_markup()
+                        return False
+                    self.bot.send_message(self.current_user, "You dont have any personality points left")
+                    return False
+                self.bot.send_message(self.current_user, "Pass at least one test related to that parameter first :)")
+            elif call.data == "-2":
+                if self.personality_caps["canE"]:
+                    if self.user_points["emotionalIntellect"] > 0:
+                        self.user_free_points += 1
+                        self.user_points["emotionalIntellect"] -= 1
+                        self.free_points_indicator.text = self.user_free_points
+                        self.personality_updated_points["emotionalIntellect"] = self.user_points["emotionalIntellect"]
+
+                        self.e_indicator.text = self.user_points["emotionalIntellect"]
+                        self.update_personality_markup()
+                        return False
+                    return False
+                self.bot.send_message(self.current_user, "Pass at least one test related to that parameter first :)")
+            elif call.data == "3":
+                if self.personality_caps["canR"]:
+                    if self.user_free_points > 0:
+                        self.user_free_points -= 1
+                        self.user_points["reliability"] += 1
+                        self.free_points_indicator.text = self.user_free_points
+                        self.personality_updated_points["reliability"] = self.user_points["reliability"]
+
+                        self.r_indicator.text = self.user_points["reliability"]
+                        self.update_personality_markup()
+                        return False
+                    self.bot.send_message(self.current_user, "You dont have any personality points left")
+                    return False
+                self.bot.send_message(self.current_user, "Pass at least one test related to that parameter first :)")
+            elif call.data == "-3":
+                if self.personality_caps["canR"]:
+                    if self.user_points["reliability"] > 0:
+                        self.user_free_points += 1
+                        self.user_points["reliability"] -= 1
+                        self.free_points_indicator.text = self.user_free_points
+                        self.personality_updated_points["reliability"] = self.user_points["reliability"]
+
+                        self.r_indicator.text = self.user_points["reliability"]
+                        self.update_personality_markup()
+                        return False
+                    self.bot.send_message(self.current_user, "You dont have any personality points left")
+                    return False
+                self.bot.send_message(self.current_user, "Pass at least one test related to that parameter first :)")
+            elif call.data == "4":
+                if self.personality_caps["canS"]:
+                    if self.user_free_points > 0:
+                        self.user_free_points -= 1
+                        self.user_points["compassion"] += 1
+                        self.free_points_indicator.text = self.user_free_points
+                        self.personality_updated_points["compassion"] = self.user_points["compassion"]
+
+                        self.s_indicator.text = self.user_points["compassion"]
+                        self.update_personality_markup()
+                        return False
+                    self.bot.send_message(self.current_user, "You dont have any personality points left")
+                    return False
+                self.bot.send_message(self.current_user, "Pass at least one test related to that parameter first :)")
+            elif call.data == "-4":
+                if self.personality_caps["canS"]:
+                    if self.user_points["compassion"] > 0:
+                        self.user_free_points += 1
+                        self.user_points["compassion"] -= 1
+                        self.free_points_indicator.text = self.user_free_points
+                        self.personality_updated_points["compassion"] = self.user_points["compassion"]
+
+                        self.s_indicator.text = self.user_points["compassion"]
+                        self.update_personality_markup()
+                        return False
+                    return False
+                self.bot.send_message(self.current_user, "Pass at least one test related to that parameter first :)")
+            elif call.data == "5":
+                if self.personality_caps["canO"]:
+                    if self.user_free_points > 0:
+                        self.user_free_points -= 1
+                        self.user_points["openMindedness"] += 1
+                        self.free_points_indicator.text = self.user_free_points
+                        self.personality_updated_points["openMindedness"] = self.user_points["openMindedness"]
+
+                        self.o_indicator.text = self.user_points["openMindedness"]
+                        self.update_personality_markup()
+                        return False
+                    self.bot.send_message(self.current_user, "You dont have any personality points left")
+                    return False
+                self.bot.send_message(self.current_user, "Pass at least one test related to that parameter first :)")
+            elif call.data == "-5":
+                if self.personality_caps["canO"]:
+                    if self.user_points["openMindedness"] > 0:
+                        self.user_free_points += 1
+                        self.user_points["openMindedness"] -= 1
+                        self.free_points_indicator.text = self.user_free_points
+                        self.personality_updated_points["openMindedness"] = self.user_points["openMindedness"]
+
+                        self.o_indicator.text = self.user_points["openMindedness"]
+                        self.update_personality_markup()
+                        return False
+                    return False
+                self.bot.send_message(self.current_user, "Pass at least one test related to that parameter first :)")
+            elif call.data == "6":
+                if self.personality_caps["canN"]:
+                    if self.user_free_points > 0:
+                        self.user_free_points -= 1
+                        self.user_points["agreeableness"] += 1
+                        self.free_points_indicator.text = self.user_free_points
+                        self.personality_updated_points["agreeableness"] = self.user_points["agreeableness"]
+
+                        self.n_indicator.text = self.user_points["agreeableness"]
+                        self.update_personality_markup()
+                        return False
+                    self.bot.send_message(self.current_user, "You dont have any personality points left")
+                    return False
+                self.bot.send_message(self.current_user, "Pass at least one test related to that parameter first :)")
+            elif call.data == "-6":
+                if self.personality_caps["canN"]:
+                    if self.user_points["agreeableness"]:
+                        self.user_free_points += 1
+                        self.user_points["agreeableness"] -= 1
+                        self.free_points_indicator.text = self.user_free_points
+                        self.personality_updated_points["agreeableness"] = self.user_points["agreeableness"]
+
+                        self.n_indicator.text = self.user_points["agreeableness"]
+                        self.update_personality_markup()
+                        return False
+                    return False
+                self.bot.send_message(self.current_user, "Pass at least one test related to that parameter first :)")
+            elif call.data == "7":
+                if self.personality_caps["canA"]:
+                    if self.user_free_points > 0:
+                        self.user_free_points -= 1
+                        self.user_points["selfAwareness"] += 1
+                        self.free_points_indicator.text = self.user_free_points
+                        self.personality_updated_points["selfAwareness"] = self.user_points["selfAwareness"]
+
+                        self.a_indicator.text = self.user_points["selfAwareness"]
+                        self.update_personality_markup()
+                        return False
+                    self.bot.send_message(self.current_user, "You dont have any personality points left")
+                    return False
+                self.bot.send_message(self.current_user, "Pass at least one test related to that parameter first :)")
+            elif call.data == "-7":
+                if self.personality_caps["canA"]:
+                    if self.user_points["selfAwareness"] > 0:
+                        self.user_free_points += 1
+                        self.user_points["selfAwareness"] -= 1
+                        self.free_points_indicator.text = self.user_free_points
+                        self.personality_updated_points["selfAwareness"] = self.user_points["selfAwareness"]
+
+                        self.a_indicator.text = self.user_points["selfAwareness"]
+                        self.update_personality_markup()
+                        return False
+                    return False
+                self.bot.send_message(self.current_user, "Pass at least one test related to that parameter first :)")
+            elif call.data == "8":
+                if self.personality_caps["canL"]:
+                    if self.user_free_points > 0:
+                        self.user_free_points -= 1
+                        self.user_points["levelOfSense"] += 1
+                        self.free_points_indicator.text = self.user_free_points
+                        self.personality_updated_points["levelOfSense"] = self.user_points["levelOfSense"]
+
+                        self.l_indicator.text = self.user_points["levelOfSense"]
+                        self.update_personality_markup()
+                        return False
+                    self.bot.send_message(self.current_user, "You dont have any personality points left")
+                    return False
+                self.bot.send_message(self.current_user, "Pass at least one test related to that parameter first :)")
+            elif call.data == "-8":
+                if self.personality_caps["canL"]:
+                    if self.user_points["levelOfSense"] > 0:
+                        self.user_free_points += 1
+                        self.user_points["levelOfSense"] -= 1
+                        self.free_points_indicator.text = self.user_free_points
+                        self.personality_updated_points["levelOfSense"] = self.user_points["levelOfSense"]
+
+                        self.l_indicator.text = self.user_points["levelOfSense"]
+                        self.update_personality_markup()
+                        return False
+                    return False
+                self.bot.send_message(self.current_user, "Pass at least one test related to that parameter first :)")
+            elif call.data == "9":
+                if self.personality_caps["canI"]:
+                    if self.user_free_points > 0:
+                        self.user_free_points -= 1
+                        self.user_points["intellect"] += 1
+                        self.free_points_indicator.text = self.user_free_points
+                        self.personality_updated_points["intellect"] = self.user_points["intellect"]
+
+                        self.i_indicator.text = self.user_points["intellect"]
+                        self.update_personality_markup()
+                        return False
+                    self.bot.send_message(self.current_user, "You dont have any personality points left")
+                    return False
+                self.bot.send_message(self.current_user, "Pass at least one test related to that parameter first :)")
+            elif call.data == "-9":
+                if self.personality_caps["canI"]:
+                    if self.user_points["intellect"] > 0:
+                        self.user_free_points += 1
+                        self.user_points["intellect"] -= 1
+                        self.free_points_indicator.text = self.user_free_points
+                        self.personality_updated_points["intellect"] = self.user_points["intellect"]
+
+                        self.i_indicator.text = self.user_points["intellect"]
+                        self.update_personality_markup()
+                        return False
+                    return False
+                self.bot.send_message(self.current_user, "Pass at least one test related to that parameter first :)")
+            elif call.data == "10":
+                if self.personality_caps["canT"]:
+                    if self.user_free_points > 0:
+                        self.user_free_points -= 1
+                        self.user_points["nature"] += 1
+                        self.free_points_indicator.text = self.user_free_points
+                        self.personality_updated_points["nature"] = self.user_points["nature"]
+
+                        self.t_indicator.text = self.user_points["nature"]
+                        self.update_personality_markup()
+                        return False
+                    self.bot.send_message(self.current_user, "You dont have any personality points left")
+                    return False
+                self.bot.send_message(self.current_user, "Pass at least one test related to that parameter first :)")
+            elif call.data == "-10":
+                if self.personality_caps["canT"]:
+                    if self.user_points["nature"] > 0:
+                        self.user_free_points += 1
+                        self.user_points["nature"] -= 1
+                        self.free_points_indicator.text = self.user_free_points
+                        self.personality_updated_points["nature"] = self.user_points["nature"]
+
+                        self.t_indicator.text = self.user_points["nature"]
+                        self.update_personality_markup()
+                        return False
+                    return False
+                self.bot.send_message(self.current_user, "Pass at least one test related to that parameter first :)")
+            elif call.data == "11":
+                if self.personality_caps["canY"]:
+                    if self.user_free_points > 0:
+                        self.user_free_points -= 1
+                        self.user_points["creativity"] += 1
+                        self.free_points_indicator.text = self.user_free_points
+                        self.personality_updated_points["creativity"] = self.user_points["creativity"]
+
+                        self.y_indicator.text = self.user_points["creativity"]
+                        self.update_personality_markup()
+                        return False
+                    self.bot.send_message(self.current_user, "You dont have any personality points left")
+                    return False
+                self.bot.send_message(self.current_user, "Pass at least one test related to that parameter first :)")
+            elif call.data == "-11":
+                if self.personality_caps["canY"]:
+                    if self.user_points["creativity"] > 0:
+                        self.user_free_points += 1
+                        self.user_points["creativity"] -= 1
+                        self.free_points_indicator.text = self.user_free_points
+                        self.personality_updated_points["creativity"] = self.user_points["creativity"]
+
+                        self.y_indicator.text = self.user_points["creativity"]
+                        self.update_personality_markup()
+                        return False
+                    return False
+                self.bot.send_message(self.current_user, "Pass at least one test related to that parameter first :)")
+
+    def update_personality_markup(self):
+        self.bot.edit_message_reply_markup(chat_id=self.current_user, reply_markup=self.personalityMarkup, message_id=self.active_personality_message)
 
     def proceed(self):
         if self.current_callback_handler:

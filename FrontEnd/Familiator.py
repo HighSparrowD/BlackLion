@@ -30,10 +30,10 @@ class Familiator:
         self.tagLimit = Helpers.get_user_tag_limit(self.current_user)
         self.wasPersonalityTurnedOff = False
 
-        self.start_message = "1. Normal search\n2. Search by tags\n3. Free search"
+        self.start_message = "1. Normal search\n2. Search by tags\n3. Free search\n4.Exit"
         self.free_search_message = "Up for meeting someone today?"
 
-        self.startMarkup = ReplyKeyboardMarkup().add("1", "2", "3")
+        self.startMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("1", "2", "3", "4")
 
         self.report_reasons = {}
         self.people = None
@@ -86,6 +86,8 @@ class Familiator:
                 self.search_by_tags(message)
             elif message.text == "3":
                 self.free_search()
+            elif message.text == "4":
+                self.destruct()
             else:
                 self.bot.send_message(self.current_user, "No such option", reply_markup=self.startMarkup)
                 self.bot.register_next_step_handler(message, self.start, acceptMode=acceptMode, chat_id=self.current_user)
