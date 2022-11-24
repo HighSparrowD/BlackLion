@@ -41,9 +41,10 @@ class Familiator:
 
         self.eh = self.bot.register_message_handler(self.exit_handler, commands=["exit"], user_id=self.current_user)
 
-        if Helpers.check_user_have_chosen_free_search(self.current_user):
+        if not Helpers.check_user_have_chosen_free_search(self.current_user):
             self.free_search_switch(msg)
-
+        else:
+            self.start(msg)
 
     def free_search_switch(self, message, acceptMode=False):
         if not acceptMode:
@@ -130,6 +131,7 @@ class Familiator:
                 self.bot.send_message(self.current_user,
                                       "We cant find anyone who matches your search parameters. Would you like to temporarily turn off PERSONALITY and continue search without it?",
                                       reply_markup=self.YNmarkup)
+                self.bot.register_next_step_handler(message, self.personalityOff_handler, acceptMode=True, chat_id=self.current_user)
             else:
                 self.proceed()
         else:

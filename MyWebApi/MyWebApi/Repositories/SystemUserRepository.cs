@@ -3826,9 +3826,9 @@ namespace MyWebApi.Repositories
             var user = await _contx.SYSTEM_USERS.FindAsync(userId);
 
             if (user == null)
-                throw new NullReferenceException($"User #{userId} does not exist");
+                return false;
 
-            return user.IsFree != null;
+            return true;
         }
 
         public async Task<bool> CheckShouldTurnOffPersonalityAsync(long userId)
