@@ -37,21 +37,27 @@ namespace MyWebApi.Repositories
 
         public async Task<long> UploadCountries(List<Country> countries)
         {
-            countries.ForEach(async c => await _contx.COUNTRIES.AddAsync(c));
+            countries.ForEach(async c => 
+            {
+                if (!_contx.COUNTRIES.Contains(c))
+                    await _contx.COUNTRIES.AddAsync(c);
+                else
+                    _contx.COUNTRIES.Update(c);
+            });
             await _contx.SaveChangesAsync();
-
-            //foreach (var item in countries)
-            //{
-            //    _contx.COUNTRIES.Add(item);
-            //    await _contx.SaveChangesAsync();
-            //}
 
             return countries.Count;
         }
 
         public async Task<long> UploadLanguages(List<Language> langs)
         {
-            langs.ForEach(async l => await _contx.LANGUAGES.AddAsync(l));
+            langs.ForEach(async l => 
+            {
+                if (!_contx.LANGUAGES.Contains(l))
+                    await _contx.LANGUAGES.AddAsync(l);
+                else
+                    _contx.LANGUAGES.Update(l);
+            });
             await _contx.SaveChangesAsync();
 
             return langs.Count;
@@ -59,7 +65,13 @@ namespace MyWebApi.Repositories
 
         public async Task<long> UploadFeedbackReasons(List<FeedbackReason> reasons)
         {
-            reasons.ForEach(async r => await _contx.FEEDBACK_REASONS.AddAsync(r));
+            reasons.ForEach(async r => 
+            {
+                if (!_contx.FEEDBACK_REASONS.Contains(r))
+                    await _contx.FEEDBACK_REASONS.AddAsync(r);
+                else
+                    _contx.FEEDBACK_REASONS.Update(r);
+            });
             await _contx.SaveChangesAsync();
             return reasons.Count;
         }

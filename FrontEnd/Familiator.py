@@ -61,7 +61,7 @@ class Familiator:
 
                 self.start(message)
             elif message.text == "No":
-                response = requests.get(f"https://localhost:44381/SetUserFreeSearchParam/{self.current_user}/{True}",
+                response = requests.get(f"https://localhost:44381/SetUserFreeSearchParam/{self.current_user}/{False}",
                                         verify=False)
 
                 if response.status_code == 200:

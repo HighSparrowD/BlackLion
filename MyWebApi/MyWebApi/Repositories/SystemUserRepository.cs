@@ -3887,5 +3887,29 @@ namespace MyWebApi.Repositories
             };
 
         }
+
+        public async Task<bool> SwitchUserRTLanguageConsiderationAsync(long userId)
+        {
+            var user = await _contx.SYSTEM_USERS.Where(u => u.UserId == userId)
+                .SingleOrDefaultAsync();
+
+            if (user == null)
+                throw new NullReferenceException($"User #{userId} does not exist");
+
+            user.ShouldConsiderLanguages = !user.ShouldConsiderLanguages;
+
+            return user.ShouldConsiderLanguages;
+        }
+
+        public async Task<bool> GetUserRTLanguageConsiderationAsync(long userId)
+        {
+            var user = await _contx.SYSTEM_USERS.Where(u => u.UserId == userId)
+                .SingleOrDefaultAsync();
+
+            if (user == null)
+                throw new NullReferenceException($"User #{userId} does not exist");
+
+            return user.ShouldConsiderLanguages;
+        }
     }
 }

@@ -1,4 +1,4 @@
-639-1 ,639-2/T ,639-2/B ,Language name ,Native name 
+639-1 ,639-2/T ,639-2/B ,Language name ,Native name,Priority
 aa ,aar ,aar ,Afar ,Afaraf 
 ab ,abk ,abk ,Abkhaz ,"аҧсуа бызшәа, аҧсшәа "
 ae ,ave ,ave ,Avestan ,avesta 
@@ -27,17 +27,17 @@ ce ,che ,che ,Chechen ,нохчийн мотт
 ch ,cha ,cha ,Chamorro ,Chamoru 
 co ,cos ,cos ,Corsican ,"corsu, lingua corsa "
 cr ,cre ,cre ,Cree ,ᓀᐦᐃᔭᐍᐏᐣ 
-cs ,ces ,cze ,Czech ,"čeština, český jazyk "
+cs ,ces ,cze ,Czech ,"čeština, český jazyk ", 1
 cu ,chu ,chu ,"Old Church Slavonic, Church Slavonic, Old Bulgarian ",ѩзыкъ словѣньскъ 
 cv ,chv ,chv ,Chuvash ,чӑваш чӗлхи 
 cy ,cym ,wel ,Welsh ,Cymraeg 
 da ,dan ,dan ,Danish ,dansk 
-de ,deu ,ger ,German ,Deutsch 
+de ,deu ,ger ,German ,Deutsch, 1
 dv ,div ,div ,Divehi; Dhivehi; Maldivian; ,ދިވެހި 
 dz ,dzo ,dzo ,Dzongkha ,རྫོང་ཁ 
 ee ,ewe ,ewe ,Ewe ,Eʋegbe 
 el ,ell ,gre ,"Greek, Modern ",ελληνικά 
-en ,eng ,eng ,English ,English 
+en ,eng ,eng ,English ,English, 2
 eo ,epo ,epo ,Esperanto ,Esperanto 
 es ,spa ,spa ,Spanish; Castilian ,"español, castellano "
 et ,est ,est ,Estonian ,"eesti, eesti keel "
@@ -135,7 +135,7 @@ qu ,que ,que ,Quechua ,"Runa Simi, Kichwa "
 rm ,roh ,roh ,Romansh ,rumantsch grischun 
 rn ,run ,run ,Kirundi ,Ikirundi 
 ro ,ron ,rum ,Romanian ,limba română 
-ru ,rus ,rus ,Russian ,русский язык 
+ru ,rus ,rus ,Russian ,русский язык, 1
 rw ,kin ,kin ,Kinyarwanda ,Ikinyarwanda 
 sa ,san ,san ,Sanskrit (Saṁskṛta) ,संस्कृतम् 
 sc ,srd ,srd ,Sardinian ,sardu 
@@ -170,7 +170,7 @@ tt ,tat ,tat ,Tatar ,"татар теле, tatar tele "
 tw ,twi ,twi ,Twi ,Twi 
 ty ,tah ,tah ,Tahitian ,Reo Tahiti 
 ug ,uig ,uig ,"Uyghur, Uighur ","Uyƣurqə, ئۇيغۇرچە‎ "
-uk ,ukr ,ukr ,Ukrainian ,українська мова 
+uk ,ukr ,ukr ,Ukrainian ,українська мова, 1
 ur ,urd ,urd ,Urdu ,اردو 
 uz ,uzb ,uzb ,Uzbek ,"O‘zbek, Ўзбек, أۇزبېك‎ "
 ve ,ven ,ven ,Venda ,Tshivenḓa 

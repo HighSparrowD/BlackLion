@@ -113,21 +113,6 @@ namespace MyWebApi.Controllers
                     LocationId = location.Id,
                 };
                 var uPrefs = new UserPreferences(model.Id, model.UserLanguagePreferences, model.UserLocationPreferences, model.AgePrefs, model.CommunicationPrefs, model.UserGenderPrefs, model.ShouldUserPersonalityFunc);
-                var m = new User(model.Id)
-                {
-                    IsBusy = false,
-                    IsDeleted = false,
-                    IsBanned = false,
-                    ShouldConsiderLanguages = false,
-                    HasPremium = false,
-                    HadReceivedReward = false,
-                    DailyRewardPoint = 0,
-                    BonusIndex = 1,
-                    ProfileViewsCount = 0,
-                    InvitedUsersCount = 0,
-                    InvitedUsersBonus = 0,
-                    TagSearchesCount = 0,
-                };
 
                 if ((await _repository.UpdateUserAppLanguageAsync(model.Id, model.UserAppLanguageId)) == 1)
                     if (location== null || (await _repository.UpdateUserLocationAsync(location)) == 1)
@@ -853,12 +838,9 @@ namespace MyWebApi.Controllers
         }
 
         [HttpGet("/GetUserFilteringByPhotoStatus/{userId}")]
-        public async Task<string> GetUserFilteringByPhotoStatus(long userId)
+        public async Task<bool> GetUserFilteringByPhotoStatus(long userId)
         {
-            //TODO: Get string from localizer !!!
-            if (await _repository.GetUserFilteringByPhotoStatusAsync(userId) == false)
-                return "Filtering is currently Off. Would you like to turn it on ?";
-            return "Filtering is currently On. Would you like to turn it off ?";
+            return await _repository.GetUserFilteringByPhotoStatusAsync(userId);
         }
 
         [HttpGet("/GetTestDataByProperty/{userId}/{param}")]
@@ -949,6 +931,18 @@ namespace MyWebApi.Controllers
         public async Task<bool> CheckEffectIsActive(long userId, int effectId)
         {
             return await _repository.CheckEffectIsActiveAsync(userId, effectId);
+        }
+
+        [HttpGet("/SwitchUserRTLanguageConsideration/{userId}")]
+        public async Task<bool> SwitchUserRTLanguageConsideration(long userId)
+        {
+            return await _repository.SwitchUserRTLanguageConsiderationAsync(userId);
+        }
+
+        [HttpGet("/CheckEffectIsActive/{userId}")]
+        public async Task<bool> GetUserRTLanguageConsideration(long userId)
+        {
+            return await _repository.GetUserRTLanguageConsiderationAsync(userId);
         }
     }
 }

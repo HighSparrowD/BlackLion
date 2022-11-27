@@ -83,6 +83,7 @@ class Settings:
         self.encounterOptionMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4")
         self.credsMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3")
 
+
         self.secondChanceDescription = "Second chance allows you to 'like' another user once again. It can be used in the 'encounters' section"
         self.valentineDescription = "Doubles your Personality points for an hour"
         self.detectorDescription = "When matched, shows which PERSONALITY parameters were matched. Works for 1 hour"
@@ -182,7 +183,7 @@ class Settings:
                     if message.text == "abort":
                         self.proceed()
                         return False
-                    if bool(json.loads(json.loads(requests.get(f"https://localhost:44381/SetAutoReplyText/{self.current_user}/{message.text}", verify=False).text))):
+                    if bool(json.loads(requests.get(f"https://localhost:44381/SetAutoReplyText/{self.current_user}/{message.text}", verify=False).text)):
                         self.bot.send_message(self.current_user, "Set successfully !")
                         self.proceed()
                         return False
@@ -227,23 +228,97 @@ class Settings:
             self.bot.register_next_step_handler(message, self.filters_settings_choice, acceptMode=True, chat_id=self.current_user)
         else:
             if message.text == "1":
-                # TODO: implement
-                self.bot.send_message(self.current_user, "Not implemented yet!")
-                self.proceed()
+                self.language_consideration_manager(message)
             elif message.text == "2":
-                # TODO: implement
-                self.bot.send_message(self.current_user, "Not implemented yet!")
-                self.proceed()
+                self.free_status_manager(message)
             elif message.text == "3":
-                # TODO: implement
-                self.bot.send_message(self.current_user, "Not implemented yet!")
-                self.proceed()
+                if Helpers.check_user_has_premium(self.current_user):
+                    self.real_photo_filter_manager(message)
+                else:
+                    self.bot.send_message(self.current_user, "Sorry, only users with premium can turn on this filter")
             elif message.text == "4":
                 self.proceed()
             else:
                 self.bot.send_message(self.current_user, "No such option", reply_markup=self.settingFiltersSettingsMarkup)
                 self.bot.register_next_step_handler(message, self.filters_settings_choice, acceptMode=acceptMode, chat_id=self.current_user)
 
+    def language_consideration_manager(self, message, acceptMode=False):
+        self.previous_section = self.filters_settings_choice
+        if not acceptMode:
+            description = "When this filter is turned on - all people you'll encounter in /random section are going to speak in a languages you have chosen during registration. If it is turned off - you will be able to encounter absolutely random people, from random places, speaking languages, that can vary from yours.\n"
+            msg = "The filter is currently offline. Would you like to turn it on ?"
+            if bool(json.loads(requests.get(f"https://localhost:44381/CheckEffectIsActive/{self.current_user}", verify=False).text)):
+                msg = "The filter is currently online. Would you like to turn it off ?"
+            self.bot.send_message(self.current_user, f"{description}\n{msg}", reply_markup=self.YNMarkup)
+            self.bot.register_next_step_handler(message, self.language_consideration_manager, acceptMode=True, chat_id=self.current_user)
+        else:
+            if message.text == "yes" or message.text == "1":
+                response = requests.get(f"https://localhost:44381/SwitchUserRTLanguageConsideration/{self.current_user}/{message.text}",verify=False)
+                if response.status_code == 200:
+                    self.bot.send_message(self.current_user, "Done :)", reply_markup=self.YNMarkup)
+                else:
+                    self.bot.send_message(self.current_user, "Something went wrong. Please, contact the administration", reply_markup=self.YNMarkup)
+
+                self.proceed()
+            elif message.text == "no" or message.text == "2":
+                self.proceed()
+            else:
+                self.bot.send_message(self.current_user, "No such option", reply_markup=self.YNMarkup)
+                self.bot.register_next_step_handler(message, self.language_consideration_manager, acceptMode=acceptMode, chat_id=self.current_user)
+
+    def free_status_manager(self, message, acceptMode=False):
+        self.previous_section = self.filters_settings_choice
+        if not acceptMode:
+            self.bot.send_message(self.current_user, "Up for meeting someone today?", reply_markup=self.YNMarkup)
+            self.bot.register_next_step_handler(message, self.free_status_manager, acceptMode=True, chat_id=self.current_user)
+        else:
+            if message.text == "yes":
+                response = requests.get(f"https://localhost:44381/SetUserFreeSearchParam/{self.current_user}/{True}", verify=False)
+
+                if response.status_code == 200:
+                    self.bot.send_message(self.current_user, "Done :)")
+                else:
+                    self.bot.send_message(self.current_user, "Something went wrong. Please contact the administration")
+
+                self.proceed()
+            elif message.text == "No":
+                response = requests.get(f"https://localhost:44381/SetUserFreeSearchParam/{self.current_user}/{False}", verify=False)
+
+                if response.status_code == 200:
+                    self.bot.send_message(self.current_user, "Done :)")
+                else:
+                    self.bot.send_message(self.current_user, "Something went wrong. Please contact the administration")
+
+                self.proceed()
+            else:
+                self.bot.send_message(self.current_user, "No such option", reply_markup=self.YNMarkup)
+                self.bot.register_next_step_handler(message, self.free_status_manager, acceptMode=acceptMode, chat_id=self.current_user)
+
+    def real_photo_filter_manager(self, message, acceptMode=False):
+        self.previous_section = self.filters_settings_choice
+        if not acceptMode:
+            msg = "The filter is currently offline. Would you like to turn it on ?"
+            if bool(json.loads(requests.get(f"https://localhost:44381/GetUserFilteringByPhotoStatus/{self.current_user}",verify=False).text)):
+                msg = "The filter is currently online. Would you like to turn it off ?"
+
+            description = "When this filter is turned on, you will encounter only people with the real photos in their profiles\n\n"
+            self.bot.send_message(self.current_user, f"{description}{msg}", reply_markup=self.YNMarkup)
+            self.bot.register_next_step_handler(message, self.real_photo_filter_manager, acceptMode=True, chat_id=self.current_user)
+        else:
+            if message.text == "yes":
+                response = requests.get(f"https://localhost:44381/SwitchUserFilteringByPhoto/{self.current_user}", verify=False)
+
+                if response.status_code == 200:
+                    self.bot.send_message(self.current_user, "Done :)")
+                else:
+                    self.bot.send_message(self.current_user, "Something went wrong. Please, contact the administration")
+
+                self.proceed()
+            elif message.text == "no":
+                self.proceed()
+            else:
+                self.bot.send_message(self.current_user, "No such option", reply_markup=self.YNMarkup)
+                self.bot.register_next_step_handler(message, self.real_photo_filter_manager, acceptMode=acceptMode, chat_id=self.current_user)
 
     def my_statistics_settings_choice(self, message, acceptMode=False):
         self.previous_section = self.setting_choice

@@ -165,5 +165,7 @@ namespace MyWebApi.Interfaces
         Task<bool> SetUserFreeSearchParamAsync(long userId, bool freeStatus);
         //Get which stats can user invest points in
         Task<PersonalityCaps> GetUserPersonalityCapsAsync(long userId);
+        Task<bool> SwitchUserRTLanguageConsiderationAsync(long userId);
+        Task<bool> GetUserRTLanguageConsiderationAsync(long userId);
     }
 }
