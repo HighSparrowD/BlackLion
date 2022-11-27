@@ -15,6 +15,7 @@ using MyWebApi.Entities.DailyTaskEntities;
 using MyWebApi.Entities.TestEntities;
 using static MyWebApi.Enums.SystemEnums;
 using MyWebApi.Entities.AdminEntities;
+using MyWebApi.Entities.EffectEntities;
 
 namespace MyWebApi.Controllers
 {
@@ -924,6 +925,30 @@ namespace MyWebApi.Controllers
         public async Task<PersonalityCaps> GetUserPersonalityCaps(long userId)
         {
             return await _repository.GetUserPersonalityCapsAsync(userId);
+        }
+
+        [HttpGet("/GetUserActiveEffects/{userId}")]
+        public async Task<List<ActiveEffect>> GetUserActiveEffects(long userId)
+        {
+            return await _repository.GetUserActiveEffects(userId);
+        }
+
+        [HttpGet("/ActivateDurableEffect/{userId}/{effectId}")]
+        public async Task<DateTime?> ActivateDurableEffect(long userId, int effectId)
+        {
+            return await _repository.ActivateDurableEffectAsync(userId, effectId);
+        }
+
+        [HttpGet("/ActivateToggleEffect/{userId}/{effectId}")]
+        public async Task<bool> ActivateToggleEffect(long userId, int effectId)
+        {
+            return await _repository.ActivateToggleEffectAsync(userId, effectId);
+        }
+
+        [HttpGet("/CheckEffectIsActive/{userId}/{effectId}")]
+        public async Task<bool> CheckEffectIsActive(long userId, int effectId)
+        {
+            return await _repository.CheckEffectIsActiveAsync(userId, effectId);
         }
     }
 }

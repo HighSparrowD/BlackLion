@@ -4,14 +4,12 @@ import Common.Menues as menues
 
 
 class Shop:
-    def __init__(self, bot, message, shops, visit):
+    def __init__(self, bot, message, visit):
         self.bot = bot
         self.message = message
         self.current_user = message.from_user.id
         Helpers.switch_user_busy_status(self.current_user)
         self.price_list = f"\n1 day of premium costs 500p\n7 days of premium cost 1500p\n1 month (always 30 days) costs 7000p"
-        self.shops = shops
-        self.shops.append(self)
 
         self.start_markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True, row_width=3)\
             .add(KeyboardButton("Buy premium"), KeyboardButton("/exit")) #TODO: Expand in the future
@@ -66,6 +64,5 @@ class Shop:
 
     def destruct(self):
         self.bot.message_handlers.remove(self.mh)
-        self.shops.remove(self)
         Helpers.switch_user_busy_status(self.current_user)
         menues.go_back_to_main_menu(self.bot, self.current_user, self.message)

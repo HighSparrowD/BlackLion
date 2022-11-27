@@ -850,7 +850,7 @@ class Registrator:
             description_message = "---Functionality description---\n"
             question_message = "Would you like to use auto reply functionality? Send me a text message (up to 300 characters) or a ⭐Voice message (Up to 15 seconds)⭐ that will be sent to every user who likes your profile"
 
-            if self.hasVisited:
+            if not self.hasVisited:
                 question_message = description_message + question_message
 
             self.bot.send_message(self.current_user, question_message, reply_markup=self.skip_markup)
@@ -862,7 +862,7 @@ class Registrator:
 
             elif message.voice:
                 if Helpers.check_user_has_premium(self.current_user):
-                    if message.voice.duration < 15:
+                    if message.voice.duration <= 15:
                         self.reply_voice = message.voice.file_id
                         self.checkout_step(message)
                     else:

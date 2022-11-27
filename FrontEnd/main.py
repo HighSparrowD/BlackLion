@@ -24,7 +24,6 @@ sponsor_handlers = []
 admin_sponsor_handlers = []
 admin_cabinets = []
 reporters = []
-shops = []
 
 
 @bot.message_handler(commands=["start"], is_multihandler=True)
@@ -151,7 +150,7 @@ def create_shop(message):
     if Helpers.check_user_exists(message.from_user.id):
         if not Helpers.check_user_is_banned(message.from_user.id):
             visit = Helpers.check_user_has_visited_section(message.from_user.id, 10)
-            return Shop(bot, message, shops, visit)
+            return Shop(bot, message, visit)
         else:
             bot.send_message(message.from_user.id, "Sorry, you had been banned. Please contact the support team")
     send_registration_warning(message.from_user.id)

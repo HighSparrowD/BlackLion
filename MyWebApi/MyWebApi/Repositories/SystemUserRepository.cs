@@ -3489,6 +3489,7 @@ namespace MyWebApi.Repositories
             try
             {
                 ActiveEffect effect;
+                var userBalance = await GetUserWalletBalance(userId);
 
                 switch (effectId)
                 {
@@ -3499,7 +3500,9 @@ namespace MyWebApi.Repositories
                         {
                             if (AtLeastOneIsNotZero(userPoints))
                             {
+                                userBalance.Valentines--;
                                 effect = new TheValentine(userId);
+                                break;
                             }
                             return null;
                         }
@@ -3507,11 +3510,14 @@ namespace MyWebApi.Repositories
                     case 7:
                         if (!(bool)await CheckUserUsesPersonality(userId))
                             return null;
+                        userBalance.Detectors--;
                         effect = new TheDetector(userId);
                         break;
+                    //Currently not used
                     case 8:
                         if (!(bool)await CheckUserUsesPersonality(userId))
                             return null;
+                        userBalance.WhiteDetectors--;
                         effect = new TheWhiteDetector(userId);
                         break;
                     default:
@@ -3519,6 +3525,7 @@ namespace MyWebApi.Repositories
                 }
 
                 await _contx.USER_ACTIVE_EFFECTS.AddAsync(effect);
+                await _contx.SaveChangesAsync();
                 return effect.ExpirationTime;
             }
             catch { return null; }
@@ -3528,9 +3535,12 @@ namespace MyWebApi.Repositories
         {
             try
             {
+                var userBalance = await GetUserWalletBalance(userId);
+
                 switch (effectId)
                 {
                     case 5:
+                        userBalance.SecondChances--;
                         await RegisterUserRequest(new UserNotification
                         {
                             UserId = userId,
@@ -3542,9 +3552,11 @@ namespace MyWebApi.Repositories
                         });
                         return true;
                     case 9:
+                        userBalance.CardDecksMini--;
                         await AddMaxUserProfileViewCount(userId, 20);
                         return true;
                     case 10:
+                        userBalance.CardDecksPlatinum--;
                         await AddMaxUserProfileViewCount(userId, 50);
                         return true;
                     default:
