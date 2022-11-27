@@ -281,7 +281,7 @@ class Settings:
                     self.bot.send_message(self.current_user, "Something went wrong. Please contact the administration")
 
                 self.proceed()
-            elif message.text == "No":
+            elif message.text == "no":
                 response = requests.get(f"https://localhost:44381/SetUserFreeSearchParam/{self.current_user}/{False}", verify=False)
 
                 if response.status_code == 200:
@@ -298,7 +298,7 @@ class Settings:
         self.previous_section = self.filters_settings_choice
         if not acceptMode:
             msg = "The filter is currently offline. Would you like to turn it on ?"
-            if bool(json.loads(requests.get(f"https://localhost:44381/GetUserFilteringByPhotoStatus/{self.current_user}",verify=False).text)):
+            if bool(json.loads(requests.get(f"https://localhost:44381/GetUserFilteringByPhotoStatus/{self.current_user}", verify=False).text)):
                 msg = "The filter is currently online. Would you like to turn it off ?"
 
             description = "When this filter is turned on, you will encounter only people with the real photos in their profiles\n\n"

@@ -3693,6 +3693,7 @@ namespace MyWebApi.Repositories
                 throw new NullReferenceException($"User {userId} was not found");
 
             userPrefs.ShouldFilterUsersWithoutRealPhoto = !userPrefs.ShouldFilterUsersWithoutRealPhoto;
+            await _contx.SaveChangesAsync();
 
             return userPrefs.ShouldFilterUsersWithoutRealPhoto;
         }
