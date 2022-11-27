@@ -24,7 +24,6 @@ sponsor_handlers = []
 admin_sponsor_handlers = []
 admin_cabinets = []
 reporters = []
-shops = []
 
 
 @bot.message_handler(commands=["start"], is_multihandler=True)
@@ -95,6 +94,7 @@ def SwitchAdminStatus(message):
     if msg:
         bot.send_message(message.from_user.id, f"Your current admin status is: -> {msg} <-", reply_markup=Menus.admin_menu_markup)
 
+
 @bot.message_handler(commands=["enteradmincabinet"])
 def EnterAdminCabinet(message):
     if not Helpers.check_user_is_busy(message.from_user.id):
@@ -125,7 +125,7 @@ def create_familiator(message, userId):
         if not Helpers.check_user_is_banned(message.from_user.id):
             if not Helpers.check_user_is_deleted(message.from_user.id):
                 visit = Helpers.check_user_has_visited_section(message.from_user.id, 2)
-                return Familiator(bot, message, userId, familiators, requesters, visit)
+                return Familiator(bot, message, userId, familiators, visit)
             else:
                 bot.send_message(message.from_user.id, "Hey! your account had been deleted recently. Would you like to pass a quick registration and save all your lost data?\n Then hit /register !")
         else:
@@ -150,7 +150,7 @@ def create_shop(message):
     if Helpers.check_user_exists(message.from_user.id):
         if not Helpers.check_user_is_banned(message.from_user.id):
             visit = Helpers.check_user_has_visited_section(message.from_user.id, 10)
-            return Shop(bot, message, shops, visit)
+            return Shop(bot, message, visit)
         else:
             bot.send_message(message.from_user.id, "Sorry, you had been banned. Please contact the support team")
     send_registration_warning(message.from_user.id)

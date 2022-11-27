@@ -15,6 +15,7 @@ using MyWebApi.Entities.DailyTaskEntities;
 using MyWebApi.Entities.TestEntities;
 using static MyWebApi.Enums.SystemEnums;
 using MyWebApi.Entities.AdminEntities;
+using MyWebApi.Entities.EffectEntities;
 
 namespace MyWebApi.Controllers
 {
@@ -120,7 +121,6 @@ namespace MyWebApi.Controllers
                     ShouldConsiderLanguages = false,
                     HasPremium = false,
                     HadReceivedReward = false,
-                    IsFree = false,
                     DailyRewardPoint = 0,
                     BonusIndex = 1,
                     ProfileViewsCount = 0,
@@ -290,7 +290,6 @@ namespace MyWebApi.Controllers
                 ShouldConsiderLanguages = false,
                 HasPremium = false,
                 HadReceivedReward = false,
-                IsFree = false,
                 DailyRewardPoint = 0,
                 BonusIndex = 1,
                 ProfileViewsCount = 0,
@@ -748,7 +747,7 @@ namespace MyWebApi.Controllers
         }
 
         [HttpPost("/UpdateUserPersonalityPoints")]
-        public async Task<UserPersonalityPoints> UpdateUserPersonalityPoints(UserPersonalityPoints model)
+        public async Task<bool> UpdateUserPersonalityPoints(PointsPayload model)
         {
             return await _repository.UpdateUserPersonalityPoints(model);
         }
@@ -783,10 +782,10 @@ namespace MyWebApi.Controllers
             return await _repository.GetTags(userId);
         }
 
-        [HttpGet("/GetUserListByTags/{userId}")]
-        public async Task<User> GetUserListByTags(long userId)
+        [HttpPost("/GetUserByTags")]
+        public async Task<User> GetUserByTags(GetUserByTags model)
         {
-            return await _repository.GetUserListByTagsAsync(userId);
+            return await _repository.GetUserListByTagsAsync(model);
         }
 
         [HttpGet("/GetMaxTagCount/{userId}")]
@@ -860,6 +859,96 @@ namespace MyWebApi.Controllers
             if (await _repository.GetUserFilteringByPhotoStatusAsync(userId) == false)
                 return "Filtering is currently Off. Would you like to turn it on ?";
             return "Filtering is currently On. Would you like to turn it off ?";
+        }
+
+        [HttpGet("/GetTestDataByProperty/{userId}/{param}")]
+        public async Task<List<GetTestShortData>> GetTestDataByProperty(long userId, short param)
+        {
+            return await _repository.GetTestDataByPropertyAsync(userId, param);
+        }
+
+        [HttpGet("/GetUserTestDataByProperty/{userId}/{param}")]
+        public async Task<List<GetTestShortData>> GetUserTestDataByProperty(long userId, short param)
+        {
+            return await _repository.GetUserTestDataByPropertyAsync(userId, param);
+        }
+
+        [HttpGet("/GetTestFullDataById/{testId}/{localisation}")]
+        public async Task<GetFullTestData> GetTestFullDataById(long testId, int localisation)
+        {
+            return await _repository.GetTestFullDataByIdAsync(testId, localisation);
+        }
+
+        [HttpGet("/GetUserTest/{userId}/{testId}")]
+        public async Task<UserTest> GetUserTest(long userId, long testId)
+        {
+            return await _repository.GetUserTestAsync(userId, testId);
+        }
+
+        [HttpGet("/GetPossibleTestPassRange/{userId}/{testId}")]
+        public async Task<int> GetPossibleTestPassRange(long userId, long testId)
+        {
+            return await _repository.GetPossibleTestPassRangeAsync(userId, testId);
+        }
+
+        [HttpGet("/PurchaseTest/{userId}/{testId}/{localisation}")]
+        public async Task<bool> PurchaseTest(long userId, long testId, int localisation)
+        {
+            return await _repository.PurchaseTestAsync(userId, testId, localisation);
+        }
+
+        [HttpGet("/CheckTickRequestStatus/{userId}")]
+        public async Task<string> CheckTickRequestStatus(long userId)
+        {
+            return await _repository.CheckTickRequestStatusÀsync(userId);
+        }
+
+        [HttpGet("/SetUserFreeSearchParam/{userId}/{freeSearch}")]
+        public async Task<bool> SetUserFreeSearchParam(long userId, bool freeSearch)
+        {
+            return await _repository.SetUserFreeSearchParamAsync(userId, freeSearch);
+        }
+
+        [HttpGet("/CheckUserHaveChosenFreeParam/{userId}")]
+        public async Task<bool> CheckUserHaveChosenFreeParam(long userId)
+        {
+            return await _repository.CheckUserHaveChosenFreeParamAsync(userId);
+        }
+
+        [HttpGet("/CheckShouldTurnOffPersonality/{userId}")]
+        public async Task<bool> CheckShouldTurnOffPersonality(long userId)
+        {
+            return await _repository.CheckShouldTurnOffPersonalityAsync(userId);
+        }
+
+        [HttpGet("/GetUserPersonalityCaps/{userId}")]
+        public async Task<PersonalityCaps> GetUserPersonalityCaps(long userId)
+        {
+            return await _repository.GetUserPersonalityCapsAsync(userId);
+        }
+
+        [HttpGet("/GetUserActiveEffects/{userId}")]
+        public async Task<List<ActiveEffect>> GetUserActiveEffects(long userId)
+        {
+            return await _repository.GetUserActiveEffects(userId);
+        }
+
+        [HttpGet("/ActivateDurableEffect/{userId}/{effectId}")]
+        public async Task<DateTime?> ActivateDurableEffect(long userId, int effectId)
+        {
+            return await _repository.ActivateDurableEffectAsync(userId, effectId);
+        }
+
+        [HttpGet("/ActivateToggleEffect/{userId}/{effectId}")]
+        public async Task<bool> ActivateToggleEffect(long userId, int effectId)
+        {
+            return await _repository.ActivateToggleEffectAsync(userId, effectId);
+        }
+
+        [HttpGet("/CheckEffectIsActive/{userId}/{effectId}")]
+        public async Task<bool> CheckEffectIsActive(long userId, int effectId)
+        {
+            return await _repository.CheckEffectIsActiveAsync(userId, effectId);
         }
     }
 }

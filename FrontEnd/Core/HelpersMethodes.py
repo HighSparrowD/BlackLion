@@ -242,6 +242,30 @@ def get_user_list(userId):
         return None
 
 
+def get_user_list_turnOffPersonality(userId):
+    try:
+        return json.loads(requests.get(f"https://localhost:44381//GetUserList/TurnOffP/{userId}", verify=False).text)
+    except:
+        return None
+
+
+def get_free_user_list(userId):
+    try:
+        return json.loads(requests.get(f"https://localhost:44381//GetUserList/FreeSearch/{userId}", verify=False).text)
+    except:
+        return None
+
+
+def get_user_list_by_tags(getUserByTagsModel):
+    try:
+        d = json.dumps(getUserByTagsModel)
+        return json.loads(requests.post(f"https://localhost:44381//GetUserByTags", d,
+                                       headers={"Content-Type": "application/json"},
+                                       verify=False).text)
+    except:
+        return None
+
+
 def user_invitation_link(invitationId, userId):
     try:
         return bool(
@@ -322,6 +346,16 @@ def top_up_user_balance(userId, amount, description):
 def check_user_balance_is_sufficient(userId, cost):
     return bool(json.loads(
         requests.get(f"https://localhost:44381/CheckBalanceIsSufficient/{userId}/{cost}", verify=False).text))
+
+
+def check_user_have_chosen_free_search(userId):
+    return bool(json.loads(
+        requests.get(f"https://localhost:44381/CheckUserHaveChosenFreeParam/{userId}", verify=False).text))
+
+
+def check_should_turnOf_personality(userId):
+    return bool(json.loads(
+        requests.get(f"https://localhost:44381/CheckShouldTurnOffPersonality/{userId}", verify=False).text))
 
 
 def grant_premium(userId, cost, dayDuration):

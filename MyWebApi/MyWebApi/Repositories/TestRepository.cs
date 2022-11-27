@@ -51,9 +51,9 @@ namespace MyWebApi.Repositories
             return await _contx.APP_LANGUAGES.ToListAsync();
         }
 
-        public async Task<List<PsychologicalTest>> GetPsychologicalTestsAsync()
+        public async Task<List<Test>> GetPsychologicalTestsAsync()
         {
-            var tests = await _contx.psychological_tests
+            var tests = await _contx.tests
                 .ToListAsync();
 
             return tests;
@@ -103,9 +103,9 @@ namespace MyWebApi.Repositories
                 .ToListAsync();
         }
 
-        public async Task<PsychologicalTest> GetSinglePsychologicalTestAsync(long testId, int localisationId)
+        public async Task<Test> GetSingleTestAsync(long testId, int localisationId)
         {
-            return await _contx.psychological_tests
+            return await _contx.tests
                 .Where(t => t.Id == testId && t.ClassLocalisationId == localisationId)
                 .Include(t => t.Questions)
                 .ThenInclude(q => q.Answers)

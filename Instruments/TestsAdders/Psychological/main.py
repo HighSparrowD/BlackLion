@@ -29,7 +29,9 @@ def load_test_data(testTemplate):
             "classLocalisationId": test[1],
             "name": test[2],
             "description": test[3],
-            "questions": load_questions(test[0])
+            "testType": test[4],
+            "price": test[5],
+            "questions": load_questions(test[0]),
         }
         testTemplate.append(test_data)
 
@@ -46,6 +48,7 @@ def load_questions(testId):
         if question[2] == testId:
             questions.append({
                 "text": question[0],
+                "photo": question[3],
                 "answers": load_answers(question[1])
             })
 
@@ -62,7 +65,8 @@ def load_answers(questionId):
         if answer[2] == questionId:
             answers.append({
                 "text": answer[0],
-                "value": answer[1]
+                "value": answer[1],
+                "isCorrect": answer[3]
             })
 
     return answers

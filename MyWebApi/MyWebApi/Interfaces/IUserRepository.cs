@@ -128,7 +128,7 @@ namespace MyWebApi.Interfaces
         int GetMaximumLanguageCount(bool? hasPremium);
         Task<int> GetUserPersonalityPointsAmount(long userId);
         Task<bool> UpdateUserPersonalityStats(TestPayload model);
-        Task<UserPersonalityPoints> UpdateUserPersonalityPoints(UserPersonalityPoints model);
+        Task<bool> UpdateUserPersonalityPoints(PointsPayload model);
         Task<UserPersonalityStats> GetUserPersonalityStats(long userId);
         Task<UserPersonalityPoints> GetUserPersonalityPoints(long userId);
         Task<bool> SwitchPersonalityUsage(long userId);
@@ -136,7 +136,7 @@ namespace MyWebApi.Interfaces
         Task<bool> RegisterTestPassingAsync(TestPayload model);
         Task<bool> UpdateTags(UpdateTags model);
         Task<List<string>> GetTags(long userId);
-        Task<User> GetUserListByTagsAsync(long userId);
+        Task<User> GetUserListByTagsAsync(GetUserByTags model);
         Task<bool> CheckEncounteredUserIsInBlackList(long userId, long encounteredUser);
         Task<string> RetreiveCommonLanguagesAsync(long user1Iq, long user2Id, int localisationId);
         Task<bool> LogAdminErrorAsync(long? userId, string description, int sectioId);
@@ -153,5 +153,17 @@ namespace MyWebApi.Interfaces
         Task<bool> SendTickRequestAsync(SendTickRequest request);
         Task<bool> SwitchUserFilteringByPhotoAsync(long userId);
         Task<bool> GetUserFilteringByPhotoStatusAsync(long userId);
+        Task<List<GetTestShortData>> GetTestDataByPropertyAsync(long userId, short param);
+        Task<List<GetTestShortData>> GetUserTestDataByPropertyAsync(long userId, short param);
+        Task<GetFullTestData> GetTestFullDataByIdAsync(long testId, int localisation);
+        Task<UserTest> GetUserTestAsync(long userId, long testId);
+        Task<int> GetPossibleTestPassRangeAsync(long userId, long testId);
+        Task<bool> PurchaseTestAsync(long userId, long testId, int localisation);
+        Task<string> CheckTickRequestStatusÀsync(long userId);
+        Task<bool> CheckUserHaveChosenFreeParamAsync(long userId);
+        Task<bool> CheckShouldTurnOffPersonalityAsync(long userId);
+        Task<bool> SetUserFreeSearchParamAsync(long userId, bool freeStatus);
+        //Get which stats can user invest points in
+        Task<PersonalityCaps> GetUserPersonalityCapsAsync(long userId);
     }
 }

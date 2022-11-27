@@ -90,17 +90,10 @@ namespace MyWebApi.Controllers
             return await _repository.GetLanguagesAsync(localisationId);
         }
 
-        [HttpGet("/GetPsychologicalTests")]
-        public async Task<List<PsychologicalTest>> GetPsychologicalTests()
+        [HttpGet("/GetSingleTest/{id}/{locId}")]
+        public async Task<Test> GetSingleTest(long id, int locId)
         {
-            var tests = await _repository.GetPsychologicalTestsAsync();
-            return tests;
-        }
-
-        [HttpGet("/GetSinglePsychologicalTest/{id}/{locId}")]
-        public async Task<PsychologicalTest> GetSinglePsychologicalTest(long id, int locId)
-        {
-            var tests = await _repository.GetSinglePsychologicalTestAsync(id, locId);
+            var tests = await _repository.GetSingleTestAsync(id, locId);
             return tests;
         }
 

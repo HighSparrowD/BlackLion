@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.VisualBasic;
 using MyWebApi.Data;
 using MyWebApi.Entities.AchievementEntities;
 using MyWebApi.Entities.AdminEntities;
@@ -17,7 +16,6 @@ using MyWebApi.Interfaces;
 using QRCoder;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 using static MyWebApi.Enums.SystemEnums;
@@ -262,7 +260,7 @@ namespace MyWebApi.Repositories
 
                 //If user wants to find only people who are free today
                 if (isFreeSearch)
-                    data = data.Where(u => u.IsFree).ToList();
+                    data = data.Where(u => u.IsFree != null && (bool)u.IsFree).ToList();
 
 
                 //If user uses PERSONALITY functionality and free search is disabled
@@ -279,6 +277,9 @@ namespace MyWebApi.Repositories
                     var valentineBonus = 1d;
 
                     var hasActiveValentine = userActiveEffects.Where(e => e.EffectId == (int)Currencies.TheValentine)
+                        .SingleOrDefault() != null;
+
+                    var userHasDetectorOn = userActiveEffects.Where(e => e.EffectId == (int)Currencies.TheDetector)
                         .SingleOrDefault() != null;
 
                     if (hasActiveValentine)
@@ -613,7 +614,12 @@ namespace MyWebApi.Repositories
                             continue;
                         };
 
-                        returnData.Add(new GetUserData(u, $"<br>{matchedBy}</br>\n{u.UserBaseInfo.UserDescription}"));
+                        var returnUser = new GetUserData(u, $"{u.UserBaseInfo.UserDescription}");
+
+                        if (userHasDetectorOn)
+                            returnUser.AddDescriptionBonus("<br>{matchedBy}</br>");
+
+                        returnData.Add(returnUser);
                     }
                 }
                 else
@@ -651,12 +657,15 @@ namespace MyWebApi.Repositories
                     //Fill-up return data if it wasnt filled in PERSONALITY check
                     if (!currentUser.UserPreferences.ShouldUsePersonalityFunc)
                     {
-                        await Task.Run(() =>
+                        await Task.Run(async () =>
                         {
                             for (int i = 0; i < data.Count; i++)
                             {
                                 var u = data[i];
                                 string bonus = "";
+
+                                //Register user encounter
+                                await RegisterUserEncounter(new Encounter { UserId = userId, EncounteredUserId = u.UserId, SectionId = (int)Sections.Familiator });
 
                                 if (u.IsIdentityConfirmed)
                                     bonus += $"✔️\n\n";
@@ -2036,12 +2045,14 @@ namespace MyWebApi.Repositories
         {
             try
             {
-                request.Severity = (short)SystemEnums.Severities.Moderate;
+                request.Severity = (short)Severities.Moderate;
 
                 if (request.IsLikedBack)
-                    request.SectionId = (short)SystemEnums.Sections.Requester;
+                    request.SectionId = (short)Sections.Requester;
                 else
-                    request.SectionId = (short)SystemEnums.Sections.Familiator;
+                    request.SectionId = (short)Sections.Familiator;
+
+                await RegisterUserEncounter(new Encounter { UserId = (long)request.UserId, EncounteredUserId = request.UserId1, SectionId = (int)Sections.Requester });
 
                 var id = await AddUserNotificationAsync(request);
 
@@ -2920,7 +2931,7 @@ namespace MyWebApi.Repositories
         {
             try
             {
-                //Breake if test result wasnt saved
+                //Break if test result wasnt saved
                 if (!await RegisterTestPassingAsync(model))
                     return false;
 
@@ -2932,17 +2943,23 @@ namespace MyWebApi.Repositories
             catch { return false; }
         }
 
-        public async Task<UserPersonalityPoints> UpdateUserPersonalityPoints(UserPersonalityPoints model)
+        public async Task<bool> UpdateUserPersonalityPoints(PointsPayload model)
         {
             try
             {
-                model = await RecalculateSimilarityPercentage(model);
-                _contx.Update(model);
+                var points = await RecalculateSimilarityPercentage(model);
+                var balance = await _contx.USER_WALLET_BALANCES.Where(b => b.UserId == model.UserId)
+                    .SingleOrDefaultAsync();
+
+                balance.PersonalityPoints = model.Balance;
+
+                _contx.Update(balance);
+                _contx.Update(points);
                 await _contx.SaveChangesAsync();
 
-                return model;
+                return true;
             }
-            catch { return null; }
+            catch { return false; }
         }
 
         public async Task<UserPersonalityStats> GetUserPersonalityStats(long userId)
@@ -2967,22 +2984,79 @@ namespace MyWebApi.Repositories
             catch { return null; }
         }
 
-        private async Task<UserPersonalityPoints> RecalculateSimilarityPercentage(UserPersonalityPoints model)
+        private async Task<UserPersonalityPoints> RecalculateSimilarityPercentage(PointsPayload model)
         {
             try
             {
-                model.PersonalityPercentage = await CalculateSimilarityPreferences(model.Personality, model.PersonalityPercentage);
-                model.CreativityPercentage = await CalculateSimilarityPreferences(model.Creativity, model.CreativityPercentage);
-                model.ReliabilityPercentage = await CalculateSimilarityPreferences(model.Reliability, model.ReliabilityPercentage);
-                model.NaturePercentage = await CalculateSimilarityPreferences(model.Nature, model.NaturePercentage);
-                model.AgreeablenessPercentage = await CalculateSimilarityPreferences(model.Agreeableness, model.AgreeablenessPercentage);
-                model.CompassionPercentage = await CalculateSimilarityPreferences(model.Compassion, model.CompassionPercentage);
-                model.EmotionalIntellectPercentage = await CalculateSimilarityPreferences(model.EmotionalIntellect, model.EmotionalIntellectPercentage);
-                model.IntellectPercentage = await CalculateSimilarityPreferences(model.Intellect, model.IntellectPercentage);
-                model.LevelOfSensePercentage = await CalculateSimilarityPreferences(model.LevelOfSense, model.LevelOfSensePercentage);
-                model.OpenMindednessPercentage = await CalculateSimilarityPreferences(model.OpenMindedness, model.OpenMindednessPercentage);
-                model.SelfAwarenessPercentage = await CalculateSimilarityPreferences(model.SelfAwareness, model.SelfAwarenessPercentage);
-                return model;
+                var points = await GetUserPersonalityPoints(model.UserId);
+
+                if (model.Personality != null)
+                {
+                    points.PersonalityPercentage = await CalculateSimilarityPreferences((int)model.Personality, points.PersonalityPercentage);
+                    points.Personality = (int)model.Personality;
+                }
+
+                if (model.Creativity != null)
+                {
+                    points.CreativityPercentage = await CalculateSimilarityPreferences((int)model.Creativity, points.CreativityPercentage);
+                    points.Creativity = (int)model.Creativity;
+                }
+
+                if (model.Reliability != null)
+                {
+                    points.ReliabilityPercentage = await CalculateSimilarityPreferences((int)model.Reliability, points.ReliabilityPercentage);
+                    points.Reliability = (int)model.Reliability;
+                }
+
+                if (model.Nature != null)
+                {
+                    points.NaturePercentage = await CalculateSimilarityPreferences((int)model.Nature, points.NaturePercentage);
+                    points.Nature = (int)model.Nature;
+                }
+
+                if (model.Agreeableness != null)
+                {
+                    points.AgreeablenessPercentage = await CalculateSimilarityPreferences((int)model.Agreeableness, points.AgreeablenessPercentage);
+                    points.Agreeableness = (int)model.Agreeableness;
+                }
+
+                if (model.Compassion != null)
+                {
+                    points.CompassionPercentage = await CalculateSimilarityPreferences((int)model.Compassion, points.CompassionPercentage);
+                    points.Compassion = (int)model.Compassion;
+                }
+
+                if (model.EmotionalIntellect != null)
+                {
+                    points.EmotionalIntellectPercentage = await CalculateSimilarityPreferences((int)model.EmotionalIntellect, points.EmotionalIntellectPercentage);
+                    points.EmotionalIntellect = (int)model.EmotionalIntellect;
+                }
+
+                if (model.Intellect != null)
+                {
+                    points.IntellectPercentage = await CalculateSimilarityPreferences((int)model.Intellect, points.IntellectPercentage);
+                    points.Intellect = (int)model.Intellect;
+                }
+
+                if (model.LevelOfSense != null)
+                {
+                    points.LevelOfSensePercentage = await CalculateSimilarityPreferences((int)model.LevelOfSense, points.LevelOfSensePercentage);
+                    points.LevelOfSense = (int)model.LevelOfSense;
+                }
+
+                if (model.OpenMindedness != null)
+                {
+                    points.OpenMindednessPercentage = await CalculateSimilarityPreferences((int)model.OpenMindedness, points.OpenMindednessPercentage);
+                    points.OpenMindedness = (int)model.OpenMindedness;
+                }
+
+                if (model.SelfAwareness != null)
+                {
+                    points.SelfAwarenessPercentage = await CalculateSimilarityPreferences((int)model.SelfAwareness, points.SelfAwarenessPercentage);
+                    points.SelfAwareness = (int)model.SelfAwareness;
+                }
+
+                return points;
             }
             catch { return null; }
         }
@@ -2994,7 +3068,7 @@ namespace MyWebApi.Repositories
                 .SingleOrDefaultAsync();
 
             //If user have passed some test before - set the devider to 2, to find an average value
-            if ((await _contx.USER_TESTS_RESULTS.Where(r => r.UserId == model.UserId).ToListAsync()).Count > 1)
+            if ((await _contx.user_tests.Where(r => r.UserId == model.UserId).ToListAsync()).Count > 1)
                 devider = 2;
 
             if (model.Personality != 0)
@@ -3089,7 +3163,12 @@ namespace MyWebApi.Repositories
         {
             try
             {
-                await _contx.USER_TESTS_RESULTS.AddAsync(model);
+                var userTest = await _contx.user_tests.Where(t => t.UserId == model.UserId && t.TestId == model.TestId)
+                    .SingleOrDefaultAsync();
+
+                userTest.PassedOn = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
+
+                _contx.user_tests.Update(userTest);
                 await _contx.SaveChangesAsync();
 
                 return true;
@@ -3140,16 +3219,15 @@ namespace MyWebApi.Repositories
             { return null; }
         }
 
-        public async Task<User> GetUserListByTagsAsync(long userId)
+        public async Task<User> GetUserListByTagsAsync(GetUserByTags model)
         {
-            var currentUser = await GetUserInfoAsync(userId);
+            var currentUser = await GetUserInfoAsync(model.UserId);
 
             //Throw exception if user has reached his tag search limit
             if (!currentUser.HasPremium && currentUser.TagSearchesCount + 1 > 3)
-                throw new ApplicationException($"User {userId} has already reached his tag-search limit");
+                throw new ApplicationException($"User {model.UserId} has already reached his tag-search limit");
 
-            var tags = await GetTags(userId);
-            var currentUserEncounters = await GetUserEncounters(userId, (int)Sections.Familiator); //I am not sure if it is 2 or 3 section
+            var currentUserEncounters = await GetUserEncounters(model.UserId, (int)Sections.Familiator); //I am not sure if it is 2 or 3 section
 
             var data = await _contx.SYSTEM_USERS
                 .Where(u => u.UserId != currentUser.UserId)
@@ -3170,14 +3248,14 @@ namespace MyWebApi.Repositories
             data = data.Where(u => !currentUser.CheckIfHasEncountered(currentUserEncounters, u.UserId)).ToList();
 
             //Check if users are in each others black lists
-            data = data.Where(u => u.UserBlackList.Where(u => u.BannedUserId == userId).SingleOrDefault() == null).ToList();
+            data = data.Where(u => u.UserBlackList.Where(u => u.BannedUserId == model.UserId).SingleOrDefault() == null).ToList();
             data = data.Where(u => currentUser.UserBlackList.Where(l => l.BannedUserId == u.UserId).SingleOrDefault() == null).ToList();
 
             //Check if request already exists
-            data = data.Where(u => !CheckRequestExists(userId, u.UserId)).ToList();
+            data = data.Where(u => !CheckRequestExists(model.UserId, u.UserId)).ToList();
 
             //Check if current user had already recieved request from user
-            data = data.Where(u => !CheckRequestExists(u.UserId, userId)).ToList();
+            data = data.Where(u => !CheckRequestExists(u.UserId, model.UserId)).ToList();
 
             //If user does NOT have gender prederences
             if (currentUser.UserPreferences.UserGenderPrefs != 2)
@@ -3211,7 +3289,7 @@ namespace MyWebApi.Repositories
             //    Console.WriteLine(t);
             //});
 
-            var user = data.OrderByDescending(u => u.UserDataInfo.Tags.Intersect(tags).Count())
+            var user = data.OrderByDescending(u => u.UserDataInfo.Tags.Intersect(model.Tags).Count())
                 .FirstOrDefault();
 
             if(user.HasPremium && user.Nickname != null)
@@ -3411,6 +3489,7 @@ namespace MyWebApi.Repositories
             try
             {
                 ActiveEffect effect;
+                var userBalance = await GetUserWalletBalance(userId);
 
                 switch (effectId)
                 {
@@ -3421,7 +3500,9 @@ namespace MyWebApi.Repositories
                         {
                             if (AtLeastOneIsNotZero(userPoints))
                             {
+                                userBalance.Valentines--;
                                 effect = new TheValentine(userId);
+                                break;
                             }
                             return null;
                         }
@@ -3429,11 +3510,14 @@ namespace MyWebApi.Repositories
                     case 7:
                         if (!(bool)await CheckUserUsesPersonality(userId))
                             return null;
+                        userBalance.Detectors--;
                         effect = new TheDetector(userId);
                         break;
+                    //Currently not used
                     case 8:
                         if (!(bool)await CheckUserUsesPersonality(userId))
                             return null;
+                        userBalance.WhiteDetectors--;
                         effect = new TheWhiteDetector(userId);
                         break;
                     default:
@@ -3441,6 +3525,7 @@ namespace MyWebApi.Repositories
                 }
 
                 await _contx.USER_ACTIVE_EFFECTS.AddAsync(effect);
+                await _contx.SaveChangesAsync();
                 return effect.ExpirationTime;
             }
             catch { return null; }
@@ -3450,9 +3535,12 @@ namespace MyWebApi.Repositories
         {
             try
             {
+                var userBalance = await GetUserWalletBalance(userId);
+
                 switch (effectId)
                 {
                     case 5:
+                        userBalance.SecondChances--;
                         await RegisterUserRequest(new UserNotification
                         {
                             UserId = userId,
@@ -3464,9 +3552,11 @@ namespace MyWebApi.Repositories
                         });
                         return true;
                     case 9:
+                        userBalance.CardDecksMini--;
                         await AddMaxUserProfileViewCount(userId, 20);
                         return true;
                     case 10:
+                        userBalance.CardDecksPlatinum--;
                         await AddMaxUserProfileViewCount(userId, 50);
                         return true;
                     default:
@@ -3616,6 +3706,186 @@ namespace MyWebApi.Repositories
                 throw new NullReferenceException($"User {userId} was not found");
 
             return userPrefs.ShouldFilterUsersWithoutRealPhoto;
+        }
+
+        public async Task<List<GetTestShortData>> GetTestDataByPropertyAsync(long userId, short param)
+        {
+            var localisation = await GetUserAppLanguage(userId);
+
+            //Get tests user already has
+            var userTests = await _contx.user_tests.Where(t => t.UserId == userId && t.TestType == param)
+                .Select(t => t.TestId)
+                .ToListAsync();
+
+            return await _contx.tests
+                .Where(t => t.TestType == param && !userTests.Contains(t.Id) && t.ClassLocalisationId == localisation)
+                .Select(t => new GetTestShortData { Id = t.Id, Name = t.Name })
+                .ToListAsync();
+        }
+
+        public Task<GetFullTestData> GetTestFullDataByIdAsync(long testId, int localisation)
+        {
+            return _contx.tests.Where(t => t.Id == testId && t.ClassLocalisationId == localisation)
+                .Select(t => new GetFullTestData {Id = t.Id, Name = t.Name, Description = t.Description, Price = t.Price, TestType = t.TestType})
+                .SingleOrDefaultAsync();
+        }
+
+        public async Task<UserTest> GetUserTestAsync(long userId, long testId)
+        {
+            return await _contx.user_tests.Where(t => t.UserId == userId && t.TestId == testId)
+                .Include(t => t.Test)
+                .SingleOrDefaultAsync();
+        }
+
+        public async Task<int> GetPossibleTestPassRangeAsync(long userId, long testId)
+        {
+            var test = await GetUserTestAsync(userId, testId);
+
+            if (test == null)
+                throw new NullReferenceException($"User #{userId} does not have test #{testId} available");
+
+            //If date is passing is equal to null => test had not been passed so far
+            if (test.PassedOn == null)
+                return 0;
+
+            if ((test.PassedOn - DateTime.Now).Value.TotalDays > 90)
+                return 0;
+
+            return (int)(90 - (test.PassedOn - DateTime.Now).Value.TotalDays);
+
+        }
+
+        public async Task<bool> PurchaseTestAsync(long userId, long testId, int localisation)
+        {
+            var balance = await GetUserWalletBalance(userId);
+            var sysTest = await _contx.tests.Where(t => t.Id == testId && t.ClassLocalisationId == localisation)
+                .SingleOrDefaultAsync();
+
+            if (sysTest == null)
+                throw new NullReferenceException($"Test #{testId} with localisation #{localisation} does not exist");
+
+            if (balance.Points >= sysTest.Price)
+            {
+                var test = await _contx.tests.Where(t => t.Id == testId && t.ClassLocalisationId == localisation)
+                    .SingleOrDefaultAsync();
+
+                if (test == null)
+                    throw new NullReferenceException($"Test #{testId} with localisation #{localisation} was not found");
+
+                await _contx.user_tests.AddAsync(new UserTest
+                {
+                    UserId = userId,
+                    TestId = testId,
+                    TestType = test.TestType,
+                    TestClassLocalisationId = localisation
+                });
+                
+                await _contx.SaveChangesAsync();
+                return true;
+            }
+
+            return false;
+        }
+
+        public async Task<List<GetTestShortData>> GetUserTestDataByPropertyAsync(long userId, short param)
+        {
+            //Get users tests
+            return await _contx.user_tests.Where(t => t.UserId == userId && t.TestType == param)
+                .Include(t => t.Test)
+                .Select(t => new GetTestShortData { Id = t.TestId, Name = t.Test.Name })
+                .ToListAsync();
+        }
+
+        public async Task<string> CheckTickRequestStatusÀsync(long userId)
+        {
+            var request = await _contx.tick_requests.Where(r => r.UserId == userId)
+                .SingleOrDefaultAsync();
+
+            if (request == null)
+                return "";
+
+            //TODO: Get status from localizer !
+            switch (request.State)
+            {
+                case 1:
+                    return "Added";
+                case 2:
+                    return "Changed";
+                case 3:
+                    return "In Process";
+                case 4:
+                    return "Declined";
+                case 5:
+                    return "1";
+                default:
+                    return "Added";
+            }
+        }
+
+        public async Task<bool> SetUserFreeSearchParamAsync(long userId, bool freeStatus)
+        {
+            var user = await _contx.SYSTEM_USERS.FindAsync(userId);
+
+            if (user == null)
+                throw new NullReferenceException($"User #{userId} does not exist");
+
+            user.IsFree = freeStatus;
+            return freeStatus;
+        }
+
+        public async Task<bool> CheckUserHaveChosenFreeParamAsync(long userId)
+        {
+            var user = await _contx.SYSTEM_USERS.FindAsync(userId);
+
+            if (user == null)
+                return false;
+
+            return true;
+        }
+
+        public async Task<bool> CheckShouldTurnOffPersonalityAsync(long userId)
+        {
+            var user = await _contx.SYSTEM_USERS.Where(u => u.UserId == userId)
+                .Include(u => u.UserPreferences)
+                .SingleOrDefaultAsync();
+
+            if (user == null)
+                throw new NullReferenceException($"User #{userId} does not exist");
+
+            //Return false if peofileViewCountIsAlreadyMaxed
+            if (user.ProfileViewsCount >= user.MaxProfileViewsCount)
+                return false;
+
+            //Return false if personality is not used
+            if (!user.UserPreferences.ShouldUsePersonalityFunc)
+                return false;
+
+            return true;
+        }
+
+        public async Task<PersonalityCaps> GetUserPersonalityCapsAsync(long userId)
+        {
+            var stats = await _contx.USER_PERSONALITY_STATS.Where(s => s.UserId == userId)
+                .SingleOrDefaultAsync();
+
+            if (stats == null)
+                throw new NullReferenceException($"Use #{userId} does not have personality stats");
+
+            return new PersonalityCaps
+            {
+                CanP = stats.Personality > 0,
+                CanE = stats.EmotionalIntellect > 0,
+                CanR = stats.Reliability > 0,
+                CanS = stats.Compassion > 0,
+                CanO = stats.OpenMindedness > 0,
+                CanN = stats.Agreeableness > 0,
+                CanA = stats.SelfAwareness > 0,
+                CanL = stats.LevelOfSense > 0,
+                CanI = stats.Intellect > 0,
+                CanT = stats.Nature > 0,
+                CanY = stats.Creativity > 0,
+            };
+
         }
     }
 }
