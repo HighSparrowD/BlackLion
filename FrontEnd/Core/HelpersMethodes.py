@@ -225,7 +225,7 @@ def delete_user_request(requestId):
 def delete_user_notification(notificationId):
     try:
         return bool(
-            json.loads(requests.delete(f"https://localhost:44381/SendNotificationConfirmationCode/{notificationId}", verify=False).text))
+            json.loads(requests.get(f"https://localhost:44381/SendNotificationConfirmationCode/{notificationId}", verify=False).text))
     except:
         return None
 

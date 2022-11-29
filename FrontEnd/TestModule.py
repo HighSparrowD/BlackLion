@@ -2,7 +2,7 @@ import json
 
 import requests
 import Core.HelpersMethodes as Helpers
-from telebot.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardButton, InlineKeyboardMarkup
+from telebot.types import ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
 from Common.Menues import count_pages, assemble_markup, reset_pages
 from Common.Menues import go_back_to_main_menu
 
@@ -16,6 +16,8 @@ class TestModule:
         self.isOnStart = True
         self.isDeciding = False
         self.isPassingTest = False
+        self.is_about_to_leave = False
+        self.is_about_handler_present = False
         self.returnMethod = returnMethod
 
         self.localisation = Helpers.get_user_app_language(self.current_user)
@@ -25,6 +27,7 @@ class TestModule:
         self.markup_page = 1
         self.markup_pages_count = 0
 
+        self.current_question_message = 0
         self.active_message_id = 0
         self.active_param = 0
 
@@ -45,6 +48,7 @@ class TestModule:
                 .add(InlineKeyboardButton("Creativity", callback_data="11")) \
 
         self.YNmarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Yes", "No")
+        self.abortMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("/abort")
         self.ManageTestMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("1", "2")
 
         #TODO: Name the effect !
@@ -59,11 +63,15 @@ class TestModule:
         self.current_test = None
 
         Helpers.switch_user_busy_status(self.current_user)
+        self.ah = self.bot.register_message_handler(self.abort_checkout, commands=["abort"], user_id=self.current_user)
 
         self.start()
 
     def start(self):
         self.active_message_id = self.bot.send_message(self.current_user, "Please choose the parameter, test will be sorted by", reply_markup=self.start_markup).id
+        self.bot.send_message(self.current_user, "Type 'abort to leave'", reply_markup=self.abortMarkup)
+        # self.is_about_to_leave = True
+        # self.get_ready_to_abort(self.message)
 
     def manage_point_group(self):
         markup = self.get_markup()
@@ -106,6 +114,7 @@ class TestModule:
             return None
 
     def show_current_test(self, message, acceptMode=False):
+        # self.is_about_to_leave = False
         if not acceptMode:
             self.bot.send_message(self.current_user, self.get_current_test_data())
             if self.isActivatedFromShop:
@@ -186,11 +195,16 @@ class TestModule:
             self.current_question_answers.clear()
             for answer in self.current_question["answers"]:
                 self.current_question_answers[answer["id"]] = answer
-                markup.add(InlineKeyboardButton(answer["text"], callback_data=answer["id"]))
+                markup.add(InlineKeyboardButton(f"{answer['text']}", callback_data=answer["id"]))
 
             if self.current_question["photo"]:
                 self.bot.send_photo(self.current_user, self.current_question["photo"], caption=self.current_question["text"])
-            self.bot.send_message(self.current_user, self.current_question["text"], reply_markup=markup)
+
+            if not self.current_question_message:
+                self.current_question_message = self.bot.send_message(self.current_user, f"❓ {self.current_question['text']} ❓", reply_markup=markup).id
+            else:
+                # self.bot.edit_message_reply_markup(chat_id=self.current_user, reply_markup=markup, message_id=self.current_question_message)
+                self.bot.edit_message_text(text=f"❓ {self.current_question['text']} ❓", chat_id=self.current_user, message_id=self.current_question_message, reply_markup=markup)
             questions.pop(0)
         else:
             self.isPassingTest = False
@@ -201,8 +215,23 @@ class TestModule:
 
         d = json.dumps(data)
         json.loads(requests.post(f"https://localhost:44381/UpdateUserPersonalityStats", d, headers={"Content-Type": "application/json"}, verify=False).text)
-        #TODO: Show the real result
-        self.bot.send_message(self.current_user, f"Here is your result: {self.user_total}")
+
+        active_answer = "-"
+
+        default_answer = None
+        smallest = 1000
+
+        for result in self.current_test_data["results"]:
+            #Will be sent if users score is even smaller than the smallest possible score
+            if result["score"] < smallest:
+                default_answer = result["result"]
+            if self.user_total >= int(result["score"]):
+                active_answer = result["result"]
+
+        if active_answer:
+            self.bot.send_message(self.current_user, active_answer)
+        else:
+            self.bot.send_message(self.current_user, default_answer)
         self.go_back_to_test_selection()
 
     def create_test_payload(self):
@@ -272,7 +301,10 @@ class TestModule:
 
         if markup:
             self.bot.delete_message(chat_id=self.current_user, message_id=self.active_message_id)
-            self.active_message_id = self.bot.send_message(self.current_user, "---", reply_markup=markup).id
+            self.active_message_id = self.bot.send_message(self.current_user, "Choose a test", reply_markup=markup).id
+            self.bot.send_message(self.current_user, "Type '/abort' to leave", reply_markup=self.abortMarkup)
+            # self.is_about_to_leave = True
+            # self.get_ready_to_abort(self.message)
 
     def load_test_data(self):
         self.current_test_data = json.loads(requests.get(f"https://localhost:44381/GetSingleTest/{self.current_test}/{self.localisation}", verify=False).text)
@@ -297,7 +329,7 @@ class TestModule:
             return False
 
         elif self.isOnStart:
-            self.active_param = call.data
+            self.active_param = int(call.data)
             self.manage_point_group()
 
         elif self.isPassingTest:
@@ -313,6 +345,29 @@ class TestModule:
             self.current_test = int(call.data)
             self.show_current_test(call.message)
 
+    # def get_ready_to_abort(self, message):
+    #     self.bot.register_next_step_handler(message, self.abort_checkout, chat_id=self.current_user)
+
+    def abort_handler(self):
+        self.destruct()
+
+    def abort_checkout(self, message, acceptMode=False):
+        if not self.is_about_to_leave:
+            if not acceptMode:
+                self.bot.send_message(self.current_user, "Are you sure, you want to leave ?", reply_markup=self.YNmarkup)
+                self.bot.register_next_step_handler(message, self.abort_checkout, acceptMode=True, chat_id=self.current_user)
+            else:
+                if message.text == "Yes":
+                    self.is_about_to_leave = False
+                    self.abort_handler()
+                elif message.text == "No":
+                    self.is_about_to_leave = False
+                    pass
+                #     self.get_ready_to_abort(message)
+                else:
+                    self.bot.send_message(self.current_user, "No such option", reply_markup=self.YNmarkup)
+                    self.bot.register_next_step_handler(message, self.abort_handler, acceptMode=acceptMode, chat_id=self.current_user)
+
     @staticmethod
     def index_converter(index):
         if index == "-1":
@@ -320,7 +375,11 @@ class TestModule:
         return 1
 
     def destruct(self):
-        self.bot.callback_query_handlers.remove(self.chCode)
+        if self.chCode in self.bot.callback_query_handlers:
+            self.bot.callback_query_handlers.remove(self.chCode)
+
+        if self.ah in self.bot.message_handlers:
+            self.bot.message_handlers.remove(self.ah)
 
         if self.returnMethod:
             self.returnMethod()

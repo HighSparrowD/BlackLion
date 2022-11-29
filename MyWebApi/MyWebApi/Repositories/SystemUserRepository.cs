@@ -132,6 +132,10 @@ namespace MyWebApi.Repositories
                     //TODO find and topup user's task progress
                 }
 
+                //Add Starting test pack
+                //TODO: Add more tests here
+                await PurchaseTestAsync(model.UserId, 1, dataModel.LanguageId);
+
                 return model.UserId;
             }
             catch(Exception ex) {
@@ -1566,6 +1570,7 @@ namespace MyWebApi.Repositories
                 else
                 {
                     await CreateUserBalance(userId, points, time);
+                    userBalance = await GetUserWalletBalance(userId);
                 }
 
                 var userParentId = (await _contx.SYSTEM_USERS.FindAsync(userId)).ParentId;
@@ -2596,11 +2601,11 @@ namespace MyWebApi.Repositories
                 .ToListAsync();
         }
 
-        public async Task<bool> DeleteUserNotification(long userId, Guid notificationId)
+        public async Task<bool> DeleteUserNotification(Guid notificationId)
         {
             try
             {
-                var notification = await GetUserNotificationAsync(userId, notificationId);
+                var notification = await GetUserNotificationAsync(notificationId);
 
                 if (notification != null)
                 {
@@ -2884,18 +2889,16 @@ namespace MyWebApi.Repositories
             return 250; //TODO: Think if value should be hardcoded 
         }
 
-        public async Task<UserNotification> GetUserNotificationAsync(long userId, Guid notificationId)
+        public async Task<UserNotification> GetUserNotificationAsync(Guid notificationId)
         {
-            var notification = await _contx.USER_NOTIFICATIONS.Where(n => n.UserId1 == userId && n.Id == notificationId)
-                .FirstOrDefaultAsync();
+            var notification = await _contx.USER_NOTIFICATIONS.FindAsync(notificationId);
 
             return notification;
         }
 
-        public async Task<byte> SendNotificationConfirmationCodeAsync(long userId, Guid notificationId)
+        public async Task<byte> SendNotificationConfirmationCodeAsync(Guid notificationId)
         {
-            var notification = await _contx.USER_NOTIFICATIONS.Where(n => n.UserId1 == userId && n.Id == notificationId)
-                .FirstOrDefaultAsync();
+            var notification = await _contx.USER_NOTIFICATIONS.FindAsync(notificationId);
 
             if (notification == null)
                 return 0;
@@ -3584,21 +3587,22 @@ namespace MyWebApi.Repositories
         {
             try
             {
-                var effects = await _contx.USER_ACTIVE_EFFECTS.Where(e => e.UserId == userId)
-                    .ToListAsync();
+                var effectsToRemove = new List<ActiveEffect>();
+                var effectsToReturn = new List<ActiveEffect>();
 
-                if(effects != null)
+                foreach (var effect in await _contx.USER_ACTIVE_EFFECTS.Where(e => e.UserId == userId).ToListAsync())
                 {
-                    for (int i = 0; i < effects.Count; i++)
-                    {
-                        var effect = effects[i];
-                        if (effect.ExpirationTime <= DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc))
-                            effects.Remove(effect);
-                    }
-                    await _contx.SaveChangesAsync();
-                    return effects;
+                    if (effect.ExpirationTime.Value <= DateTime.UtcNow)
+                        effectsToRemove.Add(effect);
+                    else
+                        effectsToReturn.Add(effect);
                 }
-                return null;
+
+                if (effectsToRemove.Count > 0)
+                    _contx.USER_ACTIVE_EFFECTS.RemoveRange(effectsToRemove);
+
+                await _contx.SaveChangesAsync();
+                return effectsToReturn;
             }
             catch {
                 return null;
@@ -3778,6 +3782,7 @@ namespace MyWebApi.Repositories
                     UserId = userId,
                     TestId = testId,
                     TestType = test.TestType,
+                    Result = 0,
                     TestClassLocalisationId = localisation
                 });
                 

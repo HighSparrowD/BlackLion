@@ -1,2 +1,6 @@
-Text,Value,QuestionId,IsCorrect
-asada,55,40,True
+Text,Value,TestId,QuestionId,IsCorrect
+All the time,1,1,,
+Often,2,1,,
+Moderately often,3,1,,
+Sometimes,4,1,,
+Not at all,5,1,,

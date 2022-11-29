@@ -70,7 +70,7 @@ namespace MyWebApi.Repositories
         public async Task<List<Country>> GetCountries(int localisationId)
         {
             return await _contx.COUNTRIES.Where(c => c.ClassLocalisationId == localisationId)
-                .OrderByDescending(c => c.Priority)
+                .OrderBy(c => c.Priority)
                 .ToListAsync();
         }
 
@@ -103,6 +103,7 @@ namespace MyWebApi.Repositories
                 .Where(t => t.Id == testId && t.ClassLocalisationId == localisationId)
                 .Include(t => t.Questions)
                 .ThenInclude(q => q.Answers)
+                .Include(t => t.Results.OrderBy(r => r.Score))
                 .SingleOrDefaultAsync();
         }
     }

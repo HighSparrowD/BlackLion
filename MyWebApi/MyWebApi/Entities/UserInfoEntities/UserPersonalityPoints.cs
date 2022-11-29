@@ -38,27 +38,27 @@ namespace MyWebApi.Entities.UserInfoEntities
         public UserPersonalityPoints(long userId)
         {
             UserId = userId;
-            Personality = 1;
+            Personality = 0;
             PersonalityPercentage = 1;
-            EmotionalIntellect = 1;
+            EmotionalIntellect = 0;
             EmotionalIntellectPercentage = 1;
-            Reliability = 1;
+            Reliability = 0;
             ReliabilityPercentage = 1;
-            Compassion = 1;
+            Compassion = 0;
             CompassionPercentage = 1;
-            OpenMindedness = 1;
+            OpenMindedness = 0;
             OpenMindednessPercentage = 1;
-            Agreeableness = 1;
+            Agreeableness = 0;
             AgreeablenessPercentage = 1;
-            SelfAwareness = 1;
+            SelfAwareness = 0;
             SelfAwarenessPercentage = 1;
-            LevelOfSense = 1;
+            LevelOfSense = 0;
             LevelOfSensePercentage = 1;
-            Intellect = 1;
+            Intellect = 0;
             IntellectPercentage = 1;
-            Nature = 1;
+            Nature = 0;
             NaturePercentage = 1;
-            Creativity = 1;
+            Creativity = 0;
             CreativityPercentage = 1;
         }
 

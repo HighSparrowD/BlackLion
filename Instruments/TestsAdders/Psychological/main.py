@@ -43,31 +43,50 @@ def load_questions(testId):
     file = get_file_data(file)
 
     questions = []
+    q = {}
 
     for question in file:
         if question[2] == testId:
-            questions.append({
+            q = {
                 "text": question[0],
-                "photo": question[3],
-                "answers": load_answers(question[1])
-            })
+                "answers": load_answers(question[1], question[2])
+            }
+
+            if not isinstance(question[3], float):
+               q["photo"] = question[3]
+
+            questions.append(q)
 
     return questions
 
 
-def load_answers(questionId):
+def load_answers(questionId, testId=None):
     file = pandas.read_csv(f"{answers_file_name}.csv")
     file = get_file_data(file)
 
     answers = []
 
     for answer in file:
-        if answer[2] == questionId:
-            answers.append({
-                "text": answer[0],
-                "value": answer[1],
-                "isCorrect": answer[3]
-            })
+        a = {}
+
+        #If each question has its own answers
+        if answer[3] > 0:
+            if answer[3] == questionId:
+                a = {
+                    "text": answer[0],
+                    "value": answer[1],
+                }
+        else:
+            if answer[2] == testId:
+                a = {
+                    "text": answer[0],
+                    "value": answer[1],
+                }
+
+        if not isinstance(answer[3], float):
+            a["isCorrect"] = answer[3]
+
+        answers.append(a)
 
     return answers
 

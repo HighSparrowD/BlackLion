@@ -31,6 +31,7 @@ class ReportModule:
         self.markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
         self.checkoutMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("1", "2", "3", "4")
         self.YNmarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("yes", "no")
+        self.ASmarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("/skip", "/abort")
 
         for reason in self.reasons:
             self.reas.append(reason["description"])
@@ -54,10 +55,16 @@ class ReportModule:
             for reason in self.report_reasons.keys():
                 self.reasons_markup.add(self.report_reasons[reason])
 
+            self.reasons_markup.add("/abort")
+
             self.bot.send_message(self.current_user, self.start_text, reply_markup=self.reasons_markup)
             self.bot.register_next_step_handler(message, self.report_step1, acceptMode=True, editMode=editMode, chat_id=self.current_user)
         else:
-            if message.text in self.report_reasons.values():
+            if message.text == "/abort":
+                self.abort_checkout(message, stage=self.report_step1, editMode=editMode)
+                return
+
+            elif message.text in self.report_reasons.values():
                 self.report_data = {"id": 0,
                                     "UserBaseInfoId": self.current_user,
                                     "UserBaseInfoId1": self.active_user,
@@ -70,12 +77,21 @@ class ReportModule:
                 else:
                     self.report_user_final(message)
 
+            else:
+                self.bot.send_message(self.current_user, "No such option", reply_markup=self.reasons_markup)
+                self.bot.register_next_step_handler(message, self.report_step1, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
+
     def report_user(self, message, acceptMode=False, editMode=False):
         if not acceptMode:
-            self.bot.send_message(self.current_user, "Please, enter a brief description of your report")
+            self.bot.send_message(self.current_user, "Please, enter a brief description of your report", reply_markup=self.ASmarkup)
             self.bot.register_next_step_handler(message, self.report_user, acceptMode=True, editMode=editMode, chat_id=self.current_user)
         else:
-            self.report_data["text"] = message.text
+            if message.text == "/abort":
+                self.abort_checkout(message, stage=self.report_user, editMode=editMode)
+                return
+            elif message.text == "/skip":
+                self.report_data["text"] = message.text
+
             self.report_user_final(message)
 
     def report_user_final(self, message, acceptMode=False):
@@ -95,10 +111,27 @@ class ReportModule:
                 else:
                     self.destruct()
             elif message.text == "4":
-                self.destruct()
+                self.abort_checkout(message, stage=self.report_user_final)
+                return
             else:
                 self.bot.send_message(self.current_user, "No such option")
                 self.bot.register_next_step_handler(message, self.report_user_final, acceptMode=acceptMode, chat_id=self.current_user)
+
+    def abort_checkout(self, message, stage=None, editMode=None, acceptMode=False):
+        if not acceptMode:
+            self.bot.send_message(self.current_user, "Are you sure you want to abort ?", reply_markup=self.YNmarkup)
+            self.bot.register_next_step_handler(message, self.abort_checkout, stage=stage, acceptMode=True, chat_id=self.current_user)
+        else:
+            if message.text == "yes":
+                self.destruct()
+            elif message.text == "no":
+                if editMode is not None:
+                    stage(message, editMode=editMode)
+                    return
+                stage(message)
+            else:
+                self.bot.send_message(self.current_user, "No such option", reply_markup=self.YNmarkup)
+                self.bot.register_next_step_handler(message, self.abort_checkout, stage=stage, acceptMode=acceptMode, chat_id=self.current_user)
 
     def add_user_to_blacklist_step(self, message, acceptMode=False):
         if not acceptMode:
@@ -125,7 +158,6 @@ class ReportModule:
             if reason == self.report_reasons[reas]:
                 pass
                 return reas
-
 
     def send_report(self):
         d = json.dumps(self.report_data)

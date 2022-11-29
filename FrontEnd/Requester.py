@@ -36,9 +36,7 @@ class Requester:
             .add(KeyboardButton("/search"),
                  KeyboardButton("/random"),
                  KeyboardButton("/feedback"),
-                 KeyboardButton("/sponsoraccount"),
-                 KeyboardButton("/random"),
-                 KeyboardButton("/shop"))
+                 KeyboardButton("/settings"))
 
         # if liked:
         #     self.d["userDescription"] = self.m + self.d["userDescription"]

@@ -87,7 +87,9 @@ class Registrator:
                 self.city = data["location"]["cityId"]
                 self.chosen_langs = data["userLanguages"]
                 self.app_language = data["languageId"]
-                self.tags = ' '.join(data["tags"])
+
+                if "tags" in self.data.keys():
+                    self.tags = ' '.join(data["tags"])
 
                 self.data["appLanguage"] = self.app_language
                 self.data["userName"] = base["userName"]
@@ -582,7 +584,7 @@ class Registrator:
         if not acceptMode:
             m = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("yes", "no")
             self.bot.send_message(self.current_user, "Is that your photo ? ", reply_markup=m)
-            self.bot.register_next_step_handler(msg, self.photo_step, acceptMode=True, editMode=editMode, chat_id=self.current_user)
+            self.bot.register_next_step_handler(msg, self.photo_confirmation_step, acceptMode=True, editMode=editMode, chat_id=self.current_user)
         else:
             if msg.text == "yes":
                 self.data["isPhotoReal"] = True
@@ -964,7 +966,7 @@ class Registrator:
                 response = requests.post("https://localhost:44381/UpdateUserProfile", d, headers={
                     "Content-Type": "application/json"}, verify=False)
             else:
-                del self.data["wasChanged"]
+                # del self.data["wasChanged"]
                 response = requests.post("https://localhost:44381/RegisterUser", d, headers={
                     "Content-Type": "application/json"}, verify=False)
 
@@ -1010,7 +1012,10 @@ class Registrator:
             cityName = self.cities[self.data['userCityCode']]
             countryName = self.countries[self.data['userCountryCode']]
 
-        return f"{self.data['userRealName']}, {countryName}, {cityName}\n{self.data['userAge']}\n{self.data['userDescription']}\n\n{self.tags}"
+        if self.tags:
+            return f"{self.data['userRealName']}, {countryName}, {cityName}\n{self.data['userAge']}\n{self.data['userDescription']}\n\n{self.tags}"
+
+        return f"{self.data['userRealName']}, {countryName}, {cityName}\n{self.data['userAge']}\n{self.data['userDescription']}"
 
     def spoken_languages_convertor(self, lang):
         for l in self.languages:

@@ -22,5 +22,7 @@ namespace MyWebApi.Entities.TestEntities
         public int Price{ get; set; }
         [NotNull]
         public virtual List<TestQuestion> Questions { get; set; }
+        [NotNull]
+        public virtual List<TestResult> Results { get; set; }
     }
 }

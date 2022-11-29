@@ -61,20 +61,19 @@ class Settings:
         self.add_to_blacklist_text = "Add user to a blacklist"
         self.remove_from_blacklist_text = "Remove user from a blacklist"
 
-        #TODO: Add Free search prefs switch (settingsFiltersSettings)
         self.chooseOption_message = "Choose the option:"
         self.setting_message = "1. My Profile\n2. Personality Settings\n3. Filter Settings\n4. My Statistics\n5. Additional Actions\n\n6. Exit"
         self.settingMyProfile_message = f"{self.chooseOption_message}\n1. View the blacklist\n2. Manage recently encountered users\n3. Change profile properties\n4. ⭐Set profile status⭐\n5. Set Auto reply message\n\n 6. Go back"
         self.settingPersonalitySettings_message = f"{self.chooseOption_message}\n1. Turn On / Turn Off PERSONALITY\n2. Manage PERSONALITY points\n3. View my tests\n\n4. Go back"
         self.settingFiltersSettings_message = f"{self.chooseOption_message}\n1. Turn On / Turn Off language consideration (Random Conversation)\n2.Change my 'Free' status\n3. ⭐Turn on / Turn off filtration by a real photo⭐\n\n4. Go back"
-        self.settingStatistics_message = f"{self.chooseOption_message}\n1. View Achievements\n2.Manage Effects\n3. 💎Top-Up coin balance💎\n4. 💎Top-Up Personality points balance💎\n5. 💎Buy premium access💎\n\n6. Go back"
+        self.settingStatistics_message = f"{self.chooseOption_message}\n1. View Achievements\n2. Manage Effects\n3. 💎Top-Up coin balance💎\n4. 💎Top-Up Personality points balance💎\n5. 💎Buy premium access💎\n\n6. Go back"
         self.settingAdditionalActions_message = f"{self.chooseOption_message}\n1. Get invitation credentials\n"
         self.effectsMessage = f"1. Manage my effects\n\n2.Go back"
         self.encounter_options_message = f"1. Use 💥Second chance💥 to send like to a user once again. You have SECOND_CHANCE_COUNT\n2. Report user\n3. Abort\n4." #TODO: replace caps message to a real "second chance" effect amount
         self.settingMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4", "5", "6")
         self.settingMyProfileMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4", "5", "6")
         self.settingPersonalitySettingsMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4")
-        self.settingFiltersSettingsMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3")
+        self.settingFiltersSettingsMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4")
         self.settingStatisticsMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4", "5", "6")
         self.effects_manageMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2")
         self.YNMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("yes", "no")
@@ -91,7 +90,7 @@ class Settings:
         self.cardDeckPlatinumDescription = "Instantly adds 50 profile views to your daily views"
 
         #Api return 1 if request was accepted
-        if self.requestStatus:
+        if self.requestStatus != "1" and self.requestStatus != "3":
             self.settingAdditionalActions_message += "2. Confirm my identity\n\n3. Go back"
             self.settingAdditionalActionsMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3")
         #TODO: think if confirmation request text should be changed if request exists. That is cool, but less efficient !
@@ -138,7 +137,7 @@ class Settings:
                 self.encounter_list_management(message)
             elif message.text == "3":
                 self.previous_section = self.my_profile_settings_choice
-                Registrator(self.bot, self.message, Helpers.check_user_has_visited_section(self.current_user, 1), self.proceed)
+                Registrator(self.bot, self.message, Helpers.check_user_is_registered(self.current_user), self.proceed)
             elif message.text == "4":
                 self.set_profile_status(message)
             elif message.text == "5":
@@ -382,7 +381,10 @@ class Settings:
             if message.text == "1":
                 self.credentials_management(message)
             elif message.text == "2":
-                self.send_confirmation_request(message)
+                if self.requestStatus != "1" and self.requestStatus != "3":
+                    self.send_confirmation_request(message)
+                    return
+                self.proceed()
             elif message.text == "3":
                 self.proceed()
             else:
@@ -516,6 +518,7 @@ class Settings:
 
                 self.bot.send_message(self.current_user, "There are all your recent encounters", reply_markup=markup)
                 self.bot.send_message(self.current_user, "Select a user to view more options", reply_markup=self.abortMarkup)
+                self.get_ready_to_abort(message)
             else:
                 self.bot.send_message(self.current_user, "No encounters so far :)")
                 self.proceed()
@@ -579,6 +582,7 @@ class Settings:
 
                 self.bot.send_message(self.current_user, "There are all users you have in your black list", reply_markup=markup)
                 self.bot.send_message(self.current_user, "Select a user to remove him from the black list", reply_markup=self.abortMarkup)
+                self.get_ready_to_abort(message)
             else:
                 self.bot.send_message(self.current_user, "There are no users in your blacklist :)")
                 self.proceed()
@@ -643,9 +647,11 @@ class Settings:
         self.previous_section = self.my_profile_settings_choice
         if not acceptMode:
             if Helpers.check_user_has_premium(self.current_user):
-                self.bot.send_message(self.current_user, f"Please, send me your new status (up to 50 characters)")
+                self.bot.send_message(self.current_user, f"Please, send me your new status (up to 50 characters)", reply_markup=self.abortMarkup)
                 self.bot.register_next_step_handler(message, self.set_profile_status, acceptMode=True, chat_id=self.current_user)
             else:
+                if message.text == "abort":
+                    self.proceed()
                 self.bot.send_message(self.current_user, f"This action is available only for users with premium", reply_markup=self.YNMarkup)
                 self.proceed()
         else:
@@ -710,13 +716,13 @@ class Settings:
                 self.bot.send_message(self.current_user, "You can confirm your identity by sending us:\nVideo or 'Circle' (15 seconds max) in which you are saying the code frase 'LALALA'.\n!Your face have to be visible!", reply_markup=self.abortMarkup)
                 self.bot.register_next_step_handler(message, self.send_confirmation_request, acceptMode=True, chat_id=self.current_user)
             else:
-                self.bot.send_message(self.current_user, f"Status is: {self.requestStatus}")
                 self.bot.send_message(self.current_user, "You can update current request, you have sent by sending us:\nVideo or 'Circle' (15 seconds max) in which you are saying the code frase 'LALALA'.\n!Your face have to be visible!", reply_markup=self.abortMarkup)
                 self.bot.register_next_step_handler(message, self.send_confirmation_request, acceptMode=True, chat_id=self.current_user)
 
         else:
             if message.text == "abort":
                 self.proceed()
+                return
 
             data = {
                 "userId": self.current_user
@@ -782,7 +788,7 @@ class Settings:
                     if self.valentines > 0:
                         self.use_effect_manager(call.message, call.data)
                     else:
-                        self.buy_effect_manager(call.message, call.data)
+                        self.buy_effect_manager(call.message, effectId=call.data)
                 else:
                     self.bot.send_message(self.current_user, "You have to turn on PERSONALITY to use this effect")
             elif call.data == "7":
@@ -791,7 +797,7 @@ class Settings:
                     if self.detectors > 0:
                         self.use_effect_manager(call.message, call.data)
                     else:
-                        self.buy_effect_manager(call.message, call.data)
+                        self.buy_effect_manager(call.message, effectId=call.data)
                 else:
                     self.bot.send_message(self.current_user, "You have to turn on PERSONALITY to use this effect")
             elif call.data == "9":
@@ -799,13 +805,13 @@ class Settings:
                 if self.cardDecksMini > 0:
                     self.use_effect_manager(call.message, call.data)
                 else:
-                    self.buy_effect_manager(call.message, call.data)
+                    self.buy_effect_manager(call.message, effectId=call.data)
             elif call.data == "10":
                 self.bot.send_message(self.current_user, self.cardDeckPlatinumDescription)
                 if self.cardDecksPlatinum > 0:
                     self.use_effect_manager(call.message, call.data)
                 else:
-                    self.buy_effect_manager(call.message, call.data)
+                    self.buy_effect_manager(call.message, effectId=call.data)
 
     def use_effect_manager(self, message, effectId, acceptMode=False):
         if not acceptMode:
@@ -841,15 +847,16 @@ class Settings:
                     self.get_ready_to_abort(message)
                     self.update_effects_markup()
             elif message.text == "no":
-                self.proceed()
+                self.bot.send_message(self.current_user, "Gotcha :)", reply_markup=self.abortMarkup)
+                self.get_ready_to_abort(message)
             else:
                 self.bot.send_message(self.current_user, "No such option", reply_markup=self.YNMarkup)
                 self.bot.register_next_step_handler(message, self.use_effect_manager, effectId, acceptMode=acceptMode, chat_id=self.current_user)
 
-    def buy_effect_manager(self, message, acceptMode=False):
+    def buy_effect_manager(self, message, effectId, acceptMode=False):
         if not acceptMode:
             self.bot.send_message(self.current_user, "Would you like to buy this effect from shop ?", reply_markup=self.YNMarkup)
-            self.bot.register_next_step_handler(message, self.buy_effect_manager, acceptMode=True, chat_id=self.current_user)
+            self.bot.register_next_step_handler(message, self.buy_effect_manager, effectId=effectId, acceptMode=True, chat_id=self.current_user)
         else:
             if message.text == "yes":
                 #TODO: navigate to the shop
@@ -858,7 +865,7 @@ class Settings:
                 self.proceed()
             else:
                 self.bot.send_message(self.current_user, "No such option", reply_markup=self.YNMarkup)
-                self.bot.register_next_step_handler(message, self.buy_effect_manager, acceptMode=acceptMode, chat_id=self.current_user)
+                self.bot.register_next_step_handler(message, self.buy_effect_manager, effectId=effectId, acceptMode=acceptMode, chat_id=self.current_user)
 
 
     def personality_callback_handler(self, call):
@@ -1169,7 +1176,10 @@ class Settings:
         self.bot.edit_message_reply_markup(chat_id=self.current_user, reply_markup=self.personalityMarkup, message_id=self.active_personality_message)
 
     def update_effects_markup(self):
-        self.bot.edit_message_reply_markup(chat_id=self.current_user, reply_markup=self.effects_markup, message_id=self.active_effects_message)
+        try:
+            self.bot.edit_message_reply_markup(chat_id=self.current_user, reply_markup=self.effects_markup, message_id=self.active_effects_message)
+        except:
+            pass
 
     def proceed(self):
         if self.current_callback_handler:
@@ -1190,7 +1200,7 @@ class Settings:
 
         self.bot.send_photo(self.current_user, user["userBaseInfo"]["userPhoto"], user["userBaseInfo"]["userDescription"],
                             reply_markup=self.encounterOptionMarkup)
-        self.bot.send_message(self.current_user, f"{self.encounter_options_message}{m}", reply_markup=self.encounterOptionMarkup)
+        self.bot.send_message(self.current_user, f"{self.encounter_options_message} {m}", reply_markup=self.encounterOptionMarkup)
         self.bot.register_next_step_handler(self.message, self.encounter_list_management, acceptMode=True,
                                             chat_id=self.current_user)
 

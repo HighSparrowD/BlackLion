@@ -110,9 +110,9 @@ namespace MyWebApi.Interfaces
         Task<bool> CheckUserHasNotificationsAsync(long userId);
         Task<List<UserNotification>> GetUserNotifications(long userId);
         Task<List<Guid>> GetUserNotificationsIdsAsync(long userId);
-        Task<UserNotification> GetUserNotificationAsync(long userId, Guid notificationId);
-        Task<byte> SendNotificationConfirmationCodeAsync(long userId, Guid notidicationId);
-        Task<bool> DeleteUserNotification(long userId, Guid notificationId);
+        Task<UserNotification> GetUserNotificationAsync(Guid notificationId);
+        Task<byte> SendNotificationConfirmationCodeAsync(Guid notidicationId);
+        Task<bool> DeleteUserNotification(Guid notificationId);
         Task<bool> DeleteUserNotification(UserNotification notification);
         Task<List<UserAchievement>> GetRandomAchievements(long userId);
         Task<double> CalculateSimilarityAsync(double param1, double param2);
