@@ -226,6 +226,7 @@ namespace MyWebApi.Repositories
                     .ThenInclude(u => u.Location)
                     .Include(u => u.UserPreferences)
                     .Include(u => u.UserBlackList)
+                    .AsNoTracking()
                     .ToListAsync();
 
                 if (currentUser.UserPreferences.ShouldFilterUsersWithoutRealPhoto && currentUser.HasPremium)
@@ -280,11 +281,9 @@ namespace MyWebApi.Repositories
 
                     var valentineBonus = 1d;
 
-                    var hasActiveValentine = userActiveEffects.Where(e => e.EffectId == (int)Currencies.TheValentine)
-                        .SingleOrDefault() != null;
+                    var hasActiveValentine = await CheckEffectIsActiveAsync(userId, (int)Currencies.TheValentine);
 
-                    var userHasDetectorOn = userActiveEffects.Where(e => e.EffectId == (int)Currencies.TheDetector)
-                        .SingleOrDefault() != null;
+                    var userHasDetectorOn = await CheckEffectIsActiveAsync(userId, (int)Currencies.TheDetector);
 
                     if (hasActiveValentine)
                         valentineBonus = 2;
@@ -621,7 +620,7 @@ namespace MyWebApi.Repositories
                         var returnUser = new GetUserData(u, $"{u.UserBaseInfo.UserDescription}");
 
                         if (userHasDetectorOn)
-                            returnUser.AddDescriptionBonus("<br>{matchedBy}</br>");
+                            returnUser.AddDescriptionBonus("<b>{matchedBy}</b>");
 
                         returnData.Add(returnUser);
                     }
@@ -674,7 +673,7 @@ namespace MyWebApi.Repositories
                                 if (u.IsIdentityConfirmed)
                                     bonus += $"✔️\n\n";
                                 if (u.HasPremium && u.Nickname != "")
-                                    bonus += $"<br>{u.Nickname}</br>\n";
+                                    bonus += $"<b>{u.Nickname}</b>\n";
                                 returnData.Add(new GetUserData(u, bonus));
                             }
                         });
@@ -1702,6 +1701,7 @@ namespace MyWebApi.Repositories
 
                     //TODO: Notify user that his premium access has expired
 
+                    await _contx.SaveChangesAsync();
                     return user.HasPremium;
                 }
                 return false;
@@ -1759,6 +1759,11 @@ namespace MyWebApi.Repositories
 
                 //Reward for premium purchase
                 await TopUpUserWalletPointsBalance(userId, 500);
+
+                //PP Reward for purchasing long-term premium
+                //TODO: Think if the amount is properly set...
+                if (dayDuration >= 30)
+                    await TopUpUserWalletPPBalance(userId, 5);
 
                 if (user.PremiumExpirationDate < timeNow || user.PremiumExpirationDate == null)
                     user.PremiumExpirationDate = premiumFutureExpirationDate;
@@ -2019,7 +2024,6 @@ namespace MyWebApi.Repositories
                 return await _contx.USER_NOTIFICATIONS
                     .Where(r => r.UserId1 == userId)
                     .Where(r => r.SectionId == (int)SystemEnums.Sections.Familiator || r.SectionId == (int)SystemEnums.Sections.Requester)
-                    .Include(r => r.Sender).ThenInclude(s => s.UserBaseInfo)
                     .ToListAsync();
             }
             catch (Exception ex)
@@ -2036,7 +2040,6 @@ namespace MyWebApi.Repositories
                 return await _contx.USER_NOTIFICATIONS
                     .Where(r => r.Id == requestId)
                     .Where(r => r.SectionId == (int)SystemEnums.Sections.Familiator || r.SectionId == (int)SystemEnums.Sections.Requester)
-                    .Include(r => r.Sender).ThenInclude(s => s.UserBaseInfo)
                     .SingleOrDefaultAsync();
             }
             catch (Exception ex)
@@ -2046,14 +2049,42 @@ namespace MyWebApi.Repositories
             }
         }
 
-        public async Task<Guid?> RegisterUserRequest(UserNotification request)
+        public async Task<string> RegisterUserRequest(UserNotification request)
         {
             try
             {
                 request.Severity = (short)Severities.Moderate;
+                var returnMessage = "";
 
                 if (request.IsLikedBack)
+                {
                     request.SectionId = (short)Sections.Requester;
+
+                    if ((byte)new Random().Next(0, 2) == 0)
+                    {
+                        var senderUserName = await _contx.SYSTEM_USERS_BASES.Where(d => d.Id == request.UserId).Select(d => d.UserName).SingleOrDefaultAsync();
+
+                        //Delete request, user had just answered
+                        var requestId = await _contx.USER_NOTIFICATIONS.Where(n => n.UserId == request.UserId1 && n.UserId1 == request.UserId).Select(n => n.Id).SingleOrDefaultAsync();
+                        await DeleteUserRequest(requestId);
+
+                        //TODO: Get message from localizer based on users`s localization 
+                        request.Description = $"Hey! I have got a match for you. This person was notified about it, but he did not receive your username, thus he cannot write you first everything is in your hands, do not miss your chance!\n\n@{senderUserName}";
+                        returnMessage = "Hey! I have a match for you. Right now this person is deciding whether or not to write you Just wait for it!\n\n";
+                    }
+                    else
+                    {
+                        var receiverUserName = await _contx.SYSTEM_USERS_BASES.Where(d => d.Id == request.UserId1).Select(d => d.UserName).SingleOrDefaultAsync();
+
+                        //Delete request, user had just answered
+                        var requestId = await _contx.USER_NOTIFICATIONS.Where(n => n.UserId == request.UserId1 && n.UserId1 == request.UserId).Select(n => n.Id).SingleOrDefaultAsync();
+                        await DeleteUserRequest(requestId);
+
+                        //TODO: Get message from localizer based on users`s localization 
+                        request.Description = "Hey! I have a match for you. Right now this person is deciding whether or not to write you Just wait for it!\n\n";
+                        returnMessage = $"Hey! I have got a match for you. This person was notified about it, but he did not receive your username, thus he cannot write you first everything is in your hands, do not miss your chance!\n\n@{receiverUserName}";
+                    }
+                }
                 else
                     request.SectionId = (short)Sections.Familiator;
 
@@ -2061,7 +2092,7 @@ namespace MyWebApi.Repositories
 
                 var id = await AddUserNotificationAsync(request);
 
-                return id;
+                return returnMessage;
             }
             catch (Exception ex)
             {
@@ -3225,6 +3256,7 @@ namespace MyWebApi.Repositories
         public async Task<User> GetUserListByTagsAsync(GetUserByTags model)
         {
             var currentUser = await GetUserInfoAsync(model.UserId);
+            var hasActiveDetector = await CheckEffectIsActiveAsync(currentUser.UserId, (int)Currencies.TheDetector);
 
             //Throw exception if user has reached his tag search limit
             if (!currentUser.HasPremium && currentUser.TagSearchesCount + 1 > 3)
@@ -3233,19 +3265,24 @@ namespace MyWebApi.Repositories
             var currentUserEncounters = await GetUserEncounters(model.UserId, (int)Sections.Familiator); //I am not sure if it is 2 or 3 section
 
             var data = await _contx.SYSTEM_USERS
-                .Where(u => u.UserId != currentUser.UserId)
-                .Where(u => u.UserPreferences.AgePrefs.Contains(currentUser.UserDataInfo.UserAge))
-                //Check if users gender preferences correspond to current user gender prefs or are equal to 'Does not matter'
-                .Where(u => u.UserPreferences.UserGenderPrefs == currentUser.UserDataInfo.UserGender || u.UserPreferences.UserGenderPrefs == 2)
-                .Where(u => u.UserDataInfo.UserLanguages.Any(l => currentUser.UserPreferences.UserLanguagePreferences.Contains(l)))
-                .Where(u => currentUser.UserPreferences.AgePrefs.Contains(u.UserDataInfo.UserAge))
-                .Where(u => currentUser.UserDataInfo.UserLanguages.Any(l => u.UserPreferences.UserLanguagePreferences.Contains(l)))
-                .Include(u => u.UserBaseInfo)
-                .Include(u => u.UserDataInfo)
-                .ThenInclude(u => u.Location)
-                .Include(u => u.UserPreferences)
-                .Include(u => u.UserBlackList)
-                .ToListAsync();
+                    .Where(u => u.UserId != currentUser.UserId)
+                    .Where(u => u.UserPreferences.AgePrefs.Contains(currentUser.UserDataInfo.UserAge))
+                    .Where(u => u.UserDataInfo.UserLanguages.Any(l => currentUser.UserPreferences.UserLanguagePreferences.Contains(l)))
+                    .Where(u => currentUser.UserPreferences.AgePrefs.Contains(u.UserDataInfo.UserAge))
+                    .Where(u => currentUser.UserDataInfo.UserLanguages.Any(l => u.UserPreferences.UserLanguagePreferences.Contains(l)))
+                    .Include(u => u.UserBaseInfo)
+                    .Include(u => u.UserDataInfo)
+                    .ThenInclude(u => u.Location)
+                    .Include(u => u.UserPreferences)
+                    .Include(u => u.UserBlackList)
+                    .AsNoTracking()
+                    .ToListAsync();
+
+            if (currentUser.UserPreferences.ShouldFilterUsersWithoutRealPhoto && currentUser.HasPremium)
+            {
+                data.Where(u => u.UserBaseInfo.IsPhotoReal)
+                    .ToList();
+            }
 
             //Check if users had encountered one another
             data = data.Where(u => !currentUser.CheckIfHasEncountered(currentUserEncounters, u.UserId)).ToList();
@@ -3260,45 +3297,21 @@ namespace MyWebApi.Repositories
             //Check if current user had already recieved request from user
             data = data.Where(u => !CheckRequestExists(u.UserId, model.UserId)).ToList();
 
-            //If user does NOT have gender prederences
-            if (currentUser.UserPreferences.UserGenderPrefs != 2)
-            {
-                data = data.Where(u => u.UserDataInfo.UserGender == currentUser.UserPreferences.UserGenderPrefs)
-                .Where(u => currentUser.UserPreferences.UserGenderPrefs == u.UserDataInfo.UserGender)
-                .ToList();
-            }
-
             currentUser.TagSearchesCount++;
             await _contx.SaveChangesAsync();
 
-            ////TODO: remove in production
-            //var tags1 = new List<string>();
-            //tags1.Add("#starcraft");
-
-            //var tags2 = new List<string>();
-            //tags2.Add("#starcraft");
-            //tags2.Add("#code");
-
-            //var tags3 = new List<string>();
-            //tags3.Add("#code");
-
-            //data.Add(new User(5) { UserDataInfo = new UserDataInfo { Tags = tags1 } });
-            //data.Add(new User(54) { UserDataInfo = new UserDataInfo { Tags = tags2 } });
-            //data.Add(new User(57) { UserDataInfo = new UserDataInfo { Tags = tags3 } });
-
-            //data.ForEach(d =>
-            //{
-            //    var t = d.UserDataInfo.Tags.Intersect(tags).Count();
-            //    Console.WriteLine(t);
-            //});
+            data = data.Where(d => d.UserDataInfo.Tags != null).ToList();
 
             var user = data.OrderByDescending(u => u.UserDataInfo.Tags.Intersect(model.Tags).Count())
                 .FirstOrDefault();
 
             if(user.HasPremium && user.Nickname != null)
-                user.UserBaseInfo.UserDescription = $"<br>{user.Nickname}</br>\n\n{user.UserBaseInfo.UserDescription}";
+                user.UserBaseInfo.UserDescription = $"<b>{user.Nickname}</b>\n\n{user.UserBaseInfo.UserDescription}";
             if(user.IsIdentityConfirmed)
                 user.UserBaseInfo.UserDescription = $"✔️{user.UserBaseInfo.UserDescription}";
+            //Show tags if user has detector activated
+            if (hasActiveDetector)
+                user.UserBaseInfo.UserDescription += String.Join(" ", user.UserDataInfo.Tags);
 
             return user;
         }
@@ -3550,17 +3563,20 @@ namespace MyWebApi.Repositories
                             UserId1 = (long)user2Id,
                             IsLikedBack = false,
                             Description = description,
-                            SectionId = (int)Sections.Registration,
+                            SectionId = (int)Sections.Familiator,
                             Severity = (short)Severities.Moderate
                         });
+                        await _contx.SaveChangesAsync();
                         return true;
                     case 9:
                         userBalance.CardDecksMini--;
                         await AddMaxUserProfileViewCount(userId, 20);
+                        await _contx.SaveChangesAsync();
                         return true;
                     case 10:
                         userBalance.CardDecksPlatinum--;
                         await AddMaxUserProfileViewCount(userId, 50);
+                        await _contx.SaveChangesAsync();
                         return true;
                     default:
                         return false;
@@ -3909,13 +3925,96 @@ namespace MyWebApi.Repositories
 
         public async Task<bool> GetUserRTLanguageConsiderationAsync(long userId)
         {
-            var user = await _contx.SYSTEM_USERS.Where(u => u.UserId == userId)
-                .SingleOrDefaultAsync();
+            var user = await _contx.SYSTEM_USERS.FindAsync(userId);
 
             if (user == null)
                 throw new NullReferenceException($"User #{userId} does not exist");
 
             return user.ShouldConsiderLanguages;
+        }
+
+        public async Task SetUserCurrencyAsync(long userId, short currency)
+        {
+            var user = await _contx.SYSTEM_USERS.FindAsync(userId);
+
+            if (user == null)
+                throw new NullReferenceException($"User #{userId} does not exist");
+
+            user.Currency = currency;
+            await _contx.SaveChangesAsync();
+        }
+
+        public async Task<bool> PurchaseEffectAsync(long userId, int effectId, int points, short currency)
+        {
+            var balance = await GetUserWalletBalance(userId);
+
+            if (balance != null)
+            {
+                switch (effectId)
+                {
+                    case 5:
+                        balance.SecondChances++;
+                        if (currency == (short)Currencies.Points)
+                            await RegisterUserWalletPurchaseInPoints(userId, points, $"User purchase of Second Chance effect for point amount {points}");
+                        else
+                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of Second Chance effect for real money amount {points}");
+                        break;
+                    case 6:
+                        balance.Valentines++;
+                        if (currency == (short)Currencies.Points)
+                            await RegisterUserWalletPurchaseInPoints(userId, points, $"User purchase of Valentine effect for point amount {points}");
+                        else
+                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of Valentine effect for real money amount {points}");
+                        break;
+                    case 7:
+                        balance.Detectors++;
+                        if (currency == (short)Currencies.Points)
+                            await RegisterUserWalletPurchaseInPoints(userId, points, $"User purchase of Detector effect for point amount {points}");
+                        else
+                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of Detector effect for real money amount {points}");
+                        break;
+                    case 9:
+                        balance.CardDecksMini++;
+                        if (currency == (short)Currencies.Points)
+                            await RegisterUserWalletPurchaseInPoints(userId, points, $"User purchase of Card Deck Mini effect for point amount {points}");
+                        else
+                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of Second Card Deck Mini for real money amount {points}");
+                        break;
+                    case 10:
+                        balance.CardDecksPlatinum++;
+                        if (currency == (short)Currencies.Points)
+                            await RegisterUserWalletPurchaseInPoints(userId, points, $"User purchase of Card Deck Platinum effect for point amount {points}");
+                        else
+                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of Card Deck Platinum effect for real money amount {points}");
+                        break;
+                    default:
+                        break;
+
+                }
+                return true;
+            }
+
+            return false;
+        }
+
+        public async Task<GetUserData> GetRequestSenderAsync(Guid requestId)
+        {
+            var senderId = await _contx.USER_NOTIFICATIONS.Where(r => r.Id == requestId).Select(r => r.UserId)
+                .SingleOrDefaultAsync();
+
+            var sender = await _contx.SYSTEM_USERS.Where(u => u.UserId == senderId)
+                .Include(u => u.UserBaseInfo)
+                .AsNoTracking()
+                .SingleOrDefaultAsync();
+
+            var bonus = "";
+
+            if (sender.IsIdentityConfirmed)
+                bonus += $"✔️\n\n";
+            if (sender.HasPremium && sender.Nickname != "")
+                bonus += $"<b>{sender.Nickname}</b>\n";
+
+            return new GetUserData(sender, bonus);
         }
     }
 }

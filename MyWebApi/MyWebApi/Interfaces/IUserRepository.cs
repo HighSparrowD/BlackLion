@@ -33,7 +33,7 @@ namespace MyWebApi.Interfaces
         Task<List<UserNotification>> GetUserRequests(long userId);
         Task<UserNotification> GetUserRequest(Guid requestId);
         bool CheckRequestExists(long senderId, long recieverId);
-        Task<Guid?> RegisterUserRequest(UserNotification request);
+        Task<string> RegisterUserRequest(UserNotification request);
         Task<byte> DeleteUserRequests(long userId);
         Task<byte> DeleteUserRequest(Guid requestId);
         Task<User> GetUserInfoByUsrnameAsync(string username);
@@ -150,6 +150,7 @@ namespace MyWebApi.Interfaces
         Task<bool> DeactivateEffectAsync(long userId, Guid activeEffectId);
         Task<int> AddMaxUserProfileViewCount(long userId, int profileCount);
         Task<bool> CheckEffectIsActiveAsync(long userId, int effectId);
+        Task<bool> PurchaseEffectAsync(long userId, int effectId, int points, short currency);
         Task<bool> SendTickRequestAsync(SendTickRequest request);
         Task<bool> SwitchUserFilteringByPhotoAsync(long userId);
         Task<bool> GetUserFilteringByPhotoStatusAsync(long userId);
@@ -167,5 +168,7 @@ namespace MyWebApi.Interfaces
         Task<PersonalityCaps> GetUserPersonalityCapsAsync(long userId);
         Task<bool> SwitchUserRTLanguageConsiderationAsync(long userId);
         Task<bool> GetUserRTLanguageConsiderationAsync(long userId);
+        Task SetUserCurrencyAsync(long userId, short currency);
+        Task<GetUserData> GetRequestSenderAsync(Guid requestId);
     }
 }

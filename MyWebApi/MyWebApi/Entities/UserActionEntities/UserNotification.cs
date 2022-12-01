@@ -16,9 +16,9 @@ namespace MyWebApi.Entities.UserActionEntities
         public short Severity { get; set; }
         public int SectionId{ get; set; }
         public string? Description { get; set; }
-        [ForeignKey("UserId")]
-        public virtual User? Sender { get; set; }
-        [ForeignKey("UserId1")]
-        public virtual User? Receiver { get; set; }
+        //[ForeignKey("UserId")]
+        //public virtual User? Sender { get; set; }
+        //[ForeignKey("UserId1")]
+        //public virtual User? Receiver { get; set; }
     }
 }

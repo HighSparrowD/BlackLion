@@ -117,5 +117,15 @@
             Aborted = 6,
             Failed = 7
         }
+
+        public enum PaymentCurrencies
+        {
+            USD = 1,
+            EUR = 2,
+            UAH = 3,
+            RUB = 4,
+            CZK = 5,
+            PLN = 6,
+        }
     }
 }

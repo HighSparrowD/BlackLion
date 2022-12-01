@@ -495,7 +495,7 @@ namespace MyWebApi.Controllers
         }
 
         [HttpPost("/RegisterUserRequest")]
-        public async Task<Guid?> RegisterUserRequest(UserNotification request)
+        public async Task<string> RegisterUserRequest(UserNotification request)
         {
             return await _repository.RegisterUserRequest(request);
         }
@@ -921,10 +921,10 @@ namespace MyWebApi.Controllers
             return await _repository.ActivateDurableEffectAsync(userId, effectId);
         }
 
-        [HttpGet("/ActivateToggleEffect/{userId}/{effectId}")]
-        public async Task<bool> ActivateToggleEffect(long userId, int effectId)
+        [HttpGet("/ActivateToggleEffect/{userId}/{effectId}/{user2Id?}")]
+        public async Task<bool> ActivateToggleEffect(long userId, int effectId, long? user2Id = null)
         {
-            return await _repository.ActivateToggleEffectAsync(userId, effectId);
+            return await _repository.ActivateToggleEffectAsync(userId, effectId, user2Id);
         }
 
         [HttpGet("/CheckEffectIsActive/{userId}/{effectId}")]
@@ -943,6 +943,34 @@ namespace MyWebApi.Controllers
         public async Task<bool> GetUserRTLanguageConsideration(long userId)
         {
             return await _repository.GetUserRTLanguageConsiderationAsync(userId);
+        }
+
+        [HttpGet("/PurchaseEffect/{userId}/{effectId}/{points}/{currency}")]
+        public async Task<bool> PurchaseEffect(long userId, int effectId, int points, short currency)
+        {
+            return await _repository.PurchaseEffectAsync(userId, effectId, points, currency);
+        }
+
+        [HttpGet("/SetUserCurrency/{userId}/{currency}")]
+        public async Task<ActionResult> SetUserCurrency(long userId, short currency)
+        {
+            await _repository.SetUserCurrencyAsync(userId, currency);
+
+            if (ModelState.IsValid)
+                return Ok();
+
+            return BadRequest();
+        }
+
+        [HttpGet("/GetRequestSender/{requestId}")]
+        public async Task<ActionResult<GetUserData>> GetRequestSender(Guid requestId)
+        {
+            var sender = await _repository.GetRequestSenderAsync(requestId);
+
+            if (ModelState.IsValid)
+                return Ok(sender);
+
+            return BadRequest();
         }
     }
 }

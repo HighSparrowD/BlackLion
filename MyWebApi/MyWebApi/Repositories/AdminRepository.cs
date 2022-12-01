@@ -8,6 +8,7 @@ using MyWebApi.Entities.ReasonEntities;
 using MyWebApi.Entities.ReportEntities;
 using MyWebApi.Entities.SecondaryEntities;
 using MyWebApi.Entities.TestEntities;
+using MyWebApi.Entities.UserInfoEntities;
 using MyWebApi.Enums;
 using MyWebApi.Interfaces;
 using System;
@@ -523,6 +524,79 @@ namespace MyWebApi.Repositories
                 return true;
             }
             catch { return false; }
+        }
+
+        public async Task<bool> CreateDecoyAsync(long? copyUserId = null, UserRegistrationModel model = null)
+        {
+            var rand = new Random();
+
+            UserBaseInfo uBase = null;
+            UserDataInfo uData = null;
+            UserPreferences uPrefs= null;
+            User m = null;
+            Location location = null;
+
+            if (model != null)
+            {
+                var langCount = await _userRep.GetUserMaximumLanguageCountAsync(model.Id);
+                if (model.UserLanguages.Count > langCount)
+                    throw new Exception($"This user cannot have more than {langCount} languages !");
+                
+                uBase = new UserBaseInfo(model.Id + rand.Next(8000), model.UserName, model.UserRealName, model.UserDescription, model.UserPhoto, model.IsPhotoReal);
+                uData = new UserDataInfo
+                {
+                    Id = uBase.Id,
+                    UserLanguages = model.UserLanguages,
+                    ReasonId = model.ReasonId,
+                    UserAge = model.UserAge,
+                    UserGender = model.UserGender,
+                    LanguageId = model.UserAppLanguageId,
+                };
+                uPrefs = new UserPreferences(uBase.Id, model.UserLanguagePreferences, model.UserLocationPreferences, model.AgePrefs, model.CommunicationPrefs, model.UserGenderPrefs, model.ShouldUserPersonalityFunc);
+                uPrefs.ShouldFilterUsersWithoutRealPhoto = false;
+                m = new User(uBase.Id)
+                {
+                    IsBusy = false,
+                    IsDeleted = false,
+                    IsBanned = false,
+                    ShouldConsiderLanguages = false,
+                    HasPremium = false,
+                    HadReceivedReward = false,
+                    DailyRewardPoint = 0,
+                    BonusIndex = 1,
+                    ProfileViewsCount = 0,
+                    InvitedUsersCount = 0,
+                    InvitedUsersBonus = 0,
+                    TagSearchesCount = 0,
+                    MaxProfileViewsCount = 50,
+                    IsIdentityConfirmed = false,
+                };
+
+                if (model.UserCityCode != null && model.UserCountryCode != null)
+                    location = new Location { Id = uBase.Id, CityId = (int)model.UserCityCode, CountryId = (int)model.UserCountryCode, CityCountryClassLocalisationId = model.UserAppLanguageId, CountryClassLocalisationId = model.UserAppLanguageId };
+                else
+                    location = new Location { Id = uBase.Id };
+
+                uData.LocationId = location.Id;
+            }
+            else
+            {
+                uBase = await _contx.SYSTEM_USERS_BASES.Where(b => b.Id == copyUserId).AsNoTracking().SingleOrDefaultAsync();
+                uData = await _contx.SYSTEM_USERS_DATA.Where(b => b.Id == copyUserId).AsNoTracking().SingleOrDefaultAsync();
+                uPrefs = await _contx.SYSTEM_USERS_PREFERENCES.Where(b => b.Id == copyUserId).AsNoTracking().SingleOrDefaultAsync();
+                m = await _contx.SYSTEM_USERS.Where(b => b.UserId == copyUserId).AsNoTracking().SingleOrDefaultAsync();
+                location = await _contx.USER_LOCATIONS.Where(b => b.Id == copyUserId).AsNoTracking().SingleOrDefaultAsync();
+
+                uBase.Id += rand.Next(8000);
+                uData.Id = uBase.Id;
+                uPrefs.Id = uBase.Id;
+                m.UserId = uBase.Id;
+                location.Id = uBase.Id;
+            }
+
+            await _userRep.RegisterUserAsync(m, uBase, uData, uPrefs, location);
+
+            return true;
         }
 
         //public Task<long> UploadInTest(UploadInTest model)

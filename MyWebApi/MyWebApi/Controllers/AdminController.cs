@@ -8,6 +8,7 @@ using MyWebApi.Entities.ReasonEntities;
 using MyWebApi.Entities.ReportEntities;
 using MyWebApi.Entities.SecondaryEntities;
 using MyWebApi.Entities.TestEntities;
+using MyWebApi.Entities.UserInfoEntities;
 using MyWebApi.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -169,6 +170,18 @@ namespace MyWebApi.Controllers
         public async Task<string> GetUserPhoto(long userId)
         {
             return await _repository.GetUserPhotoAsync(userId);
+        }
+
+        [HttpGet("/Decoy/{userId}")]
+        public async Task<bool> CreateDecoy(long userId)
+        {
+            return await _repository.CreateDecoyAsync(copyUserId: userId);
+        }
+
+        [HttpPost("/Decoy")]
+        public async Task<bool> CreateDecoy(UserRegistrationModel model)
+        {
+            return await _repository.CreateDecoyAsync(model: model);
         }
     }
 }

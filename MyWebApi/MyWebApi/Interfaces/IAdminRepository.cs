@@ -9,6 +9,7 @@ using MyWebApi.Entities.DailyTaskEntities;
 using MyWebApi.Entities.AdminEntities;
 using System;
 using MyWebApi.Entities.TestEntities;
+using MyWebApi.Entities.UserInfoEntities;
 
 namespace MyWebApi.Interfaces
 {
@@ -36,5 +37,6 @@ namespace MyWebApi.Interfaces
         Task<bool> ResolveTickRequestAsync(Guid requestId, long adminId, bool isAccepted);
         Task<bool> AbortTickRequestAsync(Guid requestId);
         Task<bool> NotifyFailierTickRequestAsync(Guid requestId, long adminId);
+        Task<bool> CreateDecoyAsync(long? copyUserId=null, UserRegistrationModel model=null);
     }
 }

@@ -34,6 +34,7 @@ namespace MyWebApi.Entities.UserInfoEntities
         public int ProfileViewsCount { get; set; }
         public int MaxProfileViewsCount { get; set; }
         public int TagSearchesCount { get; set; }
+        public short? Currency { get; set; }
         public DateTime? PremiumExpirationDate{ get; set; }
         public virtual UserBaseInfo? UserBaseInfo { get; set; }
         public virtual UserDataInfo? UserDataInfo  { get; set; }

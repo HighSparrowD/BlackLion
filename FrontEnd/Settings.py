@@ -42,6 +42,7 @@ class Settings:
         self.current_callback_handler = None
         self.shouldRestrictTickRequest = False
         Helpers.switch_user_busy_status(self.current_user)
+        self.userBalance = json.loads(requests.get(f"https://localhost:44381/GetActiveUserWalletBalance/{self.current_user}", verify=False).text)
         self.requestStatus = requests.get(f"https://localhost:44381/CheckTickRequestStatus/{self.current_user}", verify=False).text
 
         self.secondChance_indicator = None
@@ -69,7 +70,7 @@ class Settings:
         self.settingStatistics_message = f"{self.chooseOption_message}\n1. View Achievements\n2. Manage Effects\n3. 💎Top-Up coin balance💎\n4. 💎Top-Up Personality points balance💎\n5. 💎Buy premium access💎\n\n6. Go back"
         self.settingAdditionalActions_message = f"{self.chooseOption_message}\n1. Get invitation credentials\n"
         self.effectsMessage = f"1. Manage my effects\n\n2.Go back"
-        self.encounter_options_message = f"1. Use 💥Second chance💥 to send like to a user once again. You have SECOND_CHANCE_COUNT\n2. Report user\n3. Abort\n4." #TODO: replace caps message to a real "second chance" effect amount
+        self.encounter_options_message = "1. Use 💥Second chance💥 to send like to a user once again. You have {}\n2. Report user\n3. {}\n4. Abort"
         self.settingMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4", "5", "6")
         self.settingMyProfileMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4", "5", "6")
         self.settingPersonalitySettingsMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4")
@@ -322,7 +323,7 @@ class Settings:
     def my_statistics_settings_choice(self, message, acceptMode=False):
         self.previous_section = self.setting_choice
         if not acceptMode:
-            #TODO: Send a message, containing user coins, PP, effects and so on
+            self.bot.send_message(self.current_user, self.construct_user_inventory_message(self.userBalance))
             self.bot.send_message(self.current_user, f"{self.settingStatistics_message}", reply_markup=self.settingStatisticsMarkup)
             self.bot.register_next_step_handler(message, self.my_statistics_settings_choice, acceptMode=True, chat_id=self.current_user)
         else:
@@ -354,8 +355,7 @@ class Settings:
         self.previous_section = self.my_statistics_settings_choice
         if not acceptMode:
             effects = json.loads(requests.get(f"https://localhost:44381/GetUserActiveEffects/{self.current_user}", verify=False).text)
-            if effects:
-                self.bot.send_message(self.current_user, self.construct_active_effects_message(effects))
+            self.bot.send_message(self.current_user, self.construct_active_effects_message(effects))
             self.bot.send_message(self.current_user, self.effectsMessage, reply_markup=self.effects_manageMarkup)
             self.bot.register_next_step_handler(message, self.effects_manager, acceptMode=True, chat_id=self.current_user)
         else:
@@ -365,8 +365,7 @@ class Settings:
                 self.proceed()
 
     def show_users_effects(self, message):
-        balance = json.loads(requests.get(f"https://localhost:44381/GetActiveUserWalletBalance/{self.current_user}", verify=False).text)
-        self.construct_effects_markup(balance)
+        self.construct_effects_markup(self.userBalance)
         self.active_effects_message = self.bot.send_message(self.current_user, "Here is your effects inventory:", reply_markup=self.effects_markup).id
         self.bot.send_message(self.current_user, "Select an effect to read it description or type 'abort' to go back", reply_markup=self.abortMarkup)
         self.current_callback_handler = self.bot.register_callback_query_handler("", self.effects_callback_handler, user_id=self.current_user)
@@ -524,19 +523,29 @@ class Settings:
                 self.proceed()
         else:
             if message.text == "1":
-                #TODO: Implement when ready
-                self.bot.send_message(self.current_user, "Functionality had not been implemented yet")
-                self.proceed_with_encounters()
+                response = bool(json.loads(requests.get(f"https://localhost:44381/ActivateToggleEffect/{self.current_user}/{5}/{self.current_managed_user}", verify=False).text))
+                if response:
+                    self.bot.send_message(self.current_user, "Done :)")
+                    self.userBalance['secondChances'] = int(self.userBalance['secondChances'] - 1)
+
+                if not self.isInBlackList:
+                    m = self.add_to_blacklist_text
+                else:
+                    m = self.remove_from_blacklist_text
+
+                self.bot.send_message(self.current_user, self.encounter_options_message.format(self.userBalance['secondChances'], m), reply_markup=self.encounterOptionMarkup)
+                self.bot.register_next_step_handler(message, self.encounter_list_management, acceptMode=True, chat_id=self.current_user)
+
             elif message.text == "2":
                 ReportModule(self.bot, message, self.current_managed_user, self.proceed_with_encounters, dontAddToBlackList=True)
             elif message.text == "3":
-                self.proceed()
-            elif message.text == "4":
                 if not self.isInBlackList:
                     self.add_to_black_list(message)
                 else:
                     self.bot.send_message(self.current_user, "Are you sure, you want to delete that user from your black list?", reply_markup=self.YNMarkup)
                     self.bot.register_next_step_handler(message, self.black_list_management, acceptMode=True, isEncounter=True, chat_id=self.current_user)
+            elif message.text == "4":
+                self.proceed()
 
     def add_to_black_list(self, message, acceptMode=False):
         if not acceptMode:
@@ -1198,9 +1207,8 @@ class Settings:
 
         user = Helpers.get_user_info(self.current_managed_user)
 
-        self.bot.send_photo(self.current_user, user["userBaseInfo"]["userPhoto"], user["userBaseInfo"]["userDescription"],
-                            reply_markup=self.encounterOptionMarkup)
-        self.bot.send_message(self.current_user, f"{self.encounter_options_message} {m}", reply_markup=self.encounterOptionMarkup)
+        self.bot.send_photo(self.current_user, user["userBaseInfo"]["userPhoto"], user["userBaseInfo"]["userDescription"], reply_markup=self.encounterOptionMarkup)
+        self.bot.send_message(self.current_user, self.encounter_options_message.format(self.userBalance['secondChances'], m), reply_markup=self.encounterOptionMarkup)
         self.bot.register_next_step_handler(self.message, self.encounter_list_management, acceptMode=True,
                                             chat_id=self.current_user)
 
@@ -1232,12 +1240,23 @@ class Settings:
             self.proceed()
 
     def construct_active_effects_message(self, effects):
+        msg = ""
+
         if effects:
-            msg = ""
             for effect in effects:
                 msg += f"{effect['name']}\nExpires at: {effect['expirationTime']}\n\n"
-            return msg
+
+                return msg
+
         return "No active effects"
+
+    def construct_user_inventory_message(self, balance):
+        msg = ""
+
+        if balance:
+            return f"💎Coins: {balance['points']}\n💎Personality Points: {balance['personalityPoints']}\n💥Second Chances{balance['secondChances']}\n💥Valentines: {balance['valentines']}\n💥Detectors: {balance['detectors']}\n💥Card Decks Mini: {balance['cardDecksMini']}\n💥Card Decks Platinum: {balance['cardDecksPlatinum']}"
+
+        return "Something went wrong"
 
     @staticmethod
     def index_converter(index):
