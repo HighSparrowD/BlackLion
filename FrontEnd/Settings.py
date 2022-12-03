@@ -3,6 +3,9 @@ import base64
 from Registration import *
 from ReportModule import *
 from telebot.types import ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
+import Core.HelpersMethodes as Helpers
+
+from Shop import Shop
 
 
 class Settings:
@@ -334,17 +337,14 @@ class Settings:
             elif message.text == "2":
                 self.effects_manager(message)
             elif message.text == "3":
-                # TODO: implement
-                self.bot.send_message(self.current_user, "Not implemented yet!")
-                self.proceed()
+                hasVisited = Helpers.check_user_has_visited_section(self.current_user, 10)
+                Shop(self.bot, message, hasVisited, startingTransaction=1, returnMethod=self.proceed)
             elif message.text == "4":
-                # TODO: implement
-                self.bot.send_message(self.current_user, "Not implemented yet!")
-                self.proceed()
+                hasVisited = Helpers.check_user_has_visited_section(self.current_user, 10)
+                Shop(self.bot, message, hasVisited, startingTransaction=4, returnMethod=self.proceed)
             elif message.text == "5":
-                # TODO: implement
-                self.bot.send_message(self.current_user, "Not implemented yet!")
-                self.proceed()
+                hasVisited = Helpers.check_user_has_visited_section(self.current_user, 10)
+                Shop(self.bot, message, hasVisited, startingTransaction=3, returnMethod=self.proceed)
             elif message.text == "6":
                 self.proceed()
             else:
@@ -868,8 +868,8 @@ class Settings:
             self.bot.register_next_step_handler(message, self.buy_effect_manager, effectId=effectId, acceptMode=True, chat_id=self.current_user)
         else:
             if message.text == "yes":
-                #TODO: navigate to the shop
-                pass
+                hasVisited = Helpers.check_user_has_visited_section(self.current_user, 10)
+                Shop(self.bot, self.message, hasVisited, startingTransaction=2, returnMethod=self.proceed)
             elif message.text == "no":
                 self.proceed()
             else:

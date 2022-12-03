@@ -20,6 +20,10 @@ class TestModule:
         self.is_about_handler_present = False
         self.returnMethod = returnMethod
 
+        self.current_question_index = -1
+        self.previous_question = None
+        self.answer_array = []
+
         self.localisation = Helpers.get_user_app_language(self.current_user)
 
         self.current_markup_elements = []
@@ -185,17 +189,26 @@ class TestModule:
                 self.bot.send_message(self.current_user, f"No such option", reply_markup=self.ManageTestMarkup)
                 self.bot.register_next_step_handler(message, self.manage_current_test, acceptMode=True, chat_id=self.current_user)
 
-    def recurring_test_pass(self):
+    def recurring_test_pass(self, gotoPrevious=False):
         self.isPassingTest = True
         questions = self.current_test_data["questions"]
         if questions:
+            if not gotoPrevious:
+                self.current_question_index += 1
+
             markup = InlineKeyboardMarkup()
-            self.current_question = questions[0]
+            self.current_question = questions[self.current_question_index]
+
+            #Create question counter
+            markup.add(InlineKeyboardButton(f"{self.current_question_index + 1} / {len(questions)}", callback_data="0"))
 
             self.current_question_answers.clear()
             for answer in self.current_question["answers"]:
                 self.current_question_answers[answer["id"]] = answer
                 markup.add(InlineKeyboardButton(f"{answer['text']}", callback_data=answer["id"]))
+
+            #Create previous question button
+            markup.add(InlineKeyboardButton("⬅ Previous question", callback_data="-8"))
 
             if self.current_question["photo"]:
                 self.bot.send_photo(self.current_user, self.current_question["photo"], caption=self.current_question["text"])
@@ -205,12 +218,13 @@ class TestModule:
             else:
                 # self.bot.edit_message_reply_markup(chat_id=self.current_user, reply_markup=markup, message_id=self.current_question_message)
                 self.bot.edit_message_text(text=f"❓ {self.current_question['text']} ❓", chat_id=self.current_user, message_id=self.current_question_message, reply_markup=markup)
-            questions.pop(0)
         else:
             self.isPassingTest = False
             self.show_test_result()
+            return
 
     def show_test_result(self):
+        self.user_total = sum(self.answer_array)
         data = self.create_test_payload()
 
         d = json.dumps(data)
@@ -307,6 +321,7 @@ class TestModule:
             # self.get_ready_to_abort(self.message)
 
     def load_test_data(self):
+        self.current_question_index = -1
         self.current_test_data = json.loads(requests.get(f"https://localhost:44381/GetSingleTest/{self.current_test}/{self.localisation}", verify=False).text)
 
     def callback_handler(self, call):
@@ -322,9 +337,6 @@ class TestModule:
             except:
                 pass
 
-        elif "/" in call.data:
-            self.bot.answer_callback_query(call.id, call.data)
-
         elif self.isDeciding:
             return False
 
@@ -332,14 +344,23 @@ class TestModule:
             self.active_param = int(call.data)
             self.manage_point_group()
 
-        elif self.isPassingTest:
-            self.user_total += self.current_question_answers[int(call.data)]["value"]
-            self.recurring_test_pass()
-
         #If user is going back to start
         elif call.data == '-10':
             self.isOnStart = True
             self.bot.edit_message_reply_markup(chat_id=self.current_user, reply_markup=self.start_markup, message_id=self.active_message_id)
+
+        elif call.data == '-8':
+            if self.current_question_index > 0:
+                self.current_question_index -= 1
+                self.recurring_test_pass(gotoPrevious=True)
+
+        elif self.isPassingTest:
+            if len(self.answer_array) > self.current_question_index:
+                self.answer_array[self.current_question_index] = int(self.current_question_answers[int(call.data)]["value"])
+            else:
+                self.answer_array.append(int(self.current_question_answers[int(call.data)]["value"]))
+            # self.user_total += self.current_question_answers[int(call.data)]["value"]
+            self.recurring_test_pass()
 
         else:
             self.current_test = int(call.data)

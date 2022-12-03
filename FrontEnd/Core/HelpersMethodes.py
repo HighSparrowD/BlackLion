@@ -373,12 +373,17 @@ def grant_premium_for_real_money(userId, cost, dayDuration):
     return json.loads(requests.get(f"https://localhost:44381/GrantPremiumToUser/{userId}/{cost}/{dayDuration}/{4}", verify=False).text)
 
 
-def purchase_effect_for_points(userId, effectId, cost):
-    return json.loads(requests.get(f"https://localhost:44381/GrantPremiumToUser/{userId}/{effectId}/{cost}/{1}", verify=False).text)
+def purchase_effect_for_points(userId, effectId, cost, count=1):
+    return json.loads(requests.get(f"https://localhost:44381/PurchaseEffect/{userId}/{effectId}/{cost}/{count}", verify=False).text)
 
 
+#TODO: Change called API endpoint
 def purchase_effect_for_real_money(userId, effectId, cost):
     return json.loads(requests.get(f"https://localhost:44381/GrantPremiumToUser/{userId}/{effectId}/{cost}/{4}", verify=False).text)
+
+
+def purchase_PP_for_points(userId, cost, count=1):
+    return json.loads(requests.get(f"https://localhost:44381/PurchesPPForPoints/{userId}/{cost}/{count}", verify=False).text)
 
 
 def switch_admin_status(userId):

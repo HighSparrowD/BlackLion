@@ -945,10 +945,10 @@ namespace MyWebApi.Controllers
             return await _repository.GetUserRTLanguageConsiderationAsync(userId);
         }
 
-        [HttpGet("/PurchaseEffect/{userId}/{effectId}/{points}/{currency}")]
-        public async Task<bool> PurchaseEffect(long userId, int effectId, int points, short currency)
+        [HttpGet("/PurchaseEffect/{userId}/{effectId}/{points}/{currency}/{count?}")]
+        public async Task<bool> PurchaseEffect(long userId, int effectId, int points, short currency, short count=1)
         {
-            return await _repository.PurchaseEffectAsync(userId, effectId, points, currency);
+            return await _repository.PurchaseEffectAsync(userId, effectId, points, currency, count);
         }
 
         [HttpGet("/SetUserCurrency/{userId}/{currency}")]
@@ -971,6 +971,18 @@ namespace MyWebApi.Controllers
                 return Ok(sender);
 
             return BadRequest();
+        }
+
+        [HttpGet("/PurchesPPForPoints/{userId}/{price}/{count?}")]
+        public async Task<bool> PurchesPPForPoints(long userId, int price, short count=1)
+        {
+            return await _repository.PurchasePersonalityPointsAsync(userId, price, (short)Currencies.Points, count);
+        }
+
+        [HttpGet("/PurchesPPForRealMoney/{userId}/{price}/{count?}")]
+        public async Task<bool> PurchesPPForRealMoney(long userId, int price, short count = 1)
+        {
+            return await _repository.PurchasePersonalityPointsAsync(userId, price, (short)Currencies.RealMoney, count);
         }
     }
 }

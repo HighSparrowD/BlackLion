@@ -17,6 +17,7 @@ using QRCoder;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using static MyWebApi.Enums.SystemEnums;
 using static System.Net.Mime.MediaTypeNames;
@@ -107,7 +108,10 @@ namespace MyWebApi.Repositories
                         invitor.InvitedUsersBonus = 0.5 + bonus;
                         // 1499 will then turn into 1999 due to premium purchase reward
                         await TopUpUserWalletPointsBalance(invitor.UserId, 1499, $"User {invitor.UserId} has invited 10 users");
-                        //TODO: apply effect later
+                        
+                        //Adds + 10 random effects to users inventory
+                        var effecId = new Random().Next(5, 10);
+                        await PurchaseEffectAsync(invitor.UserId, effecId, 0, (int)Currencies.Points, 10);
                         await GrantPremiumToUser(model.UserId, 0, 30, (short)Currencies.Points);
                     }
                     else
@@ -3101,32 +3105,107 @@ namespace MyWebApi.Repositories
             var userStats = await _contx.USER_PERSONALITY_STATS.Where(s => s.UserId == model.UserId)
                 .SingleOrDefaultAsync();
 
-            //If user have passed some test before - set the devider to 2, to find an average value
-            if ((await _contx.user_tests.Where(r => r.UserId == model.UserId).ToListAsync()).Count > 1)
-                devider = 2;
+            //Create user stats if they werent created before
+            if (userStats != null)
+            {
+                userStats = new UserPersonalityStats(model.UserId);
+                await _contx.USER_PERSONALITY_STATS.AddAsync(userStats);
+                await _contx.SaveChangesAsync();
+            }
+
 
             if (model.Personality != 0)
+            {
+                //Set the devider to 2 if user had passed the tests of the same type before
+                if (userStats.Personality != 0)
+                    devider = 2;
+
                 userStats.Personality = (userStats.Personality + model.Personality) / devider;
+                //Return the devider to its normal state
+                devider = 1;
+            }
             if (model.EmotionalIntellect != 0)
+            {
+                if (userStats.EmotionalIntellect != 0)
+                    devider = 2;
+
                 userStats.EmotionalIntellect = (userStats.EmotionalIntellect + model.EmotionalIntellect) / devider;
+                devider = 1;
+            }
             if (model.Reliability != 0)
+            {
+                if (userStats.Reliability != 0)
+                    devider = 2;
+
                 userStats.Reliability = (userStats.Reliability + model.Reliability) / devider;
+                devider = 1;
+            }
             if (model.Compassion != 0)
+            {
+                if (userStats.Compassion != 0)
+                    devider = 2;
+
                 userStats.Compassion = (userStats.Compassion + model.Compassion) / devider;
+                devider = 1;
+            }
+                
             if (model.OpenMindedness != 0)
+            {
+                if (userStats.OpenMindedness != 0)
+                    devider = 2;
+
                 userStats.OpenMindedness = (userStats.OpenMindedness + model.OpenMindedness) / devider;
+                devider = 1;
+            }
             if (model.Agreeableness != 0)
+            {
+                if (userStats.Agreeableness != 0)
+                    devider = 2;
+
                 userStats.Agreeableness = (userStats.Agreeableness + model.Agreeableness) / devider;
+                devider = 1;
+            }
             if (model.SelfAwareness != 0)
+            {
+                if (userStats.SelfAwareness != 0)
+                    devider = 2;
+
                 userStats.SelfAwareness = (userStats.SelfAwareness + model.SelfAwareness) / devider;
+                devider = 1;
+            }
+                
             if (model.LevelOfSense != 0)
+            {
+                if (userStats.LevelOfSense != 0)
+                    devider = 2;
+                
                 userStats.LevelOfSense = (userStats.LevelOfSense + model.LevelOfSense) / devider;
+                devider = 1;
+            }
             if (model.Intellect != 0)
+            {
+                if (userStats.Intellect != 0)
+                    devider = 2;
+
                 userStats.Intellect = (userStats.Intellect + model.Intellect) / devider;
+                devider = 1;
+            }
             if (model.Nature != 0)
+            {
+                if (userStats.Nature != 0)
+                    devider = 2;
+
                 userStats.Nature = (userStats.Nature + model.Nature) / devider;
+                devider = 1;
+            }
             if (model.Creativity != 0)
+            {
+                if (userStats.Creativity != 0)
+                    devider = 2;
+
                 userStats.Creativity = (userStats.Creativity + model.Creativity) / devider;
+                devider = 1;
+            }
 
             return userStats;
         }
@@ -3944,7 +4023,7 @@ namespace MyWebApi.Repositories
             await _contx.SaveChangesAsync();
         }
 
-        public async Task<bool> PurchaseEffectAsync(long userId, int effectId, int points, short currency)
+        public async Task<bool> PurchaseEffectAsync(long userId, int effectId, int points, short currency, short count=1)
         {
             var balance = await GetUserWalletBalance(userId);
 
@@ -3953,39 +4032,39 @@ namespace MyWebApi.Repositories
                 switch (effectId)
                 {
                     case 5:
-                        balance.SecondChances++;
+                        balance.SecondChances += count;
                         if (currency == (short)Currencies.Points)
-                            await RegisterUserWalletPurchaseInPoints(userId, points, $"User purchase of Second Chance effect for point amount {points}");
+                            await RegisterUserWalletPurchaseInPoints(userId, points, $"User purchase of {count} Second Chance effect for point amount {points}");
                         else
-                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of Second Chance effect for real money amount {points}");
+                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Second Chance effect for real money amount {points}");
                         break;
                     case 6:
-                        balance.Valentines++;
+                        balance.Valentines += count;
                         if (currency == (short)Currencies.Points)
-                            await RegisterUserWalletPurchaseInPoints(userId, points, $"User purchase of Valentine effect for point amount {points}");
+                            await RegisterUserWalletPurchaseInPoints(userId, points, $"User purchase of {count} Valentine effect for point amount {points}");
                         else
-                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of Valentine effect for real money amount {points}");
+                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Valentine effect for real money amount {points}");
                         break;
                     case 7:
-                        balance.Detectors++;
+                        balance.Detectors += count;
                         if (currency == (short)Currencies.Points)
-                            await RegisterUserWalletPurchaseInPoints(userId, points, $"User purchase of Detector effect for point amount {points}");
+                            await RegisterUserWalletPurchaseInPoints(userId, points, $"User purchase of {count} Detector effect for point amount {points}");
                         else
-                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of Detector effect for real money amount {points}");
+                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Detector effect for real money amount {points}");
                         break;
                     case 9:
-                        balance.CardDecksMini++;
+                        balance.CardDecksMini += count;
                         if (currency == (short)Currencies.Points)
-                            await RegisterUserWalletPurchaseInPoints(userId, points, $"User purchase of Card Deck Mini effect for point amount {points}");
+                            await RegisterUserWalletPurchaseInPoints(userId, points, $"User purchase of {count} Card Deck Mini effect for point amount {points}");
                         else
-                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of Second Card Deck Mini for real money amount {points}");
+                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Second Card Deck Mini for real money amount {points}");
                         break;
                     case 10:
-                        balance.CardDecksPlatinum++;
+                        balance.CardDecksPlatinum += count;
                         if (currency == (short)Currencies.Points)
-                            await RegisterUserWalletPurchaseInPoints(userId, points, $"User purchase of Card Deck Platinum effect for point amount {points}");
+                            await RegisterUserWalletPurchaseInPoints(userId, points, $"User purchase of {count} Card Deck Platinum effect for point amount {points}");
                         else
-                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of Card Deck Platinum effect for real money amount {points}");
+                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Card Deck Platinum effect for real money amount {points}");
                         break;
                     default:
                         break;
@@ -4015,6 +4094,31 @@ namespace MyWebApi.Repositories
                 bonus += $"<b>{sender.Nickname}</b>\n";
 
             return new GetUserData(sender, bonus);
+        }
+
+        public async Task<bool> PurchasePersonalityPointsAsync(long userId, int points, short currency, short count = 1)
+        {
+            try
+            {
+                var balance = await GetUserWalletBalance(userId);
+
+                if (currency == (short)Currencies.Points)
+                {
+                    balance.PersonalityPoints += count;
+                    await RegisterUserWalletPurchaseInPoints(userId, points, $"User purchase of {count} Personality Points effect for point amount {points}");
+                }
+                else
+                {
+                    balance.PersonalityPoints += count;
+                    await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Personality Points effect for real money amount {points}");
+                }
+                await _contx.SaveChangesAsync();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }
