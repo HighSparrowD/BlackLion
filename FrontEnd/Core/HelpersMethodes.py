@@ -365,6 +365,11 @@ def check_should_turnOf_personality(userId):
         requests.get(f"https://localhost:44381/CheckShouldTurnOffPersonality/{userId}", verify=False).text))
 
 
+def check_promo_is_valid(userId, promo, isActivatedBeforeRegistration):
+    return bool(json.loads(
+        requests.get(f"https://localhost:44381/CheckPromoIsCorrect/{userId}/{promo}/{isActivatedBeforeRegistration}", verify=False).text))
+
+
 def grant_premium_for_points(userId, cost, dayDuration):
     return json.loads(requests.get(f"https://localhost:44381/GrantPremiumToUser/{userId}/{cost}/{dayDuration}/{1}", verify=False).text)
 
@@ -397,8 +402,18 @@ def switch_admin_status(userId):
 
 
 def switch_personality_status(userId):
-    return requests.get(f"https://localhost:44381/SwitchPersonalityUsage/{userId}",
+    return requests.get(f"https://localhost:44381/SwitchIncreasedFamiliarity/{userId}",
                                                            verify=False)
+
+
+def switch_familiarity_status(userId):
+    return requests.get(f"https://localhost:44381/SwitchIncreasedFamiliarity/{userId}",
+                                                           verify=False)
+
+
+def get_increased_familiarity_status(userId):
+    return bool(json.loads(requests.get(f"https://localhost:44381/GetUserIncreasedFamiliarity/{userId}",
+                                                           verify=False).text))
 
 
 def update_user_status(userId, status):

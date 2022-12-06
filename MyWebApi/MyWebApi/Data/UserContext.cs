@@ -73,6 +73,7 @@ namespace MyWebApi.Data
         public DbSet<AdminErrorLog> ADMIN_ERROR_LOGS { get; set; }
         public DbSet<ActiveEffect> USER_ACTIVE_EFFECTS { get; set; }
         public DbSet<TickRequest> tick_requests { get; set; }
+        public DbSet<PromoCode> promo_codes { get; set; }
 
 
 

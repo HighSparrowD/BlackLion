@@ -12,6 +12,7 @@ import Core.HelpersMethodes as Helpers
 # from Sponsor_Handler import SponsorHandler
 # from SponsorHandlerAdmin import SponsorHandlerAdmin
 from AdminCabinet import AdminCabinet
+from StartModule import StartModule
 
 bot = TeleBot("5488749379:AAEJ0t9RksogDD14zJLRYqSisBUpu2pS2WU") #TODO: relocate code to an .env file or db
 Menus.start_program_in_debug_mode(bot) #TODO: remove in production
@@ -30,14 +31,8 @@ reporters = []
 def Start(message):
     #Allow only if user is not registered
     if not Helpers.check_user_is_registered(message.from_user.id):
-        invitorId = get_invitor_id(message.html_text)
-        if invitorId:
-            if Helpers.user_invitation_link(invitorId, message.from_user.id):
-                bot.send_message(message.from_user.id, f"Registered on behalf of {invitorId}")
-            #bot.send_message(message.from_user.id, "Sorry. Something went wrong")
-        bot.send_message(message.from_user.id, "Hello and welcome to Personality bot\n---More description IT IS NOT MY TASK lalala---\nHit /registration to start you journey :)")
+        StartModule(bot, message)
         #TODO: Maybe send a sticker or smth
-        #TODO: Add normal start here (description message, blah blah blah). Leave it for later, it is not that important
     else:
         Menus.go_back_to_main_menu(bot, message.from_user.id, message)
 
@@ -197,10 +192,6 @@ def check_module_created(userId, module_array): #Probably redundant
         if module.current_user == userId:
             return True
     return False
-
-
-def get_invitor_id(html_text):
-    return html_text.strip("/start")
 
 
 bot.polling()

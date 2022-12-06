@@ -11,7 +11,7 @@ from TestModule import TestModule
 
 
 class Registrator:
-    def __init__(self, bot=None, msg=None, hasVisited=False, return_method=None):
+    def __init__(self, bot=None, msg=None, hasVisited=False, return_method=None, localizationIndex=None):
         self.bot = bot
         self.msg = msg
         self.return_method = return_method
@@ -73,7 +73,7 @@ class Registrator:
         self.reply_text = ""
 
         if not hasVisited:
-            self.app_language_step(msg)
+            self.spoken_language_step(msg)
         else:
             self.current_user_data = Helpers.get_user_info(self.current_user)
             if self.current_user_data:
@@ -126,7 +126,7 @@ class Registrator:
 
                 self.checkout_step(msg)
             else:
-                self.app_language_step(msg)
+                self.spoken_language_step(msg)
 
     def app_language_step(self, msg, acceptMode=False, editMode=False):
         if not acceptMode:

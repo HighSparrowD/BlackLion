@@ -96,9 +96,9 @@ class Requester:
             self.accept_request(message)
         self.destruct()
 
-
     def decline_all_requests(self):
         Helpers.delete_user_requests(self.current_user)
+        self.destruct()
 
     def decline_request(self, message):
         Helpers.delete_user_request(self.current_request["id"])

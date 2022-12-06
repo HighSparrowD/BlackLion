@@ -36,7 +36,6 @@ class Settings:
         self.t_indicator = None
         self.y_indicator = None
         self.personalityMarkup = None
-        self.active_personality_message = 0
         self.personality_caps = {}
         self.personality_updated_points = {}
         self.current_markup_elements = []
@@ -51,60 +50,73 @@ class Settings:
         self.secondChance_indicator = None
         self.valentine_indicator = None
         self.detector_indicator = None
+        self.nullifier_indicator = None
         self.cardDeckMini_indicator = None
         self.cardDeckPlatinum_indicator = None
 
         self.secondChances = 0
         self.valentines = 0
         self.detectors = 0
+        self.nullifiers = 0
         self.cardDecksMini = 0
         self.cardDecksPlatinum = 0
         self.effects_markup = None
-        self.active_effects_message = 0
+
+
+        self.current_markup_elements = []
+        self.markup_last_element = 0
+        self.markup_page = 1
+        self.markup_pages_count = 0
+
+        self.achievements = {}
+        self.achievements_data = {}
+
+        self.active_message = 0
 
         self.add_to_blacklist_text = "Add user to a blacklist"
         self.remove_from_blacklist_text = "Remove user from a blacklist"
 
         self.chooseOption_message = "Choose the option:"
         self.setting_message = "1. My Profile\n2. Personality Settings\n3. Filter Settings\n4. My Statistics\n5. Additional Actions\n\n6. Exit"
-        self.settingMyProfile_message = f"{self.chooseOption_message}\n1. View the blacklist\n2. Manage recently encountered users\n3. Change profile properties\n4. ⭐Set profile status⭐\n5. Set Auto reply message\n\n 6. Go back"
+        self.settingMyProfile_message = f"{self.chooseOption_message}\n1. View the blacklist\n2. Manage recently encountered users\n3. Change profile properties\n4. ⭐Set profile status⭐\n5. Set Auto reply message\n\n 6. Change payment currency\n7. Go back"
         self.settingPersonalitySettings_message = f"{self.chooseOption_message}\n1. Turn On / Turn Off PERSONALITY\n2. Manage PERSONALITY points\n3. View my tests\n\n4. Go back"
         self.settingFiltersSettings_message = f"{self.chooseOption_message}\n1. Turn On / Turn Off language consideration (Random Conversation)\n2.Change my 'Free' status\n3. ⭐Turn on / Turn off filtration by a real photo⭐\n\n4. Go back"
         self.settingStatistics_message = f"{self.chooseOption_message}\n1. View Achievements\n2. Manage Effects\n3. 💎Top-Up coin balance💎\n4. 💎Top-Up Personality points balance💎\n5. 💎Buy premium access💎\n\n6. Go back"
-        self.settingAdditionalActions_message = f"{self.chooseOption_message}\n1. Get invitation credentials\n"
+        self.settingAdditionalActions_message = f"{self.chooseOption_message}\n1. Get invitation credentials\n2. Switch Increased Familiarity parameter\n"
+        self.increased_familiarity_start_message = "When you invite someone, this person instantly gets like from you.\n"
+        self.increased_familiarity_offline_message = "This functionality is currently Turned off. Would you like to turn it on?"
+        self.increased_familiarity_online_message = "This functionality is currently Turned on. Would you like to turn it off?"
         self.effectsMessage = f"1. Manage my effects\n\n2.Go back"
         self.encounter_options_message = "1. Use 💥Second chance💥 to send like to a user once again. You have {}\n2. Report user\n3. {}\n4. Abort"
+        self.currency_list_message = "1. USD\n2. EUR\n3. UAH\n4. RUB\n5. CZK\n6. PLN"
         self.settingMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4", "5", "6")
-        self.settingMyProfileMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4", "5", "6")
+        self.settingMyProfileMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4", "5", "6", "7")
         self.settingPersonalitySettingsMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4")
         self.settingFiltersSettingsMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4")
         self.settingStatisticsMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4", "5", "6")
         self.effects_manageMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2")
         self.YNMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("yes", "no")
-        self.abortMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("abort")
+        self.abortMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("Go Back")
         self.doneMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("Done")
         self.encounterOptionMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4")
         self.credsMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3")
+        self.currency_choiceMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4", "5", "6")
 
-
-        self.secondChanceDescription = "Second chance allows you to 'like' another user once again. It can be used in the 'encounters' section"
+        self.secondChanceDescription = "Second chance allows you to 'like' another user once again. It can be used in the 'Encounters' section"
         self.valentineDescription = "Doubles your Personality points for an hour"
         self.detectorDescription = "When matched, shows which PERSONALITY parameters were matched. Works for 1 hour"
+        self.nullifierDescription = "Allows you to pass any test one more time, without waiting. It can be activated from the 'Test' section"
         self.cardDeckMiniDescription = "Instantly adds 20 profile views to your daily views"
         self.cardDeckPlatinumDescription = "Instantly adds 50 profile views to your daily views"
 
-        #Api return 1 if request was accepted
+        #Api return 1 if request was accepted. 3 if it is being processed right now
         if self.requestStatus != "1" and self.requestStatus != "3":
-            self.settingAdditionalActions_message += "2. Confirm my identity\n\n3. Go back"
-            self.settingAdditionalActionsMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3")
-        #TODO: think if confirmation request text should be changed if request exists. That is cool, but less efficient !
-        # elif not self.requestStatus != "1":
-        #     self.settingAdditionalActions_message += "2. Confirm my identity\n\n3. Go back"
-        #     self.settingAdditionalActionsMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3")
+            self.settingAdditionalActions_message += "3. Confirm my identity\n\n4. Go back"
+            self.settingAdditionalActionsMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4")
         else:
             self.shouldRestrictTickRequest = True
-            self.settingAdditionalActions_message += "\n2. Go back"
-            self.settingAdditionalActionsMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2")
+            self.settingAdditionalActions_message += "\n3. Go back"
+            self.settingAdditionalActionsMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3")
         self.setting_choice(message)
 
     def setting_choice(self, message, acceptMode=False):
@@ -147,10 +159,30 @@ class Settings:
             elif message.text == "5":
                 self.auto_reply_manager(message)
             elif message.text == "6":
-                self.proceed()
+                self.currency_change_manager(message)
+            elif message.text == "7":
+                self.proceed(message)
             else:
                 self.bot.send_message(self.current_user, "No such option", reply_markup=self.settingMyProfileMarkup)
                 self.bot.register_next_step_handler(message, self.my_profile_settings_choice, acceptMode=acceptMode, chat_id=self.current_user)
+
+    def currency_change_manager(self, message, acceptMode=False):
+        self.previous_section = self.my_profile_settings_choice
+        if not acceptMode:
+            self.bot.send_message(self.current_user, "Choose the currency you feel most comfortable using to make payments before we continue")
+            self.bot.send_message(self.current_user, self.currency_list_message, reply_markup=self.currency_choiceMarkup)
+            self.bot.register_next_step_handler(message, self.currency_change_manager, acceptMode=True, chat_id=self.current_user)
+        else:
+            if message.text == "1" or message.text == "2" or message.text == "3" or message.text == "4" or message.text == "5" or message.text == "6":
+                if Helpers.set_user_currency(self.current_user, message.text):
+                    self.bot.send_message(self.current_user, "Done. You can change selected currency at any time :)")
+                else:
+                    self.bot.send_message(self.current_user, "Something went wrong. Please, contact the administration")
+
+                self.proceed(message)
+            else:
+                self.bot.send_message(self.current_user, "No such option", reply_markup=self.currency_choiceMarkup)
+                self.bot.register_next_step_handler(message, self.currency_change_manager, acceptMode=acceptMode, chat_id=self.current_user)
 
     def auto_reply_manager(self, message, acceptMode=False):
         self.previous_section = self.my_profile_settings_choice
@@ -331,9 +363,7 @@ class Settings:
             self.bot.register_next_step_handler(message, self.my_statistics_settings_choice, acceptMode=True, chat_id=self.current_user)
         else:
             if message.text == "1":
-                # TODO: implement
-                self.bot.send_message(self.current_user, "Not implemented yet!")
-                self.proceed()
+                self.achievement_manager()
             elif message.text == "2":
                 self.effects_manager(message)
             elif message.text == "3":
@@ -351,6 +381,33 @@ class Settings:
                 self.bot.send_message(self.current_user, "No such option", reply_markup=self.settingStatisticsMarkup)
                 self.bot.register_next_step_handler(message, self.my_statistics_settings_choice, acceptMode=acceptMode, chat_id=self.current_user)
 
+    def achievement_manager(self):
+        self.achievements.clear()
+        self.achievements_data.clear()
+
+        self.previous_section = self.my_statistics_settings_choice
+        achievements = Helpers.get_all_user_achievements(self.current_user)
+
+        for achievement in achievements:
+            name = achievement["achievement"]["name"]
+
+            #Add a tick if user has acquired an achievement
+            if achievement["isAcquired"]:
+                name = "✅" + name
+
+            self.achievements[achievement["id"]] = name
+            self.achievements_data[achievements["id"]] = achievement
+
+        reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page, self.markup_pages_count)
+        count_pages(self.achievements, self.current_markup_elements, self.markup_pages_count)
+        markup = assemble_markup(self.markup_page, self.current_markup_elements, 0)
+        self.markup_page = 1
+
+        self.current_callback_handler = self.bot.register_callback_query_handler("", self.achievement_callback_handler)
+        self.bot.send_message(self.current_user, "Your achievement list", reply_markup=markup)
+        self.bot.send_message(self.current_user, "Already acquired achievements are marked with '✅'\nSelect an achievement to view more info")
+        self.get_ready_to_abort(self.message)
+
     def effects_manager(self, message, acceptMode=False):
         self.previous_section = self.my_statistics_settings_choice
         if not acceptMode:
@@ -366,7 +423,7 @@ class Settings:
 
     def show_users_effects(self, message):
         self.construct_effects_markup(self.userBalance)
-        self.active_effects_message = self.bot.send_message(self.current_user, "Here is your effects inventory:", reply_markup=self.effects_markup).id
+        self.active_message = self.bot.send_message(self.current_user, "Here is your effects inventory:", reply_markup=self.effects_markup).id
         self.bot.send_message(self.current_user, "Select an effect to read it description or type 'abort' to go back", reply_markup=self.abortMarkup)
         self.current_callback_handler = self.bot.register_callback_query_handler("", self.effects_callback_handler, user_id=self.current_user)
         self.get_ready_to_abort(message)
@@ -380,16 +437,37 @@ class Settings:
             if message.text == "1":
                 self.credentials_management(message)
             elif message.text == "2":
+                self.increased_familiarity_switch(message)
+            elif message.text == "3":
                 if self.requestStatus != "1" and self.requestStatus != "3":
                     self.send_confirmation_request(message)
                     return
                 self.proceed()
-            elif message.text == "3":
-                self.proceed()
+            elif message.text == "4":
+                self.proceed(message)
             else:
                 self.bot.send_message(self.current_user, "No such option", reply_markup=self.settingAdditionalActionsMarkup)
                 self.bot.register_next_step_handler(message, self.additional_actions_settings_choice, acceptMode=acceptMode, chat_id=self.current_user)
 
+    def increased_familiarity_switch(self, message, acceptMode=False):
+        self.previous_section = self.additional_actions_settings_choice
+        if not acceptMode:
+            if Helpers.get_increased_familiarity_status(self.current_user):
+                self.bot.send_message(self.current_user, f"{self.increased_familiarity_start_message}{self.increased_familiarity_online_message}", reply_markup=self.YNMarkup)
+            else:
+                self.bot.send_message(self.current_user, f"{self.increased_familiarity_start_message}{self.increased_familiarity_offline_message}", reply_markup=self.YNMarkup)
+            self.bot.register_next_step_handler(message, self.increased_familiarity_switch, acceptMode=True, chat_id=self.current_user)
+        else:
+            if message.text == "yes":
+                Helpers.switch_familiarity_status(self.current_user)
+                self.bot.send_message(self.current_user, "Gotcha :)")
+                self.proceed(message)
+            elif message.text == "no":
+                self.proceed(message)
+                self.bot.send_message(self.current_user, "Done :)")
+            else:
+                self.bot.send_message(self.current_user, "No such option", reply_markup=self.YNMarkup)
+                self.bot.register_next_step_handler(message, self.increased_familiarity_switch, acceptMode=acceptMode, chat_id=self.current_user)
 
     def personality_points(self, message, acceptMode=False):
         self.previous_section = self.personality_settings_choice
@@ -443,7 +521,7 @@ class Settings:
                 .add(InlineKeyboardButton("-", callback_data="-11"), self.y_indicator, InlineKeyboardButton("+", callback_data="11"))
 
             self.bot.send_message(self.current_user, "✨", reply_markup=self.doneMarkup)
-            self.active_personality_message = self.bot.send_message(self.current_user, "Points table:", reply_markup=self.personalityMarkup).id
+            self.active_message = self.bot.send_message(self.current_user, "Points table:", reply_markup=self.personalityMarkup).id
             self.bot.register_next_step_handler(message, self.personality_points_save, chat_id=self.current_user)
 
     def personality_points_save(self, message):
@@ -687,9 +765,6 @@ class Settings:
                                                        message_id=call.message.id)
                     self.markup_page += index
 
-            elif "/" in call.data:  # TODO: Make it work another way... maybe
-                self.bot.answer_callback_query(call.id, call.data)
-
             else:
                 try:
                     self.current_managed_user = int(call.data)
@@ -774,9 +849,6 @@ class Settings:
                                                        message_id=call.message.id)
                     self.markup_page += index
 
-            elif "/" in call.data:  # TODO: Make it work another way... maybe
-                self.bot.answer_callback_query(call.id, call.data)
-
             else:
                 try:
                     self.current_managed_user = int(call.data)
@@ -809,6 +881,11 @@ class Settings:
                         self.buy_effect_manager(call.message, effectId=call.data)
                 else:
                     self.bot.send_message(self.current_user, "You have to turn on PERSONALITY to use this effect")
+            elif call.data == "8":
+                if self.detectors > 0:
+                    self.bot.send_message(self.current_user, self.nullifierDescription)
+                else:
+                    self.buy_effect_manager(call.message, effectId=call.data)
             elif call.data == "9":
                 self.bot.send_message(self.current_user, self.cardDeckMiniDescription)
                 if self.cardDecksMini > 0:
@@ -832,7 +909,7 @@ class Settings:
             self.bot.register_next_step_handler(message, self.use_effect_manager, effectId=effectId, acceptMode=True, chat_id=self.current_user)
         else:
             if message.text == "yes":
-                if effectId == "6" or effectId == "7" or effectId == "8":
+                if effectId == "6" or effectId == "7":
                     if effectId == "6":
                         self.valentines -= 1
                         self.valentine_indicator.text = self.valentines
@@ -1181,16 +1258,42 @@ class Settings:
                     return False
                 self.bot.send_message(self.current_user, "Pass at least one test related to that parameter first :)")
 
+    def achievement_callback_handler(self, call):
+        if call.message.id not in self.old_queries:
+            self.current_query = call.message.id
+
+            if call.data == "-1" or call.data == "-2":
+                index = self.index_converter(call.data)
+                if self.markup_page + index <= self.markup_pages_count or self.markup_page + index >= 1:
+                    markup = assemble_markup(self.markup_page, self.current_markup_elements, index)
+                    self.bot.edit_message_reply_markup(chat_id=call.message.chat.id, reply_markup=markup,
+                                                       message_id=call.message.id)
+                    self.markup_page += index
+
+            else:
+                try:
+                    if self.active_message:
+                        self.bot.edit_message_text(self.construct_achievement_message(call.data), self.current_user, self.active_message,
+                                                   reply_markup=self.abortMarkup)
+                        return
+
+                    self.active_message = self.bot.send_message(self.current_user, self.construct_achievement_message(call.data), reply_markup=self.abortMarkup).id
+                    self.bot.send_message(self.current_user, "Type 'Go Back' to return to the previous section")
+                except:
+                    self.bot.send_message(self.current_user, "Unable to load achievement data, please, contact the administration")
+                    self.proceed()
+
     def update_personality_markup(self):
-        self.bot.edit_message_reply_markup(chat_id=self.current_user, reply_markup=self.personalityMarkup, message_id=self.active_personality_message)
+        self.bot.edit_message_reply_markup(chat_id=self.current_user, reply_markup=self.personalityMarkup, message_id=self.active_message)
 
     def update_effects_markup(self):
         try:
-            self.bot.edit_message_reply_markup(chat_id=self.current_user, reply_markup=self.effects_markup, message_id=self.active_effects_message)
+            self.bot.edit_message_reply_markup(chat_id=self.current_user, reply_markup=self.effects_markup, message_id=self.active_message)
         except:
             pass
 
-    def proceed(self):
+    def proceed(self, msg=None):
+        self.active_message = 0
         if self.current_callback_handler:
             self.bot.callback_query_handlers.remove(self.current_callback_handler)
             self.current_callback_handler = None
@@ -1212,16 +1315,27 @@ class Settings:
         self.bot.register_next_step_handler(self.message, self.encounter_list_management, acceptMode=True,
                                             chat_id=self.current_user)
 
+    def construct_achievement_message(self, achievementId):
+        achievement = self.achievements_data[achievementId]
+        name = achievement["achievement"]["name"]
+
+        if achievement["isAcquired"]:
+            name = "✅" + name + "✅"
+
+        msg = f"{name}\n\n{achievement['achievement']['description']}\nProgress: {achievement['progress']} / {['achievement']['condition']}\n\nReward:{achievement['value']} Coins"
+
     def construct_effects_markup(self, balance):
         self.secondChances = balance["secondChances"]
         self.valentines = balance["valentines"]
         self.detectors = balance["detectors"]
+        self.nullifiers = balance["nullifiers"]
         self.cardDecksMini = balance["cardDecksMini"]
         self.cardDecksPlatinum = balance["cardDecksPlatinum"]
 
         self.secondChance_indicator = InlineKeyboardButton(self.secondChances, callback_data="0")
         self.valentine_indicator = InlineKeyboardButton(self.valentines, callback_data="0")
         self.detector_indicator = InlineKeyboardButton(self.detectors, callback_data="0")
+        self.nullifier_indicator = InlineKeyboardButton(self.nullifiers, callback_data="0")
         self.cardDeckMini_indicator = InlineKeyboardButton(self.cardDecksMini, callback_data="0")
         self.cardDeckPlatinum_indicator = InlineKeyboardButton(self.cardDecksPlatinum, callback_data="0")
 
@@ -1229,6 +1343,7 @@ class Settings:
             .add(InlineKeyboardButton("Second Chance", callback_data="5"), self.secondChance_indicator) \
             .add(InlineKeyboardButton("Valentine", callback_data="6"), self.valentine_indicator) \
             .add(InlineKeyboardButton("Detector", callback_data="7"), self.detector_indicator) \
+            .add(InlineKeyboardButton("Nullifiers", callback_data="8"), self.nullifier_indicator) \
             .add(InlineKeyboardButton("Card Deck Mini", callback_data="9"), self.cardDeckMini_indicator) \
             .add(InlineKeyboardButton("Card Deck Platinum", callback_data="10"), self.cardDeckPlatinum_indicator) \
 
@@ -1236,7 +1351,7 @@ class Settings:
         self.bot.register_next_step_handler(message, self.abort_handler, chat_id=self.current_user)
 
     def abort_handler(self, message):
-        if message.from_user.id == self.current_user and message.text == "abort":
+        if message.from_user.id == self.current_user and message.text == "Go Back":
             self.proceed()
 
     def construct_active_effects_message(self, effects):
@@ -1254,7 +1369,7 @@ class Settings:
         msg = ""
 
         if balance:
-            return f"💎Coins: {balance['points']}\n💎Personality Points: {balance['personalityPoints']}\n💥Second Chances{balance['secondChances']}\n💥Valentines: {balance['valentines']}\n💥Detectors: {balance['detectors']}\n💥Card Decks Mini: {balance['cardDecksMini']}\n💥Card Decks Platinum: {balance['cardDecksPlatinum']}"
+            return f"💎Coins: {balance['points']}\n💎Personality Points: {balance['personalityPoints']}\n💥Second Chances{balance['secondChances']}\n💥Valentines: {balance['valentines']}\n💥Detectors: {balance['detectors']}\n💥Nullifiers: {balance['nullifiers']}\n💥Card Decks Mini: {balance['cardDecksMini']}\n💥Card Decks Platinum: {balance['cardDecksPlatinum']}"
 
         return "Something went wrong"
 

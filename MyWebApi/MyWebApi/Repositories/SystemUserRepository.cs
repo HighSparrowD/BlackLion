@@ -87,36 +87,46 @@ namespace MyWebApi.Repositories
                     invitor.InvitedUsersCount++;
 
                     var bonus = invitor.HasPremium ? 0.05 : 0;
+                    var multiplier = 1;
+
+                    if (invitor.InvitedUsersCount > 10)
+                        multiplier = 2;
 
                     if (invitor.InvitedUsersCount == 1)
                     {
-                        await TopUpUserWalletPointsBalance(invitor.UserId, 250, $"User {invitor.UserId} has invited his firs user");
+                        await TopUpUserWalletPointsBalance(invitor.UserId, 250 * multiplier, $"User {invitor.UserId} has invited his firs user");
                         await GrantPremiumToUser(invitor.UserId, 0, 1, (short)Currencies.Points);
                     }
-                    else if (invitor.InvitedUsersCount == 3)
+                    else if (invitor.InvitedUsersCount == 3 || invitor.InvitedUsersCount % 3 == 0)
                     {
-                        invitor.InvitedUsersBonus = 0.15 + bonus;
-                        await TopUpUserWalletPointsBalance(invitor.UserId, 1199, $"User {invitor.UserId} has invited 3 users");
+                        if (multiplier == 1)
+                            invitor.InvitedUsersBonus = 0.15 + bonus;
+                        await TopUpUserWalletPointsBalance(invitor.UserId, 1199 * multiplier, $"User {invitor.UserId} has invited 3 users");
                     }
-                    else if (invitor.InvitedUsersCount == 7)
+                    else if (invitor.InvitedUsersCount == 7 || invitor.InvitedUsersCount % 7 == 0)
                     {
-                        invitor.InvitedUsersBonus = 0.35 + bonus;
-                        await TopUpUserWalletPointsBalance(invitor.UserId, 1499, $"User {invitor.UserId} has invited 7 users");
+                        if (multiplier == 1)
+                            invitor.InvitedUsersBonus = 0.35 + bonus;
+                        await TopUpUserWalletPointsBalance(invitor.UserId, 1499 * multiplier, $"User {invitor.UserId} has invited 7 users");
                     }
-                    else if (invitor.InvitedUsersBonus == 10)
+                    else if (invitor.InvitedUsersCount == 10 || invitor.InvitedUsersCount % 10 == 0)
                     {
-                        invitor.InvitedUsersBonus = 0.5 + bonus;
-                        // 1499 will then turn into 1999 due to premium purchase reward
-                        await TopUpUserWalletPointsBalance(invitor.UserId, 1499, $"User {invitor.UserId} has invited 10 users");
-                        
-                        //Adds + 10 random effects to users inventory
-                        var effecId = new Random().Next(5, 10);
-                        await PurchaseEffectAsync(invitor.UserId, effecId, 0, (int)Currencies.Points, 10);
-                        await GrantPremiumToUser(model.UserId, 0, 30, (short)Currencies.Points);
+                        if (multiplier == 1)
+                        {
+                            invitor.InvitedUsersBonus = 0.5 + bonus;
+                            // 1499 will then turn into 1999 due to premium purchase reward
+                            await TopUpUserWalletPointsBalance(invitor.UserId, 1499, $"User {invitor.UserId} has invited 10 users");
+                            //Adds + 10 random effects to users inventory
+                            var effecId = new Random().Next(5, 10);
+                            await PurchaseEffectAsync(invitor.UserId, effecId, 0, (int)Currencies.Points, 10);
+                            await GrantPremiumToUser(model.UserId, 0, 30, (short)Currencies.Points);
+                        }
+                        else
+                            await TopUpUserWalletPointsBalance(invitor.UserId, 1999 * multiplier, $"User {invitor.UserId} has invited more than 10 users");
                     }
                     else
                     {
-                        await TopUpUserWalletPointsBalance(invitor.UserId, (int)(200 + (200 * bonus)), $"User {model.UserId} was invited by user {invitor.UserId}");
+                        await TopUpUserWalletPointsBalance(invitor.UserId, (int)(200 + (200 * bonus) * multiplier), $"User {model.UserId} was invited by user {invitor.UserId}");
                     }
 
                     model.BonusIndex = 1.5;
@@ -125,8 +135,9 @@ namespace MyWebApi.Repositories
                     _contx.SYSTEM_USERS.Update(model);
                     await _contx.SaveChangesAsync();
 
-                    //User is instantly liked by an invitor (Possibly let users turn of that feature)
-                    await RegisterUserRequest(new UserNotification { UserId = invitor.UserId, UserId1 = model.UserId, IsLikedBack = false });
+                    //User is instantly liked by an invitor if he is allowing it
+                    if (invitor.IncreasedFamiliarity)
+                        await RegisterUserRequest(new UserNotification { UserId = invitor.UserId, UserId1 = model.UserId, IsLikedBack = false });
                     //Invitor is notified about referential registration
                     await NotifyUserAboutReferentialRegistrationAsync(invitor.UserId, model.UserId);
                 }
@@ -1218,6 +1229,7 @@ namespace MyWebApi.Repositories
             {
                 return await _contx.USER_ACHIEVEMENTS
                     .Where(a => a.UserBaseInfoId == userId)
+                    .Include(a => a.Achievement)
                     .ToListAsync();
             }
             catch (Exception ex)
@@ -3279,6 +3291,14 @@ namespace MyWebApi.Repositories
                 var userTest = await _contx.user_tests.Where(t => t.UserId == model.UserId && t.TestId == model.TestId)
                     .SingleOrDefaultAsync();
 
+                //Give user 1 PP for passing the test for the first time
+                if (userTest.PassedOn != null)
+                {
+                    var userBalance = await GetUserWalletBalance(model.UserId);
+                    userBalance.PersonalityPoints++;
+                    await _contx.SaveChangesAsync();
+                }
+
                 userTest.PassedOn = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
 
                 _contx.user_tests.Update(userTest);
@@ -3555,7 +3575,7 @@ namespace MyWebApi.Repositories
                             value = balance.Detectors > 0;
                             break;
                         case 8:
-                            value = balance.WhiteDetectors > 0;
+                            value = balance.Nullifiers > 0;
                             break;
                         case 9:
                             value = balance.CardDecksMini > 0;
@@ -3608,11 +3628,10 @@ namespace MyWebApi.Repositories
                         userBalance.Detectors--;
                         effect = new TheDetector(userId);
                         break;
-                    //Currently not used
                     case 8:
                         if (!(bool)await CheckUserUsesPersonality(userId))
                             return null;
-                        userBalance.WhiteDetectors--;
+                        userBalance.Nullifiers--;
                         effect = new TheWhiteDetector(userId);
                         break;
                     default:
@@ -3645,6 +3664,10 @@ namespace MyWebApi.Repositories
                             SectionId = (int)Sections.Familiator,
                             Severity = (short)Severities.Moderate
                         });
+                        await _contx.SaveChangesAsync();
+                        return true;
+                    case 8:
+                        userBalance.Nullifiers --;
                         await _contx.SaveChangesAsync();
                         return true;
                     case 9:
@@ -3830,16 +3853,23 @@ namespace MyWebApi.Repositories
                 .SingleOrDefaultAsync();
         }
 
-        public async Task<UserTest> GetUserTestAsync(long userId, long testId)
+        public async Task<GetUserTest> GetUserTestAsync(long userId, long testId)
         {
-            return await _contx.user_tests.Where(t => t.UserId == userId && t.TestId == testId)
+            var test = await _contx.user_tests.Where(t => t.UserId == userId && t.TestId == testId)
                 .Include(t => t.Test)
                 .SingleOrDefaultAsync();
+
+            if (test == null)
+                throw new NullReferenceException($"User {userId} does not have Test {testId}");
+
+            return new GetUserTest(test);
         }
 
         public async Task<int> GetPossibleTestPassRangeAsync(long userId, long testId)
         {
-            var test = await GetUserTestAsync(userId, testId);
+            var test = await _contx.user_tests.Where(t => t.UserId == userId && t.TestId == testId)
+                .AsNoTracking()
+                .SingleOrDefaultAsync();
 
             if (test == null)
                 throw new NullReferenceException($"User #{userId} does not have test #{testId} available");
@@ -3848,10 +3878,11 @@ namespace MyWebApi.Repositories
             if (test.PassedOn == null)
                 return 0;
 
-            if ((test.PassedOn - DateTime.Now).Value.TotalDays > 90)
+            if ((DateTime.Now - test.PassedOn).Value.Days > 90)
                 return 0;
 
-            return (int)(90 - (test.PassedOn - DateTime.Now).Value.TotalDays);
+            var result = (90 - (DateTime.Now - test.PassedOn).Value.Days);
+            return result;
 
         }
 
@@ -4029,6 +4060,7 @@ namespace MyWebApi.Repositories
 
             if (balance != null)
             {
+                balance.Points -= points;
                 switch (effectId)
                 {
                     case 5:
@@ -4051,6 +4083,13 @@ namespace MyWebApi.Repositories
                             await RegisterUserWalletPurchaseInPoints(userId, points, $"User purchase of {count} Detector effect for point amount {points}");
                         else
                             await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Detector effect for real money amount {points}");
+                        break;
+                    case 8:
+                        balance.Nullifiers += count;
+                        if (currency == (short)Currencies.Points)
+                            await RegisterUserWalletPurchaseInPoints(userId, points, $"User purchase of {count} Nullifier effect for point amount {points}");
+                        else
+                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Nullifier effect for real money amount {points}");
                         break;
                     case 9:
                         balance.CardDecksMini += count;
@@ -4104,11 +4143,13 @@ namespace MyWebApi.Repositories
 
                 if (currency == (short)Currencies.Points)
                 {
+                    balance.Points -= points;
                     balance.PersonalityPoints += count;
                     await RegisterUserWalletPurchaseInPoints(userId, points, $"User purchase of {count} Personality Points effect for point amount {points}");
                 }
                 else
                 {
+                    balance.Points -= points;
                     balance.PersonalityPoints += count;
                     await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Personality Points effect for real money amount {points}");
                 }
@@ -4119,6 +4160,54 @@ namespace MyWebApi.Repositories
             {
                 return false;
             }
+        }
+
+        public async Task<bool> CheckPromoIsCorrectAsync(long userId, string promoText, bool isActivatedBeforeRegistration)
+        {
+            var promo = await _contx.promo_codes.Where(p => p.Promo == promoText && p.UserdOnlyInRegistration == isActivatedBeforeRegistration)
+                .AsNoTracking()
+                .SingleOrDefaultAsync();
+
+            if (promo == null)
+                return false;
+
+            var userBalance = await _contx.USER_WALLET_BALANCES.FindAsync(userId);
+
+            userBalance.Points += promo.Points;
+            userBalance.PersonalityPoints += promo.PersonalityPoints;
+            userBalance.SecondChances += promo.SecondChance;
+            userBalance.Valentines += promo.TheValentine;
+            userBalance.Detectors += promo.TheDetector;
+            userBalance.Nullifiers += promo.Nullifier;
+            userBalance.CardDecksMini += promo.CardDeckMini;
+            userBalance.CardDecksPlatinum += promo.CardDeckPlatinum;
+
+            _contx.USER_WALLET_BALANCES.Update(userBalance);
+            await _contx.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> GetUserIncreasedFamiliarityAsync(long userId)
+        {
+            var user = await _contx.SYSTEM_USERS.FindAsync(userId);
+
+            if (user == null)
+                throw new NullReferenceException($"User {userId} does not exist !");
+
+            return user.IncreasedFamiliarity;
+        }
+
+        public async Task<bool> SwitchIncreasedFamiliarityAsync(long userId)
+        {
+            var user = await _contx.SYSTEM_USERS.FindAsync(userId);
+
+            if (user == null)
+                throw new NullReferenceException($"User {userId} does not exist !");
+
+            user.IncreasedFamiliarity = !user.IncreasedFamiliarity;
+            await _contx.SaveChangesAsync();
+
+            return user.IncreasedFamiliarity;
         }
     }
 }

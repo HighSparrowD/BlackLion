@@ -275,6 +275,7 @@ namespace MyWebApi.Controllers
                 ShouldConsiderLanguages = false,
                 HasPremium = false,
                 HadReceivedReward = false,
+                IncreasedFamiliarity = true,
                 DailyRewardPoint = 0,
                 BonusIndex = 1,
                 ProfileViewsCount = 0,
@@ -283,6 +284,7 @@ namespace MyWebApi.Controllers
                 TagSearchesCount = 0,
                 MaxProfileViewsCount = 50,
                 IsIdentityConfirmed = false,
+                EnteredPromoCodes = ""
             };
 
             if (model.UserCityCode != null && model.UserCountryCode != null)
@@ -862,7 +864,7 @@ namespace MyWebApi.Controllers
         }
 
         [HttpGet("/GetUserTest/{userId}/{testId}")]
-        public async Task<UserTest> GetUserTest(long userId, long testId)
+        public async Task<GetUserTest> GetUserTest(long userId, long testId)
         {
             return await _repository.GetUserTestAsync(userId, testId);
         }
@@ -983,6 +985,24 @@ namespace MyWebApi.Controllers
         public async Task<bool> PurchesPPForRealMoney(long userId, int price, short count = 1)
         {
             return await _repository.PurchasePersonalityPointsAsync(userId, price, (short)Currencies.RealMoney, count);
+        }
+
+        [HttpGet("/CheckPromoIsCorrect/{userId}/{promo}/{isActivatedBeforeRegistration}")]
+        public async Task<bool> CheckPromoIsCorrect(long userId, string promo, bool isActivatedBeforeRegistration)
+        {
+            return await _repository.CheckPromoIsCorrectAsync(userId, promo, isActivatedBeforeRegistration);
+        }
+
+        [HttpGet("/GetUserIncreasedFamiliarity/{userId}")]
+        public async Task<bool> GetUserIncreasedFamiliarity(long userId)
+        {
+            return await _repository.GetUserIncreasedFamiliarityAsync(userId);
+        }
+
+        [HttpGet("/SwitchIncreasedFamiliarity/{userId}")]
+        public async Task<bool> SwitchIncreasedFamiliarity(long userId)
+        {
+            return await _repository.SwitchIncreasedFamiliarityAsync(userId);
         }
     }
 }

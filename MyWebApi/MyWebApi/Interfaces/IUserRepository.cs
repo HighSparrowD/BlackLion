@@ -158,7 +158,7 @@ namespace MyWebApi.Interfaces
         Task<List<GetTestShortData>> GetTestDataByPropertyAsync(long userId, short param);
         Task<List<GetTestShortData>> GetUserTestDataByPropertyAsync(long userId, short param);
         Task<GetFullTestData> GetTestFullDataByIdAsync(long testId, int localisation);
-        Task<UserTest> GetUserTestAsync(long userId, long testId);
+        Task<GetUserTest> GetUserTestAsync(long userId, long testId);
         Task<int> GetPossibleTestPassRangeAsync(long userId, long testId);
         Task<bool> PurchaseTestAsync(long userId, long testId, int localisation);
         Task<string> CheckTickRequestStatusÀsync(long userId);
@@ -171,5 +171,8 @@ namespace MyWebApi.Interfaces
         Task<bool> GetUserRTLanguageConsiderationAsync(long userId);
         Task SetUserCurrencyAsync(long userId, short currency);
         Task<GetUserData> GetRequestSenderAsync(Guid requestId);
+        Task<bool> CheckPromoIsCorrectAsync(long userId, string promoText, bool isActivatedBeforeRegistration);
+        Task<bool> GetUserIncreasedFamiliarityAsync(long userId);
+        Task<bool> SwitchIncreasedFamiliarityAsync(long userId);
     }
 }

@@ -20,9 +20,11 @@ class Shop:
         self.active_pack = 0
         self.chosen_pack_price = 0
 
+        self.current_effect_pack = ""
+
         #TODO: load price lists based on currency selected by user
         self.start_options_message = "1. Premium\n2. Coins\n3. Effects\n4. Personality Points\n5. Tests\n6. Support Us :)\n7. Exit"
-        self.premium_price_list_message = "3 days: VALUE Coins - VALUE CURRENCY\n14 days: VALUE Coins - VALUE CURRENCY\n30 days VALUE Coins - VALUE CURRENCY"
+        self.premium_price_list_message = "1. 3 days: 5,999 Coins - VALUE CURRENCY\n2. 21 days: 12,999 Coins - VALUE CURRENCY\n3. 30 days 20,999 Coins - VALUE CURRENCY\n4. Go Back"
         self.effects_list_message = "1. 💥Second Chance💥\n2. 💥The Valentine💥\n3. 💥The Detector💥\n4. 💥The Nullifier💥\n5. 💥Card Deck Mini💥\n6. 💥Card Deck Platinum💥\n7. Go Back"
         self.secondChance_price_list_message = "1. Buy 1: 599 Coins - VALUE CURRENCY\n2. Buy 5: 2,300 Coins - VALUE CURRENCY\n3. Buy 10: 4,000 Coins - VALUE CURRENCY\n4. Go Back"
         self.theValentine_price_list_message = "1. Buy 1: 599 Coins - VALUE CURRENCY\n2. Buy 5: 2,300 Coins - VALUE CURRENCY\n3. Buy 10: 4,000 Coins - VALUE CURRENCY\n4. Go Back"
@@ -39,11 +41,18 @@ class Shop:
 
         self.userBalance = Helpers.get_active_user_balance(self.current_user)
 
+        self.secondChanceDescription = "Second chance allows you to 'like' another user once again. It can be used in the 'encounters' section"
+        self.valentineDescription = "Doubles your Personality points for an hour"
+        self.detectorDescription = "When matched, shows which PERSONALITY parameters were matched. Works for 1 hour"
+        self.nullifierDescription = "Allows you to pass any test one more time, without waiting"
+        self.cardDeckMiniDescription = "Instantly adds 20 profile views to your daily views"
+        self.cardDeckPlatinumDescription = "Instantly adds 50 profile views to your daily views"
+
         self.YNmarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("yes", "no")
         self.currency_choiceMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4", "5", "6")
         self.currency_purchaseMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3")
         self.start_markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4", "5", "6", "7") #TODO: Expand in the future
-        self.buy_premium_markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3")
+        self.buy_premium_markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4")
         self.effects_list_markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4", "5", "6", "7")
         self.effect_pack_markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4")
 
@@ -80,6 +89,7 @@ class Shop:
         if not acceptMode:
             if self.startingTransaction == 1:
                 self.buy_coins(message)
+                return
             elif self.startingTransaction == 2:
                 self.choose_effect_to_buy(message)
                 return
@@ -88,8 +98,10 @@ class Shop:
                 return
             elif self.startingTransaction == 4:
                 self.choose_pack_PP(message)
+                return
             elif self.startingTransaction == 5:
                 self.buy_tests()
+                return
 
             self.bot.send_message(self.current_user, "Welcome to the shop!", reply_markup=self.start_markup)
             self.bot.send_message(self.current_user, f"Your current points balance: {self.userBalance['points']}", reply_markup=self.start_markup)
@@ -131,12 +143,14 @@ class Shop:
             self.bot.send_message(self.current_user, self.premium_price_list_message, reply_markup=self.buy_premium_markup)
             self.bot.register_next_step_handler(message, self.buy_premium, acceptMode=True, chat_id=self.current_user)
         else:
-            if message.text.lower() == "1":
+            if message.text == "1":
                 self.choose_pay_method(message, "1")
-            elif message.text.lower() == "2":
+            elif message.text == "2":
                 self.choose_pay_method(message, "2")
-            elif message.text.lower() == "3":
+            elif message.text == "3":
                 self.choose_pay_method(message, "3")
+            elif message.text == "4":
+                self.proceed(message)
             else:
                 self.bot.send_message(self.current_user, "No such option", reply_markup=self.buy_premium_markup)
                 self.bot.register_next_step_handler(message, self.buy_premium, acceptMode=acceptMode, chat_id=self.current_user)
@@ -148,16 +162,39 @@ class Shop:
             self.bot.send_message(self.current_user, self.effects_list_message, reply_markup=self.effects_list_markup)
             self.bot.register_next_step_handler(message, self.choose_effect_to_buy, acceptMode=True, chat_id=self.current_user)
         else:
-            if message.text == "1" or message.text == "2" or message.text == "3" or message.text == "4" or message.text == "5" or message.text == "6":
-                self.choose_effect_pack(message, message.text)
+            if message.text == "1":
+                self.current_effect_pack = message.text
+                self.bot.send_message(self.current_user, self.secondChanceDescription)
+                self.choose_effect_pack(message)
+            elif message.text == "2":
+                self.current_effect_pack = message.text
+                self.bot.send_message(self.current_user, self.valentineDescription)
+                self.choose_effect_pack(message)
+            elif message.text == "3":
+                self.current_effect_pack = message.text
+                self.bot.send_message(self.current_user, self.detectorDescription)
+                self.choose_effect_pack(message)
+            elif message.text == "4":
+                self.current_effect_pack = message.text
+                self.bot.send_message(self.current_user, self.nullifierDescription)
+                self.choose_effect_pack(message)
+            elif message.text == "5":
+                self.current_effect_pack = message.text
+                self.bot.send_message(self.current_user, self.cardDeckMiniDescription)
+                self.choose_effect_pack(message)
+            elif message.text == "6":
+                self.current_effect_pack = message.text
+                self.bot.send_message(self.current_user, self.cardDeckPlatinumDescription)
+                self.choose_effect_pack(message)
             elif message.text == "7":
                 self.proceed(message)
             else:
-                self.bot.send_message(self.current_user, "No such option", reply_markup=self.buy_premium_markup)
-                self.bot.register_next_step_handler(message, self.choose_effect_to_buy, acceptMode=acceptMode,chat_id=self.current_user)
+                self.bot.send_message(self.current_user, "No such option", reply_markup=self.effects_list_markup)
+                self.bot.register_next_step_handler(message, self.choose_effect_to_buy, acceptMode=acceptMode, chat_id=self.current_user)
 
-    def choose_effect_pack(self, message, effectId, acceptMode=False):
-        self.previous_section = self.choose_effect_pack
+    def choose_effect_pack(self, message, acceptMode=False):
+        self.previous_section = self.choose_effect_to_buy
+        effectId = self.current_effect_pack
         if not acceptMode:
             if effectId == "1":
                 self.active_first_option_price = 599
@@ -189,7 +226,7 @@ class Shop:
                 self.active_first_option_price = 2000
                 self.active_first_option_price = 3400
                 self.bot.send_message(self.current_user, self.cardDeckPlatinum_price_list_message, reply_markup=self.effect_pack_markup)
-            self.bot.register_next_step_handler(message, self.choose_effect_pack, effectId=effectId, acceptMode=True, chat_id=self.current_user)
+            self.bot.register_next_step_handler(message, self.choose_effect_pack, acceptMode=True, chat_id=self.current_user)
         else:
             if message.text == "1":
                 self.active_pack = 1
@@ -202,6 +239,7 @@ class Shop:
                 self.chosen_pack_price = self.active_third_option_price
             elif message.text == "4":
                 self.proceed(message)
+                return
             self.choose_pay_method(message, effectId)
 
     def choose_pack_PP(self, message, acceptMode=False):
@@ -255,19 +293,19 @@ class Shop:
         result = False
         if transaction_type == "1":
             if currency == "1":
-                result = Helpers.grant_premium_for_points(self.current_user, 6999, 3)
+                result = Helpers.grant_premium_for_points(self.current_user, 5999, 3)
             elif currency == "2":
                 pass
                 # TODO: Redirect user to real money purchase section
         elif transaction_type == "2":
             if currency == "1":
-                result = Helpers.grant_premium_for_points(self.current_user, 10999, 14)
+                result = Helpers.grant_premium_for_points(self.current_user, 12999, 21)
             elif currency == "2":
                 pass
                 # TODO: Redirect user to real money purchase section
         elif transaction_type == "3":
             if currency == "1":
-                result = Helpers.grant_premium_for_points(self.current_user, 18999, 30)
+                result = Helpers.grant_premium_for_points(self.current_user, 20999, 30)
             elif currency == "2":
                 pass
                 #TODO: Redirect user to real money purchase section

@@ -34,6 +34,7 @@ class TestModule:
         self.current_question_message = 0
         self.active_message_id = 0
         self.active_param = 0
+        self.active_media = None
 
         self.user_total = 0
 
@@ -210,11 +211,19 @@ class TestModule:
             #Create previous question button
             markup.add(InlineKeyboardButton("⬅ Previous question", callback_data="-8"))
 
+            if self.active_media is not None:
+                #Remove photo from question
+                self.active_media = None
+                self.bot.edit_message_media(None, self.current_user, self.active_message_id)
+
+            #Set question photo if one is required
             if self.current_question["photo"]:
-                self.bot.send_photo(self.current_user, self.current_question["photo"], caption=self.current_question["text"])
+                self.active_media = self.current_question["photo"]
+                self.bot.edit_message_media(self.active_media, self.current_user, self.active_message_id)
 
             if not self.current_question_message:
                 self.current_question_message = self.bot.send_message(self.current_user, f"❓ {self.current_question['text']} ❓", reply_markup=markup).id
+                self.bot.send_message(self.current_user, "You can leave by typing '/abort', but all your progress will be lost", reply_markup=self.abortMarkup)
             else:
                 # self.bot.edit_message_reply_markup(chat_id=self.current_user, reply_markup=markup, message_id=self.current_question_message)
                 self.bot.edit_message_text(text=f"❓ {self.current_question['text']} ❓", chat_id=self.current_user, message_id=self.current_question_message, reply_markup=markup)
@@ -344,6 +353,9 @@ class TestModule:
             self.active_param = int(call.data)
             self.manage_point_group()
 
+        elif call.data == "0":
+            return
+
         #If user is going back to start
         elif call.data == '-10':
             self.isOnStart = True
@@ -403,7 +415,7 @@ class TestModule:
             self.bot.message_handlers.remove(self.ah)
 
         if self.returnMethod:
-            self.returnMethod()
+            self.returnMethod(self.message)
             return False
 
         go_back_to_main_menu(self.bot, self.current_user, self.message)

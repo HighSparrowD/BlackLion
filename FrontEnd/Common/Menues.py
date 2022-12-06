@@ -1,15 +1,16 @@
 import copy
 from math import ceil
+
 from Core import HelpersMethodes as Helpers
 from telebot.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardButton, InlineKeyboardMarkup
 
 from Requester import Requester
-
 menu_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True) \
     .add(KeyboardButton("/search"),
          KeyboardButton("/random"),
          KeyboardButton("/feedback"),
-         KeyboardButton("/settings"))
+         KeyboardButton("/settings"),
+         KeyboardButton("/shop"))
 
 admin_menu_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True) \
     .add(KeyboardButton("/switchstatus"),
