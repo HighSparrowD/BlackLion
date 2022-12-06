@@ -7,6 +7,7 @@ using MyWebApi.Entities.EffectEntities;
 using MyWebApi.Entities.LocationEntities;
 using MyWebApi.Entities.ReasonEntities;
 using MyWebApi.Entities.ReportEntities;
+using MyWebApi.Entities.SecondaryEntities;
 using MyWebApi.Entities.SponsorEntities;
 using MyWebApi.Entities.TestEntities;
 using MyWebApi.Entities.UserActionEntities;
@@ -146,6 +147,12 @@ namespace MyWebApi.Repositories
                 {
                     //TODO find and topup user's task progress
                 }
+
+                //Enter promo if it was supplied
+                if (model.EnteredPromoCodes != null)
+                    await CheckPromoIsCorrectAsync(model.UserId, model.EnteredPromoCodes, false);
+                else
+                    model.EnteredPromoCodes = "";
 
                 //Add Starting test pack
                 //TODO: Add more tests here
@@ -3358,8 +3365,11 @@ namespace MyWebApi.Repositories
             var hasActiveDetector = await CheckEffectIsActiveAsync(currentUser.UserId, (int)Currencies.TheDetector);
 
             //Throw exception if user has reached his tag search limit
-            if (!currentUser.HasPremium && currentUser.TagSearchesCount + 1 > 3)
-                throw new ApplicationException($"User {model.UserId} has already reached his tag-search limit");
+            if (!currentUser.HasPremium && currentUser.TagSearchesCount >= 3)
+                return null;
+            //throw new ApplicationException($"User {model.UserId} has already reached his tag-search limit");
+            else if (currentUser.HasPremium && currentUser.TagSearchesCount >= 50)
+                return null;
 
             var currentUserEncounters = await GetUserEncounters(model.UserId, (int)Sections.Familiator); //I am not sure if it is 2 or 3 section
 
@@ -4168,6 +4178,17 @@ namespace MyWebApi.Repositories
                 .AsNoTracking()
                 .SingleOrDefaultAsync();
 
+            // There is no way the promo can be applied before Registration, due to the absence of user data.
+            // Thus we are only checking its presence
+            if (isActivatedBeforeRegistration)
+                return promo != null;
+
+            //Enter promo right await if it had not been inputed before registration
+            return await EnterPromo(userId, promo);
+        }
+
+        private async Task<bool> EnterPromo(long userId, PromoCode promo)
+        {
             if (promo == null)
                 return false;
 

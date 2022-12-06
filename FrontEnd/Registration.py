@@ -11,7 +11,7 @@ from TestModule import TestModule
 
 
 class Registrator:
-    def __init__(self, bot=None, msg=None, hasVisited=False, return_method=None, localizationIndex=None):
+    def __init__(self, bot=None, msg=None, hasVisited=False, return_method=None, localizationIndex=None, promoCode=None):
         self.bot = bot
         self.msg = msg
         self.return_method = return_method
@@ -22,8 +22,11 @@ class Registrator:
         self.hasVisited = hasVisited
         self.okMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(KeyboardButton("Ok"))
         self.chCode = self.bot.register_callback_query_handler("", self.callback_handler, user_id=self.current_user)
+        #TODO: Replace with another method
         self.localisation = json.loads(requests.get("https://localhost:44381/GetLocalisation/0", verify=False).text)
         self.lang_limit = Helpers.get_user_language_limit(self.current_user)
+
+        self.promo = promoCode
 
         self.question_index = 0 #Represents current question index
 
@@ -45,7 +48,7 @@ class Registrator:
         self.age_pref_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
         self.skip_markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("skip")
 
-        self.app_language = None
+        self.app_language = localizationIndex
 
         self.data = {}
         self.current_user_data = None
@@ -71,6 +74,8 @@ class Registrator:
 
         self.reply_voice = ""
         self.reply_text = ""
+
+        self.get_localisations()
 
         if not hasVisited:
             self.spoken_language_step(msg)
@@ -148,16 +153,10 @@ class Registrator:
 
         else:
             self.app_language = self.app_language_converter(msg.text)
-            if self.app_language or self.app_language == 0:
-                self.get_localisations()
+            if self.app_language is not None:
 
-                if not editMode:
-                    self.spoken_language_step(msg)
-                    self.data = {"id": msg.from_user.id, "userName": msg.from_user.username,
-                                 "userAppLanguageId": self.app_language}
-                else:
-                    self.checkout_step(msg)
-                    self.data["userAppLanguageId"] = self.app_language
+                self.checkout_step(msg)
+                self.data["userAppLanguageId"] = self.app_language
 
             else:
                 self.bot.send_message(self.current_user, "There is no such language. Try again", reply_markup=self.app_languages_markup)
@@ -231,6 +230,11 @@ class Registrator:
                 self.data["userLanguages"] = self.chosen_langs
 
                 if not editMode:
+                    self.data["id"] = self.current_user
+                    self.data["userName"] = msg.from_user.username
+                    self.data["userAppLanguageId"] = self.app_language
+                    self.data["promo"] = self.promo
+
                     self.gender_step(msg)
                 else:
                     self.checkout_step(msg)

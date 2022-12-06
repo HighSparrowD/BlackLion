@@ -311,8 +311,6 @@ class TestModule:
         return_string = f"{data['test']['name']}\n\n{data['test']['description']}\n\n"
 
         if data['passedOn']:
-            #TODO: format timestamp correctly
-            #passDate = datetime.strptime(data["passedOn"], '%Y-%m-%d %H:%M:%S %Z')
             return_string += f"Passed on: {data['passedOn']}"
         else:
             return_string += f"Test hadn't been passed yet"

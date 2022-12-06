@@ -284,7 +284,7 @@ namespace MyWebApi.Controllers
                 TagSearchesCount = 0,
                 MaxProfileViewsCount = 50,
                 IsIdentityConfirmed = false,
-                EnteredPromoCodes = ""
+                EnteredPromoCodes = model.Promo
             };
 
             if (model.UserCityCode != null && model.UserCountryCode != null)
