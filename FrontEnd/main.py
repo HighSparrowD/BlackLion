@@ -95,7 +95,7 @@ def EnterAdminCabinet(message):
     if not Helpers.check_user_is_busy(message.from_user.id):
         create_admin_cabinet(message)
 
-
+# bot.edi
 @bot.message_handler(commands=["settings"])
 def settings(message):
     if not Helpers.check_user_is_busy(message.from_user.id):

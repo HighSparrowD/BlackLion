@@ -13,8 +13,6 @@ class StartModule:
 
         self.hasEnteredPromo = False
 
-        self.app_langs = {}
-
         self.startMessage = "1. About us\n2. Read rules\n3. Enter Promo code\n4. Register profile"
         self.registerMessage = "1. Yes\n2. Go back"
         self.about_us_message = "--About US-- TODO: Fill up"
@@ -46,7 +44,7 @@ class StartModule:
 
         else:
             self.user_localisation = self.app_language_converter(msg.text)
-            if self.user_localisation is not None:
+            if self.user_localisation is None or self.user_localisation == 0:
                 self.get_localisations()
                 self.start(msg)
             else:
@@ -55,10 +53,7 @@ class StartModule:
 
     def start(self, message, acceptMode=False):
         if not acceptMode:
-            if self.active_message is not None:
-                self.active_message = self.bot.send_message(self.current_user, f"Hello and welcome to Personality bot\n--Tell more about us--\n{self.startMessage}", reply_markup=self.startMarkup).id
-            else:
-                self.bot.edit_message_text(self.startMessage, self.current_user, self.active_message, reply_markup=self.startMarkup)
+            self.active_message = self.bot.send_message(self.current_user, f"Hello and welcome to Personality bot\n--Tell more about us--\n{self.startMessage}", reply_markup=self.startMarkup)
             self.bot.register_next_step_handler(message, self.start, acceptMode=True, chat_id=self.current_user)
         else:
             if message.text == "1":
@@ -66,8 +61,10 @@ class StartModule:
             elif message.text == "2":
                 self.rules(message)
             elif message.text == "3":
-                if self.hasEnteredPromo:
+                if not self.hasEnteredPromo:
                     self.enter_promo(message)
+                else:
+                    self.start(message)
             elif message.text == "4":
                 self.register(message)
             else:
@@ -75,18 +72,21 @@ class StartModule:
                 self.bot.register_next_step_handler(message, self.start, acceptMode=acceptMode, chat_id=self.current_user)
 
     def about_us(self, message):
-        self.bot.edit_message_text(self.about_us_message, self.current_user, self.active_message)
+        # self.bot.edit_message_text(self.about_us_message, self.current_user, self.active_message)
+        self.bot.send_message(self.current_user, self.about_us_message)
         self.start(message)
 
     def rules(self, message):
-        self.bot.edit_message_text(self.rules_message, self.current_user, self.active_message)
+        # self.bot.edit_message_text(self.rules_message, self.current_user, self.active_message)
+        self.bot.send_message(self.current_user, self.rules_message)
         self.start(message)
 
     def enter_promo(self, message, acceptMode=False):
         if not acceptMode:
             #Nullify active message to avoid inconveniences
             self.active_message = None
-            self.bot.edit_message_text("Please, enter your promo", self.current_user, self.active_message, reply_markup=self.go_backMarkup)
+            # self.bot.edit_message_text(, self.current_user, self.active_message, reply_markup=self.go_backMarkup)
+            self.bot.send_message(self.current_user, "Please, enter your promo", reply_markup=self.go_backMarkup)
             self.bot.register_next_step_handler(message, self.enter_promo, acceptMode=True, chat_id=self.current_user)
         else:
             if Helpers.check_promo_is_valid(self.current_user, message.text, True):
@@ -96,6 +96,7 @@ class StartModule:
             else:
                 if message.text == "Go Back":
                     self.start(message)
+                    return
 
                 self.bot.send_message(self.current_user, "Wrong promo code", reply_markup=self.go_backMarkup)
                 self.bot.register_next_step_handler(message, self.enter_promo, acceptMode=True, chat_id=self.current_user)
@@ -107,7 +108,7 @@ class StartModule:
             self.bot.register_next_step_handler(message, self.register, acceptMode=True, chat_id=self.current_user)
         else:
             if message.text == "Yes":
-                Registrator(self.bot, message)
+                Registrator(self.bot, message, localizationIndex=self.user_localisation)
             elif message.text == "Go Back":
                 self.start(message)
             else:

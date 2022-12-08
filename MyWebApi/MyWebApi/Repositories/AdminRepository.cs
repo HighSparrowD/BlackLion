@@ -412,7 +412,10 @@ namespace MyWebApi.Repositories
                     if (existingTest != null)
                     {
                         if (existingTest.ClassLocalisationId == model.ClassLocalisationId)
-                            throw new Exception("This version of test already exists");
+                            //Continue if test version already exists.
+                            //It allows to avoid constantly changing source file in tools
+                            continue;
+                            //throw new Exception("This version of test already exists");
 
                         testId = model.Id;
                     }
