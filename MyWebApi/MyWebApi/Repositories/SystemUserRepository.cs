@@ -7,6 +7,7 @@ using MyWebApi.Entities.EffectEntities;
 using MyWebApi.Entities.LocationEntities;
 using MyWebApi.Entities.ReasonEntities;
 using MyWebApi.Entities.ReportEntities;
+using MyWebApi.Entities.SecondaryEntities;
 using MyWebApi.Entities.SponsorEntities;
 using MyWebApi.Entities.TestEntities;
 using MyWebApi.Entities.UserActionEntities;
@@ -17,6 +18,7 @@ using QRCoder;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using static MyWebApi.Enums.SystemEnums;
 using static System.Net.Mime.MediaTypeNames;
@@ -86,33 +88,46 @@ namespace MyWebApi.Repositories
                     invitor.InvitedUsersCount++;
 
                     var bonus = invitor.HasPremium ? 0.05 : 0;
+                    var multiplier = 1;
+
+                    if (invitor.InvitedUsersCount > 10)
+                        multiplier = 2;
 
                     if (invitor.InvitedUsersCount == 1)
                     {
-                        await TopUpUserWalletPointsBalance(invitor.UserId, 250, $"User {invitor.UserId} has invited his firs user");
+                        await TopUpUserWalletPointsBalance(invitor.UserId, 250 * multiplier, $"User {invitor.UserId} has invited his firs user");
                         await GrantPremiumToUser(invitor.UserId, 0, 1, (short)Currencies.Points);
                     }
-                    else if (invitor.InvitedUsersCount == 3)
+                    else if (invitor.InvitedUsersCount == 3 || invitor.InvitedUsersCount % 3 == 0)
                     {
-                        invitor.InvitedUsersBonus = 0.15 + bonus;
-                        await TopUpUserWalletPointsBalance(invitor.UserId, 1199, $"User {invitor.UserId} has invited 3 users");
+                        if (multiplier == 1)
+                            invitor.InvitedUsersBonus = 0.15 + bonus;
+                        await TopUpUserWalletPointsBalance(invitor.UserId, 1199 * multiplier, $"User {invitor.UserId} has invited 3 users");
                     }
-                    else if (invitor.InvitedUsersCount == 7)
+                    else if (invitor.InvitedUsersCount == 7 || invitor.InvitedUsersCount % 7 == 0)
                     {
-                        invitor.InvitedUsersBonus = 0.35 + bonus;
-                        await TopUpUserWalletPointsBalance(invitor.UserId, 1499, $"User {invitor.UserId} has invited 7 users");
+                        if (multiplier == 1)
+                            invitor.InvitedUsersBonus = 0.35 + bonus;
+                        await TopUpUserWalletPointsBalance(invitor.UserId, 1499 * multiplier, $"User {invitor.UserId} has invited 7 users");
                     }
-                    else if (invitor.InvitedUsersBonus == 10)
+                    else if (invitor.InvitedUsersCount == 10 || invitor.InvitedUsersCount % 10 == 0)
                     {
-                        invitor.InvitedUsersBonus = 0.5 + bonus;
-                        // 1499 will then turn into 1999 due to premium purchase reward
-                        await TopUpUserWalletPointsBalance(invitor.UserId, 1499, $"User {invitor.UserId} has invited 10 users");
-                        //TODO: apply effect later
-                        await GrantPremiumToUser(model.UserId, 0, 30, (short)Currencies.Points);
+                        if (multiplier == 1)
+                        {
+                            invitor.InvitedUsersBonus = 0.5 + bonus;
+                            // 1499 will then turn into 1999 due to premium purchase reward
+                            await TopUpUserWalletPointsBalance(invitor.UserId, 1499, $"User {invitor.UserId} has invited 10 users");
+                            //Adds + 10 random effects to users inventory
+                            var effecId = new Random().Next(5, 10);
+                            await PurchaseEffectAsync(invitor.UserId, effecId, 0, (int)Currencies.Points, 10);
+                            await GrantPremiumToUser(model.UserId, 0, 30, (short)Currencies.Points);
+                        }
+                        else
+                            await TopUpUserWalletPointsBalance(invitor.UserId, 1999 * multiplier, $"User {invitor.UserId} has invited more than 10 users");
                     }
                     else
                     {
-                        await TopUpUserWalletPointsBalance(invitor.UserId, (int)(200 + (200 * bonus)), $"User {model.UserId} was invited by user {invitor.UserId}");
+                        await TopUpUserWalletPointsBalance(invitor.UserId, (int)(200 + (200 * bonus) * multiplier), $"User {model.UserId} was invited by user {invitor.UserId}");
                     }
 
                     model.BonusIndex = 1.5;
@@ -121,8 +136,9 @@ namespace MyWebApi.Repositories
                     _contx.SYSTEM_USERS.Update(model);
                     await _contx.SaveChangesAsync();
 
-                    //User is instantly liked by an invitor (Possibly let users turn of that feature)
-                    await RegisterUserRequest(new UserNotification { UserId = invitor.UserId, UserId1 = model.UserId, IsLikedBack = false });
+                    //User is instantly liked by an invitor if he is allowing it
+                    if (invitor.IncreasedFamiliarity)
+                        await RegisterUserRequest(new UserNotification { UserId = invitor.UserId, UserId1 = model.UserId, IsLikedBack = false });
                     //Invitor is notified about referential registration
                     await NotifyUserAboutReferentialRegistrationAsync(invitor.UserId, model.UserId);
                 }
@@ -131,6 +147,16 @@ namespace MyWebApi.Repositories
                 {
                     //TODO find and topup user's task progress
                 }
+
+                //Enter promo if it was supplied
+                if (model.EnteredPromoCodes != null)
+                    await CheckPromoIsCorrectAsync(model.UserId, model.EnteredPromoCodes, false);
+                else
+                    model.EnteredPromoCodes = "";
+
+                //Add Starting test pack
+                //TODO: Add more tests here
+                await PurchaseTestAsync(model.UserId, 1, dataModel.LanguageId);
 
                 return model.UserId;
             }
@@ -222,6 +248,7 @@ namespace MyWebApi.Repositories
                     .ThenInclude(u => u.Location)
                     .Include(u => u.UserPreferences)
                     .Include(u => u.UserBlackList)
+                    .AsNoTracking()
                     .ToListAsync();
 
                 if (currentUser.UserPreferences.ShouldFilterUsersWithoutRealPhoto && currentUser.HasPremium)
@@ -276,11 +303,9 @@ namespace MyWebApi.Repositories
 
                     var valentineBonus = 1d;
 
-                    var hasActiveValentine = userActiveEffects.Where(e => e.EffectId == (int)Currencies.TheValentine)
-                        .SingleOrDefault() != null;
+                    var hasActiveValentine = await CheckEffectIsActiveAsync(userId, (int)Currencies.TheValentine);
 
-                    var userHasDetectorOn = userActiveEffects.Where(e => e.EffectId == (int)Currencies.TheDetector)
-                        .SingleOrDefault() != null;
+                    var userHasDetectorOn = await CheckEffectIsActiveAsync(userId, (int)Currencies.TheDetector);
 
                     if (hasActiveValentine)
                         valentineBonus = 2;
@@ -617,7 +642,7 @@ namespace MyWebApi.Repositories
                         var returnUser = new GetUserData(u, $"{u.UserBaseInfo.UserDescription}");
 
                         if (userHasDetectorOn)
-                            returnUser.AddDescriptionBonus("<br>{matchedBy}</br>");
+                            returnUser.AddDescriptionBonus("<b>{matchedBy}</b>");
 
                         returnData.Add(returnUser);
                     }
@@ -670,7 +695,7 @@ namespace MyWebApi.Repositories
                                 if (u.IsIdentityConfirmed)
                                     bonus += $"✔️\n\n";
                                 if (u.HasPremium && u.Nickname != "")
-                                    bonus += $"<br>{u.Nickname}</br>\n";
+                                    bonus += $"<b>{u.Nickname}</b>\n";
                                 returnData.Add(new GetUserData(u, bonus));
                             }
                         });
@@ -1211,6 +1236,7 @@ namespace MyWebApi.Repositories
             {
                 return await _contx.USER_ACHIEVEMENTS
                     .Where(a => a.UserBaseInfoId == userId)
+                    .Include(a => a.Achievement)
                     .ToListAsync();
             }
             catch (Exception ex)
@@ -1566,6 +1592,7 @@ namespace MyWebApi.Repositories
                 else
                 {
                     await CreateUserBalance(userId, points, time);
+                    userBalance = await GetUserWalletBalance(userId);
                 }
 
                 var userParentId = (await _contx.SYSTEM_USERS.FindAsync(userId)).ParentId;
@@ -1697,6 +1724,7 @@ namespace MyWebApi.Repositories
 
                     //TODO: Notify user that his premium access has expired
 
+                    await _contx.SaveChangesAsync();
                     return user.HasPremium;
                 }
                 return false;
@@ -1754,6 +1782,11 @@ namespace MyWebApi.Repositories
 
                 //Reward for premium purchase
                 await TopUpUserWalletPointsBalance(userId, 500);
+
+                //PP Reward for purchasing long-term premium
+                //TODO: Think if the amount is properly set...
+                if (dayDuration >= 30)
+                    await TopUpUserWalletPPBalance(userId, 5);
 
                 if (user.PremiumExpirationDate < timeNow || user.PremiumExpirationDate == null)
                     user.PremiumExpirationDate = premiumFutureExpirationDate;
@@ -2014,7 +2047,6 @@ namespace MyWebApi.Repositories
                 return await _contx.USER_NOTIFICATIONS
                     .Where(r => r.UserId1 == userId)
                     .Where(r => r.SectionId == (int)SystemEnums.Sections.Familiator || r.SectionId == (int)SystemEnums.Sections.Requester)
-                    .Include(r => r.Sender).ThenInclude(s => s.UserBaseInfo)
                     .ToListAsync();
             }
             catch (Exception ex)
@@ -2031,7 +2063,6 @@ namespace MyWebApi.Repositories
                 return await _contx.USER_NOTIFICATIONS
                     .Where(r => r.Id == requestId)
                     .Where(r => r.SectionId == (int)SystemEnums.Sections.Familiator || r.SectionId == (int)SystemEnums.Sections.Requester)
-                    .Include(r => r.Sender).ThenInclude(s => s.UserBaseInfo)
                     .SingleOrDefaultAsync();
             }
             catch (Exception ex)
@@ -2041,14 +2072,42 @@ namespace MyWebApi.Repositories
             }
         }
 
-        public async Task<Guid?> RegisterUserRequest(UserNotification request)
+        public async Task<string> RegisterUserRequest(UserNotification request)
         {
             try
             {
                 request.Severity = (short)Severities.Moderate;
+                var returnMessage = "";
 
                 if (request.IsLikedBack)
+                {
                     request.SectionId = (short)Sections.Requester;
+
+                    if ((byte)new Random().Next(0, 2) == 0)
+                    {
+                        var senderUserName = await _contx.SYSTEM_USERS_BASES.Where(d => d.Id == request.UserId).Select(d => d.UserName).SingleOrDefaultAsync();
+
+                        //Delete request, user had just answered
+                        var requestId = await _contx.USER_NOTIFICATIONS.Where(n => n.UserId == request.UserId1 && n.UserId1 == request.UserId).Select(n => n.Id).SingleOrDefaultAsync();
+                        await DeleteUserRequest(requestId);
+
+                        //TODO: Get message from localizer based on users`s localization 
+                        request.Description = $"Hey! I have got a match for you. This person was notified about it, but he did not receive your username, thus he cannot write you first everything is in your hands, do not miss your chance!\n\n@{senderUserName}";
+                        returnMessage = "Hey! I have a match for you. Right now this person is deciding whether or not to write you Just wait for it!\n\n";
+                    }
+                    else
+                    {
+                        var receiverUserName = await _contx.SYSTEM_USERS_BASES.Where(d => d.Id == request.UserId1).Select(d => d.UserName).SingleOrDefaultAsync();
+
+                        //Delete request, user had just answered
+                        var requestId = await _contx.USER_NOTIFICATIONS.Where(n => n.UserId == request.UserId1 && n.UserId1 == request.UserId).Select(n => n.Id).SingleOrDefaultAsync();
+                        await DeleteUserRequest(requestId);
+
+                        //TODO: Get message from localizer based on users`s localization 
+                        request.Description = "Hey! I have a match for you. Right now this person is deciding whether or not to write you Just wait for it!\n\n";
+                        returnMessage = $"Hey! I have got a match for you. This person was notified about it, but he did not receive your username, thus he cannot write you first everything is in your hands, do not miss your chance!\n\n@{receiverUserName}";
+                    }
+                }
                 else
                     request.SectionId = (short)Sections.Familiator;
 
@@ -2056,7 +2115,7 @@ namespace MyWebApi.Repositories
 
                 var id = await AddUserNotificationAsync(request);
 
-                return id;
+                return returnMessage;
             }
             catch (Exception ex)
             {
@@ -2596,11 +2655,11 @@ namespace MyWebApi.Repositories
                 .ToListAsync();
         }
 
-        public async Task<bool> DeleteUserNotification(long userId, Guid notificationId)
+        public async Task<bool> DeleteUserNotification(Guid notificationId)
         {
             try
             {
-                var notification = await GetUserNotificationAsync(userId, notificationId);
+                var notification = await GetUserNotificationAsync(notificationId);
 
                 if (notification != null)
                 {
@@ -2884,18 +2943,16 @@ namespace MyWebApi.Repositories
             return 250; //TODO: Think if value should be hardcoded 
         }
 
-        public async Task<UserNotification> GetUserNotificationAsync(long userId, Guid notificationId)
+        public async Task<UserNotification> GetUserNotificationAsync(Guid notificationId)
         {
-            var notification = await _contx.USER_NOTIFICATIONS.Where(n => n.UserId1 == userId && n.Id == notificationId)
-                .FirstOrDefaultAsync();
+            var notification = await _contx.USER_NOTIFICATIONS.FindAsync(notificationId);
 
             return notification;
         }
 
-        public async Task<byte> SendNotificationConfirmationCodeAsync(long userId, Guid notificationId)
+        public async Task<byte> SendNotificationConfirmationCodeAsync(Guid notificationId)
         {
-            var notification = await _contx.USER_NOTIFICATIONS.Where(n => n.UserId1 == userId && n.Id == notificationId)
-                .FirstOrDefaultAsync();
+            var notification = await _contx.USER_NOTIFICATIONS.FindAsync(notificationId);
 
             if (notification == null)
                 return 0;
@@ -2931,12 +2988,14 @@ namespace MyWebApi.Repositories
         {
             try
             {
+
+                var result = await RecalculateUserStats(model);
+
                 //Break if test result wasnt saved
-                if (!await RegisterTestPassingAsync(model))
+                if (!await RegisterTestPassingAsync(model, result.TestResult))
                     return false;
 
-                var userStats = await RecalculateUserStats(model);
-                _contx.USER_PERSONALITY_STATS.Update(userStats);
+                _contx.USER_PERSONALITY_STATS.Update(result.Stats);
                 await _contx.SaveChangesAsync();
                 return true;
             }
@@ -3061,40 +3120,127 @@ namespace MyWebApi.Repositories
             catch { return null; }
         }
 
-        private async Task<UserPersonalityStats> RecalculateUserStats(TestPayload model)
+        private async Task<RecalculationResult> RecalculateUserStats(TestPayload model)
         {
             var devider = 1;
+            var result = 0;
             var userStats = await _contx.USER_PERSONALITY_STATS.Where(s => s.UserId == model.UserId)
                 .SingleOrDefaultAsync();
 
-            //If user have passed some test before - set the devider to 2, to find an average value
-            if ((await _contx.user_tests.Where(r => r.UserId == model.UserId).ToListAsync()).Count > 1)
-                devider = 2;
+            //Create user stats if they werent created before
+            if (userStats != null)
+            {
+                userStats = new UserPersonalityStats(model.UserId);
+                await _contx.USER_PERSONALITY_STATS.AddAsync(userStats);
+                await _contx.SaveChangesAsync();
+            }
+
 
             if (model.Personality != 0)
-                userStats.Personality = (userStats.Personality + model.Personality) / devider;
-            if (model.EmotionalIntellect != 0)
-                userStats.EmotionalIntellect = (userStats.EmotionalIntellect + model.EmotionalIntellect) / devider;
-            if (model.Reliability != 0)
-                userStats.Reliability = (userStats.Reliability + model.Reliability) / devider;
-            if (model.Compassion != 0)
-                userStats.Compassion = (userStats.Compassion + model.Compassion) / devider;
-            if (model.OpenMindedness != 0)
-                userStats.OpenMindedness = (userStats.OpenMindedness + model.OpenMindedness) / devider;
-            if (model.Agreeableness != 0)
-                userStats.Agreeableness = (userStats.Agreeableness + model.Agreeableness) / devider;
-            if (model.SelfAwareness != 0)
-                userStats.SelfAwareness = (userStats.SelfAwareness + model.SelfAwareness) / devider;
-            if (model.LevelOfSense != 0)
-                userStats.LevelOfSense = (userStats.LevelOfSense + model.LevelOfSense) / devider;
-            if (model.Intellect != 0)
-                userStats.Intellect = (userStats.Intellect + model.Intellect) / devider;
-            if (model.Nature != 0)
-                userStats.Nature = (userStats.Nature + model.Nature) / devider;
-            if (model.Creativity != 0)
-                userStats.Creativity = (userStats.Creativity + model.Creativity) / devider;
+            {
+                //Set the devider to 2 if user had passed the tests of the same type before
+                if (userStats.Personality != 0)
+                    devider = 2;
 
-            return userStats;
+                result = model.Personality;
+                userStats.Personality = (userStats.Personality + model.Personality) / devider;
+                //Return the devider to its normal state
+                devider = 1;
+            }
+            if (model.EmotionalIntellect != 0)
+            {
+                if (userStats.EmotionalIntellect != 0)
+                    devider = 2;
+
+                result = model.EmotionalIntellect;
+                userStats.EmotionalIntellect = (userStats.EmotionalIntellect + model.EmotionalIntellect) / devider;
+                devider = 1;
+            }
+            if (model.Reliability != 0)
+            {
+                if (userStats.Reliability != 0)
+                    devider = 2;
+
+                result = model.Reliability;
+                userStats.Reliability = (userStats.Reliability + model.Reliability) / devider;
+                devider = 1;
+            }
+            if (model.Compassion != 0)
+            {
+                if (userStats.Compassion != 0)
+                    devider = 2;
+
+                result = model.Compassion;
+                userStats.Compassion = (userStats.Compassion + model.Compassion) / devider;
+                devider = 1;
+            }
+                
+            if (model.OpenMindedness != 0)
+            {
+                if (userStats.OpenMindedness != 0)
+                    devider = 2;
+
+                result = model.OpenMindedness;
+                userStats.OpenMindedness = (userStats.OpenMindedness + model.OpenMindedness) / devider;
+                devider = 1;
+            }
+            if (model.Agreeableness != 0)
+            {
+                if (userStats.Agreeableness != 0)
+                    devider = 2;
+
+                result = model.Agreeableness;
+                userStats.Agreeableness = (userStats.Agreeableness + model.Agreeableness) / devider;
+                devider = 1;
+            }
+            if (model.SelfAwareness != 0)
+            {
+                if (userStats.SelfAwareness != 0)
+                    devider = 2;
+
+                result = model.SelfAwareness;
+                userStats.SelfAwareness = (userStats.SelfAwareness + model.SelfAwareness) / devider;
+                devider = 1;
+            }
+                
+            if (model.LevelOfSense != 0)
+            {
+                if (userStats.LevelOfSense != 0)
+                    devider = 2;
+
+                result = model.LevelOfSense;
+                userStats.LevelOfSense = (userStats.LevelOfSense + model.LevelOfSense) / devider;
+                devider = 1;
+            }
+            if (model.Intellect != 0)
+            {
+                if (userStats.Intellect != 0)
+                    devider = 2;
+
+                result = model.Intellect;
+                userStats.Intellect = (userStats.Intellect + model.Intellect) / devider;
+                devider = 1;
+            }
+            if (model.Nature != 0)
+            {
+                if (userStats.Nature != 0)
+                    devider = 2;
+
+                result = model.Nature;
+                userStats.Nature = (userStats.Nature + model.Nature) / devider;
+                devider = 1;
+            }
+            if (model.Creativity != 0)
+            {
+                if (userStats.Creativity != 0)
+                    devider = 2;
+
+                result = model.Creativity;
+                userStats.Creativity = (userStats.Creativity + model.Creativity) / devider;
+                devider = 1;
+            }
+
+            return new RecalculationResult { Stats = userStats, TestResult = result};
         }
 
         private async Task<double> CalculateSimilarityPreferences(int points, double similarityCoefficient)
@@ -3159,14 +3305,23 @@ namespace MyWebApi.Repositories
             catch { throw new NullReferenceException($"User {userId} does not exist !"); }
         }
 
-        public async Task<bool> RegisterTestPassingAsync(TestPayload model)
+        public async Task<bool> RegisterTestPassingAsync(TestPayload model, int testResult)
         {
             try
             {
                 var userTest = await _contx.user_tests.Where(t => t.UserId == model.UserId && t.TestId == model.TestId)
                     .SingleOrDefaultAsync();
 
+                //Give user 1 PP for passing the test for the first time
+                if (userTest.PassedOn != null)
+                {
+                    var userBalance = await GetUserWalletBalance(model.UserId);
+                    userBalance.PersonalityPoints++;
+                    await _contx.SaveChangesAsync();
+                }
+
                 userTest.PassedOn = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
+                userTest.Result = testResult;
 
                 _contx.user_tests.Update(userTest);
                 await _contx.SaveChangesAsync();
@@ -3222,27 +3377,36 @@ namespace MyWebApi.Repositories
         public async Task<User> GetUserListByTagsAsync(GetUserByTags model)
         {
             var currentUser = await GetUserInfoAsync(model.UserId);
+            var hasActiveDetector = await CheckEffectIsActiveAsync(currentUser.UserId, (int)Currencies.TheDetector);
 
             //Throw exception if user has reached his tag search limit
-            if (!currentUser.HasPremium && currentUser.TagSearchesCount + 1 > 3)
-                throw new ApplicationException($"User {model.UserId} has already reached his tag-search limit");
+            if (!currentUser.HasPremium && currentUser.TagSearchesCount >= 3)
+                return null;
+            //throw new ApplicationException($"User {model.UserId} has already reached his tag-search limit");
+            else if (currentUser.HasPremium && currentUser.TagSearchesCount >= 50)
+                return null;
 
             var currentUserEncounters = await GetUserEncounters(model.UserId, (int)Sections.Familiator); //I am not sure if it is 2 or 3 section
 
             var data = await _contx.SYSTEM_USERS
-                .Where(u => u.UserId != currentUser.UserId)
-                .Where(u => u.UserPreferences.AgePrefs.Contains(currentUser.UserDataInfo.UserAge))
-                //Check if users gender preferences correspond to current user gender prefs or are equal to 'Does not matter'
-                .Where(u => u.UserPreferences.UserGenderPrefs == currentUser.UserDataInfo.UserGender || u.UserPreferences.UserGenderPrefs == 2)
-                .Where(u => u.UserDataInfo.UserLanguages.Any(l => currentUser.UserPreferences.UserLanguagePreferences.Contains(l)))
-                .Where(u => currentUser.UserPreferences.AgePrefs.Contains(u.UserDataInfo.UserAge))
-                .Where(u => currentUser.UserDataInfo.UserLanguages.Any(l => u.UserPreferences.UserLanguagePreferences.Contains(l)))
-                .Include(u => u.UserBaseInfo)
-                .Include(u => u.UserDataInfo)
-                .ThenInclude(u => u.Location)
-                .Include(u => u.UserPreferences)
-                .Include(u => u.UserBlackList)
-                .ToListAsync();
+                    .Where(u => u.UserId != currentUser.UserId)
+                    .Where(u => u.UserPreferences.AgePrefs.Contains(currentUser.UserDataInfo.UserAge))
+                    .Where(u => u.UserDataInfo.UserLanguages.Any(l => currentUser.UserPreferences.UserLanguagePreferences.Contains(l)))
+                    .Where(u => currentUser.UserPreferences.AgePrefs.Contains(u.UserDataInfo.UserAge))
+                    .Where(u => currentUser.UserDataInfo.UserLanguages.Any(l => u.UserPreferences.UserLanguagePreferences.Contains(l)))
+                    .Include(u => u.UserBaseInfo)
+                    .Include(u => u.UserDataInfo)
+                    .ThenInclude(u => u.Location)
+                    .Include(u => u.UserPreferences)
+                    .Include(u => u.UserBlackList)
+                    .AsNoTracking()
+                    .ToListAsync();
+
+            if (currentUser.UserPreferences.ShouldFilterUsersWithoutRealPhoto && currentUser.HasPremium)
+            {
+                data.Where(u => u.UserBaseInfo.IsPhotoReal)
+                    .ToList();
+            }
 
             //Check if users had encountered one another
             data = data.Where(u => !currentUser.CheckIfHasEncountered(currentUserEncounters, u.UserId)).ToList();
@@ -3257,45 +3421,21 @@ namespace MyWebApi.Repositories
             //Check if current user had already recieved request from user
             data = data.Where(u => !CheckRequestExists(u.UserId, model.UserId)).ToList();
 
-            //If user does NOT have gender prederences
-            if (currentUser.UserPreferences.UserGenderPrefs != 2)
-            {
-                data = data.Where(u => u.UserDataInfo.UserGender == currentUser.UserPreferences.UserGenderPrefs)
-                .Where(u => currentUser.UserPreferences.UserGenderPrefs == u.UserDataInfo.UserGender)
-                .ToList();
-            }
-
             currentUser.TagSearchesCount++;
             await _contx.SaveChangesAsync();
 
-            ////TODO: remove in production
-            //var tags1 = new List<string>();
-            //tags1.Add("#starcraft");
-
-            //var tags2 = new List<string>();
-            //tags2.Add("#starcraft");
-            //tags2.Add("#code");
-
-            //var tags3 = new List<string>();
-            //tags3.Add("#code");
-
-            //data.Add(new User(5) { UserDataInfo = new UserDataInfo { Tags = tags1 } });
-            //data.Add(new User(54) { UserDataInfo = new UserDataInfo { Tags = tags2 } });
-            //data.Add(new User(57) { UserDataInfo = new UserDataInfo { Tags = tags3 } });
-
-            //data.ForEach(d =>
-            //{
-            //    var t = d.UserDataInfo.Tags.Intersect(tags).Count();
-            //    Console.WriteLine(t);
-            //});
+            data = data.Where(d => d.UserDataInfo.Tags != null).ToList();
 
             var user = data.OrderByDescending(u => u.UserDataInfo.Tags.Intersect(model.Tags).Count())
                 .FirstOrDefault();
 
             if(user.HasPremium && user.Nickname != null)
-                user.UserBaseInfo.UserDescription = $"<br>{user.Nickname}</br>\n\n{user.UserBaseInfo.UserDescription}";
+                user.UserBaseInfo.UserDescription = $"<b>{user.Nickname}</b>\n\n{user.UserBaseInfo.UserDescription}";
             if(user.IsIdentityConfirmed)
                 user.UserBaseInfo.UserDescription = $"✔️{user.UserBaseInfo.UserDescription}";
+            //Show tags if user has detector activated
+            if (hasActiveDetector)
+                user.UserBaseInfo.UserDescription += String.Join(" ", user.UserDataInfo.Tags);
 
             return user;
         }
@@ -3460,7 +3600,7 @@ namespace MyWebApi.Repositories
                             value = balance.Detectors > 0;
                             break;
                         case 8:
-                            value = balance.WhiteDetectors > 0;
+                            value = balance.Nullifiers > 0;
                             break;
                         case 9:
                             value = balance.CardDecksMini > 0;
@@ -3513,11 +3653,10 @@ namespace MyWebApi.Repositories
                         userBalance.Detectors--;
                         effect = new TheDetector(userId);
                         break;
-                    //Currently not used
                     case 8:
                         if (!(bool)await CheckUserUsesPersonality(userId))
                             return null;
-                        userBalance.WhiteDetectors--;
+                        userBalance.Nullifiers--;
                         effect = new TheWhiteDetector(userId);
                         break;
                     default:
@@ -3547,17 +3686,24 @@ namespace MyWebApi.Repositories
                             UserId1 = (long)user2Id,
                             IsLikedBack = false,
                             Description = description,
-                            SectionId = (int)Sections.Registration,
+                            SectionId = (int)Sections.Familiator,
                             Severity = (short)Severities.Moderate
                         });
+                        await _contx.SaveChangesAsync();
+                        return true;
+                    case 8:
+                        userBalance.Nullifiers --;
+                        await _contx.SaveChangesAsync();
                         return true;
                     case 9:
                         userBalance.CardDecksMini--;
                         await AddMaxUserProfileViewCount(userId, 20);
+                        await _contx.SaveChangesAsync();
                         return true;
                     case 10:
                         userBalance.CardDecksPlatinum--;
                         await AddMaxUserProfileViewCount(userId, 50);
+                        await _contx.SaveChangesAsync();
                         return true;
                     default:
                         return false;
@@ -3584,21 +3730,22 @@ namespace MyWebApi.Repositories
         {
             try
             {
-                var effects = await _contx.USER_ACTIVE_EFFECTS.Where(e => e.UserId == userId)
-                    .ToListAsync();
+                var effectsToRemove = new List<ActiveEffect>();
+                var effectsToReturn = new List<ActiveEffect>();
 
-                if(effects != null)
+                foreach (var effect in await _contx.USER_ACTIVE_EFFECTS.Where(e => e.UserId == userId).ToListAsync())
                 {
-                    for (int i = 0; i < effects.Count; i++)
-                    {
-                        var effect = effects[i];
-                        if (effect.ExpirationTime <= DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc))
-                            effects.Remove(effect);
-                    }
-                    await _contx.SaveChangesAsync();
-                    return effects;
+                    if (effect.ExpirationTime.Value <= DateTime.UtcNow)
+                        effectsToRemove.Add(effect);
+                    else
+                        effectsToReturn.Add(effect);
                 }
-                return null;
+
+                if (effectsToRemove.Count > 0)
+                    _contx.USER_ACTIVE_EFFECTS.RemoveRange(effectsToRemove);
+
+                await _contx.SaveChangesAsync();
+                return effectsToReturn;
             }
             catch {
                 return null;
@@ -3693,6 +3840,7 @@ namespace MyWebApi.Repositories
                 throw new NullReferenceException($"User {userId} was not found");
 
             userPrefs.ShouldFilterUsersWithoutRealPhoto = !userPrefs.ShouldFilterUsersWithoutRealPhoto;
+            await _contx.SaveChangesAsync();
 
             return userPrefs.ShouldFilterUsersWithoutRealPhoto;
         }
@@ -3730,28 +3878,39 @@ namespace MyWebApi.Repositories
                 .SingleOrDefaultAsync();
         }
 
-        public async Task<UserTest> GetUserTestAsync(long userId, long testId)
+        public async Task<GetUserTest> GetUserTestAsync(long userId, long testId)
         {
-            return await _contx.user_tests.Where(t => t.UserId == userId && t.TestId == testId)
+            var test = await _contx.user_tests.Where(t => t.UserId == userId && t.TestId == testId)
                 .Include(t => t.Test)
                 .SingleOrDefaultAsync();
+
+            if (test == null)
+                throw new NullReferenceException($"User {userId} does not have Test {testId}");
+
+            return new GetUserTest(test);
         }
 
         public async Task<int> GetPossibleTestPassRangeAsync(long userId, long testId)
         {
-            var test = await GetUserTestAsync(userId, testId);
+            var test = await _contx.user_tests.Where(t => t.UserId == userId && t.TestId == testId)
+                .Include(t => t.Test)
+                .AsNoTracking()
+                .SingleOrDefaultAsync();
 
             if (test == null)
                 throw new NullReferenceException($"User #{userId} does not have test #{testId} available");
 
-            //If date is passing is equal to null => test had not been passed so far
+            //If date of passing is equal to null => test had not been passed so far
             if (test.PassedOn == null)
                 return 0;
 
-            if ((test.PassedOn - DateTime.Now).Value.TotalDays > 90)
+            //Every test has its own passing range. If date of passing is out of it => Test can be passed again
+            if ((DateTime.Now - test.PassedOn).Value.Days > test.Test.CanBePassedInDays)
                 return 0;
 
-            return (int)(90 - (test.PassedOn - DateTime.Now).Value.TotalDays);
+            //Get number of days in which this test can be passed again
+            var result = (test.Test.CanBePassedInDays - (DateTime.Now - test.PassedOn).Value.Days);
+            return result;
 
         }
 
@@ -3777,6 +3936,7 @@ namespace MyWebApi.Repositories
                     UserId = userId,
                     TestId = testId,
                     TestType = test.TestType,
+                    Result = 0,
                     TestClassLocalisationId = localisation
                 });
                 
@@ -3886,6 +4046,207 @@ namespace MyWebApi.Repositories
                 CanY = stats.Creativity > 0,
             };
 
+        }
+
+        public async Task<bool> SwitchUserRTLanguageConsiderationAsync(long userId)
+        {
+            var user = await _contx.SYSTEM_USERS.Where(u => u.UserId == userId)
+                .SingleOrDefaultAsync();
+
+            if (user == null)
+                throw new NullReferenceException($"User #{userId} does not exist");
+
+            user.ShouldConsiderLanguages = !user.ShouldConsiderLanguages;
+
+            return user.ShouldConsiderLanguages;
+        }
+
+        public async Task<bool> GetUserRTLanguageConsiderationAsync(long userId)
+        {
+            var user = await _contx.SYSTEM_USERS.FindAsync(userId);
+
+            if (user == null)
+                throw new NullReferenceException($"User #{userId} does not exist");
+
+            return user.ShouldConsiderLanguages;
+        }
+
+        public async Task SetUserCurrencyAsync(long userId, short currency)
+        {
+            var user = await _contx.SYSTEM_USERS.FindAsync(userId);
+
+            if (user == null)
+                throw new NullReferenceException($"User #{userId} does not exist");
+
+            user.Currency = currency;
+            await _contx.SaveChangesAsync();
+        }
+
+        public async Task<bool> PurchaseEffectAsync(long userId, int effectId, int points, short currency, short count=1)
+        {
+            var balance = await GetUserWalletBalance(userId);
+
+            if (balance != null)
+            {
+                balance.Points -= points;
+                switch (effectId)
+                {
+                    case 5:
+                        balance.SecondChances += count;
+                        if (currency == (short)Currencies.Points)
+                            await RegisterUserWalletPurchaseInPoints(userId, points, $"User purchase of {count} Second Chance effect for point amount {points}");
+                        else
+                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Second Chance effect for real money amount {points}");
+                        break;
+                    case 6:
+                        balance.Valentines += count;
+                        if (currency == (short)Currencies.Points)
+                            await RegisterUserWalletPurchaseInPoints(userId, points, $"User purchase of {count} Valentine effect for point amount {points}");
+                        else
+                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Valentine effect for real money amount {points}");
+                        break;
+                    case 7:
+                        balance.Detectors += count;
+                        if (currency == (short)Currencies.Points)
+                            await RegisterUserWalletPurchaseInPoints(userId, points, $"User purchase of {count} Detector effect for point amount {points}");
+                        else
+                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Detector effect for real money amount {points}");
+                        break;
+                    case 8:
+                        balance.Nullifiers += count;
+                        if (currency == (short)Currencies.Points)
+                            await RegisterUserWalletPurchaseInPoints(userId, points, $"User purchase of {count} Nullifier effect for point amount {points}");
+                        else
+                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Nullifier effect for real money amount {points}");
+                        break;
+                    case 9:
+                        balance.CardDecksMini += count;
+                        if (currency == (short)Currencies.Points)
+                            await RegisterUserWalletPurchaseInPoints(userId, points, $"User purchase of {count} Card Deck Mini effect for point amount {points}");
+                        else
+                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Second Card Deck Mini for real money amount {points}");
+                        break;
+                    case 10:
+                        balance.CardDecksPlatinum += count;
+                        if (currency == (short)Currencies.Points)
+                            await RegisterUserWalletPurchaseInPoints(userId, points, $"User purchase of {count} Card Deck Platinum effect for point amount {points}");
+                        else
+                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Card Deck Platinum effect for real money amount {points}");
+                        break;
+                    default:
+                        break;
+
+                }
+                return true;
+            }
+
+            return false;
+        }
+
+        public async Task<GetUserData> GetRequestSenderAsync(Guid requestId)
+        {
+            var senderId = await _contx.USER_NOTIFICATIONS.Where(r => r.Id == requestId).Select(r => r.UserId)
+                .SingleOrDefaultAsync();
+
+            var sender = await _contx.SYSTEM_USERS.Where(u => u.UserId == senderId)
+                .Include(u => u.UserBaseInfo)
+                .AsNoTracking()
+                .SingleOrDefaultAsync();
+
+            var bonus = "";
+
+            if (sender.IsIdentityConfirmed)
+                bonus += $"✔️\n\n";
+            if (sender.HasPremium && sender.Nickname != "")
+                bonus += $"<b>{sender.Nickname}</b>\n";
+
+            return new GetUserData(sender, bonus);
+        }
+
+        public async Task<bool> PurchasePersonalityPointsAsync(long userId, int points, short currency, short count = 1)
+        {
+            try
+            {
+                var balance = await GetUserWalletBalance(userId);
+
+                if (currency == (short)Currencies.Points)
+                {
+                    balance.Points -= points;
+                    balance.PersonalityPoints += count;
+                    await RegisterUserWalletPurchaseInPoints(userId, points, $"User purchase of {count} Personality Points effect for point amount {points}");
+                }
+                else
+                {
+                    balance.Points -= points;
+                    balance.PersonalityPoints += count;
+                    await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Personality Points effect for real money amount {points}");
+                }
+                await _contx.SaveChangesAsync();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public async Task<bool> CheckPromoIsCorrectAsync(long userId, string promoText, bool isActivatedBeforeRegistration)
+        {
+            var promo = await _contx.promo_codes.Where(p => p.Promo == promoText && p.UserdOnlyInRegistration == isActivatedBeforeRegistration)
+                .AsNoTracking()
+                .SingleOrDefaultAsync();
+
+            // There is no way the promo can be applied before Registration, due to the absence of user data.
+            // Thus we are only checking its presence
+            if (isActivatedBeforeRegistration)
+                return promo != null;
+
+            //Enter promo right await if it had not been inputed before registration
+            return await EnterPromo(userId, promo);
+        }
+
+        private async Task<bool> EnterPromo(long userId, PromoCode promo)
+        {
+            if (promo == null)
+                return false;
+
+            var userBalance = await _contx.USER_WALLET_BALANCES.FindAsync(userId);
+
+            userBalance.Points += promo.Points;
+            userBalance.PersonalityPoints += promo.PersonalityPoints;
+            userBalance.SecondChances += promo.SecondChance;
+            userBalance.Valentines += promo.TheValentine;
+            userBalance.Detectors += promo.TheDetector;
+            userBalance.Nullifiers += promo.Nullifier;
+            userBalance.CardDecksMini += promo.CardDeckMini;
+            userBalance.CardDecksPlatinum += promo.CardDeckPlatinum;
+
+            _contx.USER_WALLET_BALANCES.Update(userBalance);
+            await _contx.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> GetUserIncreasedFamiliarityAsync(long userId)
+        {
+            var user = await _contx.SYSTEM_USERS.FindAsync(userId);
+
+            if (user == null)
+                throw new NullReferenceException($"User {userId} does not exist !");
+
+            return user.IncreasedFamiliarity;
+        }
+
+        public async Task<bool> SwitchIncreasedFamiliarityAsync(long userId)
+        {
+            var user = await _contx.SYSTEM_USERS.FindAsync(userId);
+
+            if (user == null)
+                throw new NullReferenceException($"User {userId} does not exist !");
+
+            user.IncreasedFamiliarity = !user.IncreasedFamiliarity;
+            await _contx.SaveChangesAsync();
+
+            return user.IncreasedFamiliarity;
         }
     }
 }

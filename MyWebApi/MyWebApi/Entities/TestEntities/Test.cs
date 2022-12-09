@@ -19,8 +19,12 @@ namespace MyWebApi.Entities.TestEntities
         [NotNull]
         public short TestType { get; set; }
         [NotNull]
-        public int Price{ get; set; }
+        public int Price { get; set; }
+        [NotNull]
+        public int CanBePassedInDays { get; set; }
         [NotNull]
         public virtual List<TestQuestion> Questions { get; set; }
+        [NotNull]
+        public virtual List<TestResult> Results { get; set; }
     }
 }

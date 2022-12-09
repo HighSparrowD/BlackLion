@@ -1,15 +1,16 @@
 import copy
 from math import ceil
+
 from Core import HelpersMethodes as Helpers
 from telebot.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardButton, InlineKeyboardMarkup
 
 from Requester import Requester
-
 menu_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True) \
     .add(KeyboardButton("/search"),
          KeyboardButton("/random"),
          KeyboardButton("/feedback"),
-         KeyboardButton("/settings"))
+         KeyboardButton("/settings"),
+         KeyboardButton("/shop"))
 
 admin_menu_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True) \
     .add(KeyboardButton("/switchstatus"),
@@ -26,8 +27,8 @@ def go_back_to_main_menu(bot, user, message):
         if message:
             Requester(bot, message, user, request_list)
         return False
-    if Helpers.check_user_has_notifications(user):
-        notification_list = Helpers.get_user_notifications(user)
+    notification_list = Helpers.get_user_notifications(user)
+    if notification_list:
         for notif in notification_list: #TODO: Maybe create a separate module for handling that
             bot.send_message(notif["userId1"], notif["description"])
             Helpers.delete_user_notification(notif["id"])
@@ -76,15 +77,16 @@ def count_pages(section_elements, current_markup_elements, markup_pages_count, p
             markup.add(InlineKeyboardButton("<", callback_data="-1"),
                        InlineKeyboardButton(f"{i} / {count}", callback_data=f"{i} / {count}"),
                        InlineKeyboardButton(">", callback_data="-2"))
+
+            if additionalButton:
+                markup.add(InlineKeyboardButton(buttonText, callback_data=buttonData))
+
             current_markup_elements.append(copy.deepcopy(markup))
             markup_pages_count += 1
             markup.clear()
             for e in elements_to_delete:
                 section_elements.pop(e)
             elements_to_delete.clear()
-
-    if additionalButton:
-        markup.add(InlineKeyboardButton(buttonText, callback_data=buttonData))
 
     return markup_pages_count
 

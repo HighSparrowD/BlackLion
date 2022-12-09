@@ -113,21 +113,6 @@ namespace MyWebApi.Controllers
                     LocationId = location.Id,
                 };
                 var uPrefs = new UserPreferences(model.Id, model.UserLanguagePreferences, model.UserLocationPreferences, model.AgePrefs, model.CommunicationPrefs, model.UserGenderPrefs, model.ShouldUserPersonalityFunc);
-                var m = new User(model.Id)
-                {
-                    IsBusy = false,
-                    IsDeleted = false,
-                    IsBanned = false,
-                    ShouldConsiderLanguages = false,
-                    HasPremium = false,
-                    HadReceivedReward = false,
-                    DailyRewardPoint = 0,
-                    BonusIndex = 1,
-                    ProfileViewsCount = 0,
-                    InvitedUsersCount = 0,
-                    InvitedUsersBonus = 0,
-                    TagSearchesCount = 0,
-                };
 
                 if ((await _repository.UpdateUserAppLanguageAsync(model.Id, model.UserAppLanguageId)) == 1)
                     if (location== null || (await _repository.UpdateUserLocationAsync(location)) == 1)
@@ -290,6 +275,7 @@ namespace MyWebApi.Controllers
                 ShouldConsiderLanguages = false,
                 HasPremium = false,
                 HadReceivedReward = false,
+                IncreasedFamiliarity = true,
                 DailyRewardPoint = 0,
                 BonusIndex = 1,
                 ProfileViewsCount = 0,
@@ -298,6 +284,7 @@ namespace MyWebApi.Controllers
                 TagSearchesCount = 0,
                 MaxProfileViewsCount = 50,
                 IsIdentityConfirmed = false,
+                EnteredPromoCodes = model.Promo
             };
 
             if (model.UserCityCode != null && model.UserCountryCode != null)
@@ -510,7 +497,7 @@ namespace MyWebApi.Controllers
         }
 
         [HttpPost("/RegisterUserRequest")]
-        public async Task<Guid?> RegisterUserRequest(UserNotification request)
+        public async Task<string> RegisterUserRequest(UserNotification request)
         {
             return await _repository.RegisterUserRequest(request);
         }
@@ -651,9 +638,9 @@ namespace MyWebApi.Controllers
         }
 
         [HttpGet("/DeleteUserNotification/{userId}/{notificationId}")]
-        public async Task<bool> DeleteUserNotification(long userId, Guid notificationId)
+        public async Task<bool> DeleteUserNotification(Guid notificationId)
         {
-            return await _repository.DeleteUserNotification(userId, notificationId);
+            return await _repository.DeleteUserNotification(notificationId);
         }
 
         [HttpGet("/GetRandomAchievements/{userId}")]
@@ -722,16 +709,16 @@ namespace MyWebApi.Controllers
             return await _repository.GetUserNotificationsIdsAsync(userId);
         }
 
-        [HttpGet("/GetUserNotification/{userId}/{notificationId}")]
-        public async Task<UserNotification> GetUserNotification(long userId, Guid notificationId)
+        [HttpGet("/GetUserNotification/{notificationId}")]
+        public async Task<UserNotification> GetUserNotification(Guid notificationId)
         {
-            return await _repository.GetUserNotificationAsync(userId, notificationId);
+            return await _repository.GetUserNotificationAsync(notificationId);
         }
 
-        [HttpGet("/SendNotificationConfirmationCode/{userId}/{notificationId}")]
-        public async Task<int> SendNotificationConfirmationCode(long userId, Guid notificationId)
+        [HttpGet("/SendNotificationConfirmationCode/{notificationId}")]
+        public async Task<byte> SendNotificationConfirmationCode(Guid notificationId)
         {
-            return await _repository.SendNotificationConfirmationCodeAsync(userId, notificationId);
+            return await _repository.SendNotificationConfirmationCodeAsync(notificationId);
         }
 
         [HttpGet("/GetUserPersonalityPointsAmount/{userId}")]
@@ -853,12 +840,9 @@ namespace MyWebApi.Controllers
         }
 
         [HttpGet("/GetUserFilteringByPhotoStatus/{userId}")]
-        public async Task<string> GetUserFilteringByPhotoStatus(long userId)
+        public async Task<bool> GetUserFilteringByPhotoStatus(long userId)
         {
-            //TODO: Get string from localizer !!!
-            if (await _repository.GetUserFilteringByPhotoStatusAsync(userId) == false)
-                return "Filtering is currently Off. Would you like to turn it on ?";
-            return "Filtering is currently On. Would you like to turn it off ?";
+            return await _repository.GetUserFilteringByPhotoStatusAsync(userId);
         }
 
         [HttpGet("/GetTestDataByProperty/{userId}/{param}")]
@@ -880,7 +864,7 @@ namespace MyWebApi.Controllers
         }
 
         [HttpGet("/GetUserTest/{userId}/{testId}")]
-        public async Task<UserTest> GetUserTest(long userId, long testId)
+        public async Task<GetUserTest> GetUserTest(long userId, long testId)
         {
             return await _repository.GetUserTestAsync(userId, testId);
         }
@@ -939,16 +923,86 @@ namespace MyWebApi.Controllers
             return await _repository.ActivateDurableEffectAsync(userId, effectId);
         }
 
-        [HttpGet("/ActivateToggleEffect/{userId}/{effectId}")]
-        public async Task<bool> ActivateToggleEffect(long userId, int effectId)
+        [HttpGet("/ActivateToggleEffect/{userId}/{effectId}/{user2Id?}")]
+        public async Task<bool> ActivateToggleEffect(long userId, int effectId, long? user2Id = null)
         {
-            return await _repository.ActivateToggleEffectAsync(userId, effectId);
+            return await _repository.ActivateToggleEffectAsync(userId, effectId, user2Id);
         }
 
         [HttpGet("/CheckEffectIsActive/{userId}/{effectId}")]
         public async Task<bool> CheckEffectIsActive(long userId, int effectId)
         {
             return await _repository.CheckEffectIsActiveAsync(userId, effectId);
+        }
+
+        [HttpGet("/SwitchUserRTLanguageConsideration/{userId}")]
+        public async Task<bool> SwitchUserRTLanguageConsideration(long userId)
+        {
+            return await _repository.SwitchUserRTLanguageConsiderationAsync(userId);
+        }
+
+        [HttpGet("/CheckEffectIsActive/{userId}")]
+        public async Task<bool> GetUserRTLanguageConsideration(long userId)
+        {
+            return await _repository.GetUserRTLanguageConsiderationAsync(userId);
+        }
+
+        [HttpGet("/PurchaseEffect/{userId}/{effectId}/{points}/{currency}/{count?}")]
+        public async Task<bool> PurchaseEffect(long userId, int effectId, int points, short currency, short count=1)
+        {
+            return await _repository.PurchaseEffectAsync(userId, effectId, points, currency, count);
+        }
+
+        [HttpGet("/SetUserCurrency/{userId}/{currency}")]
+        public async Task<ActionResult> SetUserCurrency(long userId, short currency)
+        {
+            await _repository.SetUserCurrencyAsync(userId, currency);
+
+            if (ModelState.IsValid)
+                return Ok();
+
+            return BadRequest();
+        }
+
+        [HttpGet("/GetRequestSender/{requestId}")]
+        public async Task<ActionResult<GetUserData>> GetRequestSender(Guid requestId)
+        {
+            var sender = await _repository.GetRequestSenderAsync(requestId);
+
+            if (ModelState.IsValid)
+                return Ok(sender);
+
+            return BadRequest();
+        }
+
+        [HttpGet("/PurchesPPForPoints/{userId}/{price}/{count?}")]
+        public async Task<bool> PurchesPPForPoints(long userId, int price, short count=1)
+        {
+            return await _repository.PurchasePersonalityPointsAsync(userId, price, (short)Currencies.Points, count);
+        }
+
+        [HttpGet("/PurchesPPForRealMoney/{userId}/{price}/{count?}")]
+        public async Task<bool> PurchesPPForRealMoney(long userId, int price, short count = 1)
+        {
+            return await _repository.PurchasePersonalityPointsAsync(userId, price, (short)Currencies.RealMoney, count);
+        }
+
+        [HttpGet("/CheckPromoIsCorrect/{userId}/{promo}/{isActivatedBeforeRegistration}")]
+        public async Task<bool> CheckPromoIsCorrect(long userId, string promo, bool isActivatedBeforeRegistration)
+        {
+            return await _repository.CheckPromoIsCorrectAsync(userId, promo, isActivatedBeforeRegistration);
+        }
+
+        [HttpGet("/GetUserIncreasedFamiliarity/{userId}")]
+        public async Task<bool> GetUserIncreasedFamiliarity(long userId)
+        {
+            return await _repository.GetUserIncreasedFamiliarityAsync(userId);
+        }
+
+        [HttpGet("/SwitchIncreasedFamiliarity/{userId}")]
+        public async Task<bool> SwitchIncreasedFamiliarity(long userId)
+        {
+            return await _repository.SwitchIncreasedFamiliarityAsync(userId);
         }
     }
 }

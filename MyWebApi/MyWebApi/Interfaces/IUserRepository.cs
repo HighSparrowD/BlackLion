@@ -33,7 +33,7 @@ namespace MyWebApi.Interfaces
         Task<List<UserNotification>> GetUserRequests(long userId);
         Task<UserNotification> GetUserRequest(Guid requestId);
         bool CheckRequestExists(long senderId, long recieverId);
-        Task<Guid?> RegisterUserRequest(UserNotification request);
+        Task<string> RegisterUserRequest(UserNotification request);
         Task<byte> DeleteUserRequests(long userId);
         Task<byte> DeleteUserRequest(Guid requestId);
         Task<User> GetUserInfoByUsrnameAsync(string username);
@@ -110,9 +110,9 @@ namespace MyWebApi.Interfaces
         Task<bool> CheckUserHasNotificationsAsync(long userId);
         Task<List<UserNotification>> GetUserNotifications(long userId);
         Task<List<Guid>> GetUserNotificationsIdsAsync(long userId);
-        Task<UserNotification> GetUserNotificationAsync(long userId, Guid notificationId);
-        Task<byte> SendNotificationConfirmationCodeAsync(long userId, Guid notidicationId);
-        Task<bool> DeleteUserNotification(long userId, Guid notificationId);
+        Task<UserNotification> GetUserNotificationAsync(Guid notificationId);
+        Task<byte> SendNotificationConfirmationCodeAsync(Guid notidicationId);
+        Task<bool> DeleteUserNotification(Guid notificationId);
         Task<bool> DeleteUserNotification(UserNotification notification);
         Task<List<UserAchievement>> GetRandomAchievements(long userId);
         Task<double> CalculateSimilarityAsync(double param1, double param2);
@@ -133,7 +133,7 @@ namespace MyWebApi.Interfaces
         Task<UserPersonalityPoints> GetUserPersonalityPoints(long userId);
         Task<bool> SwitchPersonalityUsage(long userId);
         Task<bool?> CheckUserUsesPersonality(long userId);
-        Task<bool> RegisterTestPassingAsync(TestPayload model);
+        Task<bool> RegisterTestPassingAsync(TestPayload model, int testResult);
         Task<bool> UpdateTags(UpdateTags model);
         Task<List<string>> GetTags(long userId);
         Task<User> GetUserListByTagsAsync(GetUserByTags model);
@@ -150,13 +150,15 @@ namespace MyWebApi.Interfaces
         Task<bool> DeactivateEffectAsync(long userId, Guid activeEffectId);
         Task<int> AddMaxUserProfileViewCount(long userId, int profileCount);
         Task<bool> CheckEffectIsActiveAsync(long userId, int effectId);
+        Task<bool> PurchaseEffectAsync(long userId, int effectId, int points, short currency, short count=1);
+        Task<bool> PurchasePersonalityPointsAsync(long userId, int points, short currency, short count=1);
         Task<bool> SendTickRequestAsync(SendTickRequest request);
         Task<bool> SwitchUserFilteringByPhotoAsync(long userId);
         Task<bool> GetUserFilteringByPhotoStatusAsync(long userId);
         Task<List<GetTestShortData>> GetTestDataByPropertyAsync(long userId, short param);
         Task<List<GetTestShortData>> GetUserTestDataByPropertyAsync(long userId, short param);
         Task<GetFullTestData> GetTestFullDataByIdAsync(long testId, int localisation);
-        Task<UserTest> GetUserTestAsync(long userId, long testId);
+        Task<GetUserTest> GetUserTestAsync(long userId, long testId);
         Task<int> GetPossibleTestPassRangeAsync(long userId, long testId);
         Task<bool> PurchaseTestAsync(long userId, long testId, int localisation);
         Task<string> CheckTickRequestStatusÀsync(long userId);
@@ -165,5 +167,12 @@ namespace MyWebApi.Interfaces
         Task<bool> SetUserFreeSearchParamAsync(long userId, bool freeStatus);
         //Get which stats can user invest points in
         Task<PersonalityCaps> GetUserPersonalityCapsAsync(long userId);
+        Task<bool> SwitchUserRTLanguageConsiderationAsync(long userId);
+        Task<bool> GetUserRTLanguageConsiderationAsync(long userId);
+        Task SetUserCurrencyAsync(long userId, short currency);
+        Task<GetUserData> GetRequestSenderAsync(Guid requestId);
+        Task<bool> CheckPromoIsCorrectAsync(long userId, string promoText, bool isActivatedBeforeRegistration);
+        Task<bool> GetUserIncreasedFamiliarityAsync(long userId);
+        Task<bool> SwitchIncreasedFamiliarityAsync(long userId);
     }
 }

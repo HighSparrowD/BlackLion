@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using MyWebApi.Data;
 using MyWebApi.Entities.AchievementEntities;
 using MyWebApi.Entities.AdminEntities;
@@ -8,6 +9,7 @@ using MyWebApi.Entities.ReasonEntities;
 using MyWebApi.Entities.ReportEntities;
 using MyWebApi.Entities.SecondaryEntities;
 using MyWebApi.Entities.TestEntities;
+using MyWebApi.Entities.UserInfoEntities;
 using MyWebApi.Enums;
 using MyWebApi.Interfaces;
 using System;
@@ -37,21 +39,27 @@ namespace MyWebApi.Repositories
 
         public async Task<long> UploadCountries(List<Country> countries)
         {
-            countries.ForEach(async c => await _contx.COUNTRIES.AddAsync(c));
+            countries.ForEach(async c => 
+            {
+                if (!_contx.COUNTRIES.Contains(c))
+                    await _contx.COUNTRIES.AddAsync(c);
+                else
+                    _contx.COUNTRIES.Update(c);
+            });
             await _contx.SaveChangesAsync();
-
-            //foreach (var item in countries)
-            //{
-            //    _contx.COUNTRIES.Add(item);
-            //    await _contx.SaveChangesAsync();
-            //}
 
             return countries.Count;
         }
 
         public async Task<long> UploadLanguages(List<Language> langs)
         {
-            langs.ForEach(async l => await _contx.LANGUAGES.AddAsync(l));
+            langs.ForEach(async l => 
+            {
+                if (!_contx.LANGUAGES.Contains(l))
+                    await _contx.LANGUAGES.AddAsync(l);
+                else
+                    _contx.LANGUAGES.Update(l);
+            });
             await _contx.SaveChangesAsync();
 
             return langs.Count;
@@ -59,7 +67,13 @@ namespace MyWebApi.Repositories
 
         public async Task<long> UploadFeedbackReasons(List<FeedbackReason> reasons)
         {
-            reasons.ForEach(async r => await _contx.FEEDBACK_REASONS.AddAsync(r));
+            reasons.ForEach(async r => 
+            {
+                if (!_contx.FEEDBACK_REASONS.Contains(r))
+                    await _contx.FEEDBACK_REASONS.AddAsync(r);
+                else
+                    _contx.FEEDBACK_REASONS.Update(r);
+            });
             await _contx.SaveChangesAsync();
             return reasons.Count;
         }
@@ -393,13 +407,17 @@ namespace MyWebApi.Repositories
                 for (int i = 0; i < tests.Count; i++)
                 {
                     var model = tests[i];
+
                     //Check if a version of test already exists
                     var existingTest = await _contx.tests.Where(t => t.Id == model.Id)
                         .SingleOrDefaultAsync();
+
                     if (existingTest != null)
                     {
                         if (existingTest.ClassLocalisationId == model.ClassLocalisationId)
-                            throw new Exception("This version of test already exists");
+                            //Continue if test version already exists.
+                            //It allows to avoid constantly changing source file in tools
+                            continue;
 
                         testId = model.Id;
                     }
@@ -409,6 +427,7 @@ namespace MyWebApi.Repositories
                     var lastQuestionId = await _contx.tests_questions.CountAsync();
                     var lastAnswerId = await _contx.tests_answers.CountAsync() + 1;
 
+                    var results = new List<TestResult>();
                     var questions = new List<TestQuestion>();
                     var answers = new List<TestAnswer>();
                     var test = new Test
@@ -418,7 +437,8 @@ namespace MyWebApi.Repositories
                         Name = model.Name,
                         Description = model.Description,
                         TestType = model.TestType,
-                        Price = model.Price
+                        Price = model.Price,
+                        CanBePassedInDays = model.CanBePassedInDays
                     };
 
                     foreach (var question in model.Questions)
@@ -447,9 +467,23 @@ namespace MyWebApi.Repositories
                             });
                         }
                     }
+
+                    foreach (var result in model.Results)
+                    {
+                        results.Add(new TestResult
+                        {
+                            Id = await _contx.tests_results.CountAsync() + 1,
+                            Result = result.Result,
+                            Score = result.Score,
+                            TestId = test.Id,
+                            TestClassLocalisationId = test.ClassLocalisationId
+                        });
+                    }
+
                     await _contx.tests.AddAsync(test);
                     await _contx.tests_questions.AddRangeAsync(questions);
                     await _contx.tests_answers.AddRangeAsync(answers);
+                    await _contx.tests_results.AddRangeAsync(results);
                     await _contx.SaveChangesAsync();
                 }
 
@@ -511,6 +545,79 @@ namespace MyWebApi.Repositories
                 return true;
             }
             catch { return false; }
+        }
+
+        public async Task<bool> CreateDecoyAsync(long? copyUserId = null, UserRegistrationModel model = null)
+        {
+            var rand = new Random();
+
+            UserBaseInfo uBase = null;
+            UserDataInfo uData = null;
+            UserPreferences uPrefs= null;
+            User m = null;
+            Location location = null;
+
+            if (model != null)
+            {
+                var langCount = await _userRep.GetUserMaximumLanguageCountAsync(model.Id);
+                if (model.UserLanguages.Count > langCount)
+                    throw new Exception($"This user cannot have more than {langCount} languages !");
+                
+                uBase = new UserBaseInfo(model.Id + rand.Next(8000), model.UserName, model.UserRealName, model.UserDescription, model.UserPhoto, model.IsPhotoReal);
+                uData = new UserDataInfo
+                {
+                    Id = uBase.Id,
+                    UserLanguages = model.UserLanguages,
+                    ReasonId = model.ReasonId,
+                    UserAge = model.UserAge,
+                    UserGender = model.UserGender,
+                    LanguageId = model.UserAppLanguageId,
+                };
+                uPrefs = new UserPreferences(uBase.Id, model.UserLanguagePreferences, model.UserLocationPreferences, model.AgePrefs, model.CommunicationPrefs, model.UserGenderPrefs, model.ShouldUserPersonalityFunc);
+                uPrefs.ShouldFilterUsersWithoutRealPhoto = false;
+                m = new User(uBase.Id)
+                {
+                    IsBusy = false,
+                    IsDeleted = false,
+                    IsBanned = false,
+                    ShouldConsiderLanguages = false,
+                    HasPremium = false,
+                    HadReceivedReward = false,
+                    DailyRewardPoint = 0,
+                    BonusIndex = 1,
+                    ProfileViewsCount = 0,
+                    InvitedUsersCount = 0,
+                    InvitedUsersBonus = 0,
+                    TagSearchesCount = 0,
+                    MaxProfileViewsCount = 50,
+                    IsIdentityConfirmed = false,
+                };
+
+                if (model.UserCityCode != null && model.UserCountryCode != null)
+                    location = new Location { Id = uBase.Id, CityId = (int)model.UserCityCode, CountryId = (int)model.UserCountryCode, CityCountryClassLocalisationId = model.UserAppLanguageId, CountryClassLocalisationId = model.UserAppLanguageId };
+                else
+                    location = new Location { Id = uBase.Id };
+
+                uData.LocationId = location.Id;
+            }
+            else
+            {
+                uBase = await _contx.SYSTEM_USERS_BASES.Where(b => b.Id == copyUserId).AsNoTracking().SingleOrDefaultAsync();
+                uData = await _contx.SYSTEM_USERS_DATA.Where(b => b.Id == copyUserId).AsNoTracking().SingleOrDefaultAsync();
+                uPrefs = await _contx.SYSTEM_USERS_PREFERENCES.Where(b => b.Id == copyUserId).AsNoTracking().SingleOrDefaultAsync();
+                m = await _contx.SYSTEM_USERS.Where(b => b.UserId == copyUserId).AsNoTracking().SingleOrDefaultAsync();
+                location = await _contx.USER_LOCATIONS.Where(b => b.Id == copyUserId).AsNoTracking().SingleOrDefaultAsync();
+
+                uBase.Id += rand.Next(8000);
+                uData.Id = uBase.Id;
+                uPrefs.Id = uBase.Id;
+                m.UserId = uBase.Id;
+                location.Id = uBase.Id;
+            }
+
+            await _userRep.RegisterUserAsync(m, uBase, uData, uPrefs, location);
+
+            return true;
         }
 
         //public Task<long> UploadInTest(UploadInTest model)

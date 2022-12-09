@@ -79,7 +79,7 @@
             SecondChance = 5,
             TheValentine = 6,
             TheDetector = 7,
-            TheWhiteDetector = 8,
+            Nullifier = 8,
             CardDeckMini = 9,
             CardDeckPlatinum = 10,
             ThePersonality = 11
@@ -116,6 +116,16 @@
             Accepted = 5,
             Aborted = 6,
             Failed = 7
+        }
+
+        public enum PaymentCurrencies
+        {
+            USD = 1,
+            EUR = 2,
+            UAH = 3,
+            RUB = 4,
+            CZK = 5,
+            PLN = 6,
         }
     }
 }

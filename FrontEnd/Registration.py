@@ -11,7 +11,7 @@ from TestModule import TestModule
 
 
 class Registrator:
-    def __init__(self, bot=None, msg=None, hasVisited=False, return_method=None):
+    def __init__(self, bot=None, msg=None, hasVisited=False, return_method=None, localizationIndex=None, promoCode=None):
         self.bot = bot
         self.msg = msg
         self.return_method = return_method
@@ -22,8 +22,11 @@ class Registrator:
         self.hasVisited = hasVisited
         self.okMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(KeyboardButton("Ok"))
         self.chCode = self.bot.register_callback_query_handler("", self.callback_handler, user_id=self.current_user)
+        #TODO: Replace with another method
         self.localisation = json.loads(requests.get("https://localhost:44381/GetLocalisation/0", verify=False).text)
         self.lang_limit = Helpers.get_user_language_limit(self.current_user)
+
+        self.promo = promoCode
 
         self.question_index = 0 #Represents current question index
 
@@ -45,7 +48,7 @@ class Registrator:
         self.age_pref_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
         self.skip_markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("skip")
 
-        self.app_language = None
+        self.app_language = localizationIndex
 
         self.data = {}
         self.current_user_data = None
@@ -72,8 +75,10 @@ class Registrator:
         self.reply_voice = ""
         self.reply_text = ""
 
+        self.get_localisations()
+
         if not hasVisited:
-            self.app_language_step(msg)
+            self.spoken_language_step(msg)
         else:
             self.current_user_data = Helpers.get_user_info(self.current_user)
             if self.current_user_data:
@@ -87,7 +92,9 @@ class Registrator:
                 self.city = data["location"]["cityId"]
                 self.chosen_langs = data["userLanguages"]
                 self.app_language = data["languageId"]
-                self.tags = ' '.join(data["tags"])
+
+                if "tags" in self.data.keys():
+                    self.tags = ' '.join(data["tags"])
 
                 self.data["appLanguage"] = self.app_language
                 self.data["userName"] = base["userName"]
@@ -124,7 +131,7 @@ class Registrator:
 
                 self.checkout_step(msg)
             else:
-                self.app_language_step(msg)
+                self.spoken_language_step(msg)
 
     def app_language_step(self, msg, acceptMode=False, editMode=False):
         if not acceptMode:
@@ -146,16 +153,10 @@ class Registrator:
 
         else:
             self.app_language = self.app_language_converter(msg.text)
-            if self.app_language or self.app_language == 0:
-                self.get_localisations()
+            if self.app_language is not None:
 
-                if not editMode:
-                    self.spoken_language_step(msg)
-                    self.data = {"id": msg.from_user.id, "userName": msg.from_user.username,
-                                 "userAppLanguageId": self.app_language}
-                else:
-                    self.checkout_step(msg)
-                    self.data["userAppLanguageId"] = self.app_language
+                self.checkout_step(msg)
+                self.data["userAppLanguageId"] = self.app_language
 
             else:
                 self.bot.send_message(self.current_user, "There is no such language. Try again", reply_markup=self.app_languages_markup)
@@ -229,6 +230,11 @@ class Registrator:
                 self.data["userLanguages"] = self.chosen_langs
 
                 if not editMode:
+                    self.data["id"] = self.current_user
+                    self.data["userName"] = msg.from_user.username
+                    self.data["userAppLanguageId"] = self.app_language
+                    self.data["promo"] = self.promo
+
                     self.gender_step(msg)
                 else:
                     self.checkout_step(msg)
@@ -582,7 +588,7 @@ class Registrator:
         if not acceptMode:
             m = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("yes", "no")
             self.bot.send_message(self.current_user, "Is that your photo ? ", reply_markup=m)
-            self.bot.register_next_step_handler(msg, self.photo_step, acceptMode=True, editMode=editMode, chat_id=self.current_user)
+            self.bot.register_next_step_handler(msg, self.photo_confirmation_step, acceptMode=True, editMode=editMode, chat_id=self.current_user)
         else:
             if msg.text == "yes":
                 self.data["isPhotoReal"] = True
@@ -964,7 +970,7 @@ class Registrator:
                 response = requests.post("https://localhost:44381/UpdateUserProfile", d, headers={
                     "Content-Type": "application/json"}, verify=False)
             else:
-                del self.data["wasChanged"]
+                # del self.data["wasChanged"]
                 response = requests.post("https://localhost:44381/RegisterUser", d, headers={
                     "Content-Type": "application/json"}, verify=False)
 
@@ -1010,7 +1016,10 @@ class Registrator:
             cityName = self.cities[self.data['userCityCode']]
             countryName = self.countries[self.data['userCountryCode']]
 
-        return f"{self.data['userRealName']}, {countryName}, {cityName}\n{self.data['userAge']}\n{self.data['userDescription']}\n\n{self.tags}"
+        if self.tags:
+            return f"{self.data['userRealName']}, {countryName}, {cityName}\n{self.data['userAge']}\n{self.data['userDescription']}\n\n{self.tags}"
+
+        return f"{self.data['userRealName']}, {countryName}, {cityName}\n{self.data['userAge']}\n{self.data['userDescription']}"
 
     def spoken_languages_convertor(self, lang):
         for l in self.languages:

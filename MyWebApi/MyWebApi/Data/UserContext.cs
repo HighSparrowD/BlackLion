@@ -50,6 +50,7 @@ namespace MyWebApi.Data
         public DbSet<Test> tests { get; set; }
         public DbSet<TestQuestion> tests_questions { get; set; }
         public DbSet<TestAnswer> tests_answers { get; set; }
+        public DbSet<TestResult> tests_results { get; set; }
         public DbSet<UserTest> user_tests { get; set; }
         public DbSet<Ad> SPONSOR_ADS { get; set; }
         public DbSet<Sponsor> SYSTEM_SPONSORS { get; set; }
@@ -72,6 +73,7 @@ namespace MyWebApi.Data
         public DbSet<AdminErrorLog> ADMIN_ERROR_LOGS { get; set; }
         public DbSet<ActiveEffect> USER_ACTIVE_EFFECTS { get; set; }
         public DbSet<TickRequest> tick_requests { get; set; }
+        public DbSet<PromoCode> promo_codes { get; set; }
 
 
 
@@ -95,6 +97,7 @@ namespace MyWebApi.Data
             builder.Entity<Country>().HasMany(c => c.Cities);
             builder.Entity<Sponsor>().HasMany(s => s.SponsorAds);
             builder.Entity<Test>().HasMany(t => t.Questions);
+            builder.Entity<Test>().HasMany(t => t.Results);
             builder.Entity<Test>().HasKey(t => new {t.Id, t.ClassLocalisationId});
             builder.Entity<UserTest>().HasKey(t => new {t.TestId, t.UserId});
             builder.Entity<TestQuestion>().HasMany(q => q.Answers);

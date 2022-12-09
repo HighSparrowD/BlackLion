@@ -225,7 +225,7 @@ def delete_user_request(requestId):
 def delete_user_notification(notificationId):
     try:
         return bool(
-            json.loads(requests.delete(f"https://localhost:44381/SendNotificationConfirmationCode/{notificationId}", verify=False).text))
+            json.loads(requests.get(f"https://localhost:44381/SendNotificationConfirmationCode/{notificationId}", verify=False).text))
     except:
         return None
 
@@ -233,6 +233,13 @@ def delete_user_notification(notificationId):
 def start_program_in_debug_mode(bot): # TODO: remove in production
     requests.get("https://localhost:44381/SetDebugProperties", verify=False)
     return json.loads(requests.get("https://localhost:44381/GetAllUsersIds", verify=False).text)
+
+
+def get_request_sender(requestId):
+    try:
+        return json.loads(requests.get(f"https://localhost:44381/GetRequestSender/{requestId}", verify=False).text)
+    except:
+        return None
 
 
 def get_user_list(userId):
@@ -259,7 +266,7 @@ def get_free_user_list(userId):
 def get_user_list_by_tags(getUserByTagsModel):
     try:
         d = json.dumps(getUserByTagsModel)
-        return json.loads(requests.post(f"https://localhost:44381//GetUserByTags", d,
+        return json.loads(requests.post(f"https://localhost:44381/GetUserByTags", d,
                                        headers={"Content-Type": "application/json"},
                                        verify=False).text)
     except:
@@ -284,9 +291,9 @@ def register_user_request(senderId, receiverId, isLikedBack, description=""):
         }
 
         d = json.dumps(data)
-        return json.loads(requests.post(f"https://localhost:44381/RegisterUserRequest", d,
+        return requests.post(f"https://localhost:44381/RegisterUserRequest", d,
                                        headers={"Content-Type": "application/json"},
-                                       verify=False).text)
+                                       verify=False).text
     except:
         return None
 
@@ -358,8 +365,30 @@ def check_should_turnOf_personality(userId):
         requests.get(f"https://localhost:44381/CheckShouldTurnOffPersonality/{userId}", verify=False).text))
 
 
-def grant_premium(userId, cost, dayDuration):
-    return json.loads(requests.get(f"https://localhost:44381/GrantPremiumToUser/{userId}/{cost}/{dayDuration}", verify=False).text)
+def check_promo_is_valid(userId, promo, isActivatedBeforeRegistration):
+    return bool(json.loads(
+        requests.get(f"https://localhost:44381/CheckPromoIsCorrect/{userId}/{promo}/{isActivatedBeforeRegistration}", verify=False).text))
+
+
+def grant_premium_for_points(userId, cost, dayDuration):
+    return json.loads(requests.get(f"https://localhost:44381/GrantPremiumToUser/{userId}/{cost}/{dayDuration}/{1}", verify=False).text)
+
+
+def grant_premium_for_real_money(userId, cost, dayDuration):
+    return json.loads(requests.get(f"https://localhost:44381/GrantPremiumToUser/{userId}/{cost}/{dayDuration}/{4}", verify=False).text)
+
+
+def purchase_effect_for_points(userId, effectId, cost, count=1):
+    return json.loads(requests.get(f"https://localhost:44381/PurchaseEffect/{userId}/{effectId}/{cost}/{count}", verify=False).text)
+
+
+#TODO: Change called API endpoint
+def purchase_effect_for_real_money(userId, effectId, cost):
+    return json.loads(requests.get(f"https://localhost:44381/GrantPremiumToUser/{userId}/{effectId}/{cost}/{4}", verify=False).text)
+
+
+def purchase_PP_for_points(userId, cost, count=1):
+    return json.loads(requests.get(f"https://localhost:44381/PurchesPPForPoints/{userId}/{cost}/{count}", verify=False).text)
 
 
 def switch_admin_status(userId):
@@ -373,8 +402,18 @@ def switch_admin_status(userId):
 
 
 def switch_personality_status(userId):
-    return requests.get(f"https://localhost:44381/SwitchPersonalityUsage/{userId}",
+    return requests.get(f"https://localhost:44381/SwitchIncreasedFamiliarity/{userId}",
                                                            verify=False)
+
+
+def switch_familiarity_status(userId):
+    return requests.get(f"https://localhost:44381/SwitchIncreasedFamiliarity/{userId}",
+                                                           verify=False)
+
+
+def get_increased_familiarity_status(userId):
+    return bool(json.loads(requests.get(f"https://localhost:44381/GetUserIncreasedFamiliarity/{userId}",
+                                                           verify=False).text))
 
 
 def update_user_status(userId, status):
@@ -393,3 +432,13 @@ def get_admin_status(userId):
     if d.text:
         return data[bool(json.loads(d.text))]
     return None
+
+
+def set_user_currency(userId, currency):
+    response = requests.get(f"https://localhost:44381/SetUserCurrency/{userId}/{currency}",
+                        verify=False)
+
+    if 100 < response.status_code < 300:
+        return  True
+
+    return False

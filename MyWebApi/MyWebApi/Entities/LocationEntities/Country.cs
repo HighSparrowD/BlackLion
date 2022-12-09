@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace MyWebApi.Entities.LocationEntities
 {
@@ -10,6 +11,8 @@ namespace MyWebApi.Entities.LocationEntities
         [Key]
         public int ClassLocalisationId { get; set; }
         public string CountryName { get; set; }
+        [AllowNull]
+        public short? Priority { get; set; }
         public virtual List<City> Cities { get; set; }
     }
 }

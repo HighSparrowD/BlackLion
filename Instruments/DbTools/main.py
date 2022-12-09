@@ -12,7 +12,7 @@ languages_last_index = 0
 def update_countries(language, start_index=0, loc_index=0):
     global countries_last_index
 
-    file = pandas.read_csv("worldcities.csv", usecols=["country"])
+    file = pandas.read_csv("worldcities.csv", usecols=["country", "priority"])
     countries = sorted(file.drop_duplicates().values.tolist())
     countries_dicts = []
     i = start_index
@@ -88,7 +88,7 @@ def update_cities(language, start_index=0, loc_index=0):
 def update_languages(language, start_index=0, loc_index=0):
     global languages_last_index
 
-    languages = pandas.read_csv("Languages.csv", usecols=["Language name ", "Native name "]).drop_duplicates().values.tolist()
+    languages = pandas.read_csv("Languages.csv", usecols=["Language name ", "Native name ", "Priority "]).drop_duplicates().values.tolist()
     d = []
     i = start_index
 
@@ -98,7 +98,8 @@ def update_languages(language, start_index=0, loc_index=0):
                 "Id": i,
                 "LanguageName": lang[0],
                 "LanguageNameNative": lang[0],  # lang[1] TODO: Make it work with a native one
-                "ClassLocalisationId": loc_index
+                "ClassLocalisationId": loc_index,
+                "Priority": lang[2]
             }
             )
             i += 1
@@ -109,7 +110,8 @@ def update_languages(language, start_index=0, loc_index=0):
                     "Id": i,
                     "LanguageName": ts.google(lang[0], from_language="en", to_language=language),
                     "LanguageNameNative": lang[0], #lang[1] TODO: Make it work with a native one
-                    "ClassLocalisationId": loc_index
+                    "ClassLocalisationId": loc_index,
+                    "Priority": lang[2]
                 }
             )
             i += 1
@@ -126,7 +128,7 @@ def Do():
     print(data)
 
 
-# update_countries("en", 1, 0)
+update_countries("en", 1, 0)
 # update_countries("ru", 1, 1)
 # update_countries("uk", 1, 2)
 # update_cities("en", 1, 0)

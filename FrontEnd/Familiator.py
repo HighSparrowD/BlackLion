@@ -1,4 +1,5 @@
 import requests
+import telegram
 from telebot.types import *
 
 from Common.Menues import go_back_to_main_menu
@@ -10,7 +11,7 @@ class Familiator:
     def __init__(self, bot, msg, cr_user, familiators, hasVisited=True):
         self.btnYes = "👌"
         self.btnNo = "🙊"
-        self.btnReport = "Report"
+        self.btnReport = "⚠"
 
         self.finish_message = "That is all for now, please wait until we find someone else for you"
 
@@ -36,7 +37,7 @@ class Familiator:
         self.startMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("1", "2", "3", "4")
 
         self.report_reasons = {}
-        self.people = None
+        self.people = []
         self.reasons_markup = None
 
         self.eh = self.bot.register_message_handler(self.exit_handler, commands=["exit"], user_id=self.current_user)
@@ -61,7 +62,7 @@ class Familiator:
 
                 self.start(message)
             elif message.text == "No":
-                response = requests.get(f"https://localhost:44381/SetUserFreeSearchParam/{self.current_user}/{True}",
+                response = requests.get(f"https://localhost:44381/SetUserFreeSearchParam/{self.current_user}/{False}",
                                         verify=False)
 
                 if response.status_code == 200:
@@ -103,18 +104,18 @@ class Familiator:
 
     def search_by_tags(self, message, acceptMode=False):
         if not acceptMode:
-            self.bot.send_message(self.current_user, f"Sent me up to {self.tagLimit}")
+            self.bot.send_message(self.current_user, f"Sent me up to {self.tagLimit} tags to conduct the search")
             self.bot.register_next_step_handler(message, self.search_by_tags, acceptMode=True, chat_id=self.current_user)
         else:
-            tags = len(message.text.split())
+            tags = message.text.split()
             #TODO: check tags formatting
-            if 0 < tags <= self.tagLimit:
+            if 0 < len(tags) <= self.tagLimit:
                 data = {
                     "userId": self.current_user,
                     "tags": tags
                 }
 
-                self.people = Helpers.get_user_list_by_tags(data)
+                self.people.append(Helpers.get_user_list_by_tags(data))
                 self.proceed()
             else:
                 self.bot.send_message(self.current_user, f"Invalid tag count")
@@ -147,7 +148,7 @@ class Familiator:
                 self.bot.send_message(self.current_user, "No such option", reply_markup=self.YNmarkup)
                 self.bot.register_next_step_handler(message, self.personalityOff_handler, acceptMode=acceptMode, chat_id=self.current_user)
 
-    def set_active_person(self):
+    def set_active_person(self, msg=None):
         if self.people:
             self.active_user = self.people[0]
             Helpers.register_user_encounter_familiator(self.current_user, self.active_user_id)
@@ -156,37 +157,45 @@ class Familiator:
             return True
         return False
 
-    def show_person(self, msg):
-        user = self.active_user["userBaseInfo"]
-        self.bot.send_photo(self.current_user, user["userPhoto"], user["userDescription"], reply_markup=self.markup)
-        self.bot.send_message(self.current_user, "Additional Actions:", reply_markup=self.actions_markup)
-        self.bot.register_next_step_handler(msg, self.message_handler, chat_id=self.current_user)
+    def show_person(self, message, acceptMode=False):
+        if not acceptMode:
+            user = self.active_user["userBaseInfo"]
+            self.bot.send_photo(self.current_user, user["userPhoto"], user["userDescription"], reply_markup=self.markup, parse_mode=telegram.ParseMode.HTML)
+            self.bot.send_message(self.current_user, "Additional Actions:", reply_markup=self.actions_markup)
+            self.bot.register_next_step_handler(message, self.show_person, acceptMode=True, chat_id=self.current_user)
+        else:
+            if message.text == self.btnYes:
+                Helpers.register_user_request(self.current_user, self.active_user_id, False)
 
-    def message_handler(self, message):
-        if message.text == self.btnYes:
-            Helpers.register_user_request(self.current_user, self.active_user_id, False)
+                active_reply = Helpers.get_user_active_reply(self.active_user_id)
+                if active_reply:
+                    if not active_reply["isEmpty"]:
+                        if active_reply["isText"]:
+                            self.bot.send_message(self.current_user, f"⬆This user has a message for you ;-)⬆\n\n{active_reply['autoReply']}")
+                        else:
+                            self.bot.send_voice(self.current_user, active_reply["autoReply"], "⬆ This user has a message for you ;-) ⬆")
 
-            active_reply = Helpers.get_user_active_reply(self.active_user_id)
-            if active_reply:
-                if not active_reply["isEmpty"]:
-                    self.bot.send_message(self.current_user, "⬇ This user has a message for you ;-) ⬇")
-                    if active_reply["isText"]:
-                        self.bot.send_message(self.current_user, f'"{active_reply["autoReply"]}"')
-                    else:
-                        self.bot.send_voice(self.current_user, active_reply["autoReply"])
+                try:
+                    if not Helpers.check_user_is_busy(self.active_user_id):
+                        req_list = Helpers.get_user_requests(self.active_user_id)
+                        Requester(self.bot, message, self.active_user_id, req_list)
+                except:
+                    pass
+            elif message.text == self.btnReport:
+                ReportModule(self.bot, self.msg, self.current_user, self.proceed)
 
-            if not Helpers.check_user_is_busy(self.active_user_id):
-                req_list = Helpers.get_user_requests(self.active_user_id)
-                Requester(self.bot, message, self.active_user_id, req_list)
-        elif message.text == self.btnReport:
-            ReportModule(self.bot, self.msg, self.current_user, self.proceed)
+            else:
+                self.bot.send_message(self.current_user, "No such option", reply_markup=self.markup)
+                self.bot.register_next_step_handler(message, self.show_person, acceptMode=acceptMode, chat_id=self.current_user)
 
-        requests = Helpers.get_user_requests(self.current_user)
-        if requests:
-            Requester(self.bot, self.msg, self.current_user, requests)
-        self.proceed()
+            #Interception between Requester and Familiator
+            requests = Helpers.get_user_requests(self.current_user)
+            if requests:
+                Requester(self.bot, self.msg, self.current_user, requests, self.proceed)
+                return
+            self.proceed()
 
-    def proceed(self):
+    def proceed(self, msg=None):
         if self.set_active_person():
             self.show_person(self.msg)
         else:

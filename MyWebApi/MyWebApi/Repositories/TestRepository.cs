@@ -51,14 +51,6 @@ namespace MyWebApi.Repositories
             return await _contx.APP_LANGUAGES.ToListAsync();
         }
 
-        public async Task<List<Test>> GetPsychologicalTestsAsync()
-        {
-            var tests = await _contx.tests
-                .ToListAsync();
-
-            return tests;
-        }
-
         //public async Task<List<IntellectualTest>> GetIntellectualTestsAsync()
         //{
         //    return await _contx.INTELLECTUAL_TESTS.Include(i => i.Questions).ThenInclude(q => q.Answers).ToListAsync();
@@ -77,7 +69,9 @@ namespace MyWebApi.Repositories
 
         public async Task<List<Country>> GetCountries(int localisationId)
         {
-            return await _contx.COUNTRIES.Where(c => c.ClassLocalisationId == localisationId).ToListAsync();
+            return await _contx.COUNTRIES.Where(c => c.ClassLocalisationId == localisationId)
+                .OrderBy(c => c.Priority)
+                .ToListAsync();
         }
 
         public async Task<List<UserReason>> GetReasons(int localisationId)
@@ -109,6 +103,7 @@ namespace MyWebApi.Repositories
                 .Where(t => t.Id == testId && t.ClassLocalisationId == localisationId)
                 .Include(t => t.Questions)
                 .ThenInclude(q => q.Answers)
+                .Include(t => t.Results.OrderBy(r => r.Score))
                 .SingleOrDefaultAsync();
         }
     }

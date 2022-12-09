@@ -25,6 +25,7 @@ namespace MyWebApi.Entities.UserInfoEntities
         public bool HadReceivedReward { get; set; }
         public bool? IsFree { get; set; }
         public bool IsIdentityConfirmed { get; set; }
+        public bool IncreasedFamiliarity { get; set; }
         public short DailyRewardPoint { get; set; }
         public double BonusIndex { get; set; }
         public int InvitedUsersCount { get; set; }
@@ -34,7 +35,9 @@ namespace MyWebApi.Entities.UserInfoEntities
         public int ProfileViewsCount { get; set; }
         public int MaxProfileViewsCount { get; set; }
         public int TagSearchesCount { get; set; }
+        public short? Currency { get; set; }
         public DateTime? PremiumExpirationDate{ get; set; }
+        public string? EnteredPromoCodes { get; set; }
         public virtual UserBaseInfo? UserBaseInfo { get; set; }
         public virtual UserDataInfo? UserDataInfo  { get; set; }
         public virtual UserPreferences? UserPreferences { get; set; }

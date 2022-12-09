@@ -14,7 +14,7 @@ namespace MyWebApi.Entities.UserInfoEntities
         public int SecondChances { get; set; }
         public int Valentines { get; set; }
         public int Detectors { get; set; }
-        public int WhiteDetectors { get; set; }
+        public int Nullifiers { get; set; }
         public int CardDecksMini { get; set; }
         public int CardDecksPlatinum { get; set; }
         public int ThePersonalities { get; set; }
@@ -33,7 +33,7 @@ namespace MyWebApi.Entities.UserInfoEntities
             SecondChances = 0;
             Valentines = 0;
             Detectors = 0;
-            WhiteDetectors = 0;
+            Nullifiers = 0;
             CardDecksMini = 0;
             CardDecksPlatinum = 0;
             ThePersonalities = 0;
