@@ -56,8 +56,7 @@ class TestModule:
         self.abortMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("/abort")
         self.ManageTestMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("1", "2")
 
-        #TODO: Name the effect !
-        self.manage_test_message = "1. Go Back\n2. Use an EFFECTNAME to re-pass this test again now"
+        self.manage_test_message = "1. Go Back\n2. Use The Nullifier to re-pass this test again now"
 
         self.current_test_data = {}
         self.current_question = {}
@@ -182,10 +181,13 @@ class TestModule:
                 self.isDeciding = False
                 self.go_back_to_test_selection()
             elif message.text == "2":
-                #TODO: Check if user has an effect
-                self.isDeciding = False
-                self.load_test_data()
-                self.recurring_test_pass()
+                if Helpers.check_user_has_effect(self.current_user, 8):
+                    self.isDeciding = False
+                    self.load_test_data()
+                    self.recurring_test_pass()
+                else:
+                    self.bot.send_message(self.current_user, "Sorry, you dont have this effect", reply_markup=self.ManageTestMarkup)
+                    self.bot.register_next_step_handler(message, self.manage_current_test, acceptMode=acceptMode, chat_id=self.current_user)
             else:
                 self.bot.send_message(self.current_user, f"No such option", reply_markup=self.ManageTestMarkup)
                 self.bot.register_next_step_handler(message, self.manage_current_test, acceptMode=True, chat_id=self.current_user)

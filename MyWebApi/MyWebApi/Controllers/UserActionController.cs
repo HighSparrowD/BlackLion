@@ -917,6 +917,12 @@ namespace MyWebApi.Controllers
             return await _repository.GetUserActiveEffects(userId);
         }
 
+        [HttpGet("/CheckUserHasEffect/{userId}/{effectId}")]
+        public async Task<bool> CheckUserHasEffect(long userId, int effectId)
+        {
+            return await _repository.CheckUserHasEffectAsync(userId, effectId);
+        }
+
         [HttpGet("/ActivateDurableEffect/{userId}/{effectId}")]
         public async Task<DateTime?> ActivateDurableEffect(long userId, int effectId)
         {
