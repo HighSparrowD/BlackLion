@@ -2988,12 +2988,14 @@ namespace MyWebApi.Repositories
         {
             try
             {
+
+                var result = await RecalculateUserStats(model);
+
                 //Break if test result wasnt saved
-                if (!await RegisterTestPassingAsync(model))
+                if (!await RegisterTestPassingAsync(model, result.TestResult))
                     return false;
 
-                var userStats = await RecalculateUserStats(model);
-                _contx.USER_PERSONALITY_STATS.Update(userStats);
+                _contx.USER_PERSONALITY_STATS.Update(result.Stats);
                 await _contx.SaveChangesAsync();
                 return true;
             }
@@ -3118,9 +3120,10 @@ namespace MyWebApi.Repositories
             catch { return null; }
         }
 
-        private async Task<UserPersonalityStats> RecalculateUserStats(TestPayload model)
+        private async Task<RecalculationResult> RecalculateUserStats(TestPayload model)
         {
             var devider = 1;
+            var result = 0;
             var userStats = await _contx.USER_PERSONALITY_STATS.Where(s => s.UserId == model.UserId)
                 .SingleOrDefaultAsync();
 
@@ -3139,6 +3142,7 @@ namespace MyWebApi.Repositories
                 if (userStats.Personality != 0)
                     devider = 2;
 
+                result = model.Personality;
                 userStats.Personality = (userStats.Personality + model.Personality) / devider;
                 //Return the devider to its normal state
                 devider = 1;
@@ -3148,6 +3152,7 @@ namespace MyWebApi.Repositories
                 if (userStats.EmotionalIntellect != 0)
                     devider = 2;
 
+                result = model.EmotionalIntellect;
                 userStats.EmotionalIntellect = (userStats.EmotionalIntellect + model.EmotionalIntellect) / devider;
                 devider = 1;
             }
@@ -3156,6 +3161,7 @@ namespace MyWebApi.Repositories
                 if (userStats.Reliability != 0)
                     devider = 2;
 
+                result = model.Reliability;
                 userStats.Reliability = (userStats.Reliability + model.Reliability) / devider;
                 devider = 1;
             }
@@ -3164,6 +3170,7 @@ namespace MyWebApi.Repositories
                 if (userStats.Compassion != 0)
                     devider = 2;
 
+                result = model.Compassion;
                 userStats.Compassion = (userStats.Compassion + model.Compassion) / devider;
                 devider = 1;
             }
@@ -3173,6 +3180,7 @@ namespace MyWebApi.Repositories
                 if (userStats.OpenMindedness != 0)
                     devider = 2;
 
+                result = model.OpenMindedness;
                 userStats.OpenMindedness = (userStats.OpenMindedness + model.OpenMindedness) / devider;
                 devider = 1;
             }
@@ -3181,6 +3189,7 @@ namespace MyWebApi.Repositories
                 if (userStats.Agreeableness != 0)
                     devider = 2;
 
+                result = model.Agreeableness;
                 userStats.Agreeableness = (userStats.Agreeableness + model.Agreeableness) / devider;
                 devider = 1;
             }
@@ -3189,6 +3198,7 @@ namespace MyWebApi.Repositories
                 if (userStats.SelfAwareness != 0)
                     devider = 2;
 
+                result = model.SelfAwareness;
                 userStats.SelfAwareness = (userStats.SelfAwareness + model.SelfAwareness) / devider;
                 devider = 1;
             }
@@ -3197,7 +3207,8 @@ namespace MyWebApi.Repositories
             {
                 if (userStats.LevelOfSense != 0)
                     devider = 2;
-                
+
+                result = model.LevelOfSense;
                 userStats.LevelOfSense = (userStats.LevelOfSense + model.LevelOfSense) / devider;
                 devider = 1;
             }
@@ -3206,6 +3217,7 @@ namespace MyWebApi.Repositories
                 if (userStats.Intellect != 0)
                     devider = 2;
 
+                result = model.Intellect;
                 userStats.Intellect = (userStats.Intellect + model.Intellect) / devider;
                 devider = 1;
             }
@@ -3214,6 +3226,7 @@ namespace MyWebApi.Repositories
                 if (userStats.Nature != 0)
                     devider = 2;
 
+                result = model.Nature;
                 userStats.Nature = (userStats.Nature + model.Nature) / devider;
                 devider = 1;
             }
@@ -3222,11 +3235,12 @@ namespace MyWebApi.Repositories
                 if (userStats.Creativity != 0)
                     devider = 2;
 
+                result = model.Creativity;
                 userStats.Creativity = (userStats.Creativity + model.Creativity) / devider;
                 devider = 1;
             }
 
-            return userStats;
+            return new RecalculationResult { Stats = userStats, TestResult = result};
         }
 
         private async Task<double> CalculateSimilarityPreferences(int points, double similarityCoefficient)
@@ -3291,7 +3305,7 @@ namespace MyWebApi.Repositories
             catch { throw new NullReferenceException($"User {userId} does not exist !"); }
         }
 
-        public async Task<bool> RegisterTestPassingAsync(TestPayload model)
+        public async Task<bool> RegisterTestPassingAsync(TestPayload model, int testResult)
         {
             try
             {
@@ -3307,6 +3321,7 @@ namespace MyWebApi.Repositories
                 }
 
                 userTest.PassedOn = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
+                userTest.Result = testResult;
 
                 _contx.user_tests.Update(userTest);
                 await _contx.SaveChangesAsync();
@@ -3878,20 +3893,23 @@ namespace MyWebApi.Repositories
         public async Task<int> GetPossibleTestPassRangeAsync(long userId, long testId)
         {
             var test = await _contx.user_tests.Where(t => t.UserId == userId && t.TestId == testId)
+                .Include(t => t.Test)
                 .AsNoTracking()
                 .SingleOrDefaultAsync();
 
             if (test == null)
                 throw new NullReferenceException($"User #{userId} does not have test #{testId} available");
 
-            //If date is passing is equal to null => test had not been passed so far
+            //If date of passing is equal to null => test had not been passed so far
             if (test.PassedOn == null)
                 return 0;
 
-            if ((DateTime.Now - test.PassedOn).Value.Days > 90)
+            //Every test has its own passing range. If date of passing is out of it => Test can be passed again
+            if ((DateTime.Now - test.PassedOn).Value.Days > test.Test.CanBePassedInDays)
                 return 0;
 
-            var result = (90 - (DateTime.Now - test.PassedOn).Value.Days);
+            //Get number of days in which this test can be passed again
+            var result = (test.Test.CanBePassedInDays - (DateTime.Now - test.PassedOn).Value.Days);
             return result;
 
         }

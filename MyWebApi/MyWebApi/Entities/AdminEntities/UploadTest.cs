@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using MyWebApi.Entities.AdminEntities;
+using System.Collections.Generic;
 
 namespace MyWebApi.Entities.TestEntities
 {
@@ -11,6 +11,8 @@ namespace MyWebApi.Entities.TestEntities
         public string Description { get; set; }
         public short TestType { get; set; }
         public int Price{ get; set; }
+        public int CanBePassedInDays { get; set; }
         public List<UploadTestQuestion> Questions { get; set; }
+        public List<UploadTestResult> Results { get; set; }
     }
 }

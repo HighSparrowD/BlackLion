@@ -7,6 +7,7 @@ import requests
 test_file_name = "TestUploadTemplate - Test"
 questions_file_name = "TestUploadTemplate - Questions"
 answers_file_name = "TestUploadTemplate - Answers"
+results_file_name = "TestUploadTemplate - Results"
 
 
 def add_ps_test():
@@ -32,6 +33,7 @@ def load_test_data(testTemplate):
             "testType": test[4],
             "price": test[5],
             "questions": load_questions(test[0]),
+            "results": load_results(test[0])
         }
         testTemplate.append(test_data)
 
@@ -89,6 +91,24 @@ def load_answers(questionId, testId=None):
         answers.append(a)
 
     return answers
+
+
+def load_results(testId):
+    file = pandas.read_csv(f"{results_file_name}.csv")
+    file = get_file_data(file)
+
+    results = []
+
+    for result in file:
+        if result[0] == testId:
+            r = {
+                "score": result[1],
+                "result": result[2]
+            }
+
+            results.append(r)
+
+    return results
 
 
 def get_file_data(file):

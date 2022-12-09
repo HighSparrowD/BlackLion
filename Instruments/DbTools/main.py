@@ -8,6 +8,7 @@ countries_last_index = 0
 cities_last_index = 0
 languages_last_index = 0
 
+
 def update_countries(language, start_index=0, loc_index=0):
     global countries_last_index
 

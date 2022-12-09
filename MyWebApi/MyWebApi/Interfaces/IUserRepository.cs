@@ -133,7 +133,7 @@ namespace MyWebApi.Interfaces
         Task<UserPersonalityPoints> GetUserPersonalityPoints(long userId);
         Task<bool> SwitchPersonalityUsage(long userId);
         Task<bool?> CheckUserUsesPersonality(long userId);
-        Task<bool> RegisterTestPassingAsync(TestPayload model);
+        Task<bool> RegisterTestPassingAsync(TestPayload model, int testResult);
         Task<bool> UpdateTags(UpdateTags model);
         Task<List<string>> GetTags(long userId);
         Task<User> GetUserListByTagsAsync(GetUserByTags model);

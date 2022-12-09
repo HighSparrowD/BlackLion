@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using MyWebApi.Data;
 using MyWebApi.Entities.AchievementEntities;
 using MyWebApi.Entities.AdminEntities;
@@ -406,16 +407,17 @@ namespace MyWebApi.Repositories
                 for (int i = 0; i < tests.Count; i++)
                 {
                     var model = tests[i];
+
                     //Check if a version of test already exists
                     var existingTest = await _contx.tests.Where(t => t.Id == model.Id)
                         .SingleOrDefaultAsync();
+
                     if (existingTest != null)
                     {
                         if (existingTest.ClassLocalisationId == model.ClassLocalisationId)
                             //Continue if test version already exists.
                             //It allows to avoid constantly changing source file in tools
                             continue;
-                            //throw new Exception("This version of test already exists");
 
                         testId = model.Id;
                     }
@@ -425,6 +427,7 @@ namespace MyWebApi.Repositories
                     var lastQuestionId = await _contx.tests_questions.CountAsync();
                     var lastAnswerId = await _contx.tests_answers.CountAsync() + 1;
 
+                    var results = new List<TestResult>();
                     var questions = new List<TestQuestion>();
                     var answers = new List<TestAnswer>();
                     var test = new Test
@@ -434,7 +437,8 @@ namespace MyWebApi.Repositories
                         Name = model.Name,
                         Description = model.Description,
                         TestType = model.TestType,
-                        Price = model.Price
+                        Price = model.Price,
+                        CanBePassedInDays = model.CanBePassedInDays
                     };
 
                     foreach (var question in model.Questions)
@@ -463,9 +467,23 @@ namespace MyWebApi.Repositories
                             });
                         }
                     }
+
+                    foreach (var result in model.Results)
+                    {
+                        results.Add(new TestResult
+                        {
+                            Id = await _contx.tests_results.CountAsync() + 1,
+                            Result = result.Result,
+                            Score = result.Score,
+                            TestId = test.Id,
+                            TestClassLocalisationId = test.ClassLocalisationId
+                        });
+                    }
+
                     await _contx.tests.AddAsync(test);
                     await _contx.tests_questions.AddRangeAsync(questions);
                     await _contx.tests_answers.AddRangeAsync(answers);
+                    await _contx.tests_results.AddRangeAsync(results);
                     await _contx.SaveChangesAsync();
                 }
 
