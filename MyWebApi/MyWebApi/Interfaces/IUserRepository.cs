@@ -174,5 +174,6 @@ namespace MyWebApi.Interfaces
         Task<bool> CheckPromoIsCorrectAsync(long userId, string promoText, bool isActivatedBeforeRegistration);
         Task<bool> GetUserIncreasedFamiliarityAsync(long userId);
         Task<bool> SwitchIncreasedFamiliarityAsync(long userId);
+        Task<bool> AddUserCommercialVector(long userId, string tagString);
     }
 }

@@ -57,7 +57,7 @@ def count_pages(section_elements, current_markup_elements, markup_pages_count, p
     count = ceil(len(section_elements) / 5)
 
     if prefs:
-        markup.add(InlineKeyboardButton("Same as mine", callback_data=-5))
+        markup.add(InlineKeyboardButton("⚡ Same as mine ⚡", callback_data=-5))
     for element in list(section_elements):
         if len(section_elements) > 5:
             element_count_on_page = 5

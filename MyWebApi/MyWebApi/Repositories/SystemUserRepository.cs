@@ -120,7 +120,7 @@ namespace MyWebApi.Repositories
                             //Adds + 10 random effects to users inventory
                             var effecId = new Random().Next(5, 10);
                             await PurchaseEffectAsync(invitor.UserId, effecId, 0, (int)Currencies.Points, 10);
-                            await GrantPremiumToUser(model.UserId, 0, 30, (short)Currencies.Points);
+                            await GrantPremiumToUser(invitor.UserId, 0, 30, (short)Currencies.Points);
                         }
                         else
                             await TopUpUserWalletPointsBalance(invitor.UserId, 1999 * multiplier, $"User {invitor.UserId} has invited more than 10 users");
@@ -157,6 +157,7 @@ namespace MyWebApi.Repositories
                 //Add Starting test pack
                 //TODO: Add more tests here
                 await PurchaseTestAsync(model.UserId, 1, dataModel.LanguageId);
+                //await PurchaseTestAsync(model.UserId, 3, dataModel.LanguageId);
 
                 return model.UserId;
             }
@@ -1719,10 +1720,15 @@ namespace MyWebApi.Repositories
                 
                 if (user != null)
                 {
-                    if ((bool)user.HasPremium && user.PremiumExpirationDate > timeNow)
+                    if ((user.HasPremium && user.PremiumExpirationDate < timeNow) || (user.HasPremium && user.PremiumExpirationDate == null))
+                    {
                         user.HasPremium = false;
+                        user.PremiumExpirationDate = null;
+                        //TODO: Notify user that his premium access has expired
+                    }
+                    else if (user.PremiumExpirationDate > timeNow)
+                        user.HasPremium = true;
 
-                    //TODO: Notify user that his premium access has expired
 
                     await _contx.SaveChangesAsync();
                     return user.HasPremium;
@@ -1796,7 +1802,7 @@ namespace MyWebApi.Repositories
                 _contx.Update(user);
                 await _contx.SaveChangesAsync();
 
-                await AddUserNotificationAsync(new UserNotification { UserId = user.UserId, IsLikedBack = false, Severity = (short)Severities.Moderate, SectionId = (int)Sections.Neutral, Description = $"You have been granted premium access. Enjoy your benefits :)\nPremium expiration {user.PremiumExpirationDate.Value.ToShortTimeString()}" });
+                await AddUserNotificationAsync(new UserNotification { UserId1 = user.UserId, IsLikedBack = false, Severity = (short)Severities.Moderate, SectionId = (int)Sections.Neutral, Description = $"You have been granted premium access. Enjoy your benefits :)\nPremium expiration {user.PremiumExpirationDate.Value.ToShortTimeString()}" });
 
                 return user.PremiumExpirationDate.Value;
             }
@@ -2609,7 +2615,7 @@ namespace MyWebApi.Repositories
         {
             try
             {
-                await AddUserNotificationAsync(new UserNotification {UserId=userId, Severity=(short)Severities.Urgent, SectionId=(int)Sections.Neutral, Description="Your premium access has expired"});
+                await AddUserNotificationAsync(new UserNotification {UserId1=userId, Severity=(short)Severities.Urgent, SectionId=(int)Sections.Neutral, Description="Your premium access has expired"});
                 return true;
             }
             catch
@@ -3128,7 +3134,7 @@ namespace MyWebApi.Repositories
                 .SingleOrDefaultAsync();
 
             //Create user stats if they werent created before
-            if (userStats != null)
+            if (userStats == null)
             {
                 userStats = new UserPersonalityStats(model.UserId);
                 await _contx.USER_PERSONALITY_STATS.AddAsync(userStats);
@@ -3339,12 +3345,14 @@ namespace MyWebApi.Repositories
                 if(await CheckUserIsRegistered(model.UserId))
                 {
                     //Comas are removed to avoid bugs
-                    var tags = model.RawTags.ToLower().Replace(",", "").Split(" ").ToList();
+                    var tags = model.RawTags.ToLower().Replace(",", " ").Trim().Split(" ").ToList();
 
                     if(tags.Count > 0)
                     {
                         var user = await GetUserInfoAsync(model.UserId);
                         user.UserDataInfo.Tags = tags;
+
+                        await AddUserCommercialVector(model.UserId, model.RawTags);
 
                         _contx.SYSTEM_USERS_DATA.Update(user.UserDataInfo);
                         await _contx.SaveChangesAsync();
@@ -3600,6 +3608,7 @@ namespace MyWebApi.Repositories
                             value = balance.Detectors > 0;
                             break;
                         case 8:
+                            await ActivateToggleEffectAsync(userId, effectId);
                             value = balance.Nullifiers > 0;
                             break;
                         case 9:
@@ -3640,9 +3649,13 @@ namespace MyWebApi.Repositories
                         {
                             if (AtLeastOneIsNotZero(userPoints))
                             {
-                                userBalance.Valentines--;
-                                effect = new TheValentine(userId);
-                                break;
+                                if (userBalance.Valentines > 0)
+                                {
+                                    userBalance.Valentines--;
+                                    effect = new TheValentine(userId);
+                                    break;
+                                }
+                                return null;
                             }
                             return null;
                         }
@@ -3650,15 +3663,14 @@ namespace MyWebApi.Repositories
                     case 7:
                         if (!(bool)await CheckUserUsesPersonality(userId))
                             return null;
-                        userBalance.Detectors--;
-                        effect = new TheDetector(userId);
-                        break;
-                    case 8:
-                        if (!(bool)await CheckUserUsesPersonality(userId))
-                            return null;
-                        userBalance.Nullifiers--;
-                        effect = new TheWhiteDetector(userId);
-                        break;
+
+                        if (userBalance.Detectors > 0)
+                        {
+                            userBalance.Detectors--;
+                            effect = new TheDetector(userId);
+                            break;
+                        }
+                        return null;
                     default:
                         return null;
                 }
@@ -3679,32 +3691,52 @@ namespace MyWebApi.Repositories
                 switch (effectId)
                 {
                     case 5:
-                        userBalance.SecondChances--;
-                        await RegisterUserRequest(new UserNotification
+                        if (userBalance.SecondChances > 0)
                         {
-                            UserId = userId,
-                            UserId1 = (long)user2Id,
-                            IsLikedBack = false,
-                            Description = description,
-                            SectionId = (int)Sections.Familiator,
-                            Severity = (short)Severities.Moderate
-                        });
-                        await _contx.SaveChangesAsync();
-                        return true;
+                            userBalance.SecondChances--;
+                            await RegisterUserRequest(new UserNotification
+                            {
+                                UserId = userId,
+                                UserId1 = (long)user2Id,
+                                IsLikedBack = false,
+                                Description = description,
+                                SectionId = (int)Sections.Familiator,
+                                Severity = (short)Severities.Moderate
+                            });
+                            _contx.Update(userBalance);
+                            await _contx.SaveChangesAsync();
+                            return true;
+                        }
+                        return false;
                     case 8:
-                        userBalance.Nullifiers --;
-                        await _contx.SaveChangesAsync();
-                        return true;
+                        if (userBalance.Nullifiers > 0)
+                        {
+                            userBalance.Nullifiers --;
+                            _contx.Update(userBalance);
+                            await _contx.SaveChangesAsync();
+                            return true;
+                        }
+                        return false;
                     case 9:
-                        userBalance.CardDecksMini--;
-                        await AddMaxUserProfileViewCount(userId, 20);
-                        await _contx.SaveChangesAsync();
-                        return true;
+                        if (userBalance.CardDecksMini > 0)
+                        {
+                            userBalance.CardDecksMini--;
+                            await AddMaxUserProfileViewCount(userId, 20);
+                            _contx.Update(userBalance);
+                            await _contx.SaveChangesAsync();
+                            return true;
+                        }
+                        return false;
                     case 10:
-                        userBalance.CardDecksPlatinum--;
-                        await AddMaxUserProfileViewCount(userId, 50);
-                        await _contx.SaveChangesAsync();
-                        return true;
+                        if (userBalance.CardDecksPlatinum > 0)
+                        {
+                            userBalance.CardDecksPlatinum--;
+                            await AddMaxUserProfileViewCount(userId, 50);
+                            _contx.Update(userBalance);
+                            await _contx.SaveChangesAsync();
+                            return true;
+                        }
+                        return false;
                     default:
                         return false;
                 }
@@ -4247,6 +4279,23 @@ namespace MyWebApi.Repositories
             await _contx.SaveChangesAsync();
 
             return user.IncreasedFamiliarity;
+        }
+
+        public async Task<bool> AddUserCommercialVector(long userId, string tagString)
+        {
+            var user = await _contx.SYSTEM_USERS.Where(u => u.UserId == userId)
+                .Include(u => u.UserDataInfo)
+                .SingleOrDefaultAsync();
+
+            if (user == null)
+                throw new NullReferenceException($"User {userId} does not exist");
+
+            user.CommercialsTagsVector = (user.UserDataInfo.Tags + tagString).Replace("#", "")
+                .Trim().Replace(" ", "");
+
+            _contx.SYSTEM_USERS.Update(user);
+            await _contx.SaveChangesAsync();
+            return true;
         }
     }
 }

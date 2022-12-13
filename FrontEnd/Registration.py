@@ -1,5 +1,6 @@
 import copy
 
+import telegram
 from telebot.types import KeyboardButton, ReplyKeyboardMarkup
 from Core import HelpersMethodes as Helpers
 from Common.Menues import count_pages, assemble_markup, reset_pages, add_tick_to_element, remove_tick_from_element
@@ -21,6 +22,7 @@ class Registrator:
         Helpers.switch_user_busy_status(self.current_user)
         self.hasVisited = hasVisited
         self.okMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(KeyboardButton("Ok"))
+        self.YNmarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Yes", "No")
         self.chCode = self.bot.register_callback_query_handler("", self.callback_handler, user_id=self.current_user)
         #TODO: Replace with another method
         self.localisation = json.loads(requests.get("https://localhost:44381/GetLocalisation/0", verify=False).text)
@@ -75,9 +77,8 @@ class Registrator:
         self.reply_voice = ""
         self.reply_text = ""
 
-        self.get_localisations()
-
         if not hasVisited:
+            self.get_localisations()
             self.spoken_language_step(msg)
         else:
             self.current_user_data = Helpers.get_user_info(self.current_user)
@@ -536,7 +537,17 @@ class Registrator:
             self.bot.register_next_step_handler(msg, self.age_step, acceptMode=True, editMode=editMode, chat_id=self.current_user)
         else:
             try:
-                self.data["userAge"] = int(msg.text)
+                age = int(msg.text)
+                if age > 100:
+                    self.bot.send_message(msg.chat.id, "Age cannot be grater than 100 :)")
+                    self.bot.register_next_step_handler(msg, self.age_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
+                    return
+                elif age < 12:
+                    self.bot.send_message(msg.chat.id, "Minimal age is 12 :)")
+                    self.bot.register_next_step_handler(msg, self.age_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
+                    return
+
+                self.data["userAge"] = age
                 self.msg = msg
 
                 if not editMode:
@@ -643,7 +654,7 @@ class Registrator:
 
             self.current_inline_message_id = \
                 self.bot.send_message(msg.chat.id, "What languages are you willing to speak with people?",
-                                      reply_markup=markup).json['message_id']
+                                      reply_markup=markup, parse_mode=telegram.ParseMode.HTML).json['message_id']
 
             if editMode:
                 for l in self.pref_langs:
@@ -795,13 +806,19 @@ class Registrator:
         if not acceptMode:
             self.question_index = 15
             self.msg = msg
-            self.bot.send_message(msg.chat.id, "What age would you like your companion to be? Please, send a range of numbers\nExample: 18 - 25")
+            age_range = self.generate_personal_age_range()
+            self.bot.send_message(msg.chat.id, f"What age would you like your companion to be? Please, send a range of numbers\nExample: {age_range}")
             self.bot.register_next_step_handler(msg, self.age_pref_step, acceptMode=True, editMode=editMode, chat_id=self.current_user)
         else:
             try:
-                nums = msg.text.replace(" ", "").split("-")
-                age_pref = list(range(int(nums[0]), int(nums[1])))
-                self.data["agePrefs"] = age_pref
+                if "-" in msg.text:
+                    nums = msg.text.replace(" ", "").split("-")
+                    age_pref = list(range(int(nums[0]), int(nums[1])))
+                    self.data["agePrefs"] = age_pref
+
+                else:
+                    age_pref = list(range(int(msg.text) - 3, int(msg.text) + 5))
+                    self.data["agePrefs"] = age_pref
 
                 if not editMode:
                     self.tags_step(msg)
@@ -809,8 +826,7 @@ class Registrator:
                     self.checkout_step(msg)
 
             except:
-                self.bot.send_message(self.current_user, "Please, chose only ones in the list!",
-                                      reply_markup=self.age_pref_markup)
+                self.bot.send_message(self.current_user, "Single number or a Range of numbers please :)", reply_markup=self.age_pref_markup)
                 self.bot.register_next_step_handler(msg, self.age_pref_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
 
     def tags_step(self, msg, acceptMode=False, editMode=False):
@@ -864,12 +880,18 @@ class Registrator:
         else:
             if message.text == "skip":
                 self.bot.send_message(self.current_user, "Gotcha")
+                if not editMode:
+                    self.change_something_step(message)
+                    return
                 self.checkout_step(message)
 
             elif message.voice:
                 if Helpers.check_user_has_premium(self.current_user):
                     if message.voice.duration <= 15:
                         self.reply_voice = message.voice.file_id
+                        if not editMode:
+                            self.change_something_step(message)
+                            return
                         self.checkout_step(message)
                     else:
                         self.bot.send_message(self.current_user, "Up to 15 seconds, my friend", reply_markup=self.skip_markup)
@@ -881,6 +903,9 @@ class Registrator:
             elif message.text:
                 if len(message.text) < 300:
                     self.reply_text = message.text
+                    if not editMode:
+                        self.change_something_step(message)
+                        return
                     self.checkout_step(message)
                 else:
                     self.bot.send_message(self.current_user, "Up to 300 characters please", reply_markup=self.skip_markup)
@@ -889,7 +914,21 @@ class Registrator:
                 self.bot.send_message(self.current_user, "Empty message :(", reply_markup=self.skip_markup)
                 self.bot.register_next_step_handler(message, self.auto_reply_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
 
-    def checkout_step(self, msg, acceptMode=False):
+    def change_something_step(self, message, acceptMode=False):
+        if not acceptMode:
+            self.bot.send_photo(self.current_user, self.data["userPhoto"], f"That is how you profile will look like:\n<i><b>*Some parameters such as tags will be hidden*</b></i>\n\n{self.profile_constructor()}")
+            self.bot.send_message(self.current_user, "Would you like to change something?", reply_markup=self.YNmarkup)
+            self.bot.register_next_step_handler(message, self.change_something_step, acceptMode=True, chat_id=self.current_user)
+        else:
+            if message.text == "Yes":
+                self.checkout_step(message, firstTime=True)
+            elif message.text == "No":
+                self.tests_step(message)
+            else:
+                self.bot.send_message(self.current_user, "No such option", reply_markup=self.YNmarkup)
+                self.bot.register_next_step_handler(message, self.change_something_step, acceptMode=acceptMode, chat_id=self.current_user)
+
+    def checkout_step(self, msg, acceptMode=False, firstTime=False):
         change_markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18")
         final_msg = "18. ✨Finish the registration✨"
 
@@ -899,8 +938,9 @@ class Registrator:
         change_text = f"1. Change app language\n2. Change name\n3. Change description\n4. Add or remove languages you speak\n5. Change country\n6. Change city\n7. Change reason for using the bot\n8. Change age\n9. Change your gender\n10. Change profile photo\n11. Languages the encountered users speak\n12. Country the encountered users are located\n13. Encountered users age\n14. Preferred gender\n15. Communication preferences\n16. Change tags\n17. Change Auto-reply message\n{final_msg}"
 
         if not acceptMode:
-            self.bot.send_photo(self.current_user, self.data["userPhoto"], f"That is how you profile will look like:\n*Some parameters such as tags will be hidden*\n{self.profile_constructor()}")
-            self.bot.send_message(self.current_user, f"Wanna change something ?\n\n{change_text}", reply_markup=change_markup)
+            if not firstTime:
+                self.bot.send_photo(self.current_user, self.data["userPhoto"], f"That is how you profile will look like:\n<i><b>*Some parameters such as tags will be hidden*</b></i>\n\n{self.profile_constructor()}")
+            self.bot.send_message(self.current_user, change_text, reply_markup=change_markup)
             self.bot.register_next_step_handler(msg, self.checkout_step, acceptMode=True, chat_id=self.current_user)
         else:
             if msg.text == "1":
@@ -1002,6 +1042,7 @@ class Registrator:
 
         else:
             if msg.text == "yes":
+                self.bot.send_message(self.current_user, "You can call /help command at any time to get a hint about our functionality :)")
                 TestModule(self.bot, self.msg, isActivatedFromShop=False)
                 self.destruct()
             elif msg.text == "no":
@@ -1179,10 +1220,24 @@ class Registrator:
                     add_tick_to_element(self.bot, self.current_user, call.message.id, self.current_markup_elements,
                                         self.markup_page, call.data)
                 else:
-                    self.pref_langs.remove(int(call.data))
+                    self.pref_countries.remove(int(call.data))
                     self.bot.answer_callback_query(call.id, "Removed")
                     remove_tick_from_element(self.bot, self.current_user, call.message.id, self.current_markup_elements,
                                         self.markup_page, call.data)
+
+    def generate_personal_age_range(self):
+        min_value = self.data["userAge"] - 3
+        max_value = self.data["userAge"] + 5
+
+        #Age below 12 is forbidden, thus, no need in that :)
+        # if min_value:
+        #     min_value = 0
+        #
+        # if max_value > 100:
+        #     max_value = 100
+
+        return f"{min_value} - {max_value}"
+
 
     def get_localisations(self):
         for language in json.loads(

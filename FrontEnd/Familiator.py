@@ -3,6 +3,7 @@ import telegram
 from telebot.types import *
 
 from Common.Menues import go_back_to_main_menu
+from Helper import Helper
 from ReportModule import ReportModule
 from Requester import *
 
@@ -12,6 +13,7 @@ class Familiator:
         self.btnYes = "👌"
         self.btnNo = "🙊"
         self.btnReport = "⚠"
+        self.btnLeave = "🔙"
 
         self.finish_message = "That is all for now, please wait until we find someone else for you"
 
@@ -23,7 +25,7 @@ class Familiator:
         self.familiators.append(self)
         self.active_user = None
         self.active_user_id = 0
-        self.markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add(self.btnYes, self.btnNo, self.btnReport)
+        self.markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add(self.btnYes, self.btnNo, self.btnReport, self.btnLeave)
         self.YNmarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("Yes", "No")
         self.actions_markup = InlineKeyboardMarkup(row_width=5)
         self.actions_markup.add(InlineKeyboardButton("Report", callback_data=-1))
@@ -41,6 +43,7 @@ class Familiator:
         self.reasons_markup = None
 
         self.eh = self.bot.register_message_handler(self.exit_handler, commands=["exit"], user_id=self.current_user)
+        self.helpHandler = self.bot.register_message_handler(self.help_handler, commands=["help"], user_id=self.current_user)
 
         if not Helpers.check_user_have_chosen_free_search(self.current_user):
             self.free_search_switch(msg)
@@ -184,6 +187,8 @@ class Familiator:
             elif message.text == self.btnReport:
                 ReportModule(self.bot, self.msg, self.current_user, self.proceed)
 
+            elif message.text == self.btnLeave:
+                self.start(message)
             else:
                 self.bot.send_message(self.current_user, "No such option", reply_markup=self.markup)
                 self.bot.register_next_step_handler(message, self.show_person, acceptMode=acceptMode, chat_id=self.current_user)
@@ -206,6 +211,16 @@ class Familiator:
     def exit_handler(self, message):
         self.destruct()
 
+    def help_handler(self, message):
+        Helper(self.bot, message, self.proceed_h)
+
+    #Proceed method meant for exiting from Helper only
+    def proceed_h(self, message):
+        if self.set_active_person(message):
+            self.show_person(message)
+        else:
+            self.start(message)
+
     def move_to_next_user(self, message):
         if self.set_active_person():
             self.show_person(message)
@@ -216,6 +231,7 @@ class Familiator:
     def destruct(self):
         self.familiators.remove(self)
         self.bot.message_handlers.remove(self.eh)
+        self.bot.message_handlers.remove(self.helpHandler)
         Helpers.switch_user_busy_status(self.current_user)
         go_back_to_main_menu(self.bot, self.current_user, self.msg)
         del self

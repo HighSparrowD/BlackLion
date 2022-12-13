@@ -12,6 +12,8 @@ class Settings:
     def __init__(self, bot, message):
         self.isInBlackList = False
         self.previous_section = None
+        self.active_section = None
+        self.isEncounter = None
         self.current_query = 0
         self.current_managed_user = 0
         self.markup_last_element = 0
@@ -88,7 +90,7 @@ class Settings:
         self.increased_familiarity_online_message = "This functionality is currently Turned on. Would you like to turn it off?"
         self.effectsMessage = f"1. Manage my effects\n\n2.Go back"
         self.encounter_options_message = "1. Use 💥Second chance💥 to send like to a user once again. You have {}\n2. Report user\n3. {}\n4. Abort"
-        self.currency_list_message = "1. USD\n2. EUR\n3. UAH\n4. RUB\n5. CZK\n6. PLN"
+        self.currency_list_message = "1. USD\n2. EUR\n3. UAH\n4. RUB\n5. CZK\n6. PLN\n7. Go Back"
         self.settingMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4", "5", "6")
         self.settingMyProfileMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4", "5", "6", "7")
         self.settingPersonalitySettingsMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4")
@@ -100,7 +102,7 @@ class Settings:
         self.doneMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("Done")
         self.encounterOptionMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4")
         self.credsMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3")
-        self.currency_choiceMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4", "5", "6")
+        self.currency_choiceMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4", "5", "6", "7")
 
         self.secondChanceDescription = "Second chance allows you to 'like' another user once again. It can be used in the 'Encounters' section"
         self.valentineDescription = "Doubles your Personality points for an hour"
@@ -108,6 +110,8 @@ class Settings:
         self.nullifierDescription = "Allows you to pass any test one more time, without waiting. It can be activated from the 'Test' section"
         self.cardDeckMiniDescription = "Instantly adds 20 profile views to your daily views"
         self.cardDeckPlatinumDescription = "Instantly adds 50 profile views to your daily views"
+
+        self.helpHandler = self.bot.register_message_handler(self.help_handler, commands=["help"], user_id=self.current_user)
 
         #Api return 1 if request was accepted. 3 if it is being processed right now
         if self.requestStatus != "1" and self.requestStatus != "3":
@@ -121,6 +125,7 @@ class Settings:
 
     def setting_choice(self, message, acceptMode=False):
         self.previous_section = self.setting_choice
+        self.active_section = self.setting_choice
         if not acceptMode:
             self.bot.send_message(self.current_user, self.setting_message, reply_markup=self.settingMarkup)
             self.bot.register_next_step_handler(message, self.setting_choice, acceptMode=True, chat_id=self.current_user)
@@ -143,6 +148,7 @@ class Settings:
 
     def my_profile_settings_choice(self, message, acceptMode=False):
         self.previous_section = self.setting_choice
+        self.active_section = self.my_profile_settings_choice
         if not acceptMode:
             self.bot.send_message(self.current_user, f"{self.settingMyProfile_message}", reply_markup=self.settingMyProfileMarkup)
             self.bot.register_next_step_handler(message, self.my_profile_settings_choice, acceptMode=True, chat_id=self.current_user)
@@ -168,6 +174,7 @@ class Settings:
 
     def currency_change_manager(self, message, acceptMode=False):
         self.previous_section = self.my_profile_settings_choice
+        self.active_section = self.currency_change_manager
         if not acceptMode:
             self.bot.send_message(self.current_user, "Choose the currency you feel most comfortable using to make payments before we continue")
             self.bot.send_message(self.current_user, self.currency_list_message, reply_markup=self.currency_choiceMarkup)
@@ -180,12 +187,17 @@ class Settings:
                     self.bot.send_message(self.current_user, "Something went wrong. Please, contact the administration")
 
                 self.proceed(message)
+
+            elif message.text == "7":
+                self.proceed(message)
+
             else:
                 self.bot.send_message(self.current_user, "No such option", reply_markup=self.currency_choiceMarkup)
                 self.bot.register_next_step_handler(message, self.currency_change_manager, acceptMode=acceptMode, chat_id=self.current_user)
 
     def auto_reply_manager(self, message, acceptMode=False):
         self.previous_section = self.my_profile_settings_choice
+        self.active_section = self.auto_reply_manager
         if not acceptMode:
             auto_reply = json.loads(requests.get(f"https://localhost:44381/GetActiveAutoReply/{self.current_user}", verify=False).text)
             if not auto_reply["isEmpty"]:
@@ -233,6 +245,7 @@ class Settings:
 
     def personality_settings_choice(self, message, acceptMode=False):
         self.previous_section = self.setting_choice
+        self.active_section = self.personality_settings_choice
         if not acceptMode:
             self.bot.send_message(self.current_user, f"{self.settingPersonalitySettings_message}", reply_markup=self.settingPersonalitySettingsMarkup)
             self.bot.register_next_step_handler(message, self.personality_settings_choice, acceptMode=True, chat_id=self.current_user)
@@ -255,9 +268,9 @@ class Settings:
                 self.bot.send_message(self.current_user, "No such option", reply_markup=self.settingPersonalitySettingsMarkup)
                 self.bot.register_next_step_handler(message, self.personality_settings_choice, acceptMode=acceptMode, chat_id=self.current_user)
 
-
     def filters_settings_choice(self, message, acceptMode=False):
         self.previous_section = self.setting_choice
+        self.active_section = self.filters_settings_choice
         if not acceptMode:
             self.bot.send_message(self.current_user, f"{self.settingFiltersSettings_message}", reply_markup=self.settingFiltersSettingsMarkup)
             self.bot.register_next_step_handler(message, self.filters_settings_choice, acceptMode=True, chat_id=self.current_user)
@@ -270,7 +283,8 @@ class Settings:
                 if Helpers.check_user_has_premium(self.current_user):
                     self.real_photo_filter_manager(message)
                 else:
-                    self.bot.send_message(self.current_user, "Sorry, only users with premium can turn on this filter")
+                    self.bot.send_message(self.current_user, "Sorry, only users with premium can turn on this filter", reply_markup=self.settingFiltersSettingsMarkup)
+                    self.bot.register_next_step_handler(message, self.filters_settings_choice, chat_id=self.current_user)
             elif message.text == "4":
                 self.proceed()
             else:
@@ -279,6 +293,7 @@ class Settings:
 
     def language_consideration_manager(self, message, acceptMode=False):
         self.previous_section = self.filters_settings_choice
+        self.active_section = self.language_consideration_manager
         if not acceptMode:
             description = "When this filter is turned on - all people you'll encounter in /random section are going to speak in a languages you have chosen during registration. If it is turned off - you will be able to encounter absolutely random people, from random places, speaking languages, that can vary from yours.\n"
             msg = "The filter is currently offline. Would you like to turn it on ?"
@@ -303,6 +318,7 @@ class Settings:
 
     def free_status_manager(self, message, acceptMode=False):
         self.previous_section = self.filters_settings_choice
+        self.active_section = self.free_status_manager
         if not acceptMode:
             self.bot.send_message(self.current_user, "Up for meeting someone today?", reply_markup=self.YNMarkup)
             self.bot.register_next_step_handler(message, self.free_status_manager, acceptMode=True, chat_id=self.current_user)
@@ -331,6 +347,7 @@ class Settings:
 
     def real_photo_filter_manager(self, message, acceptMode=False):
         self.previous_section = self.filters_settings_choice
+        self.active_section = self.real_photo_filter_manager
         if not acceptMode:
             msg = "The filter is currently offline. Would you like to turn it on ?"
             if bool(json.loads(requests.get(f"https://localhost:44381/GetUserFilteringByPhotoStatus/{self.current_user}", verify=False).text)):
@@ -357,6 +374,7 @@ class Settings:
 
     def my_statistics_settings_choice(self, message, acceptMode=False):
         self.previous_section = self.setting_choice
+        self.active_section = self.my_statistics_settings_choice
         if not acceptMode:
             self.bot.send_message(self.current_user, self.construct_user_inventory_message(self.userBalance))
             self.bot.send_message(self.current_user, f"{self.settingStatistics_message}", reply_markup=self.settingStatisticsMarkup)
@@ -410,6 +428,7 @@ class Settings:
 
     def effects_manager(self, message, acceptMode=False):
         self.previous_section = self.my_statistics_settings_choice
+        self.active_section = self.effects_manager
         if not acceptMode:
             effects = json.loads(requests.get(f"https://localhost:44381/GetUserActiveEffects/{self.current_user}", verify=False).text)
             self.bot.send_message(self.current_user, self.construct_active_effects_message(effects))
@@ -430,6 +449,7 @@ class Settings:
 
     def additional_actions_settings_choice(self, message, acceptMode=False):
         self.previous_section = self.setting_choice
+        self.active_section = self.additional_actions_settings_choice
         if not acceptMode:
             self.bot.send_message(self.current_user, f"{self.settingAdditionalActions_message}", reply_markup=self.settingAdditionalActionsMarkup)
             self.bot.register_next_step_handler(message, self.additional_actions_settings_choice, acceptMode=True, chat_id=self.current_user)
@@ -451,6 +471,7 @@ class Settings:
 
     def increased_familiarity_switch(self, message, acceptMode=False):
         self.previous_section = self.additional_actions_settings_choice
+        self.active_section = self.increased_familiarity_switch
         if not acceptMode:
             if Helpers.get_increased_familiarity_status(self.current_user):
                 self.bot.send_message(self.current_user, f"{self.increased_familiarity_start_message}{self.increased_familiarity_online_message}", reply_markup=self.YNMarkup)
@@ -471,6 +492,7 @@ class Settings:
 
     def personality_points(self, message, acceptMode=False):
         self.previous_section = self.personality_settings_choice
+        self.active_section = self.personality_points
         if not acceptMode:
             self.user_free_points = int(json.loads(requests.get(f"https://localhost:44381/GetUserPersonalityPointsAmount/{self.current_user}", verify=False).text))
             self.user_points = json.loads(requests.get(f"https://localhost:44381/GetUserPersonalityPoints/{self.current_user}", verify=False).text)
@@ -546,6 +568,7 @@ class Settings:
 
     def credentials_management(self, message, acceptMode=False):
         self.previous_section = self.additional_actions_settings_choice
+        self.active_section = self.credentials_management
         if not acceptMode:
             self.bot.send_message(self.current_user, "1. Get an Invitation link\n2. Get an Invitation QR code\n3. Abort", reply_markup=self.credsMarkup)
             self.bot.register_next_step_handler(message, self.credentials_management, acceptMode=True, chat_id=self.current_user)
@@ -575,6 +598,7 @@ class Settings:
 
     def encounter_list_management(self, message, acceptMode=False):
         self.previous_section = self.my_profile_settings_choice
+        self.active_section = self.encounter_list_management
         if not acceptMode:
             self.encounter_list = {}
             self.markup_page = 1
@@ -605,6 +629,10 @@ class Settings:
                 if response:
                     self.bot.send_message(self.current_user, "Done :)")
                     self.userBalance['secondChances'] = int(self.userBalance['secondChances'] - 1)
+                else:
+                    self.bot.send_message(self.current_user, "You dont have that effect :(")
+                    self.bot.register_next_step_handler(message, self.encounter_list_management, acceptMode=True, chat_id=self.current_user)
+                    return
 
                 if not self.isInBlackList:
                     m = self.add_to_blacklist_text
@@ -626,6 +654,7 @@ class Settings:
                 self.proceed()
 
     def add_to_black_list(self, message, acceptMode=False):
+        self.active_section = self.add_to_black_list
         if not acceptMode:
             self.bot.send_message(self.current_user, "Are you sure, you want to add that user to your black list?", reply_markup=self.YNMarkup)
             self.bot.register_next_step_handler(message, self.add_to_black_list, acceptMode=True, chat_id=self.current_user)
@@ -650,6 +679,8 @@ class Settings:
 
     def black_list_management(self, message, acceptMode=False, isEncounter=False):
         self.previous_section = self.my_profile_settings_choice
+        self.isEncounter = isEncounter
+        self.active_section = self.black_list_management
         if not acceptMode:
             self.black_list = {}
             self.markup_page = 1
@@ -679,19 +710,25 @@ class Settings:
                     self.bot.send_message(self.current_user, "User have been successfully removed from you black list")
                     if not isEncounter:
                         self.black_list_management(message)
+                        self.isEncounter = None
                     else:
                         self.proceed_with_encounters()
+                        self.isEncounter = None
                 else:
                     self.bot.send_message(self.current_user, "User was not recognised. His account had probably been already deleted :)")
                     if not isEncounter:
                         self.black_list_management(message)
+                        self.isEncounter = None
                     else:
                         self.proceed_with_encounters()
+                        self.isEncounter = None
             elif message.text == "no":
                 if not isEncounter:
                     self.black_list_management(message)
+                    self.isEncounter = None
                 else:
                     self.proceed_with_encounters()
+                    self.isEncounter = None
             elif message.text == "abort":
                 self.proceed()
             else:
@@ -700,6 +737,7 @@ class Settings:
 
     def personality_switch(self, message, acceptMode=False):
         self.previous_section = self.personality_settings_choice
+        self.active_section = self.personality_switch
         if not acceptMode:
             doesUse = Helpers.check_user_uses_personality(self.current_user)
             status = ""
@@ -732,18 +770,20 @@ class Settings:
 
     def set_profile_status(self, message, acceptMode=False):
         self.previous_section = self.my_profile_settings_choice
+        self.active_section = self.set_profile_status
         if not acceptMode:
             if Helpers.check_user_has_premium(self.current_user):
                 self.bot.send_message(self.current_user, f"Please, send me your new status (up to 50 characters)", reply_markup=self.abortMarkup)
                 self.bot.register_next_step_handler(message, self.set_profile_status, acceptMode=True, chat_id=self.current_user)
             else:
-                if message.text == "abort":
-                    self.proceed()
                 self.bot.send_message(self.current_user, f"This action is available only for users with premium", reply_markup=self.YNMarkup)
                 self.proceed()
         else:
             if 50 > len(message.text) > 0:
-                if Helpers.update_user_status(self.current_user, message.text):
+                if message.text == "Go Back":
+                    self.proceed()
+                    return
+                elif Helpers.update_user_status(self.current_user, message.text):
                     self.bot.send_message(self.current_user, f"Done :)")
                 else:
                     self.bot.send_message(self.current_user, f"Something went wrong. Please contact the administration")
@@ -776,6 +816,7 @@ class Settings:
                     self.proceed()
 
     def switch_user_filtering(self, message, acceptMode=False):
+        self.active_section = self.switch_user_filtering
         if not acceptMode:
             status_string = requests.get(f"https://localhost:44381/GetUserFilteringByPhotoStatus/{self.current_user}", verify=False)
             self.bot.send_message(self.current_user, status_string, reply_markup=self.YNMarkup)
@@ -794,6 +835,7 @@ class Settings:
 
     def send_confirmation_request(self, message, acceptMode=False):
         self.previous_section = self.additional_actions_settings_choice
+        self.active_section = self.send_confirmation_request
         if not acceptMode:
 
             if not self.requestStatus:
@@ -900,6 +942,7 @@ class Settings:
                     self.buy_effect_manager(call.message, effectId=call.data)
 
     def use_effect_manager(self, message, effectId, acceptMode=False):
+        self.active_section = self.use_effect_manager
         if not acceptMode:
             #Check if effect is already active
             if (effectId == "6" or effectId == "7") and bool(json.loads(requests.get(f"https://localhost:44381/CheckEffectIsActive/{self.current_user}/{effectId}", verify=False).text)):
@@ -1354,6 +1397,9 @@ class Settings:
         if message.from_user.id == self.current_user and message.text == "Go Back":
             self.proceed()
 
+    def help_handler(self, message):
+        Helper(self.bot, message, self.active_section, isEncountered=self.isEncounter)
+
     def construct_active_effects_message(self, effects):
         msg = ""
 
@@ -1382,6 +1428,8 @@ class Settings:
     def destruct(self):
         if self.current_callback_handler:
             self.bot.callback_query_handlers.remove(self.current_callback_handler)
+        self.bot.message_handlers.remove(self.helpHandler)
+
         Helpers.switch_user_busy_status(self.current_user)
         go_back_to_main_menu(self.bot, self.current_user, self.message)
         del self

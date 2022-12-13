@@ -1,6 +1,8 @@
 import json
 
 import requests
+import telegram
+
 import Core.HelpersMethodes as Helpers
 from telebot.types import ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
 from Common.Menues import count_pages, assemble_markup, reset_pages
@@ -8,7 +10,7 @@ from Common.Menues import go_back_to_main_menu
 
 
 class TestModule:
-    def __init__(self, bot, message, isActivatedFromShop=False, returnMethod=None):
+    def __init__(self, bot, message, isActivatedFromShop=False, returnMethod=None, active_message=0):
         self.bot = bot
         self.message = message
         self.current_user = message.from_user.id
@@ -32,7 +34,7 @@ class TestModule:
         self.markup_pages_count = 0
 
         self.current_question_message = 0
-        self.active_message_id = 0
+        self.active_message_id = active_message
         self.active_param = 0
         self.active_media = None
 
@@ -72,7 +74,10 @@ class TestModule:
         self.start()
 
     def start(self):
-        self.active_message_id = self.bot.send_message(self.current_user, "Please choose the parameter, test will be sorted by", reply_markup=self.start_markup).id
+        if not self.active_message_id:
+            self.active_message_id = self.bot.send_message(self.current_user, "<i><b>Please select the parameter, test will be sorted by</b></i>", reply_markup=self.start_markup).id
+        else:
+            self.bot.edit_message_text("<i><b>Please select the parameter, test will be sorted by</b></i>", self.current_user, self.active_message_id, reply_markup=self.start_markup)
         self.bot.send_message(self.current_user, "Type 'abort to leave'", reply_markup=self.abortMarkup)
         # self.is_about_to_leave = True
         # self.get_ready_to_abort(self.message)
@@ -80,7 +85,7 @@ class TestModule:
     def manage_point_group(self):
         markup = self.get_markup()
         if markup:
-            self.bot.edit_message_reply_markup(chat_id=self.current_user, reply_markup=markup, message_id=self.active_message_id)
+            self.bot.edit_message_text(chat_id=self.current_user, text="<i><b>Select any test to view more details</b></i>", reply_markup=markup, message_id=self.active_message_id)
 
     def get_markup(self):
         if self.isActivatedFromShop:
@@ -90,7 +95,7 @@ class TestModule:
 
         if not self.current_tests:
             self.bot.send_message(self.current_user, "No tests were found")
-            return None
+            return
 
         self.isOnStart = False
         reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page, self.markup_pages_count)
@@ -120,7 +125,7 @@ class TestModule:
     def show_current_test(self, message, acceptMode=False):
         # self.is_about_to_leave = False
         if not acceptMode:
-            self.bot.send_message(self.current_user, self.get_current_test_data())
+            self.bot.send_message(self.current_user, self.get_current_test_data(), parse_mode=telegram.ParseMode.HTML)
             if self.isActivatedFromShop:
                 self.isDeciding = True
                 self.bot.send_message(self.current_user, "Are you sure, you want to buy that test ?", reply_markup=self.YNmarkup)
@@ -195,7 +200,7 @@ class TestModule:
     def recurring_test_pass(self, gotoPrevious=False):
         self.isPassingTest = True
         questions = self.current_test_data["questions"]
-        if questions:
+        if self.current_question_index +1 < len(questions):
             if not gotoPrevious:
                 self.current_question_index += 1
 
@@ -324,7 +329,7 @@ class TestModule:
 
         if markup:
             self.bot.delete_message(chat_id=self.current_user, message_id=self.active_message_id)
-            self.active_message_id = self.bot.send_message(self.current_user, "Choose a test", reply_markup=markup).id
+            self.active_message_id = self.bot.send_message(self.current_user, "<i><b>Select any test to view more details</b></i>", reply_markup=markup).id
             self.bot.send_message(self.current_user, "Type '/abort' to leave", reply_markup=self.abortMarkup)
             # self.is_about_to_leave = True
             # self.get_ready_to_abort(self.message)
@@ -359,7 +364,7 @@ class TestModule:
         #If user is going back to start
         elif call.data == '-10':
             self.isOnStart = True
-            self.bot.edit_message_reply_markup(chat_id=self.current_user, reply_markup=self.start_markup, message_id=self.active_message_id)
+            self.bot.edit_message_text(chat_id=self.current_user, text="<i><b>Please select the parameter, test will be sorted by</b></i>", reply_markup=self.start_markup, message_id=self.active_message_id)
 
         elif call.data == '-8':
             if self.current_question_index > 0:
@@ -369,11 +374,14 @@ class TestModule:
         elif self.isPassingTest:
             if len(self.answer_array) > self.current_question_index:
                 self.answer_array[self.current_question_index] = int(self.current_question_answers[int(call.data)]["value"])
+                self.recurring_test_pass()
             else:
-                self.answer_array.append(int(self.current_question_answers[int(call.data)]["value"]))
-            # self.user_total += self.current_question_answers[int(call.data)]["value"]
-            self.recurring_test_pass()
-
+                try:
+                    self.answer_array.append(int(self.current_question_answers[int(call.data)]["value"]))
+                    # self.user_total += self.current_question_answers[int(call.data)]["value"]
+                    self.recurring_test_pass()
+                except:
+                    pass
         else:
             self.current_test = int(call.data)
             self.show_current_test(call.message)

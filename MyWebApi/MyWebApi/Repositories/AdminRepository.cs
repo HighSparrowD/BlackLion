@@ -143,12 +143,6 @@ namespace MyWebApi.Repositories
                     _contx.USER_INVITATION_CREDENTIALS.Remove(userInvitationCreds);
                     await _contx.SaveChangesAsync();
                 }
-
-                if (userLocation != null)
-                {
-                    _contx.USER_LOCATIONS.Remove(userLocation);
-                    await _contx.SaveChangesAsync();
-                }
                 if (userAchievements.Count > 0)
                 {
                     _contx.USER_ACHIEVEMENTS.RemoveRange(userAchievements);
@@ -172,6 +166,11 @@ namespace MyWebApi.Repositories
                 if (userNotifications1.Count > 0)
                 {
                     _contx.USER_NOTIFICATIONS.RemoveRange(userNotifications1);
+                    await _contx.SaveChangesAsync();
+                }
+                if (userLocation != null)
+                {
+                    _contx.USER_LOCATIONS.Remove(userLocation);
                     await _contx.SaveChangesAsync();
                 }
                 if (sponsorRatings.Count > 0)
