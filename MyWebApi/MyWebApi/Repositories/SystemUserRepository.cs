@@ -1770,7 +1770,7 @@ namespace MyWebApi.Repositories
             try
             {
                 var timeNow = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
-                var premiumFutureExpirationDate = DateTime.SpecifyKind(DateTime.Now.AddDays(dayDuration), DateTimeKind.Utc); //TODO: Possible feature: Countdown starts from 00:00 at the next day of purchase
+                var premiumFutureExpirationDate = DateTime.SpecifyKind(DateTime.Now.AddDays(dayDuration), DateTimeKind.Utc);
 
                 var user = await _contx.SYSTEM_USERS
                     .Where(u => u.UserId == userId)
@@ -1797,12 +1797,12 @@ namespace MyWebApi.Repositories
                 if (user.PremiumExpirationDate < timeNow || user.PremiumExpirationDate == null)
                     user.PremiumExpirationDate = premiumFutureExpirationDate;
                 else
-                    user.PremiumExpirationDate.Value.AddDays(dayDuration);
+                    user.PremiumExpirationDate = user.PremiumExpirationDate.Value.AddDays(dayDuration);
 
                 _contx.Update(user);
                 await _contx.SaveChangesAsync();
 
-                await AddUserNotificationAsync(new UserNotification { UserId1 = user.UserId, IsLikedBack = false, Severity = (short)Severities.Moderate, SectionId = (int)Sections.Neutral, Description = $"You have been granted premium access. Enjoy your benefits :)\nPremium expiration {user.PremiumExpirationDate.Value.ToShortTimeString()}" });
+                await AddUserNotificationAsync(new UserNotification { UserId1 = user.UserId, IsLikedBack = false, Severity = (short)Severities.Moderate, SectionId = (int)Sections.Neutral, Description = $"You have been granted premium access. Enjoy your benefits :)\nPremium expiration {user.PremiumExpirationDate.Value.ToString("dd.MM.yyyy")}" });
 
                 return user.PremiumExpirationDate.Value;
             }

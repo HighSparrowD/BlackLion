@@ -1335,7 +1335,7 @@ class Settings:
         except:
             pass
 
-    def proceed(self, msg=None):
+    def proceed(self, msg=None, **kwargs):
         self.active_message = 0
         if self.current_callback_handler:
             self.bot.callback_query_handlers.remove(self.current_callback_handler)

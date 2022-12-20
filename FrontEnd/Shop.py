@@ -12,9 +12,12 @@ class Shop:
         self.hasVisited = hasVisited
         self.returnMethod = returnMethod
         self.startingTransaction = startingTransaction
-        Helpers.switch_user_busy_status(self.current_user)
         self.shouldGreet = True
         self.isDeciding = False
+        self.shouldStay = False
+
+        if returnMethod is None:
+            Helpers.switch_user_busy_status(self.current_user)
 
         self.active_first_option_price = 0
         self.active_second_option_price = 0
@@ -132,11 +135,11 @@ class Shop:
             return
 
         if self.shouldGreet:
-            self.active_message = self.bot.send_message(self.current_user, f"Welcome to the shop!\n<i><b>Your current points balance: {self.userBalance['points']}</b></i>", reply_markup=self.start_markup).id
+            self.active_message = self.bot.send_message(self.current_user, f"Welcome to the shop!\n{self.get_balance_message()}", reply_markup=self.start_markup).id
             self.shouldGreet = False
         else:
             try:
-                self.bot.edit_message_text(f"<i><b>Your current points balance: {self.userBalance['points']}</b></i>", self.current_user, self.active_message, reply_markup=self.start_markup)
+                self.bot.edit_message_text(f"{self.get_balance_message()}", self.current_user, self.active_message, reply_markup=self.start_markup)
             except:
                 pass
 
@@ -144,7 +147,7 @@ class Shop:
         self.previous_section = self.start
         if not acceptMode:
             #TODO: Implement
-            self.bot.send_message(self.current_user, "Not implemented yet :)")
+            self.send_active_transaction_message("Not implemented yet :)")
             # self.bot.register_next_step_handler(message, self.buy_premium, acceptMode=True, chat_id=self.current_user)
             self.proceed(message)
         else:
@@ -154,10 +157,10 @@ class Shop:
         self.previous_section = self.start
 
         if not self.active_message:
-            self.active_message = self.bot.send_message(self.current_user, "<i><b>Please, select a pack and currency by clicking on a corresponding button</b></i>", reply_markup=self.buy_premium_markup).id
+            self.active_message = self.bot.send_message(self.current_user, f"<i><b>Please, select a pack and currency by clicking on a corresponding button</b></i>\n{self.get_balance_message()}", reply_markup=self.buy_premium_markup).id
         else:
             try:
-                self.bot.edit_message_text("<i><b>Please, select a pack and currency by clicking on a corresponding button</b></i>", self.current_user, self.active_message, reply_markup=self.buy_premium_markup)
+                self.bot.edit_message_text(f"<i><b>Please, select a pack and currency by clicking on a corresponding button</b></i>\n{self.get_balance_message()}", self.current_user, self.active_message, reply_markup=self.buy_premium_markup)
             except:
                 pass
                 # self.active_message = self.bot.send_message(self.current_user, "<i><b>Please, select a pack and currency by clicking on a corresponding button</b></i>", reply_markup=self.buy_premium_markup).id
@@ -165,18 +168,18 @@ class Shop:
     def choose_effect_to_buy(self, message=None):
         self.previous_section = self.start
 
-        self.clear_screen()
-
+        self.clear_screen(True)
         if not self.active_message:
-            self.active_message = self.bot.send_message(self.current_user, "<i><b>Please, select an effect</b></i>", reply_markup=self.effects_list_markup).id
+            self.active_message = self.bot.send_message(self.current_user, f"<i><b>Please, select an effect</b></i>\n{self.get_balance_message()}", reply_markup=self.effects_list_markup).id
         else:
             try:
-                self.bot.edit_message_text("<i><b>Please, select an effect</b></i>", self.current_user, self.active_message, reply_markup=self.effects_list_markup)
+                self.bot.edit_message_text(f"<i><b>Please, select an effect</b></i>\n{self.get_balance_message()}", self.current_user, self.active_message, reply_markup=self.effects_list_markup)
             except:
                 pass
 
     def choose_effect_pack(self, message=None):
         self.previous_section = self.choose_effect_to_buy
+
         effectId = self.current_effect_pack
         transaction = "0"
         if effectId == "1":
@@ -214,10 +217,10 @@ class Shop:
         self.construct_active_pack_markup()
 
         if not self.active_message:
-            self.active_message = self.bot.send_message(self.current_user, "<i><b>Please, select pack of effects. Click on the according price to choose currency</b></i>", reply_markup=self.effect_pack_markup).id
+            self.active_message = self.bot.send_message(self.current_user, f"<i><b>Please, select pack of effects. Click on the according price to choose currency</b></i>\n{self.get_balance_message()}", reply_markup=self.effect_pack_markup).id
         else:
             try:
-                self.bot.edit_message_text("<i><b>Please, select pack of effects. Click on the according price to choose currency</b></i>", self.current_user, self.active_message, reply_markup=self.effect_pack_markup)
+                self.bot.edit_message_text(f"<i><b>Please, select pack of effects. Click on the according price to choose currency</b></i>\n{self.get_balance_message()}", self.current_user, self.active_message, reply_markup=self.effect_pack_markup)
             except:
                 pass
 
@@ -227,24 +230,28 @@ class Shop:
         self.active_third_option_price = 7000
 
         if not self.active_message:
-            self.active_message = self.bot.send_message(self.current_user, "<i><b>Please, select Points pack. Click on the according price to choose currency</b></i>", reply_markup=self.buyPP_markup).id
+            self.active_message = self.bot.send_message(self.current_user, f"<i><b>Please, select Points pack. Click on the according price to choose currency</b></i>\n{self.get_balance_message()}", reply_markup=self.buyPP_markup).id
         else:
             try:
-                self.bot.edit_message_text("<i><b>Please, select pack of effects. Click on the according price to choose currency</b></i>", self.current_user, self.active_message, reply_markup=self.buyPP_markup)
+                self.bot.edit_message_text(f"<i><b>Please, select pack of effects. Click on the according price to choose currency</b></i>\n{self.get_balance_message()}", self.current_user, self.active_message, reply_markup=self.buyPP_markup)
             except:
                 pass
 
         self.previous_section = self.start
 
     def buy_tests(self):
+        # Remove previous callback handler so that handlers do not collide
+        self.bot.callback_query_handlers.remove(self.ch)
+        self.ch = None
+
+        self.previous_section = self.start
         TestModule(self.bot, self.message, True, self.proceed, active_message=self.active_message)
         return
 
     def process_transaction(self, transaction_type, currency):
         result = False
-        self.clear_screen()
 
-        if (transaction_type == "1" and self.userBalance["points"] > self.chosen_pack_price) or transaction_type == "2":
+        if (currency == "1" and self.userBalance["points"] >= self.chosen_pack_price) or currency == "2":
             if transaction_type == "1":
                 if currency == "1":
                     result = Helpers.grant_premium_for_points(self.current_user, self.chosen_pack_price, 3)
@@ -309,26 +316,29 @@ class Shop:
             if result:
                 self.userBalance["points"] -= self.chosen_pack_price
 
-                self.active_transaction_status_message = self.bot.send_message(self.current_user, "Transaction was successful").id
+                self.send_active_transaction_message("Transaction was successful")
 
                 #Return to previous Module if it exists
                 if self.startingTransaction is not None:
                     self.destruct()
-                else:
-                    self.proceed(self.message)
+
             else:
                 #TODO: tell what had gone wrong
-                self.bot.send_message(self.current_user, "Something went wrong")
+                self.send_active_transaction_message("Something went wrong")
         else:
-            self.active_transaction_status_message = self.bot.send_message(self.current_user, "You dont have enough coins to buy this item").id
+            self.send_active_transaction_message("You dont have enough coins to buy this item")
 
-        self.proceed(self.message)
+    def send_active_transaction_message(self, text):
+        if self.active_transaction_status_message is not None:
+            self.bot.delete_message(self.current_user, self.active_transaction_status_message)
+
+        self.active_transaction_status_message = self.bot.send_message(self.current_user, text).id
 
     def callback_handler(self, call):
         self.bot.answer_callback_query(call.id, "")
         #Exit / Go Back
         if call.data == "-1":
-            self.proceed(call.message)
+            self.proceed(call.message, shouldClearChat=True)
         else:
             if not self.isDeciding:
                 if call.data == "1":
@@ -344,21 +354,18 @@ class Shop:
                 elif call.data == "6":
                     pass
                 elif call.data == "9":
-                    self.previous_section = self.buy_premium
                     self.chosen_pack_price = 5999
                     self.process_transaction("1", "1")
                 elif call.data == "10":
                     #TODO: Implement Payment
                     return
                 elif call.data == "11":
-                    self.previous_section = self.buy_premium
                     self.chosen_pack_price = 12999
                     self.process_transaction("2", "1")
                 elif call.data == "12":
                     #TODO: Implement Payment
                     return
                 elif call.data == "13":
-                    self.previous_section = self.buy_premium
                     self.chosen_pack_price = 20999
                     self.process_transaction("3", "1")
                 elif call.data == "16":
@@ -410,21 +417,21 @@ class Shop:
                     return
                 elif call.data == "30":
                     self.active_pack = 1
-                    self.previous_section = self.choose_pack_PP
+                    self.chosen_pack_price = self.active_first_option_price
                     self.process_transaction("100", "1")
                 elif call.data == "31":
                     # TODO: Implement Payment
                     return
                 elif call.data == "32":
                     self.active_pack = 5
-                    self.previous_section = self.choose_pack_PP
+                    self.chosen_pack_price = self.active_second_option_price
                     self.process_transaction("100", "1")
                 elif call.data == "33":
                     # TODO: Implement Payment
                     return
                 elif call.data == "34":
                     self.active_pack = 10
-                    self.previous_section = self.choose_pack_PP
+                    self.chosen_pack_price = self.active_third_option_price
                     self.process_transaction("100", "1")
                 elif call.data == "35":
                     # TODO: Implement Payment
@@ -437,9 +444,12 @@ class Shop:
             .add(InlineKeyboardButton(f"Buy 10:", callback_data="0"), InlineKeyboardButton(f"{self.active_third_option_price} coins", callback_data="27"), InlineKeyboardButton("VALUE CURRENCY", callback_data="28"))\
             .add(InlineKeyboardButton("Go Back", callback_data="-1"))
 
-    def clear_screen(self):
+    def get_balance_message(self):
+        return "<i><b>Your current points balance: {}</b></i>".format(self.userBalance['points'])
+
+    def clear_screen(self, skipTransaction=False):
         # Clear screen of previous transaction message
-        if self.active_transaction_status_message:
+        if not skipTransaction and self.active_transaction_status_message:
             self.bot.delete_message(self.current_user, self.active_transaction_status_message)
             self.active_transaction_status_message = None
 
@@ -448,18 +458,26 @@ class Shop:
             self.bot.delete_message(self.current_user, self.active_description_message)
             self.active_description_message = None
 
-    def proceed(self, message):
+    def proceed(self, message, **kwargs):
+        #Re-subscribe callback handler upon returning from Tester
+        if kwargs.get("shouldClearChat") and self.active_transaction_status_message is not None:
+            self.bot.delete_message(self.current_user, self.active_transaction_status_message)
+            self.active_transaction_status_message = None
+
         if self.previous_section:
+            if kwargs.get("shouldSubscribe"):
+                self.ch = self.bot.register_callback_query_handler("", self.callback_handler, user_id=self.current_user)
+
             self.previous_section(message)
 
     def destruct(self, message=None):
-        Helpers.switch_user_busy_status(self.current_user)
-
+        self.clear_screen()
 
         self.bot.delete_message(self.current_user, self.active_message)
         self.bot.callback_query_handlers.remove(self.ch)
 
         if not self.returnMethod:
+            Helpers.switch_user_busy_status(self.current_user)
             menues.go_back_to_main_menu(self.bot, self.current_user, self.message)
             return
 
