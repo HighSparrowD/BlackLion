@@ -81,7 +81,7 @@ namespace MyWebApi.Interfaces
         Task<Balance> GetUserWalletBalance(long userId);
         Task<int> TopUpUserWalletPointsBalance(long userId, int points, string description);
         Task<int> TopUpUserWalletPPBalance(long userId, int points, string description);
-        Task<bool> CheckUserHasPremium(long userId);
+        Task<bool> CheckUserHasPremiumAsync(long userId);
         Task<bool> CheckBalanceIsSufficient(long userId, int cost);
         Task<DateTime> GetPremiumExpirationDate(long userId);
         Task<DateTime> GrantPremiumToUser(long userId, int cost, int dayDuration, short currency);
@@ -165,7 +165,8 @@ namespace MyWebApi.Interfaces
         Task<bool> CheckUserHaveChosenFreeParamAsync(long userId);
         Task<bool> CheckShouldTurnOffPersonalityAsync(long userId);
         Task<bool> SetUserFreeSearchParamAsync(long userId, bool freeStatus);
-        //Get which stats can user invest points in
+        Task<bool> SwitchUserFreeSearchParamAsync(long userId);
+        //Get stats user can invest points in
         Task<PersonalityCaps> GetUserPersonalityCapsAsync(long userId);
         Task<bool> SwitchUserRTLanguageConsiderationAsync(long userId);
         Task<bool> GetUserRTLanguageConsiderationAsync(long userId);

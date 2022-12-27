@@ -78,7 +78,9 @@ class TestModule:
         self.current_tests = None
         self.current_test = None
 
-        Helpers.switch_user_busy_status(self.current_user)
+        if not self.returnMethod:
+            Helpers.switch_user_busy_status(self.current_user)
+
         self.ah = self.bot.register_message_handler(self.abort_checkout, commands=["abort"], user_id=self.current_user)
 
         self.start()

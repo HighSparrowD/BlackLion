@@ -201,6 +201,9 @@ namespace MyWebApi.Repositories
         {
             try
             {
+                //Actualize premium information
+                await CheckUserHasPremiumAsync(id);
+
                 return await _contx.SYSTEM_USERS.Where(u => u.UserId == id).Include(s => s.UserBaseInfo)
                     .Include(s => s.UserBaseInfo)
                     .Include(s => s.UserDataInfo).ThenInclude(s => s.Location)
@@ -226,7 +229,7 @@ namespace MyWebApi.Repositories
                 var currentUser = await GetUserInfoAsync(userId);
 
                 //Check if user STILL has premium
-                await CheckUserHasPremium(currentUser.UserId);
+                await CheckUserHasPremiumAsync(currentUser.UserId);
 
                 var currentUserEncounters = await GetUserEncounters(userId, (int)SystemEnums.Sections.Familiator); //I am not sure if it is 2 or 3 section
 
@@ -1710,7 +1713,7 @@ namespace MyWebApi.Repositories
             }
         }
 
-        public async Task<bool> CheckUserHasPremium(long userId)
+        public async Task<bool> CheckUserHasPremiumAsync(long userId)
         {
             try
             {
@@ -2004,10 +2007,10 @@ namespace MyWebApi.Repositories
                 var user = await _contx.SYSTEM_USERS.Where(u => u.UserId == userId)
                     .SingleOrDefaultAsync();
 
-                if (user != null)
+                if (user == null)
                     return false;
 
-                return (bool)user.IsBusy;
+                return user.IsBusy;
             }
             catch (Exception ex)
             {
@@ -2469,6 +2472,7 @@ namespace MyWebApi.Repositories
                     Id = id,
                     UserId = userId,
                     Link = linkBase + id,
+                    QRCode = await GetQRCode(userId)
                 };
 
                 await _contx.USER_INVITATION_CREDENTIALS.AddAsync(invitationCreds);
@@ -3527,7 +3531,7 @@ namespace MyWebApi.Repositories
         {
             try
             {
-                if (await CheckUserHasPremium(userId))
+                if (await CheckUserHasPremiumAsync(userId))
                 {
                     var user = await _contx.SYSTEM_USERS_DATA.Where(u => u.Id == userId)
                         .SingleOrDefaultAsync();
@@ -3552,7 +3556,7 @@ namespace MyWebApi.Repositories
                 .Select(d => new { d.AutoReplyText, d.AutoReplyVoice })
                 .SingleOrDefaultAsync();
 
-            if (await CheckUserHasPremium(userId))
+            if (await CheckUserHasPremiumAsync(userId))
             {
                 if (replyData.AutoReplyVoice != null)
                 {
@@ -4022,6 +4026,8 @@ namespace MyWebApi.Repositories
                 throw new NullReferenceException($"User #{userId} does not exist");
 
             user.IsFree = freeStatus;
+            await _contx.SaveChangesAsync();
+
             return freeStatus;
         }
 
@@ -4089,6 +4095,8 @@ namespace MyWebApi.Repositories
                 throw new NullReferenceException($"User #{userId} does not exist");
 
             user.ShouldConsiderLanguages = !user.ShouldConsiderLanguages;
+
+            await _contx.SaveChangesAsync();
 
             return user.ShouldConsiderLanguages;
         }
@@ -4296,6 +4304,28 @@ namespace MyWebApi.Repositories
             _contx.SYSTEM_USERS.Update(user);
             await _contx.SaveChangesAsync();
             return true;
+        }
+
+        public async Task<bool> SwitchUserFreeSearchParamAsync(long userId)
+        {
+            var user = await _contx.SYSTEM_USERS.FindAsync(userId);
+
+            if (user == null)
+                throw new NullReferenceException($"User #{userId} does not exist");
+
+            //null is the same thing as false in that case
+            if (user.IsFree == null)
+            {
+                user.IsFree = true;
+                await _contx.SaveChangesAsync();
+
+                return true;
+            }
+
+            user.IsFree = !user.IsFree;
+            await _contx.SaveChangesAsync();
+
+            return (bool)user.IsFree;
         }
     }
 }

@@ -78,7 +78,7 @@ namespace MyWebApi.Controllers
         [HttpGet("/UserInfo/{userId}")]
         public async Task<ActionResult<User>> GetUserInfo(long userId)
         {
-            return await _repository.GetUserInfoAsync(userId);
+            return Ok(await _repository.GetUserInfoAsync(userId));
         }
 
         [HttpPost("/UpdateUserProfile")]
@@ -439,7 +439,7 @@ namespace MyWebApi.Controllers
         [HttpGet("/CheckUserHasPremium/{userId}")]
         public async Task<bool> CheckUserHasPremium(long userId)
         {
-            return await _repository.CheckUserHasPremium(userId);
+            return await _repository.CheckUserHasPremiumAsync(userId);
         }
 
         [HttpGet("/CheckBalanceIsSufficient/{userId}/{cost}")]
@@ -778,7 +778,7 @@ namespace MyWebApi.Controllers
         [HttpGet("/GetMaxTagCount/{userId}")]
         public async Task<int> GetMaxTagCount(long userId)
         {
-            if (await _repository.CheckUserHasPremium(userId))
+            if (await _repository.CheckUserHasPremiumAsync(userId))
             {
                 return 50;
             }
@@ -891,6 +891,12 @@ namespace MyWebApi.Controllers
         public async Task<bool> SetUserFreeSearchParam(long userId, bool freeSearch)
         {
             return await _repository.SetUserFreeSearchParamAsync(userId, freeSearch);
+        }
+
+        [HttpGet("/SwitchUserFreeSearchParam/{userId}")]
+        public async Task<bool> SwitchUserFreeSearchParam(long userId)
+        {
+            return await _repository.SwitchUserFreeSearchParamAsync(userId);
         }
 
         [HttpGet("/CheckUserHaveChosenFreeParam/{userId}")]

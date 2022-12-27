@@ -5,7 +5,7 @@ from TestModule import TestModule
 
 
 class Shop:
-    def __init__(self, bot, message, hasVisited=False, startingTransaction=None, returnMethod=None):
+    def __init__(self, bot, message, hasVisited=False, startingTransaction=None, returnMethod=None, active_message=None):
         self.bot = bot
         self.message = message
         self.current_user = message.from_user.id
@@ -15,9 +15,11 @@ class Shop:
         self.shouldGreet = True
         self.isDeciding = False
         self.shouldStay = False
+        self.activatedElsewhere = True
 
         if returnMethod is None:
             Helpers.switch_user_busy_status(self.current_user)
+            self.activatedElsewhere = False
 
         self.active_first_option_price = 0
         self.active_second_option_price = 0
@@ -26,7 +28,7 @@ class Shop:
         self.chosen_pack_price = 0
 
         self.current_effect_pack = ""
-        self.active_message = None
+        self.active_message = active_message
         self.active_description_message = None
         self.active_transaction_status_message = None
         self.current_transaction = None
@@ -135,7 +137,7 @@ class Shop:
             return
 
         if self.shouldGreet:
-            self.active_message = self.bot.send_message(self.current_user, f"Welcome to the shop!\n{self.get_balance_message()}", reply_markup=self.start_markup).id
+            self.send_active_message(f"Welcome to the shop!\n{self.get_balance_message()}", markup=self.start_markup)
             self.shouldGreet = False
         else:
             try:
@@ -144,7 +146,11 @@ class Shop:
                 pass
 
     def buy_coins(self, message, acceptMode=False):
-        self.previous_section = self.start
+        if not self.activatedElsewhere:
+            self.previous_section = self.start
+        else:
+            self.previous_section = self.destruct
+
         if not acceptMode:
             #TODO: Implement
             self.send_active_transaction_message("Not implemented yet :)")
@@ -154,31 +160,28 @@ class Shop:
             pass
 
     def buy_premium(self, message=None):
-        self.previous_section = self.start
-
-        if not self.active_message:
-            self.active_message = self.bot.send_message(self.current_user, f"<i><b>Please, select a pack and currency by clicking on a corresponding button</b></i>\n{self.get_balance_message()}", reply_markup=self.buy_premium_markup).id
+        if not self.activatedElsewhere:
+            self.previous_section = self.start
         else:
-            try:
-                self.bot.edit_message_text(f"<i><b>Please, select a pack and currency by clicking on a corresponding button</b></i>\n{self.get_balance_message()}", self.current_user, self.active_message, reply_markup=self.buy_premium_markup)
-            except:
-                pass
-                # self.active_message = self.bot.send_message(self.current_user, "<i><b>Please, select a pack and currency by clicking on a corresponding button</b></i>", reply_markup=self.buy_premium_markup).id
+            self.previous_section = self.destruct
+
+        self.send_active_message(f"<i><b>Please, select a pack and currency by clicking on a corresponding button</b></i>\n{self.get_balance_message()}", markup=self.buy_premium_markup)
 
     def choose_effect_to_buy(self, message=None):
-        self.previous_section = self.start
+        if not self.activatedElsewhere:
+            self.previous_section = self.start
+        else:
+            self.previous_section = self.destruct
 
         self.clear_screen(True)
-        if not self.active_message:
-            self.active_message = self.bot.send_message(self.current_user, f"<i><b>Please, select an effect</b></i>\n{self.get_balance_message()}", reply_markup=self.effects_list_markup).id
-        else:
-            try:
-                self.bot.edit_message_text(f"<i><b>Please, select an effect</b></i>\n{self.get_balance_message()}", self.current_user, self.active_message, reply_markup=self.effects_list_markup)
-            except:
-                pass
+
+        self.send_active_message(f"<i><b>Please, select an effect</b></i>\n{self.get_balance_message()}", markup=self.effects_list_markup)
 
     def choose_effect_pack(self, message=None):
-        self.previous_section = self.choose_effect_to_buy
+        if not self.activatedElsewhere:
+            self.previous_section = self.choose_effect_to_buy
+        else:
+            self.previous_section = self.destruct
 
         effectId = self.current_effect_pack
         transaction = "0"
@@ -216,35 +219,30 @@ class Shop:
 
         self.construct_active_pack_markup()
 
-        if not self.active_message:
-            self.active_message = self.bot.send_message(self.current_user, f"<i><b>Please, select pack of effects. Click on the according price to choose currency</b></i>\n{self.get_balance_message()}", reply_markup=self.effect_pack_markup).id
-        else:
-            try:
-                self.bot.edit_message_text(f"<i><b>Please, select pack of effects. Click on the according price to choose currency</b></i>\n{self.get_balance_message()}", self.current_user, self.active_message, reply_markup=self.effect_pack_markup)
-            except:
-                pass
+        self.send_active_message(f"<i><b>Please, select pack of effects. Click on the according price to choose currency</b></i>\n{self.get_balance_message()}", markup=self.effect_pack_markup)
 
     def choose_pack_PP(self, message=None):
         self.active_first_option_price = 1000
         self.active_second_option_price = 4000
         self.active_third_option_price = 7000
 
-        if not self.active_message:
-            self.active_message = self.bot.send_message(self.current_user, f"<i><b>Please, select Points pack. Click on the according price to choose currency</b></i>\n{self.get_balance_message()}", reply_markup=self.buyPP_markup).id
-        else:
-            try:
-                self.bot.edit_message_text(f"<i><b>Please, select pack of effects. Click on the according price to choose currency</b></i>\n{self.get_balance_message()}", self.current_user, self.active_message, reply_markup=self.buyPP_markup)
-            except:
-                pass
+        self.send_active_message(f"<i><b>Please, select Points pack. Click on the according price to choose currency</b></i>\n{self.get_balance_message()}", markup=self.buyPP_markup)
 
-        self.previous_section = self.start
+        if not self.activatedElsewhere:
+            self.previous_section = self.start
+        else:
+            self.previous_section = self.destruct
 
     def buy_tests(self):
         # Remove previous callback handler so that handlers do not collide
         self.bot.callback_query_handlers.remove(self.ch)
         self.ch = None
 
-        self.previous_section = self.start
+        if not self.activatedElsewhere:
+            self.previous_section = self.start
+        else:
+            self.previous_section = self.destruct
+
         TestModule(self.bot, self.message, True, self.proceed, active_message=self.active_message)
         return
 
@@ -458,6 +456,12 @@ class Shop:
             self.bot.delete_message(self.current_user, self.active_description_message)
             self.active_description_message = None
 
+    def send_active_message(self, text, markup=None):
+        if self.active_message:
+            self.bot.edit_message_text(text, self.current_user, self.active_message, reply_markup=markup)
+            return
+        self.active_message = self.bot.send_message(self.current_user, text, reply_markup=markup).id
+
     def proceed(self, message, **kwargs):
         #Re-subscribe callback handler upon returning from Tester
         if kwargs.get("shouldClearChat") and self.active_transaction_status_message is not None:
@@ -473,10 +477,9 @@ class Shop:
     def destruct(self, message=None):
         self.clear_screen()
 
-        self.bot.delete_message(self.current_user, self.active_message)
-        self.bot.callback_query_handlers.remove(self.ch)
-
-        if not self.returnMethod:
+        if not self.activatedElsewhere:
+            self.bot.delete_message(self.current_user, self.active_message)
+            self.bot.callback_query_handlers.remove(self.ch)
             Helpers.switch_user_busy_status(self.current_user)
             menues.go_back_to_main_menu(self.bot, self.current_user, self.message)
             return
