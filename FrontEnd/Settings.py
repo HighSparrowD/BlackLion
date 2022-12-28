@@ -70,6 +70,7 @@ class Settings:
         self.cardDeckMini_indicator = None
         self.cardDeckPlatinum_indicator = None
 
+        self.effect_index = 0
         self.secondChances = 0
         self.valentines = 0
         self.detectors = 0
@@ -113,7 +114,7 @@ class Settings:
         self.currency_list_message = "1. USD\n2. EUR\n3. UAH\n4. RUB\n5. CZK\n6. PLN\n7. Go Back"
 
         # self.settingMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4", "5", "6")
-        self.settingMarkup = InlineKeyboardMarkup().add(InlineKeyboardButton("My Profile", callback_data="200")) \
+        self.settingMarkup = InlineKeyboardMarkup().add(InlineKeyboardButton("👤 My Profile 👤", callback_data="200")) \
             .add(InlineKeyboardButton("Personality Settings", callback_data="201")) \
             .add(InlineKeyboardButton("Filter Settings", callback_data="202")) \
             .add(InlineKeyboardButton("Inventory and Statistics", callback_data="203")) \
@@ -189,10 +190,15 @@ class Settings:
             .add(InlineKeyboardButton("QR code", callback_data="224")) \
             .add(InlineKeyboardButton("Go Back", callback_data="-20")) \
 
+        self.activate_effectMarkup = InlineKeyboardMarkup().add(InlineKeyboardButton("💥Activate💥", callback_data="-10"))
+        self.buy_effectMarkup = InlineKeyboardMarkup().add(InlineKeyboardButton("💥Buy💥", callback_data="-5"))
+
         self.YNMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("yes", "no")
         self.abortMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("Go Back")
         self.doneMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("Done")
         self.currency_choiceMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4", "5", "6", "7")
+
+        self.effect_is_active_Warning = "<i><b>Warning! This effect is already active. Repeated usage will override the effect's timer !</b></i>"
 
         self.secondChanceDescription = "Second chance allows you to 'like' another user once again. It can be used in the 'Encounters' section"
         self.valentineDescription = "Doubles your Personality points for an hour"
@@ -268,7 +274,7 @@ class Settings:
                 return
 
             if message.voice:
-                if Helpers.check_user_has_premium(self.current_user):
+                if self.has_Premium:
                     if message.voice.duration <= 15:
                         if bool(json.loads(json.loads(requests.get(f"https://localhost:44381/SetAutoReplyVoice/{self.current_user}/{message.voice.file_id}", verify=False).text))):
                             self.bot.send_message(self.current_user, "Set successfully !")
@@ -406,7 +412,6 @@ class Settings:
         self.subscribe_callback_handler(self.achievement_callback_handler)
         self.bot.send_message(self.current_user, "Your achievement list", reply_markup=markup)
         self.bot.send_message(self.current_user, "Already acquired achievements are marked with '✅'\nSelect an achievement to view more info")
-        self.get_ready_to_abort(self.message)
 
     def effects_manager(self, message):
         self.previous_section = self.my_statistics_settings_choice
@@ -866,100 +871,98 @@ class Settings:
         if call.message.id not in self.old_queries:
 
             if call.data == "5":
-                self.bot.send_message(self.current_user, self.secondChanceDescription)
+                self.effect_index = call.data
+                if self.secondChances > 0:
+                    self.send_secondary_message(self.secondChanceDescription)
+                else:
+                    self.send_secondary_message(self.secondChanceDescription, markup=self.buy_effectMarkup)
             elif call.data == "6":
-                self.bot.send_message(self.current_user, self.valentineDescription)
-                if Helpers.check_user_uses_personality(self.current_user):
+                self.effect_index = call.data
+                if self.uses_Personality:
                     if self.valentines > 0:
-                        self.use_effect_manager(call.message, call.data)
+                        #Warn user if effect is already active
+                        if bool(json.loads(requests.get(f"https://localhost:44381/CheckEffectIsActive/{self.current_user}/{call.data}", verify=False).text)):
+                            self.send_secondary_message(f"<i>The Valentine:</i> {self.valentineDescription}\n\n{self.effect_is_active_Warning}", markup=self.activate_effectMarkup)
+                        else:
+                            self.send_secondary_message(self.valentineDescription, markup=self.activate_effectMarkup)
                     else:
-                        self.buy_effect_manager(call.message, effectId=call.data)
+                        self.send_secondary_message(self.valentineDescription, markup=self.buy_effectMarkup)
                 else:
-                    self.bot.send_message(self.current_user, "You have to turn on PERSONALITY to use this effect")
+                    self.send_secondary_message("You have to turn on PERSONALITY to use this effect")
             elif call.data == "7":
-                self.bot.send_message(self.current_user, self.detectorDescription)
-                if Helpers.check_user_uses_personality(self.current_user):
+                self.effect_index = call.data
+                if self.uses_Personality:
                     if self.detectors > 0:
-                        self.use_effect_manager(call.message, call.data)
+                        if bool(json.loads(requests.get(f"https://localhost:44381/CheckEffectIsActive/{self.current_user}/{call.data}", verify=False).text)):
+                            self.send_secondary_message(f"<i>The Detector</i>{self.detectorDescription}\n\n{self.effect_is_active_Warning}", markup=self.activate_effectMarkup)
+                        else:
+                            self.send_secondary_message(self.detectorDescription, markup=self.activate_effectMarkup)
                     else:
-                        self.buy_effect_manager(call.message, effectId=call.data)
+                        self.send_secondary_message(self.detectorDescription, markup=self.buy_effectMarkup)
                 else:
-                    self.bot.send_message(self.current_user, "You have to turn on PERSONALITY to use this effect")
+                    self.send_secondary_message("You have to turn on PERSONALITY to use this effect")
             elif call.data == "8":
+                self.effect_index = call.data
                 if self.detectors > 0:
-                    self.bot.send_message(self.current_user, self.nullifierDescription)
+                    self.send_secondary_message(self.nullifierDescription)
                 else:
-                    self.buy_effect_manager(call.message, effectId=call.data)
+                    self.send_secondary_message(self.nullifierDescription, markup=self.buy_effectMarkup)
             elif call.data == "9":
-                self.bot.send_message(self.current_user, self.cardDeckMiniDescription)
+                self.effect_index = call.data
                 if self.cardDecksMini > 0:
-                    self.use_effect_manager(call.message, call.data)
+                    self.send_secondary_message(self.cardDeckMiniDescription, markup=self.activate_effectMarkup)
                 else:
-                    self.buy_effect_manager(call.message, effectId=call.data)
+                    self.send_secondary_message(self.cardDeckMiniDescription, markup=self.buy_effectMarkup)
             elif call.data == "10":
-                self.bot.send_message(self.current_user, self.cardDeckPlatinumDescription)
+                self.effect_index = call.data
                 if self.cardDecksPlatinum > 0:
-                    self.use_effect_manager(call.message, call.data)
+                    self.send_secondary_message(self.cardDeckPlatinumDescription, markup=self.activate_effectMarkup)
                 else:
-                    self.buy_effect_manager(call.message, effectId=call.data)
+                    self.send_secondary_message(self.cardDeckPlatinumDescription, markup=self.buy_effectMarkup)
+
+            elif call.data == "-10":
+                self.use_effect_manager(self.effect_index)
+
+            elif call.data == "-5":
+                self.buy_effect_manager()
 
             elif call.data == "-20":
                 self.proceed()
 
-    def use_effect_manager(self, message, effectId, acceptMode=False):
-        self.active_section = self.use_effect_manager
-        if not acceptMode:
-            #Check if effect is already active
-            if (effectId == "6" or effectId == "7") and bool(json.loads(requests.get(f"https://localhost:44381/CheckEffectIsActive/{self.current_user}/{effectId}", verify=False).text)):
-                self.bot.send_message(self.current_user, "This effect is already active. Would you like to override its duration ?", reply_markup=self.YNMarkup)
-            else:
-                self.bot.send_message(self.current_user, "Would you like to use the effect ?", reply_markup=self.YNMarkup)
-            self.bot.register_next_step_handler(message, self.use_effect_manager, effectId=effectId, acceptMode=True, chat_id=self.current_user)
-        else:
-            if message.text == "yes":
-                if effectId == "6" or effectId == "7":
-                    if effectId == "6":
-                        self.valentines -= 1
-                        self.valentine_indicator.text = self.valentines
-                    elif effectId == "7":
-                        self.detectors -= 1
-                        self.detector_indicator.text = self.detectors
-                    response = requests.get(f"https://localhost:44381/ActivateDurableEffect/{self.current_user}/{effectId}", verify=False).text
-                    if response:
-                        self.bot.send_message(self.current_user, "Done :)", reply_markup=self.abortMarkup)
-                    self.get_ready_to_abort(message)
-                    self.update_effects_markup()
-                else:
-                    if effectId == "9":
-                        self.cardDecksMini -= 1
-                        self.cardDeckMini_indicator.text = self.cardDecksMini
-                    elif effectId == "10":
-                        self.cardDecksPlatinum -= 1
-                        self.cardDeckPlatinum_indicator.text = self.cardDecksPlatinum
-                    response = requests.get(f"https://localhost:44381/ActivateToggleEffect/{self.current_user}/{effectId}", verify=False).text
-                    self.bot.send_message(self.current_user, "Done :)", reply_markup=self.abortMarkup)
-                    self.get_ready_to_abort(message)
-                    self.update_effects_markup()
-            elif message.text == "no":
-                self.bot.send_message(self.current_user, "Gotcha :)", reply_markup=self.abortMarkup)
-                self.get_ready_to_abort(message)
-            else:
-                self.bot.send_message(self.current_user, "No such option", reply_markup=self.YNMarkup)
-                self.bot.register_next_step_handler(message, self.use_effect_manager, effectId, acceptMode=acceptMode, chat_id=self.current_user)
+    def use_effect_manager(self, effectId):
+        text = "Activated!"
+        if effectId == "6" or effectId == "7":
+            if effectId == "6":
+                response = requests.get(f"https://localhost:44381/ActivateDurableEffect/{self.current_user}/{effectId}", verify=False).text
 
-    def buy_effect_manager(self, message, effectId, acceptMode=False):
-        if not acceptMode:
-            self.bot.send_message(self.current_user, "Would you like to buy this effect from shop ?", reply_markup=self.YNMarkup)
-            self.bot.register_next_step_handler(message, self.buy_effect_manager, effectId=effectId, acceptMode=True, chat_id=self.current_user)
+                if response:
+                    self.valentines -= 1
+                    self.valentine_indicator.text = self.valentines
+                    self.send_secondary_message(f"<i>The Valentine:</i> {self.valentineDescription}\n\n{self.effect_is_active_Warning}", markup=self.activate_effectMarkup)
+                else:
+                    text = "You did not spend any P.E.R.S.O.N.A.L.I.T.Y points yet"
+
+            elif effectId == "7":
+                self.detectors -= 1
+                self.detector_indicator.text = self.detectors
+                self.send_secondary_message(f"<i>The Detector</i>{self.detectorDescription}\n\n{self.effect_is_active_Warning}", markup=self.activate_effectMarkup)
+
+            self.update_effects_markup()
+            self.send_error_message("Activated!")
         else:
-            if message.text == "yes":
-                hasVisited = Helpers.check_user_has_visited_section(self.current_user, 10)
-                Shop(self.bot, self.message, hasVisited, startingTransaction=2, returnMethod=self.proceed)
-            elif message.text == "no":
-                self.proceed()
-            else:
-                self.bot.send_message(self.current_user, "No such option", reply_markup=self.YNMarkup)
-                self.bot.register_next_step_handler(message, self.buy_effect_manager, effectId=effectId, acceptMode=acceptMode, chat_id=self.current_user)
+            if effectId == "9":
+                self.cardDecksMini -= 1
+                self.cardDeckMini_indicator.text = self.cardDecksMini
+            elif effectId == "10":
+                self.cardDecksPlatinum -= 1
+                self.cardDeckPlatinum_indicator.text = self.cardDecksPlatinum
+            response = requests.get(f"https://localhost:44381/ActivateToggleEffect/{self.current_user}/{effectId}", verify=False).text
+            self.update_effects_markup()
+            self.send_error_message(text)
+
+    def buy_effect_manager(self):
+        hasVisited = Helpers.check_user_has_visited_section(self.current_user, 10)
+        Shop(self.bot, self.message, hasVisited, startingTransaction=2, returnMethod=self.proceed, active_message=self.active_message)
 
     def menu_callback_handler(self, call):
         self.bot.answer_callback_query(call.id, "")
@@ -1460,13 +1463,6 @@ class Settings:
             .add(InlineKeyboardButton("Card Deck Mini", callback_data="9"), self.cardDeckMini_indicator) \
             .add(InlineKeyboardButton("Card Deck Platinum", callback_data="10"), self.cardDeckPlatinum_indicator) \
             .add(InlineKeyboardButton("Go Back", callback_data="-20")) \
-
-    def get_ready_to_abort(self, message):
-        self.bot.register_next_step_handler(message, self.abort_handler, chat_id=self.current_user)
-
-    def abort_handler(self, message):
-        if message.from_user.id == self.current_user and message.text == "Go Back":
-            self.proceed()
 
     def help_handler(self, message):
         Helper(self.bot, message, self.active_section, isEncountered=self.isEncounter)

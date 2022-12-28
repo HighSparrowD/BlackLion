@@ -3665,8 +3665,10 @@ namespace MyWebApi.Repositories
                         }
                         return null;
                     case 7:
-                        if (!(bool)await CheckUserUsesPersonality(userId))
-                            return null;
+                        //Already checked on the Frontend
+
+                        //if (!(bool)await CheckUserUsesPersonality(userId))
+                        //    return null;
 
                         if (userBalance.Detectors > 0)
                         {
