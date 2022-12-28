@@ -3681,7 +3681,14 @@ namespace MyWebApi.Repositories
                         return null;
                 }
 
-                await _contx.USER_ACTIVE_EFFECTS.AddAsync(effect);
+                var activeEffect = await _contx.USER_ACTIVE_EFFECTS.Where(e => e.EffectId == effectId && e.UserId == userId)
+                    .SingleOrDefaultAsync();
+
+                if (activeEffect == null)
+                    await _contx.USER_ACTIVE_EFFECTS.AddAsync(effect);
+                else
+                    effect.ExpirationTime = effect.ExpirationTime;
+
                 await _contx.SaveChangesAsync();
                 return effect.ExpirationTime;
             }
