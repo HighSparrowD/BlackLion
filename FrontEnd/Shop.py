@@ -313,12 +313,13 @@ class Shop:
 
             if result:
                 self.userBalance["points"] -= self.chosen_pack_price
+                self.display_user_balance()
 
                 self.send_active_transaction_message("Transaction was successful")
 
                 #Return to previous Module if it exists
-                if self.startingTransaction is not None:
-                    self.destruct()
+                # if self.startingTransaction is not None:
+                #     self.destruct()
 
             else:
                 #TODO: tell what had gone wrong
@@ -396,18 +397,21 @@ class Shop:
                     self.active_description_message = self.bot.send_message(self.current_user, self.cardDeckPlatinumDescription).id
                     self.choose_effect_pack(call.message)
                 elif call.data == "23":
+                    self.active_pack = 1
                     self.chosen_pack_price = self.active_first_option_price
                     self.process_transaction(self.current_transaction, "1")
                 elif call.data == "24":
                     # TODO: Implement Payment
                     return
                 elif call.data == "25":
+                    self.active_pack = 5
                     self.chosen_pack_price = self.active_second_option_price
                     self.process_transaction(self.current_transaction, "1")
                 elif call.data == "26":
                     # TODO: Implement Payment
                     return
                 elif call.data == "27":
+                    self.active_pack = 10
                     self.chosen_pack_price = self.active_third_option_price
                     self.process_transaction(self.current_transaction, "1")
                 elif call.data == "28":
@@ -462,6 +466,11 @@ class Shop:
             return
         self.active_message = self.bot.send_message(self.current_user, text, reply_markup=markup).id
 
+    def display_user_balance(self):
+        if self.active_message:
+            self.bot.edit_message_text(self.get_balance_message(), self.current_user, self.active_message)
+            return
+
     def proceed(self, message, **kwargs):
         #Re-subscribe callback handler upon returning from Tester
         if kwargs.get("shouldClearChat") and self.active_transaction_status_message is not None:
@@ -484,4 +493,4 @@ class Shop:
             menues.go_back_to_main_menu(self.bot, self.current_user, self.message)
             return
 
-        self.returnMethod(self.message)
+        self.returnMethod(self.message, backFromShop=True)

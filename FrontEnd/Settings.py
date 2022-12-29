@@ -70,6 +70,7 @@ class Settings:
         self.cardDeckMini_indicator = None
         self.cardDeckPlatinum_indicator = None
 
+        self.usedEffectAmount = 0
         self.effect_index = 0
         self.secondChances = 0
         self.valentines = 0
@@ -793,7 +794,7 @@ class Settings:
             self.bot.register_next_step_handler(message, self.send_confirmation_request, acceptMode=True, chat_id=self.current_user)
         else:
             self.bot.delete_message(self.current_user, message.id)
-            if message.text == "abort":
+            if message.text == "Go Back":
                 self.proceed()
                 return
 
@@ -880,6 +881,7 @@ class Settings:
                 self.effect_index = call.data
                 if self.uses_Personality:
                     if self.valentines > 0:
+                        self.usedEffectAmount = self.valentines
                         #Warn user if effect is already active
                         if bool(json.loads(requests.get(f"https://localhost:44381/CheckEffectIsActive/{self.current_user}/{call.data}", verify=False).text)):
                             self.send_secondary_message(f"<i>The Valentine:</i> {self.valentineDescription}\n\n{self.effect_is_active_Warning}", markup=self.activate_effectMarkup)
@@ -893,6 +895,7 @@ class Settings:
                 self.effect_index = call.data
                 if self.uses_Personality:
                     if self.detectors > 0:
+                        self.usedEffectAmount = self.detectors
                         if bool(json.loads(requests.get(f"https://localhost:44381/CheckEffectIsActive/{self.current_user}/{call.data}", verify=False).text)):
                             self.send_secondary_message(f"<i>The Detector</i>{self.detectorDescription}\n\n{self.effect_is_active_Warning}", markup=self.activate_effectMarkup)
                         else:
@@ -903,19 +906,21 @@ class Settings:
                     self.send_secondary_message("You have to turn on PERSONALITY to use this effect")
             elif call.data == "8":
                 self.effect_index = call.data
-                if self.detectors > 0:
+                if self.nullifiers > 0:
                     self.send_secondary_message(self.nullifierDescription)
                 else:
                     self.send_secondary_message(self.nullifierDescription, markup=self.buy_effectMarkup)
             elif call.data == "9":
                 self.effect_index = call.data
                 if self.cardDecksMini > 0:
+                    self.usedEffectAmount = self.cardDecksMini
                     self.send_secondary_message(self.cardDeckMiniDescription, markup=self.activate_effectMarkup)
                 else:
                     self.send_secondary_message(self.cardDeckMiniDescription, markup=self.buy_effectMarkup)
             elif call.data == "10":
                 self.effect_index = call.data
                 if self.cardDecksPlatinum > 0:
+                    self.usedEffectAmount = self.cardDecksPlatinum
                     self.send_secondary_message(self.cardDeckPlatinumDescription, markup=self.activate_effectMarkup)
                 else:
                     self.send_secondary_message(self.cardDeckPlatinumDescription, markup=self.buy_effectMarkup)
@@ -947,20 +952,24 @@ class Settings:
                 self.detector_indicator.text = self.detectors
                 self.send_secondary_message(f"<i>The Detector</i>{self.detectorDescription}\n\n{self.effect_is_active_Warning}", markup=self.activate_effectMarkup)
 
-            self.update_effects_markup()
-            self.send_error_message("Activated!")
         else:
+            response = requests.get(f"https://localhost:44381/ActivateToggleEffect/{self.current_user}/{effectId}", verify=False).text
             if effectId == "9":
                 self.cardDecksMini -= 1
                 self.cardDeckMini_indicator.text = self.cardDecksMini
             elif effectId == "10":
                 self.cardDecksPlatinum -= 1
                 self.cardDeckPlatinum_indicator.text = self.cardDecksPlatinum
-            response = requests.get(f"https://localhost:44381/ActivateToggleEffect/{self.current_user}/{effectId}", verify=False).text
-            self.update_effects_markup()
-            self.send_error_message(text)
+
+        self.update_effects_markup()
+
+        if self.usedEffectAmount == 0:
+            self.edit_secondary_message_markup(self.buy_effectMarkup)
+        self.send_error_message(text)
 
     def buy_effect_manager(self):
+        self.delete_secondary_message()
+        self.delete_error_message()
         hasVisited = Helpers.check_user_has_visited_section(self.current_user, 10)
         Shop(self.bot, self.message, hasVisited, startingTransaction=2, returnMethod=self.proceed, active_message=self.active_message)
 
@@ -1412,6 +1421,10 @@ class Settings:
                 self.notInMenu = False
                 self.subscribe_callback_handler(self.menu_callback_handler)
             self.delete_secondary_message()
+
+            if kwargs.get("backFromShop"):
+                self.userBalance = json.loads(requests.get(f"https://localhost:44381/GetActiveUserWalletBalance/{self.current_user}", verify=False).text)
+
             self.previous_section(self.message)
         except:
             pass
@@ -1507,6 +1520,9 @@ class Settings:
 
     def edit_active_message_markup(self, markup):
         self.bot.edit_message_reply_markup(self.current_user, self.active_message, reply_markup=markup)
+
+    def edit_secondary_message_markup(self, markup):
+        self.bot.edit_message_reply_markup(self.current_user, self.active_secondary_message, reply_markup=markup)
 
     def send_secondary_message(self, text, markup=None, voice=None):
         try:
