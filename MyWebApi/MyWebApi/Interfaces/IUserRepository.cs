@@ -16,6 +16,7 @@ using MyWebApi.Entities.TestEntities;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MyWebApi.Entities.EffectEntities;
 using MyWebApi.Entities.AdminEntities;
+using MyWebApi.Entities.AdventureEntities;
 
 namespace MyWebApi.Interfaces
 {
@@ -176,5 +177,13 @@ namespace MyWebApi.Interfaces
         Task<bool> GetUserIncreasedFamiliarityAsync(long userId);
         Task<bool> SwitchIncreasedFamiliarityAsync(long userId);
         Task<bool> AddUserCommercialVector(long userId, string tagString);
+
+        //Adventures
+        Task<Guid> RegisterAdventureAsync(Adventure model);
+        Task<bool> ChangeAdventureAsync(ChangeAdventure model);
+        Task<bool> DeleteAdventureAsync(Guid adventureId, long userId);
+        Task<bool> SubscribeOnAdventureAsync(Guid adventureId, long userId);
+        Task<bool> ProcessSubscriptionRequestAsync(Guid adventureId, long userId, AdventureRequestStatus status);
+        Task<List<AttendeeInfo>> GetAdventureAttendeesAsync(Guid adventureId);
     }
 }

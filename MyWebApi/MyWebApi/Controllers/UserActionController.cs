@@ -16,6 +16,8 @@ using MyWebApi.Entities.TestEntities;
 using static MyWebApi.Enums.SystemEnums;
 using MyWebApi.Entities.AdminEntities;
 using MyWebApi.Entities.EffectEntities;
+using MyWebApi.Entities.AdventureEntities;
+using MyWebApi.Enums;
 
 namespace MyWebApi.Controllers
 {
@@ -1015,6 +1017,43 @@ namespace MyWebApi.Controllers
         public async Task<bool> SwitchIncreasedFamiliarity(long userId)
         {
             return await _repository.SwitchIncreasedFamiliarityAsync(userId);
+        }
+
+        //Adventures
+        [HttpPost("/RegisterAdventure")]
+        public async Task<Guid> RegisterAdventure(Adventure model)
+        {
+            return await _repository.RegisterAdventureAsync(model);
+        }
+
+        [HttpPost("/ChangeAdventure")]
+        public async Task<bool> ChangeAdventure(ChangeAdventure model)
+        {
+            return await _repository.ChangeAdventureAsync(model);
+        }
+
+        [HttpDelete("/DeleteAdventure/{id}/{userId}")]
+        public async Task<bool> DeleteAdventure(Guid id, long userId)
+        {
+            return await _repository.DeleteAdventureAsync(id, userId);
+        }
+
+        [HttpGet("/SubscribeOnAdventure/{id}/{userId}")]
+        public async Task<bool> SubscribeOnAdventure(Guid id, long userId)
+        {
+            return await _repository.SubscribeOnAdventureAsync(id, userId);
+        }
+
+        [HttpGet("/ProcessSubscriptionRequest/{id}/{userId}/{status}")]
+        public async Task<bool> ProcessSubscriptionRequest(Guid id, long userId, AdventureRequestStatus status)
+        {
+            return await _repository.ProcessSubscriptionRequestAsync(id, userId, status);
+        }
+
+        [HttpGet("/GetAdventureAttendees/{id}")]
+        public async Task<List<AttendeeInfo>> GetAdventureAttendees(Guid id)
+        {
+            return await _repository.GetAdventureAttendeesAsync(id);
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using MyWebApi.Entities.AchievementEntities;
 using MyWebApi.Entities.AdminEntities;
+using MyWebApi.Entities.AdventureEntities;
 using MyWebApi.Entities.DailyRewardEntities;
 using MyWebApi.Entities.DailyTaskEntities;
 using MyWebApi.Entities.EffectEntities;
@@ -73,6 +74,8 @@ namespace MyWebApi.Data
         public DbSet<AdminErrorLog> ADMIN_ERROR_LOGS { get; set; }
         public DbSet<ActiveEffect> USER_ACTIVE_EFFECTS { get; set; }
         public DbSet<TickRequest> tick_requests { get; set; }
+        public DbSet<Adventure> adventures { get; set; }
+        public DbSet<AdventureAttendee> adventure_attendees { get; set; }
         public DbSet<PromoCode> promo_codes { get; set; }
 
 
@@ -120,6 +123,7 @@ namespace MyWebApi.Data
             builder.Entity<CommunicationPreference>().HasKey(g => new { g.Id, g.ClassLocalisationId });
             builder.Entity<DailyTask>().HasKey(t => new { t.Id, t.ClassLocalisationId });
             builder.Entity<UserDailyTask>().HasKey(t => new { t.UserId, t.DailyTaskId });
+            builder.Entity<AdventureAttendee>().HasKey(t => new { t.UserId, t.AdventureId });
 
             builder.Entity<Ad>();
 

@@ -2,6 +2,7 @@
 using MyWebApi.Data;
 using MyWebApi.Entities.AchievementEntities;
 using MyWebApi.Entities.AdminEntities;
+using MyWebApi.Entities.AdventureEntities;
 using MyWebApi.Entities.DailyTaskEntities;
 using MyWebApi.Entities.EffectEntities;
 using MyWebApi.Entities.LocationEntities;
@@ -4335,6 +4336,231 @@ namespace MyWebApi.Repositories
             await _contx.SaveChangesAsync();
 
             return (bool)user.IsFree;
+        }
+
+        public async Task<Guid> RegisterAdventureAsync(Adventure model)
+        {
+            //Adventures created by user
+            var userAdventures = await _contx.adventures.Where(a => a.UserId == model.UserId)
+                .ToListAsync();
+
+            var adventureIds = await _contx.adventure_attendees
+                .Select(a => a.AdventureId)
+                .ToListAsync();
+
+            //Adventures user is subscribed on
+            var subscribedAdventures = await _contx.adventures.Where(a => adventureIds.Contains(a.Id))
+                .ToListAsync();
+
+            foreach (var userAdventure in userAdventures)
+            {
+                //Throw if new adventure overlaps with the other ones
+                if (userAdventure.IsOverlapping(model))
+                    throw new ArgumentException($"Overlapping detected between {userAdventure.Id} (created by user) and just created adventure");
+            }
+
+            foreach (var sAdventure in subscribedAdventures)
+            {
+                //Throw if new adventure overlaps with the other ones
+                if (sAdventure.IsOverlapping(model))
+                    throw new ArgumentException($"Overlapping detected between {sAdventure.Id} and just created adventure");
+            }
+
+            model.Id = Guid.NewGuid();
+            model.EndDateTime = DateTime.SpecifyKind(model.EndDateTime, DateTimeKind.Utc);
+            model.StartDateTime = DateTime.SpecifyKind(model.StartDateTime, DateTimeKind.Utc);
+
+            await _contx.AddAsync(model);
+            await _contx.SaveChangesAsync();
+
+            return model.Id;
+        }
+
+        public async Task<bool> ChangeAdventureAsync(ChangeAdventure model)
+        {
+            var existingAdventure = await _contx.adventures.Where(a => a.Id == model.Id)
+                .SingleOrDefaultAsync();
+
+            //Check overlapping only if datetime was changed
+            if (model.StartDateTime !=null || model.EndDateTime != null)
+            {
+                var hasPremium = await CheckUserHasPremiumAsync(model.UserId);
+
+                //Adventures created by user without currently managed one
+                var userAdventures = await _contx.adventures.Where(a => a.UserId == model.UserId && a.Id != model.Id)
+                    .ToListAsync();
+
+                var adventureIds = await _contx.adventure_attendees
+                    .Select(a => a.AdventureId)
+                    .ToListAsync();
+
+                //Adventures user is subscribed on
+                var subscribedAdventures = await _contx.adventures.Where(a => adventureIds.Contains(a.Id))
+                    .ToListAsync();
+
+                foreach (var userAdventure in userAdventures)
+                {
+                    //Throw if new adventure overlaps with the other ones
+                    if (userAdventure.IsOverlapping(model))
+                        throw new ArgumentException($"Overlapping detected between changed adventure and {userAdventure.Id} adventure while attempting to subscribe on the last one");
+                }
+
+                foreach (var sAdventure in subscribedAdventures)
+                {
+                    //Throw if new adventure overlaps with the other ones
+                    if (sAdventure.IsOverlapping(model))
+                        throw new ArgumentException($"Overlapping detected between changed adventure and already subscribed andventure {sAdventure.Id}");
+                }
+
+                existingAdventure.StartDateTime = DateTime.SpecifyKind((DateTime)model.StartDateTime, DateTimeKind.Utc);
+                existingAdventure.EndDateTime = DateTime.SpecifyKind((DateTime)model.EndDateTime, DateTimeKind.Utc);
+            }
+
+            if (model.Languages != null)
+                existingAdventure.Languages = model.Languages;
+
+            else if (model.Capacity != null)
+                existingAdventure.Capacity = (short)model.Capacity;
+
+            else if (model.IsOnline != null)
+                existingAdventure.IsOnline = (bool)model.IsOnline;
+
+            //In those two cases 0 is replaces null
+            else if (model.CountryId != 0)
+                existingAdventure.CountryId = model.CountryId;
+
+            //In those two cases 0 is replaces null
+            else if (model.CityId != 0)
+                existingAdventure.CityId = (short)model.CityId;
+
+            else if (model.Capacity != null)
+                existingAdventure.Capacity = (short)model.Capacity;
+
+            else if (model.MinAge != null)
+                existingAdventure.MinAge = (short)model.MinAge;
+
+            else if (model.MaxAge != null)
+                existingAdventure.MaxAge = (short)model.MaxAge;
+
+            else if (model.Description != null)
+                existingAdventure.Description = model.Description;
+
+            else if (model.Adress != null)
+                existingAdventure.Adress = model.Adress;
+
+            _contx.adventures.Update(existingAdventure);
+            await _contx.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> DeleteAdventureAsync(Guid adventureId, long userId)
+        {
+            var adventure = await _contx.adventures.Where(a => a.Id == adventureId && a.UserId == userId)
+                .SingleOrDefaultAsync();
+
+            if (adventure == null)
+                throw new NullReferenceException($"Adventure {adventureId} does not exist or it does not belong to user {userId}");
+
+            var attendees = await _contx.adventure_attendees.Where(a => a.UserId == userId && a.AdventureId == adventureId)
+                .ToListAsync();
+
+            //Notify all attendees about adventure cancelation
+            foreach (var attendee in attendees)
+            {
+                await AddUserNotificationAsync(new UserNotification
+                {
+                    UserId1 = attendee.UserId,
+                    IsLikedBack = false,
+                    Severity = (short)Severities.Urgent,
+                    SectionId = (int)Sections.Adventurer,
+                    Description = $"Hey! We are very sorry, but adventure <b><i>'{adventure.Name}'</i></b> was canceled by its creator"
+                });
+            }
+
+            _contx.adventure_attendees.RemoveRange(attendees);
+            _contx.adventures.Remove(adventure);
+            await _contx.SaveChangesAsync();
+
+            return true;
+        }
+
+        public async Task<bool> SubscribeOnAdventureAsync(Guid adventureId, long userId)
+        {
+            var adventure = await _contx.adventures.Where(a => a.Id == adventureId)
+                .AsNoTracking()
+                .SingleOrDefaultAsync(); 
+
+            if (adventure == null)
+                throw new NullReferenceException($"Adventure {adventureId} does not exist");
+
+
+            //Adventures created by user
+            var userAdventures = await _contx.adventures.Where(a => a.UserId == userId)
+                .ToListAsync();
+
+            var adventureIds = await _contx.adventure_attendees
+                .Select(a => a.AdventureId)
+                .ToListAsync();
+
+            //Adventures user is subscribed on
+            var subscribedAdventures = await _contx.adventures.Where(a => adventureIds.Contains(a.Id))
+                .ToListAsync();
+
+            foreach (var userAdventure in userAdventures)
+            {
+                //Throw if new adventure overlaps with the other ones
+                if (adventure.IsOverlapping(userAdventure))
+                    throw new ArgumentException($"Overlapping detected between {userAdventure.Id} (created by user) and {adventure.Id} adventure while attempting to subscribe on the last one");
+            }
+
+            foreach (var sAdventure in subscribedAdventures)
+            {
+                //Throw if new adventure overlaps with the other ones
+                if (adventure.IsOverlapping(sAdventure))
+                    throw new ArgumentException($"Overlapping detected between {sAdventure.Id} and newly subscribed adventure {adventure.Id}");
+            }
+            
+
+            var userName = await _contx.SYSTEM_USERS_BASES.Where(u => u.Id == userId)
+                .Select(a => a.UserRealName)
+                .SingleOrDefaultAsync();
+
+            await _contx.adventure_attendees.AddAsync(new AdventureAttendee
+            {
+                AdventureId = adventureId,
+                UserId = userId,
+                Username = userName,
+                Status = AdventureRequestStatus.New
+            });
+            await _contx.SaveChangesAsync();
+
+            return true;
+        }
+
+        public async Task<bool> ProcessSubscriptionRequestAsync(Guid adventureId, long userId, AdventureRequestStatus status)
+        {
+            var attendee = await _contx.adventure_attendees.Where(a => a.UserId == userId && a.AdventureId == adventureId)
+                .SingleOrDefaultAsync();
+
+            if (attendee == null)
+                throw new NullReferenceException($"No attendee with id {userId} was subscribed on adventure {adventureId}");
+
+            attendee.Status = status;
+
+            _contx.adventure_attendees.Update(attendee);
+            await _contx.SaveChangesAsync();
+
+            return true;
+        }
+
+        public async Task<List<AttendeeInfo>> GetAdventureAttendeesAsync(Guid adventureId)
+        {
+            return await _contx.adventure_attendees.Where(a => a.AdventureId == adventureId && a.Status == AdventureRequestStatus.Accepted)
+            .Select(a => new AttendeeInfo
+            {
+                UserId = a.UserId,
+                Username = a.Username,
+            }).ToListAsync();
         }
     }
 }

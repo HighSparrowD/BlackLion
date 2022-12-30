@@ -1,4 +1,3 @@
-using static MyWebApi.Core.DbWorker;
 using System;
 using System.Linq;
 using System.Collections.Generic;
