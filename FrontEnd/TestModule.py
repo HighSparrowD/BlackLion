@@ -23,7 +23,9 @@ class TestModule:
 
         self.current_question_index = -1
         self.previous_question = None
-        self.answer_array = []
+        self.answer_array = {}
+
+        self.tags_list = {}
 
         self.localisation = Helpers.get_user_app_language(self.current_user)
 
@@ -45,6 +47,8 @@ class TestModule:
         self.current_price_RM = 0
 
         self.chCode = self.bot.register_callback_query_handler("", self.callback_handler, user_id=self.current_user)
+
+        self.questions_count = 0
 
         self.start_markup = InlineKeyboardMarkup().add(InlineKeyboardButton("Personality", callback_data="1"))\
                 .add(InlineKeyboardButton("Emotional intellect", callback_data="2")) \
@@ -212,7 +216,8 @@ class TestModule:
     def recurring_test_pass(self, gotoPrevious=False):
         self.isPassingTest = True
         questions = self.current_test_data["questions"]
-        if self.current_question_index +1 < len(questions):
+        self.questions_count = len(questions)
+        if self.current_question_index +1 < self.questions_count:
             if not gotoPrevious:
                 self.current_question_index += 1
 
@@ -223,7 +228,10 @@ class TestModule:
             markup.add(InlineKeyboardButton(f"{self.current_question_index + 1} / {len(questions)}", callback_data="0"))
 
             self.current_question_answers.clear()
+
+            i = 0
             for answer in self.current_question["answers"]:
+                i += 1
                 self.current_question_answers[answer["id"]] = answer
                 markup.add(InlineKeyboardButton(f"{answer['text']}", callback_data=answer["id"]))
 
@@ -254,15 +262,13 @@ class TestModule:
 
     def show_test_result(self, message, acceptMode=False):
         if not acceptMode:
-            self.user_total = sum(self.answer_array)
+            tags = None
+            self.user_total = sum(self.answer_array.values())
             data = self.create_test_payload()
             self.isDeciding = True
 
             self.active_message_id = self.current_question_message
             self.current_question_message = 0
-
-            d = json.dumps(data)
-            json.loads(requests.post(f"https://localhost:44381/UpdateUserPersonalityStats", d, headers={"Content-Type": "application/json"}, verify=False).text)
 
             active_answer = "-"
 
@@ -272,14 +278,33 @@ class TestModule:
             for result in self.current_test_data["results"]:
                 #Will be sent if users score is even smaller than the smallest possible score
                 if result["score"] < smallest:
+                    if result["tags"] is not None:
+                        tags = result["tags"]
                     default_answer = result["result"]
                 if self.user_total >= int(result["score"]):
+                    if result["tags"] is not None:
+                        tags = result["tags"]
                     active_answer = result["result"]
 
             if active_answer:
                 self.send_secondary_message(active_answer, markup=self.continueMarkup)
             else:
                 self.send_secondary_message(default_answer, markup=self.continueMarkup)
+
+            if tags is not None:
+                for tag in tags.split(" "):
+                    self.tags_list[tag] = tag
+
+            result_tags = []
+            for tag in self.tags_list.values():
+                #Removes duplicates
+                if tag not in result_tags:
+                    result_tags.append(tag)
+
+
+            data["tags"] = result_tags
+            d = json.dumps(data)
+            json.loads(requests.post(f"https://localhost:44381/UpdateUserPersonalityStats", d, headers={"Content-Type": "application/json"}, verify=False).text)
 
             self.bot.register_next_step_handler(message, self.show_test_result, acceptMode=True, chat_id=self.current_user)
         else:
@@ -431,16 +456,25 @@ class TestModule:
                 self.recurring_test_pass(gotoPrevious=True)
 
         elif self.isPassingTest:
-            if len(self.answer_array) > self.current_question_index:
-                self.answer_array[self.current_question_index] = int(self.current_question_answers[int(call.data)]["value"])
-                self.recurring_test_pass()
-            else:
+            if self.questions_count > self.current_question_index:
                 try:
-                    self.answer_array.append(int(self.current_question_answers[int(call.data)]["value"]))
-                    # self.user_total += self.current_question_answers[int(call.data)]["value"]
-                    self.recurring_test_pass()
+                    self.answer_array[self.current_question_index] = int(self.current_question_answers[int(call.data)]["value"])
                 except:
-                    pass
+                    return
+
+                #Add tags from answers if they are present
+                if self.current_question_answers[int(call.data)]["tags"] is not None:
+                    self.tags_list[call.data] = self.current_question_answers[int(call.data)]["tags"]
+
+                self.recurring_test_pass()
+            # else:
+            #     try:
+            #         self.answer_array[self.current_question_index] = int(self.current_question_answers[int(call.data)]["value"])
+            #         # self.answer_array.append(int(self.current_question_answers[int(call.data)]["value"]))
+            #         # self.user_total += self.current_question_answers[int(call.data)]["value"]
+            #         self.recurring_test_pass()
+            #     except:
+            #         pass
         else:
             self.current_test = int(call.data)
             self.show_current_test(call.message)

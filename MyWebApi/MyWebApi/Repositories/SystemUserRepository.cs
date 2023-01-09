@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.JSInterop;
 using MyWebApi.Data;
 using MyWebApi.Entities.AchievementEntities;
 using MyWebApi.Entities.AdminEntities;
@@ -19,10 +20,8 @@ using QRCoder;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using static MyWebApi.Enums.SystemEnums;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace MyWebApi.Repositories
 {
@@ -1919,7 +1918,14 @@ namespace MyWebApi.Repositories
 
                 model.UserRawDescription = user.UserRawDescription;
                 model.UserDescription = user.GenerateUserDescription(user.UserName, data.UserAge, country, city, user.UserRawDescription);
-                model.UserPhoto = user.UserPhoto;
+
+                //Reactivate user tick request if user photo was changed
+                if (model.UserPhoto != user.UserPhoto)
+                {
+                    model.UserPhoto = user.UserPhoto;
+                    await ReactivateTickRequest(user.Id);
+                }
+
                 model.UserName = user.UserName;
                 model.UserRealName = user.UserRealName;
 
@@ -3324,7 +3330,7 @@ namespace MyWebApi.Repositories
                     .SingleOrDefaultAsync();
 
                 //Give user 1 PP for passing the test for the first time
-                if (userTest.PassedOn != null)
+                if (userTest.PassedOn == null)
                 {
                     var userBalance = await GetUserWalletBalance(model.UserId);
                     userBalance.PersonalityPoints++;
@@ -3333,6 +3339,7 @@ namespace MyWebApi.Repositories
 
                 userTest.PassedOn = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
                 userTest.Result = testResult;
+                userTest.Tags = model.Tags;
 
                 _contx.user_tests.Update(userTest);
                 await _contx.SaveChangesAsync();
@@ -4561,6 +4568,59 @@ namespace MyWebApi.Repositories
                 UserId = a.UserId,
                 Username = a.Username,
             }).ToListAsync();
+        }
+
+        public async Task<List<Adventure>> GetUsersSubscribedAdventuresAsync(long userId)
+        {
+            var adventureIds = await _contx.adventure_attendees.Where(a => a.UserId == userId)
+                .Select(a => a.AdventureId)
+                .ToListAsync();
+
+            return await _contx.adventures.Where(a => adventureIds.Contains(a.Id))
+                .ToListAsync();
+        }
+
+        public async Task<List<Adventure>> GetUsersAdventuresAsync(long userId)
+        {
+            return await _contx.adventures.Where(a => a.UserId == userId)
+                .ToListAsync();
+        }
+
+        public async Task<GetAdventureCount> GetAdventureCountAsync(long userId)
+        {
+            var createdCount = await _contx.adventures.Where(a => a.UserId == userId)
+                .CountAsync();
+
+            var subscribedCount = await _contx.adventure_attendees.Where(a => a.UserId == userId)
+                .CountAsync();
+
+            return new GetAdventureCount
+            {
+                Created = createdCount,
+                Subscribed = subscribedCount
+            };
+        }
+
+        private async Task ReactivateTickRequest(long userId)
+        {
+            var tickRequest = await _contx.tick_requests.Where(r => r.UserId == userId)
+                .SingleOrDefaultAsync();
+
+            //Return if tick request does not exists, because not all users has tick request
+            if (tickRequest == null)
+                return;
+
+            var user = await _contx.SYSTEM_USERS.Where(u => u.UserId == userId)
+                .SingleOrDefaultAsync();
+
+            //Throw if user does not exist, because that method should not be called by not existing user
+            if (user == null)
+                throw new NullReferenceException($"User {userId} does not exist");
+
+            tickRequest.State = (short)TickRequestStatus.Changed;
+            user.IsIdentityConfirmed = false;
+
+            await _contx.SaveChangesAsync();
         }
     }
 }

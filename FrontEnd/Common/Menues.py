@@ -104,6 +104,12 @@ def reset_pages(current_markup_elements, markup_last_element, markup_page, marku
     markup_pages_count = 0
 
 
+def index_converter(index):
+    if index == "-1":
+        return -1
+    return 1
+
+
 def add_tick_to_element(bot, userId, messageId, current_markup_elements, markup_page, element_index):
     try:
         wasChanged = False

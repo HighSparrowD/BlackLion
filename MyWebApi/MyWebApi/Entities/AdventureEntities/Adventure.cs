@@ -25,12 +25,11 @@ namespace MyWebApi.Entities.AdventureEntities
         public bool IsOverlapping(Adventure model)
         {
             return ((StartDateTime <= model.EndDateTime && model.StartDateTime <= model.EndDateTime) || (model.StartDateTime <= StartDateTime && model.EndDateTime <= StartDateTime));
-            //return (model.StartDateTime >= this.EndDateTime && model.EndDateTime <= this.EndDateTime) || (model.StartDateTime <= this.StartDateTime && model.EndDateTime >= this.StartDateTime);
         }
 
         public bool IsOverlapping(ChangeAdventure model)
         {
-            return (model.StartDateTime >= this.EndDateTime && model.EndDateTime <= this.EndDateTime) || (model.StartDateTime <= this.StartDateTime && model.EndDateTime >= this.StartDateTime || (model.StartDateTime >= this.StartDateTime && model.EndDateTime >= this.EndDateTime));
+            return ((StartDateTime <= model.EndDateTime && model.StartDateTime <= model.EndDateTime) || (model.StartDateTime <= StartDateTime && model.EndDateTime <= StartDateTime));
         }
     }
 

@@ -424,7 +424,8 @@ namespace MyWebApi.Repositories
                         testId = await _contx.tests.CountAsync() + 1;
 
                     var lastQuestionId = await _contx.tests_questions.CountAsync();
-                    var lastAnswerId = await _contx.tests_answers.CountAsync() + 1;
+                    var lastAnswerId = await _contx.tests_answers.CountAsync();
+                    var lastResultId = await _contx.tests_results.CountAsync();
 
                     var results = new List<TestResult>();
                     var questions = new List<TestQuestion>();
@@ -462,20 +463,24 @@ namespace MyWebApi.Repositories
                                 Text = answer.Text,
                                 Value = answer.Value,
                                 IsCorrect = answer.IsCorrect,
-                                TestQuestionId = lastQuestionId
+                                TestQuestionId = lastQuestionId,
+                                Tags = answer.Tags
                             });
                         }
                     }
 
                     foreach (var result in model.Results)
                     {
+                        lastResultId++;
+
                         results.Add(new TestResult
                         {
-                            Id = await _contx.tests_results.CountAsync() + 1,
+                            Id = lastResultId,
                             Result = result.Result,
                             Score = result.Score,
                             TestId = test.Id,
-                            TestClassLocalisationId = test.ClassLocalisationId
+                            TestClassLocalisationId = test.ClassLocalisationId,
+                            Tags = result.Tags
                         });
                     }
 

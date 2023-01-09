@@ -1,7 +1,6 @@
 ﻿using System.Threading.Tasks;
 using System.Collections.Generic;
 using MyWebApi.Entities.UserInfoEntities;
-using MyWebApi.Entities.SecondaryEntities;
 using MyWebApi.Entities.ReportEntities;
 using MyWebApi.Entities.LocationEntities;
 using MyWebApi.Entities.ReasonEntities;
@@ -11,11 +10,8 @@ using MyWebApi.Entities.UserActionEntities;
 using MyWebApi.Entities.SponsorEntities;
 using MyWebApi.Entities.DailyTaskEntities;
 using MyWebApi.Enums;
-using static MyWebApi.Enums.SystemEnums;
 using MyWebApi.Entities.TestEntities;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MyWebApi.Entities.EffectEntities;
-using MyWebApi.Entities.AdminEntities;
 using MyWebApi.Entities.AdventureEntities;
 
 namespace MyWebApi.Interfaces
@@ -185,5 +181,8 @@ namespace MyWebApi.Interfaces
         Task<bool> SubscribeOnAdventureAsync(Guid adventureId, long userId);
         Task<bool> ProcessSubscriptionRequestAsync(Guid adventureId, long userId, AdventureRequestStatus status);
         Task<List<AttendeeInfo>> GetAdventureAttendeesAsync(Guid adventureId);
+        Task<List<Adventure>> GetUsersSubscribedAdventuresAsync(long userId);
+        Task<List<Adventure>> GetUsersAdventuresAsync(long userId);
+        Task<GetAdventureCount> GetAdventureCountAsync(long userId);
     }
 }

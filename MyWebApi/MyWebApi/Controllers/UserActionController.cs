@@ -1055,5 +1055,23 @@ namespace MyWebApi.Controllers
         {
             return await _repository.GetAdventureAttendeesAsync(id);
         }
+
+        [HttpGet("/GetUsersAdventures/{userId}")]
+        public async Task<List<Adventure>> GetUsersAdventures(long userId)
+        {
+            return await _repository.GetUsersAdventuresAsync(userId);
+        }
+
+        [HttpGet("/GetUsersSubscribedAdventures/{userId}")]
+        public async Task<List<Adventure>> GetUsersSubscribedAdventures(long userId)
+        {
+            return await _repository.GetUsersSubscribedAdventuresAsync(userId);
+        }
+
+        [HttpGet("/AdventureCount/{userId}")]
+        public async Task<GetAdventureCount> GetAdventureCount(long userId)
+        {
+            return await _repository.GetAdventureCountAsync(userId);
+        }
     }
 }
