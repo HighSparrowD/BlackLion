@@ -1,4 +1,3 @@
-using static MyWebApi.Core.DbWorker;
 using System;
 using System.Linq;
 using System.Collections.Generic;
@@ -57,7 +56,12 @@ namespace MyWebApi.Entities.UserInfoEntities
 
         public bool CheckIfHasEncountered(List<Encounter> encounters, long userId)
         {
-            bool result = encounters.Where(e => e.UserId == userId).SingleOrDefault() != null || encounters.Where(e => e.EncounteredUserId == userId).SingleOrDefault() != null;
+            bool result = encounters.Where(e => e.UserId == userId)
+                .SingleOrDefault() != null 
+                || 
+                encounters
+                .Where(e => e.EncounteredUserId == userId)
+                .SingleOrDefault() != null;
             return result;
         }
 

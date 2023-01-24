@@ -11,17 +11,22 @@ namespace MyWebApi.Entities.UserInfoEntities
         public string? UserRealName { get; set; }
         public string? UserDescription { get; set; }
         public string? UserRawDescription { get; set; }
-        public string? UserPhoto { get; set; }
+        public string? UserMedia { get; set; }
         public bool IsPhotoReal { get; set; }
+        public bool IsMediaPhoto { get; set; }
 
-        public UserBaseInfo(long id, string? userName, string? userRealName, string? userDescription, string? userPhoto, bool isPhotoReal)
+        public UserBaseInfo()
+        {}
+
+        public UserBaseInfo(long id, string? userName, string? userRealName, string? userDescription, string? userPhoto, bool isPhotoReal, bool isMediaPhoto)
         {
             Id = id;
             UserName = userName;
             UserRealName = userRealName;
             UserDescription = userDescription;
-            UserPhoto = userPhoto;
+            UserMedia = userPhoto;
             IsPhotoReal = isPhotoReal;
+            IsMediaPhoto = isMediaPhoto;
         }
 
         public UserBaseInfo(UserBaseInfo model)
@@ -30,7 +35,7 @@ namespace MyWebApi.Entities.UserInfoEntities
             UserName = model.UserName;
             UserRealName = model.UserRealName;
             UserDescription = model.UserDescription;
-            UserPhoto = model.UserPhoto;
+            UserMedia = model.UserMedia;
             IsPhotoReal = model.IsPhotoReal;
         }
 

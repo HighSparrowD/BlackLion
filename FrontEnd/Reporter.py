@@ -5,6 +5,7 @@ from telebot.types import ReplyKeyboardMarkup, KeyboardButton
 
 from Common.Menues import go_back_to_main_menu
 from Core import HelpersMethodes as Helpers
+from Helper import Helper
 
 
 class Reporter:

@@ -16,5 +16,6 @@ namespace MyWebApi.Entities.TestEntities
         public int Score { get; set; }
         [NotNull]
         public string Result { get; set; }
+        public string Tags { get; set; }
     }
 }

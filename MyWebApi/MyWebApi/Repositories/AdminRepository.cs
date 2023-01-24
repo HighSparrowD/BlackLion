@@ -143,12 +143,6 @@ namespace MyWebApi.Repositories
                     _contx.USER_INVITATION_CREDENTIALS.Remove(userInvitationCreds);
                     await _contx.SaveChangesAsync();
                 }
-
-                if (userLocation != null)
-                {
-                    _contx.USER_LOCATIONS.Remove(userLocation);
-                    await _contx.SaveChangesAsync();
-                }
                 if (userAchievements.Count > 0)
                 {
                     _contx.USER_ACHIEVEMENTS.RemoveRange(userAchievements);
@@ -172,6 +166,11 @@ namespace MyWebApi.Repositories
                 if (userNotifications1.Count > 0)
                 {
                     _contx.USER_NOTIFICATIONS.RemoveRange(userNotifications1);
+                    await _contx.SaveChangesAsync();
+                }
+                if (userLocation != null)
+                {
+                    _contx.USER_LOCATIONS.Remove(userLocation);
                     await _contx.SaveChangesAsync();
                 }
                 if (sponsorRatings.Count > 0)
@@ -425,7 +424,8 @@ namespace MyWebApi.Repositories
                         testId = await _contx.tests.CountAsync() + 1;
 
                     var lastQuestionId = await _contx.tests_questions.CountAsync();
-                    var lastAnswerId = await _contx.tests_answers.CountAsync() + 1;
+                    var lastAnswerId = await _contx.tests_answers.CountAsync();
+                    var lastResultId = await _contx.tests_results.CountAsync();
 
                     var results = new List<TestResult>();
                     var questions = new List<TestQuestion>();
@@ -463,20 +463,24 @@ namespace MyWebApi.Repositories
                                 Text = answer.Text,
                                 Value = answer.Value,
                                 IsCorrect = answer.IsCorrect,
-                                TestQuestionId = lastQuestionId
+                                TestQuestionId = lastQuestionId,
+                                Tags = answer.Tags
                             });
                         }
                     }
 
                     foreach (var result in model.Results)
                     {
+                        lastResultId++;
+
                         results.Add(new TestResult
                         {
-                            Id = await _contx.tests_results.CountAsync() + 1,
+                            Id = lastResultId,
                             Result = result.Result,
                             Score = result.Score,
                             TestId = test.Id,
-                            TestClassLocalisationId = test.ClassLocalisationId
+                            TestClassLocalisationId = test.ClassLocalisationId,
+                            Tags = result.Tags
                         });
                     }
 
@@ -504,7 +508,7 @@ namespace MyWebApi.Repositories
         public async Task<string> GetUserPhotoAsync(long userId)
         {
             return await _contx.SYSTEM_USERS_BASES.Where(b => b.Id == userId)
-                .Select(u => u.UserPhoto)
+                .Select(u => u.UserMedia)
                 .FirstOrDefaultAsync();
         }
 
@@ -563,7 +567,7 @@ namespace MyWebApi.Repositories
                 if (model.UserLanguages.Count > langCount)
                     throw new Exception($"This user cannot have more than {langCount} languages !");
                 
-                uBase = new UserBaseInfo(model.Id + rand.Next(8000), model.UserName, model.UserRealName, model.UserDescription, model.UserPhoto, model.IsPhotoReal);
+                uBase = new UserBaseInfo(model.Id + rand.Next(8000), model.UserName, model.UserRealName, model.UserDescription, model.UserMedia, model.IsPhotoReal, model.IsMediaPhoto);
                 uData = new UserDataInfo
                 {
                     Id = uBase.Id,

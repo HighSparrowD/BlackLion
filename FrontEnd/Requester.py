@@ -1,8 +1,7 @@
-import random
-
 import telegram
 from telebot.types import KeyboardButton, ReplyKeyboardMarkup
 from Core import HelpersMethodes as Helpers
+from Helper import Helper
 from ReportModule import ReportModule
 
 
@@ -18,6 +17,8 @@ class Requester:
 
         self.current_managed_user = None
         self.current_managed_user_id = None
+
+        self.active_section = None
 
         Helpers.switch_user_busy_status(self.current_user)
 
@@ -41,9 +42,13 @@ class Requester:
                  KeyboardButton("/feedback"),
                  KeyboardButton("/settings"))
 
+        self.helpHandler = self.bot.register_message_handler(self.help_handler, commands=["help"], user_id=self.current_user)
+
         self.start(message)
 
     def start(self, message, acceptMode=False):
+        self.active_section = self.start
+
         if not acceptMode:
             self.bot.send_message(self.current_user, self.start_message, reply_markup=self.start_markup)
             self.bot.register_next_step_handler(message, self.start, acceptMode=True, chat_id=self.current_user)
@@ -59,17 +64,21 @@ class Requester:
                 self.bot.register_next_step_handler(message, self.start, acceptMode=True, chat_id=self.current_user)
 
     def process_request(self, message, acceptMode=False):
+        self.active_section = self.process_request
         if not acceptMode:
             if self.set_current_request():
 
                 self.get_request_sender_data()
 
                 if self.current_request["isLikedBack"]:
-                    self.bot.send_photo(self.current_user, self.current_managed_user["userPhoto"], f"<b>{self.current_request['description']}</b>\n\n{self.current_managed_user['userDescription']}", reply_markup=self.markup, parse_mode=telegram.ParseMode.HTML)
+                    self.bot.send_photo(self.current_user, self.current_managed_user["userMedia"], f"<b>{self.current_request['description']}</b>\n\n{self.current_managed_user['userDescription']}", reply_markup=self.markup, parse_mode=telegram.ParseMode.HTML)
+                    Helpers.delete_user_request(self.current_request["id"])
+                    self.request_list.pop(0)
                     self.process_request(message)
+                    # self.bot.register_next_step_handler(message, self.process_request, acceptMode=True, chat_id=self.current_user)
                     return
 
-                self.bot.send_photo(self.current_user, self.current_managed_user["userPhoto"], f"<b>Someone have liked you</b>\n\n{self.current_managed_user['userDescription']}", reply_markup=self.markup, parse_mode=telegram.ParseMode.HTML)
+                self.bot.send_photo(self.current_user, self.current_managed_user["userMedia"], f"<b>Someone have liked you</b>\n\n{self.current_managed_user['userDescription']}", reply_markup=self.markup, parse_mode=telegram.ParseMode.HTML)
                 self.bot.register_next_step_handler(message, self.process_request, acceptMode=True, chat_id=self.current_user)
             else:
                 self.destruct()
@@ -87,6 +96,7 @@ class Requester:
     def accept_request(self, message):
         msg = Helpers.register_user_request(self.current_user, self.current_managed_user["id"], True)
         self.bot.send_message(self.current_user, msg)
+        self.request_list.pop(0)
         self.process_request(message)
 
     def accept_all_requests(self, message):
@@ -94,20 +104,22 @@ class Requester:
             self.current_request = request
             self.get_request_sender_data()
             self.accept_request(message)
+        self.request_list.clear()
         self.destruct()
 
     def decline_all_requests(self):
         Helpers.delete_user_requests(self.current_user)
+        self.request_list.clear()
         self.destruct()
 
     def decline_request(self, message):
         Helpers.delete_user_request(self.current_request["id"])
+        self.request_list.pop(0)
         self.process_request(message)
 
     def set_current_request(self):
         if len(self.request_list) > 0:
             self.current_request = self.request_list[0]
-            self.request_list.pop(0)
             return True
         return False
 
@@ -116,10 +128,14 @@ class Requester:
         self.current_managed_user_id = user["userId"]
         self.current_managed_user = user["userBaseInfo"]
 
-    def destruct(self):
+    def help_handler(self, message):
+        Helper(self.bot, message, self.active_section)
 
+    def destruct(self):
         self.bot.send_message(self.current_user, "That is all for now :)")
         Helpers.switch_user_busy_status(self.current_user)
+
+        self.bot.message_handlers.remove(self.helpHandler)
 
         if self.returnMethod:
             self.returnMethod(self.message)

@@ -14,6 +14,7 @@ namespace MyWebApi.Entities.TestEntities
         public double Value { get; set; }
         [NotNull]
         public long TestQuestionId { get; set; }
+        public string Tags { get; set; }
         public bool IsCorrect { get; set; }
     }
 }

@@ -1,3 +1,4 @@
+import copy
 import json
 
 import requests
@@ -5,6 +6,7 @@ import telegram
 from telebot.types import ReplyKeyboardMarkup, KeyboardButton
 
 from Core import HelpersMethodes as Helpers
+from Helper import Helper
 
 
 class ReportModule:
@@ -16,6 +18,9 @@ class ReportModule:
         self.return_method = return_method
 
         self.dontAddToBlackList = dontAddToBlackList
+
+        self.current_section = None
+        self.edit_mode = False
 
         self.reasons_markup = None
         self.report_reasons = {}
@@ -45,9 +50,15 @@ class ReportModule:
         self.invalid_text = "No such option"
         self.checkout_message = "1. Change report reason\n2. Change report text\n3.Submit report\n4.Abort"
 
+        self.helpHandler = self.bot.register_message_handler(self.help_handler, commands=["help"], user_id=self.current_user)
+
         self.report_step1(msg)
 
     def report_step1(self, message, acceptMode=False, editMode=False):
+        #Set params to smoothly go back from Helper Module
+        self.current_section = self.report_step1
+        self.edit_mode = copy.copy(editMode)
+
         if not acceptMode:
             self.load_report_reasons(self.user_language)
             self.reasons_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
@@ -61,6 +72,7 @@ class ReportModule:
             self.bot.register_next_step_handler(message, self.report_step1, acceptMode=True, editMode=editMode, chat_id=self.current_user)
         else:
             if message.text == "/abort":
+                self.edit_mode = None
                 self.abort_checkout(message, stage=self.report_step1, editMode=editMode)
                 return
 
@@ -73,8 +85,10 @@ class ReportModule:
                                     }
 
                 if not editMode:
+                    self.edit_mode = None
                     self.report_user(message)
                 else:
+                    self.edit_mode = None
                     self.report_user_final(message)
 
             else:
@@ -82,19 +96,30 @@ class ReportModule:
                 self.bot.register_next_step_handler(message, self.report_step1, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
 
     def report_user(self, message, acceptMode=False, editMode=False):
+        # Set params to smoothly go back from Helper Module
+        self.current_section = self.report_user
+        self.edit_mode = copy.copy(editMode)
+
         if not acceptMode:
             self.bot.send_message(self.current_user, "Please, enter a brief description of your report", reply_markup=self.ASmarkup)
             self.bot.register_next_step_handler(message, self.report_user, acceptMode=True, editMode=editMode, chat_id=self.current_user)
         else:
             if message.text == "/abort":
                 self.abort_checkout(message, stage=self.report_user, editMode=editMode)
+                self.edit_mode = None
                 return
             elif message.text == "/skip":
                 self.report_data["text"] = message.text
+                self.edit_mode = None
 
+            self.edit_mode = None
             self.report_user_final(message)
 
     def report_user_final(self, message, acceptMode=False):
+        # Set params to smoothly go back from Helper Module
+        self.current_section = self.report_user_final
+        self.edit_mode = None
+
         if not acceptMode:
             self.bot.send_message(self.current_user, f"Would you like to change anything before submitting the report?\n{self.checkout_message}", reply_markup=self.checkoutMarkup)
             self.bot.register_next_step_handler(message, self.report_user_final, acceptMode=True, chat_id=self.current_user)
@@ -118,22 +143,32 @@ class ReportModule:
                 self.bot.register_next_step_handler(message, self.report_user_final, acceptMode=acceptMode, chat_id=self.current_user)
 
     def abort_checkout(self, message, stage=None, editMode=None, acceptMode=False):
+        # Set params to smoothly go back from Helper Module
+        self.current_section = self.abort_checkout
+        self.edit_mode = copy.copy(editMode)
         if not acceptMode:
             self.bot.send_message(self.current_user, "Are you sure you want to abort ?", reply_markup=self.YNmarkup)
             self.bot.register_next_step_handler(message, self.abort_checkout, stage=stage, acceptMode=True, chat_id=self.current_user)
         else:
             if message.text == "yes":
                 self.destruct()
+                self.edit_mode = None
             elif message.text == "no":
                 if editMode is not None:
                     stage(message, editMode=editMode)
+                    self.edit_mode = None
                     return
+                self.edit_mode = None
                 stage(message)
             else:
+                self.edit_mode = None
                 self.bot.send_message(self.current_user, "No such option", reply_markup=self.YNmarkup)
                 self.bot.register_next_step_handler(message, self.abort_checkout, stage=stage, acceptMode=acceptMode, chat_id=self.current_user)
 
     def add_user_to_blacklist_step(self, message, acceptMode=False):
+        # Set params to smoothly go back from Helper Module
+        self.current_section = self.add_user_to_blacklist_step
+        self.edit_mode = None
         if not acceptMode:
             self.bot.send_message(self.current_user, "Would you like to add this user to your blacklist?\nThus you wont have problem with him ever again", reply_markup=self.YNmarkup)
             self.bot.register_next_step_handler(message, self.add_user_to_blacklist_step, acceptMode=True, chat_id=self.current_user)
@@ -146,6 +181,9 @@ class ReportModule:
             else:
                 self.bot.send_message(self.current_user, "No such option", reply_markup=self.YNmarkup)
                 self.bot.register_next_step_handler(message, self.add_user_to_blacklist_step, acceptMode=acceptMode, chat_id=self.current_user)
+
+    def help_handler(self):
+        Helper(self.bot, self.message, self.current_section, editMode=self.edit_mode)
 
     def load_report_reasons(self, localisationId):
         data = json.loads(requests.get(f"https://localhost:44381/GetReportReasons/{localisationId}", verify=False).text)
@@ -170,6 +208,7 @@ class ReportModule:
 
     def destruct(self):
         self.bot.send_message(self.current_user, "Done :)")
+        self.bot.message_handlers.remove(self.helpHandler)
         self.return_method()
         del self
         return False

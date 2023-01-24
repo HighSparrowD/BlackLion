@@ -57,7 +57,7 @@ def count_pages(section_elements, current_markup_elements, markup_pages_count, p
     count = ceil(len(section_elements) / 5)
 
     if prefs:
-        markup.add(InlineKeyboardButton("Same as mine", callback_data=-5))
+        markup.add(InlineKeyboardButton("⚡ Same as mine ⚡", callback_data=-5))
     for element in list(section_elements):
         if len(section_elements) > 5:
             element_count_on_page = 5
@@ -102,6 +102,12 @@ def reset_pages(current_markup_elements, markup_last_element, markup_page, marku
     markup_last_element = 0
     markup_page = 1
     markup_pages_count = 0
+
+
+def index_converter(index):
+    if index == "-1":
+        return -1
+    return 1
 
 
 def add_tick_to_element(bot, userId, messageId, current_markup_elements, markup_page, element_index):

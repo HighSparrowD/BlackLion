@@ -1,8 +1,9 @@
 import copy
 
+import telegram
 from telebot.types import KeyboardButton, ReplyKeyboardMarkup
 from Core import HelpersMethodes as Helpers
-from Common.Menues import count_pages, assemble_markup, reset_pages, add_tick_to_element, remove_tick_from_element
+from Common.Menues import count_pages, assemble_markup, reset_pages, add_tick_to_element, remove_tick_from_element, index_converter
 import requests
 import json
 
@@ -17,10 +18,11 @@ class Registrator:
         self.return_method = return_method
         self.previous_item = '' #Is used to remove a tick from single-type items (country, city, etc..)
         self.current_inline_message_id = 0 #Represents current message with inline markup
-        self.current_user = self.msg.from_user.id
+        self.current_user = msg.from_user.id
         Helpers.switch_user_busy_status(self.current_user)
         self.hasVisited = hasVisited
         self.okMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(KeyboardButton("Ok"))
+        self.YNmarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Yes", "No")
         self.chCode = self.bot.register_callback_query_handler("", self.callback_handler, user_id=self.current_user)
         #TODO: Replace with another method
         self.localisation = json.loads(requests.get("https://localhost:44381/GetLocalisation/0", verify=False).text)
@@ -47,6 +49,7 @@ class Registrator:
         self.communication_pref_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
         self.age_pref_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
         self.skip_markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("skip")
+        self.go_backMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("Go Back")
 
         self.app_language = localizationIndex
 
@@ -75,9 +78,8 @@ class Registrator:
         self.reply_voice = ""
         self.reply_text = ""
 
-        self.get_localisations()
-
         if not hasVisited:
+            self.get_localisations()
             self.spoken_language_step(msg)
         else:
             self.current_user_data = Helpers.get_user_info(self.current_user)
@@ -101,7 +103,7 @@ class Registrator:
                 self.data["id"] = self.current_user
                 self.data["userRealName"] = base["userRealName"]
                 self.data["userDescription"] = base["userRawDescription"]
-                self.data["userPhoto"] = base["userPhoto"]
+                self.data["userMedia"] = base["userMedia"]
                 self.data["reasonId"] = data["reasonId"]
                 self.data["userAge"] = data["userAge"]
                 self.data["userLanguages"] = self.chosen_langs
@@ -115,6 +117,7 @@ class Registrator:
                 self.data["userGenderPrefs"] = prefs["userGenderPrefs"]
                 self.data["tags"] = self.tags
                 self.data["isPhotoReal"] = base["isPhotoReal"]
+                self.data["isMediaPhoto"] = base["isMediaPhoto"]
 
                 self.get_localisations()
 
@@ -196,13 +199,6 @@ class Registrator:
                 if lang:  # TODO: Get string, separate by , and process it
                     if lang not in self.chosen_langs:
                         if len(self.chosen_langs) + 1 > self.lang_limit:
-                            if Helpers.check_user_has_premium(self.current_user):
-                                self.chosen_langs.append(lang)
-                                add_tick_to_element(self.bot, self.current_user, self.current_inline_message_id,
-                                                    self.current_markup_elements,
-                                                    self.markup_page, str(lang))
-                                self.bot.send_message(self.current_user, "Added", reply_markup=self.okMarkup)
-                                return False
                             self.bot.send_message(self.current_user, f"Sorry, users without premium can chose only up to {self.lang_limit} languages", reply_markup=self.okMarkup)
                         else:
                             self.chosen_langs.append(lang)
@@ -226,7 +222,6 @@ class Registrator:
 
             if self.chosen_langs:
                 self.old_queries.append(self.current_query)
-                self.msg = msg
                 self.data["userLanguages"] = self.chosen_langs
 
                 if not editMode:
@@ -259,7 +254,6 @@ class Registrator:
             self.bot.send_message(self.msg.chat.id, "What is your gender?", reply_markup=self.gender_markup)
             self.bot.register_next_step_handler(msg, self.gender_step, acceptMode=True, editMode=editMode, chat_id=self.current_user)
         else:
-            self.msg = msg
             gender = self.gender_converter(msg.text)
             if gender or gender == 0:
                 self.data["userGender"] = self.gender_converter(msg.text)
@@ -285,7 +279,6 @@ class Registrator:
         else:
             reason = self.reason_convertor(msg.text)
             if reason or reason == 0:
-                self.msg = msg
                 self.data["reasonId"] = reason
 
                 if not editMode:
@@ -307,7 +300,6 @@ class Registrator:
             b3 = KeyboardButton("Does not matter")
 
             self.communication_pref_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(b1, b2, b3)
-            self.msg = msg
 
             self.bot.send_message(msg.chat.id, "How would you like to communicate?", reply_markup=self.communication_pref_markup)
 
@@ -316,7 +308,6 @@ class Registrator:
             comm_pref = self.communication_pref_convertor(msg.text)
             if comm_pref or comm_pref == 0:
                 self.old_queries.append(self.current_query)
-                self.msg = msg
                 self.data["communicationPrefs"] = comm_pref
 
                 if not editMode:
@@ -346,8 +337,8 @@ class Registrator:
             self.previous_item = ''
 
             self.current_inline_message_id = \
-                self.bot.send_message(self.msg.chat.id, "Which country do you live in?", reply_markup=markup).json[
-                    'message_id']
+                self.bot.send_message(self.msg.chat.id, "Which country do you live in?", reply_markup=markup).id#.json[
+                    #'message_id']
 
             if editMode:
                 self.previous_item = str(self.country)
@@ -359,14 +350,14 @@ class Registrator:
                 m = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Does not matter", row_width=2).add("ok", row_width=1)
                 self.bot.send_message(self.current_user, "Choose one from above Or Press 'Does not matter' button if you want to skip location part", reply_markup=m)
             else:
-                self.bot.send_message(self.msg.chat.id, "Choose one from above", reply_markup=self.okMarkup)
+                self.bot.send_message(self.current_user, "Choose one from above. Or simply type country name to chat", reply_markup=self.okMarkup)
 
             self.bot.register_next_step_handler(msg, self.location_step, acceptMode=True, editMode=editMode, chat_id=self.current_user)
         else:
             if not msg.text:
                 self.bot.send_message(self.current_user,
                                       "Country was not recognized, try finding it in our list above")
-                self.bot.register_next_step_handler(msg, self.spoken_language_step, acceptMode=acceptMode,
+                self.bot.register_next_step_handler(msg, self.location_step, acceptMode=acceptMode,
                                                     editMode=editMode, chat_id=self.current_user)
                 return False
 
@@ -415,7 +406,6 @@ class Registrator:
 
             if self.country or self.country == 0:
                 self.old_queries.append(self.current_query)
-                self.msg = msg
                 self.data["userCountryCode"] = self.country
                 self.previous_item = ''
 
@@ -463,7 +453,7 @@ class Registrator:
         else:
             if not msg.text:
                 self.bot.send_message(self.current_user,
-                                      "Language was not recognized, try finding it in our list above")
+                                      "City was not recognized, try finding it in our list above")
                 self.bot.register_next_step_handler(msg, self.spoken_language_step, acceptMode=acceptMode,
                                                     editMode=editMode, chat_id=self.current_user)
                 return False
@@ -492,7 +482,6 @@ class Registrator:
 
             if self.city or self.city == 0:
                 self.old_queries.append(self.current_query)
-                self.msg = msg
                 self.previous_item = ''
                 self.data["userCityCode"] = self.city
 
@@ -517,6 +506,11 @@ class Registrator:
                 if "userRealName" not in self.data:
                     self.data["userRealName"] = msg.text
 
+                if len(msg.text) > 50:
+                    self.bot.send_message(self.current_user, "Name cannot be longer than 50 characters")
+                    self.bot.register_next_step_handler(msg, self.name_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
+                    return
+
                 if not editMode:
                     self.age_step(msg)
                 else:
@@ -531,13 +525,21 @@ class Registrator:
         if not acceptMode:
             self.question_index = 7
 
-            self.msg = msg
             self.bot.send_message(msg.chat.id, "How old are you?")
             self.bot.register_next_step_handler(msg, self.age_step, acceptMode=True, editMode=editMode, chat_id=self.current_user)
         else:
             try:
-                self.data["userAge"] = int(msg.text)
-                self.msg = msg
+                age = int(msg.text)
+                if age > 100:
+                    self.bot.send_message(msg.chat.id, "Age cannot be grater than 100 :)")
+                    self.bot.register_next_step_handler(msg, self.age_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
+                    return
+                elif age < 12:
+                    self.bot.send_message(msg.chat.id, "Minimal age is 12 :)")
+                    self.bot.register_next_step_handler(msg, self.age_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
+                    return
+
+                self.data["userAge"] = age
 
                 if not editMode:
                     self.description_step(msg)
@@ -556,7 +558,11 @@ class Registrator:
             self.bot.register_next_step_handler(msg, self.description_step, acceptMode=True, editMode=editMode, chat_id=self.current_user)
         else:
             if msg.text:
-                self.msg = msg
+
+                if len(msg.text) > 1000:
+                    self.bot.send_message(self.current_user, "Description cannot contain more than 1000 characters")
+                    self.bot.register_next_step_handler(msg, self.description_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
+
                 self.data["userDescription"] = msg.text
 
                 if not editMode:
@@ -573,21 +579,37 @@ class Registrator:
         if not acceptMode:
             self.question_index = 10
 
-            self.bot.send_message(msg.chat.id, "Send your photo")
+            self.bot.send_message(msg.chat.id, "Send your photo or video (15 seconds max)")
+
+            #Warn user about the consequences of changing media
+            if self.hasVisited:
+                self.bot.send_message(self.current_user, "Note, that changing your media will temporarily re-open your identity confirmation request and thus remove tick from your profile", reply_markup=self.go_backMarkup)
+
             self.bot.register_next_step_handler(msg, self.photo_step, acceptMode=True, editMode=editMode, chat_id=self.current_user)
         else:
             if msg.photo:
-                self.msg = msg
-                self.data["userPhoto"] = msg.photo[len(msg.photo) - 1].file_id  # TODO: troubleshoot photos
+                self.data["userMedia"] = msg.photo[len(msg.photo) - 1].file_id  # TODO: troubleshoot photos
+                self.data["isMediaPhoto"] = True
                 self.photo_confirmation_step(msg, editMode=editMode)
+            elif msg.video:
+                if msg.video.duration > 15:
+                    self.bot.send_message(self.current_user, "Video cannot be longer than 15 seconds")
+                    self.bot.register_next_step_handler(msg, self.photo_step, acceptMode=acceptMode, editMode=editMode,chat_id=self.current_user)
+                    return
+
+                self.data["userMedia"] = msg.video.file_id
+                self.data["isMediaPhoto"] = False
+                self.photo_confirmation_step(msg, editMode=editMode)
+            elif msg.text == "Go Back" and self.hasVisited:
+                self.checkout_step(msg)
             else:
-                self.bot.send_message(self.current_user, "I can't find a photo in your message")
+                self.bot.send_message(self.current_user, "I can't find any media in this message")
                 self.bot.register_next_step_handler(msg, self.photo_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
 
     def photo_confirmation_step(self, msg, acceptMode=False, editMode=False):
         if not acceptMode:
             m = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("yes", "no")
-            self.bot.send_message(self.current_user, "Is that your photo ? ", reply_markup=m)
+            self.bot.send_message(self.current_user, "Are you present on that media ?", reply_markup=m) #TODO: Make statement clearer
             self.bot.register_next_step_handler(msg, self.photo_confirmation_step, acceptMode=True, editMode=editMode, chat_id=self.current_user)
         else:
             if msg.text == "yes":
@@ -618,7 +640,6 @@ class Registrator:
         else:
             gender = self.gender_converter(msg.text)
             if gender or gender == 0:
-                self.msg = msg
                 self.data["userGenderPrefs"] = gender
 
                 if not editMode:
@@ -643,7 +664,7 @@ class Registrator:
 
             self.current_inline_message_id = \
                 self.bot.send_message(msg.chat.id, "What languages are you willing to speak with people?",
-                                      reply_markup=markup).json['message_id']
+                                      reply_markup=markup, parse_mode=telegram.ParseMode.HTML).json['message_id']
 
             if editMode:
                 for l in self.pref_langs:
@@ -666,11 +687,14 @@ class Registrator:
                 lang = self.spoken_languages_convertor(msg_text)
                 if lang:  # TODO: Get string, separate by , and process it
                     if lang not in self.chosen_langs:
-                        self.chosen_langs.append(lang)
-                        add_tick_to_element(self.bot, self.current_user, self.current_inline_message_id,
-                                            self.current_markup_elements,
-                                            self.markup_page, str(lang))
-                        self.bot.send_message(self.current_user, "Added", reply_markup=self.okMarkup)
+                        if len(self.chosen_langs) + 1 > self.lang_limit:
+                            self.bot.send_message(self.current_user, f"Sorry, users without premium can chose only up to {self.lang_limit} languages", reply_markup=self.okMarkup)
+                        else:
+                            self.chosen_langs.append(lang)
+                            add_tick_to_element(self.bot, self.current_user, self.current_inline_message_id,
+                                                self.current_markup_elements,
+                                                self.markup_page, str(lang))
+                            self.bot.send_message(self.current_user, "Added", reply_markup=self.okMarkup)
                     else:
                         self.chosen_langs.remove(lang)
                         remove_tick_from_element(self.bot, self.current_user, self.current_inline_message_id,
@@ -728,7 +752,7 @@ class Registrator:
 
             self.current_inline_message_id = self.bot.send_message(self.msg.chat.id,
                                                                    "People from which countries would you like to communicate with?",
-                                                                   reply_markup=markup).json['message_id']
+                                                                   reply_markup=markup).id
 
             if editMode:
                 for c in self.pref_countries:
@@ -751,11 +775,14 @@ class Registrator:
                 country = self.country_convertor(msg_text)
                 if country:  # TODO: Get string, separate by , and process it
                     if country not in self.pref_countries:
-                        self.pref_countries.append(country)
-                        add_tick_to_element(self.bot, self.current_user, self.current_inline_message_id,
-                                            self.current_markup_elements,
-                                            self.markup_page, str(country))
-                        self.bot.send_message(self.current_user, "Added", reply_markup=self.okMarkup)
+                        if len(self.chosen_langs) + 1 > self.lang_limit:
+                            self.bot.send_message(self.current_user, f"Sorry, users without premium can chose only up to {self.lang_limit} countries", reply_markup=self.okMarkup)
+                        else:
+                            self.pref_countries.append(country)
+                            add_tick_to_element(self.bot, self.current_user, self.current_inline_message_id,
+                                                self.current_markup_elements,
+                                                self.markup_page, str(country))
+                            self.bot.send_message(self.current_user, "Added", reply_markup=self.okMarkup)
                     else:
                         self.pref_countries.remove(country)
                         remove_tick_from_element(self.bot, self.current_user, self.current_inline_message_id,
@@ -794,14 +821,19 @@ class Registrator:
     def age_pref_step(self, msg, acceptMode=False, editMode=False):
         if not acceptMode:
             self.question_index = 15
-            self.msg = msg
-            self.bot.send_message(msg.chat.id, "What age would you like your companion to be? Please, send a range of numbers\nExample: 18 - 25")
+            age_range = self.generate_personal_age_range()
+            self.bot.send_message(msg.chat.id, f"What age would you like your companion to be? Please, send a range of numbers\nExample: {age_range}")
             self.bot.register_next_step_handler(msg, self.age_pref_step, acceptMode=True, editMode=editMode, chat_id=self.current_user)
         else:
             try:
-                nums = msg.text.replace(" ", "").split("-")
-                age_pref = list(range(int(nums[0]), int(nums[1])))
-                self.data["agePrefs"] = age_pref
+                if "-" in msg.text:
+                    nums = msg.text.replace(" ", "").split("-")
+                    age_pref = list(range(int(nums[0]), int(nums[1])))
+                    self.data["agePrefs"] = age_pref
+
+                else:
+                    age_pref = list(range(int(msg.text) - 3, int(msg.text) + 5))
+                    self.data["agePrefs"] = age_pref
 
                 if not editMode:
                     self.tags_step(msg)
@@ -809,8 +841,7 @@ class Registrator:
                     self.checkout_step(msg)
 
             except:
-                self.bot.send_message(self.current_user, "Please, chose only ones in the list!",
-                                      reply_markup=self.age_pref_markup)
+                self.bot.send_message(self.current_user, "Single number or a Range of numbers please :)", reply_markup=self.age_pref_markup)
                 self.bot.register_next_step_handler(msg, self.age_pref_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
 
     def tags_step(self, msg, acceptMode=False, editMode=False):
@@ -864,12 +895,18 @@ class Registrator:
         else:
             if message.text == "skip":
                 self.bot.send_message(self.current_user, "Gotcha")
+                if not editMode:
+                    self.change_something_step(message)
+                    return
                 self.checkout_step(message)
 
             elif message.voice:
                 if Helpers.check_user_has_premium(self.current_user):
                     if message.voice.duration <= 15:
                         self.reply_voice = message.voice.file_id
+                        if not editMode:
+                            self.change_something_step(message)
+                            return
                         self.checkout_step(message)
                     else:
                         self.bot.send_message(self.current_user, "Up to 15 seconds, my friend", reply_markup=self.skip_markup)
@@ -881,6 +918,9 @@ class Registrator:
             elif message.text:
                 if len(message.text) < 300:
                     self.reply_text = message.text
+                    if not editMode:
+                        self.change_something_step(message)
+                        return
                     self.checkout_step(message)
                 else:
                     self.bot.send_message(self.current_user, "Up to 300 characters please", reply_markup=self.skip_markup)
@@ -889,7 +929,24 @@ class Registrator:
                 self.bot.send_message(self.current_user, "Empty message :(", reply_markup=self.skip_markup)
                 self.bot.register_next_step_handler(message, self.auto_reply_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
 
-    def checkout_step(self, msg, acceptMode=False):
+    def change_something_step(self, message, acceptMode=False):
+        if not acceptMode:
+            if self.data["isMediaPhoto"]:
+                self.bot.send_photo(self.current_user, self.data["userMedia"], f"That is how you profile will look like:\n<i><b>*Some parameters such as tags will be hidden*</b></i>\n\n{self.profile_constructor()}")
+            else:
+                self.bot.send_video(self.current_user, video=self.data["userMedia"], caption=f"That is how you profile will look like:\n<i><b>*Some parameters such as tags will be hidden*</b></i>\n\n{self.profile_constructor()}")
+            self.bot.send_message(self.current_user, "Would you like to change something?", reply_markup=self.YNmarkup)
+            self.bot.register_next_step_handler(message, self.change_something_step, acceptMode=True, chat_id=self.current_user)
+        else:
+            if message.text == "Yes":
+                self.checkout_step(message, firstTime=True)
+            elif message.text == "No":
+                self.tests_step(message)
+            else:
+                self.bot.send_message(self.current_user, "No such option", reply_markup=self.YNmarkup)
+                self.bot.register_next_step_handler(message, self.change_something_step, acceptMode=acceptMode, chat_id=self.current_user)
+
+    def checkout_step(self, msg, acceptMode=False, firstTime=False):
         change_markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18")
         final_msg = "18. ✨Finish the registration✨"
 
@@ -898,9 +955,17 @@ class Registrator:
 
         change_text = f"1. Change app language\n2. Change name\n3. Change description\n4. Add or remove languages you speak\n5. Change country\n6. Change city\n7. Change reason for using the bot\n8. Change age\n9. Change your gender\n10. Change profile photo\n11. Languages the encountered users speak\n12. Country the encountered users are located\n13. Encountered users age\n14. Preferred gender\n15. Communication preferences\n16. Change tags\n17. Change Auto-reply message\n{final_msg}"
 
+        #Add discard changes button if user exists
+        if self.hasVisited:
+            change_text += "\n19. ✨Discard changes✨"
+
         if not acceptMode:
-            self.bot.send_photo(self.current_user, self.data["userPhoto"], f"That is how you profile will look like:\n*Some parameters such as tags will be hidden*\n{self.profile_constructor()}")
-            self.bot.send_message(self.current_user, f"Wanna change something ?\n\n{change_text}", reply_markup=change_markup)
+            if not firstTime:
+                if self.data["isMediaPhoto"]:
+                    self.bot.send_photo(self.current_user, self.data["userMedia"], f"That is how you profile will look like:\n<i><b>*Some parameters such as tags will be hidden*</b></i>\n\n{self.profile_constructor()}")
+                else:
+                    self.bot.send_video(self.current_user, video=self.data["userMedia"], caption=f"That is how you profile will look like:\n<i><b>*Some parameters such as tags will be hidden*</b></i>\n\n{self.profile_constructor()}")
+            self.bot.send_message(self.current_user, change_text, reply_markup=change_markup)
             self.bot.register_next_step_handler(msg, self.checkout_step, acceptMode=True, chat_id=self.current_user)
         else:
             if msg.text == "1":
@@ -956,6 +1021,8 @@ class Registrator:
                 self.auto_reply_step(msg, editMode=True)
             elif msg.text == "18":
                 self.tests_step(msg, editMode=self.hasVisited)
+            elif self.hasVisited and msg.text == "19":
+                self.destruct()
             else:
                 self.bot.send_message(self.current_user, "No such option", reply_markup=change_markup)
                 self.bot.register_next_step_handler(msg, self.checkout_step, acceptMode=acceptMode, chat_id=self.current_user)
@@ -1002,6 +1069,7 @@ class Registrator:
 
         else:
             if msg.text == "yes":
+                self.bot.send_message(self.current_user, "You can call /help command at any time to get a hint about our functionality :)")
                 TestModule(self.bot, self.msg, isActivatedFromShop=False)
                 self.destruct()
             elif msg.text == "no":
@@ -1074,7 +1142,7 @@ class Registrator:
 
             if call.data == "-1" or call.data == "-2":
                 try:
-                    index = self.index_converter(call.data)
+                    index = index_converter(call.data)
                     if self.markup_page + index <= self.markup_pages_count or self.markup_page + index >= 1:
                         markup = assemble_markup(self.markup_page, self.current_markup_elements, index)
                         self.bot.edit_message_reply_markup(chat_id=call.message.chat.id, reply_markup=markup,
@@ -1083,20 +1151,12 @@ class Registrator:
                 except:
                     pass
 
-            elif "/" in call.data:      #TODO: Make it work another way... maybe
-                self.bot.answer_callback_query(call.id, call.data)
-
             elif self.question_index == 2:
                 if int(call.data) not in self.chosen_langs:
+                    #Notify user if limit had been exceeded
                     if len(self.chosen_langs) + 1 > self.lang_limit:
-                        if Helpers.check_user_has_premium(self.current_user):
-                            # self.bot.send_message(chatId, call.data)
-                            self.chosen_langs.append(int(call.data))
-                            self.bot.answer_callback_query(call.id, "Added")
-                            add_tick_to_element(self.bot, self.current_user, call.message.id, self.current_markup_elements,
-                                                self.markup_page, call.data)
-                            return False
                         self.bot.send_message(self.current_user, f"Sorry, users without premium can chose only up to {self.lang_limit} languages")
+                        return False
                     else:
                         # self.bot.send_message(chatId, call.data)
                         self.chosen_langs.append(int(call.data))
@@ -1120,7 +1180,7 @@ class Registrator:
                     add_tick_to_element(self.bot, self.current_user, call.message.id, self.current_markup_elements,
                                         self.markup_page, call.data)
                     self.previous_item = call.data
-                else:  # call.data in self.countries.values():
+                else:
                     self.bot.send_message(call.message.chat.id, "Incorrect country code")
 
             elif self.question_index == 5:
@@ -1149,12 +1209,14 @@ class Registrator:
                                           reply_markup=self.okMarkup)
 
                 elif int(call.data) not in self.pref_langs:
-                    # self.bot.send_message(chatId, call.data)
-                    self.pref_langs.append(int(call.data))
-                    self.bot.answer_callback_query(call.id, "Added")
-                    add_tick_to_element(self.bot, self.current_user, call.message.id, self.current_markup_elements,
-                                        self.markup_page, call.data)
-
+                    if len(self.pref_langs) + 1 > self.lang_limit:
+                        self.bot.send_message(self.current_user, f"Sorry, users without premium can chose only up to {self.lang_limit} languages")
+                        return False
+                    else:
+                        self.pref_langs.append(int(call.data))
+                        self.bot.answer_callback_query(call.id, "Added")
+                        add_tick_to_element(self.bot, self.current_user, call.message.id, self.current_markup_elements,
+                                            self.markup_page, call.data)
                 else:
                     self.pref_langs.remove(int(call.data))
                     self.bot.answer_callback_query(call.id, "Removed")
@@ -1172,17 +1234,34 @@ class Registrator:
 
                         add_tick_to_element(self.bot, self.current_user, self.current_inline_message_id, self.current_markup_elements, self.markup_page, str(self.country))
 
-
                 elif int(call.data) not in self.pref_countries:
-                    self.pref_countries.append(int(call.data))
-                    self.bot.answer_callback_query(call.id, "Added")
-                    add_tick_to_element(self.bot, self.current_user, call.message.id, self.current_markup_elements,
-                                        self.markup_page, call.data)
+                    if len(self.pref_countries) + 1 > self.lang_limit:
+                        self.bot.send_message(self.current_user, f"Sorry, users without premium can chose only up to {self.lang_limit} languages")
+                        return False
+                    else:
+                        self.pref_countries.append(int(call.data))
+                        self.bot.answer_callback_query(call.id, "Added")
+                        add_tick_to_element(self.bot, self.current_user, call.message.id, self.current_markup_elements,
+                                            self.markup_page, call.data)
                 else:
-                    self.pref_langs.remove(int(call.data))
+                    self.pref_countries.remove(int(call.data))
                     self.bot.answer_callback_query(call.id, "Removed")
                     remove_tick_from_element(self.bot, self.current_user, call.message.id, self.current_markup_elements,
                                         self.markup_page, call.data)
+
+    def generate_personal_age_range(self):
+        min_value = self.data["userAge"] - 3
+        max_value = self.data["userAge"] + 5
+
+        #Age below 12 is forbidden, thus, no need in that :)
+        # if min_value:
+        #     min_value = 0
+        #
+        # if max_value > 100:
+        #     max_value = 100
+
+        return f"{min_value} - {max_value}"
+
 
     def get_localisations(self):
         for language in json.loads(
@@ -1208,12 +1287,6 @@ class Registrator:
         for pref in json.loads(requests.get(f"https://localhost:44381/GetCommunicationPreferences/{self.app_language}",
                                             verify=False).text):
             self.communication_pref[pref["id"]] = pref["communicationPrefName"].strip()
-
-    @staticmethod
-    def index_converter(index):
-        if index == "-1":
-            return -1
-        return 1
 
     def destruct(self):
         self.bot.callback_query_handlers.remove(self.chCode)

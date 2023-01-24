@@ -1,7 +1,6 @@
 ﻿using System.Threading.Tasks;
 using System.Collections.Generic;
 using MyWebApi.Entities.UserInfoEntities;
-using MyWebApi.Entities.SecondaryEntities;
 using MyWebApi.Entities.ReportEntities;
 using MyWebApi.Entities.LocationEntities;
 using MyWebApi.Entities.ReasonEntities;
@@ -11,11 +10,9 @@ using MyWebApi.Entities.UserActionEntities;
 using MyWebApi.Entities.SponsorEntities;
 using MyWebApi.Entities.DailyTaskEntities;
 using MyWebApi.Enums;
-using static MyWebApi.Enums.SystemEnums;
 using MyWebApi.Entities.TestEntities;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MyWebApi.Entities.EffectEntities;
-using MyWebApi.Entities.AdminEntities;
+using MyWebApi.Entities.AdventureEntities;
 
 namespace MyWebApi.Interfaces
 {
@@ -81,7 +78,7 @@ namespace MyWebApi.Interfaces
         Task<Balance> GetUserWalletBalance(long userId);
         Task<int> TopUpUserWalletPointsBalance(long userId, int points, string description);
         Task<int> TopUpUserWalletPPBalance(long userId, int points, string description);
-        Task<bool> CheckUserHasPremium(long userId);
+        Task<bool> CheckUserHasPremiumAsync(long userId);
         Task<bool> CheckBalanceIsSufficient(long userId, int cost);
         Task<DateTime> GetPremiumExpirationDate(long userId);
         Task<DateTime> GrantPremiumToUser(long userId, int cost, int dayDuration, short currency);
@@ -135,7 +132,7 @@ namespace MyWebApi.Interfaces
         Task<bool?> CheckUserUsesPersonality(long userId);
         Task<bool> RegisterTestPassingAsync(TestPayload model, int testResult);
         Task<bool> UpdateTags(UpdateTags model);
-        Task<List<string>> GetTags(long userId);
+        Task<List<UserTag>> GetTags(long userId);
         Task<User> GetUserListByTagsAsync(GetUserByTags model);
         Task<bool> CheckEncounteredUserIsInBlackList(long userId, long encounteredUser);
         Task<string> RetreiveCommonLanguagesAsync(long user1Iq, long user2Id, int localisationId);
@@ -165,7 +162,8 @@ namespace MyWebApi.Interfaces
         Task<bool> CheckUserHaveChosenFreeParamAsync(long userId);
         Task<bool> CheckShouldTurnOffPersonalityAsync(long userId);
         Task<bool> SetUserFreeSearchParamAsync(long userId, bool freeStatus);
-        //Get which stats can user invest points in
+        Task<bool> SwitchUserFreeSearchParamAsync(long userId);
+        //Get stats user can invest points in
         Task<PersonalityCaps> GetUserPersonalityCapsAsync(long userId);
         Task<bool> SwitchUserRTLanguageConsiderationAsync(long userId);
         Task<bool> GetUserRTLanguageConsiderationAsync(long userId);
@@ -174,5 +172,18 @@ namespace MyWebApi.Interfaces
         Task<bool> CheckPromoIsCorrectAsync(long userId, string promoText, bool isActivatedBeforeRegistration);
         Task<bool> GetUserIncreasedFamiliarityAsync(long userId);
         Task<bool> SwitchIncreasedFamiliarityAsync(long userId);
+        Task<bool> AddUserCommercialVector(long userId, string tagString);
+
+        //Adventures
+        Task<Guid> RegisterAdventureAsync(Adventure model);
+        Task<bool> ChangeAdventureAsync(ChangeAdventure model);
+        Task<bool> DeleteAdventureAsync(Guid adventureId, long userId);
+        Task<bool> SubscribeOnAdventureAsync(Guid adventureId, long userId);
+        Task<bool> ProcessSubscriptionRequestAsync(Guid adventureId, long userId, AdventureRequestStatus status);
+        Task<List<AttendeeInfo>> GetAdventureAttendeesAsync(Guid adventureId);
+        Task<List<Adventure>> GetUsersSubscribedAdventuresAsync(long userId);
+        Task<List<Adventure>> GetUsersAdventuresAsync(long userId);
+        Task<GetAdventureCount> GetAdventureCountAsync(long userId);
+        Task<SimilarityBetweenUsers> GetSimilarityBetweenUsersAsync(long user1, long user2);
     }
 }

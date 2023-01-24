@@ -1,4 +1,4 @@
-TestId,Score,Result
+TestId,Score,Result,Tags
 1,38,"Test indicates high level of depression. Please note that the norms were based on nondepressed college
 students. So this result does not necessarily mean that you are seriously depressed. As always, if you suspect that you are, you should consult a mental
 health professional. "
@@ -10,4 +10,4 @@ students. So this result does not necessarily mean that you are seriously depres
 health professional. "
 1,60,"Test indicates normal emotional condition. Please note that the norms were based on nondepressed college
 students. So this result does not necessarily mean that you are absolutely OK. As always, if you suspect that you are not, you should consult a mental
-health professional. "
+health professional. ",stable acceptable

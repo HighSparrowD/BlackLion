@@ -54,6 +54,7 @@ def load_questions(testId):
                 "answers": load_answers(question[1], question[2])
             }
 
+            # Nullable check
             if not isinstance(question[3], float):
                q["photo"] = question[3]
 
@@ -71,18 +72,27 @@ def load_answers(questionId, testId=None):
     for answer in file:
         a = {}
 
+        tags = None
+        # Nullable check
+        if not isinstance(answer[5], float):
+            tags = answer[5]
+
         #If each question has its own answers
         if answer[3] > 0:
             if answer[3] == questionId:
                 a = {
                     "text": answer[0],
                     "value": answer[1],
+                    "tags": tags,
+                    # "serialNumber": answer[6]
                 }
         else:
             if answer[2] == testId:
                 a = {
                     "text": answer[0],
                     "value": answer[1],
+                    "tags": tags,
+                    # "serialNumber": answer[6]
                 }
 
         if not isinstance(answer[3], float):
@@ -101,9 +111,16 @@ def load_results(testId):
 
     for result in file:
         if result[0] == testId:
+
+            tags = None
+            # Nullable check
+            if not isinstance(result[3], float):
+                tags = result[3]
+
             r = {
                 "score": result[1],
-                "result": result[2]
+                "result": result[2],
+                "tags": tags
             }
 
             results.append(r)

@@ -15,16 +15,14 @@ from AdminCabinet import AdminCabinet
 from StartModule import StartModule
 
 bot = TeleBot("5488749379:AAEJ0t9RksogDD14zJLRYqSisBUpu2pS2WU") #TODO: relocate code to an .env file or db
+bot.parse_mode = telegram.ParseMode.HTML
 Menus.start_program_in_debug_mode(bot) #TODO: remove in production
 
 familiators = []
 random_talkers = []
-registrators = []
-requesters = []
 sponsor_handlers = []
 admin_sponsor_handlers = []
 admin_cabinets = []
-reporters = []
 
 
 @bot.message_handler(commands=["start"], is_multihandler=True)
@@ -64,6 +62,7 @@ def Report(message):
 def ShopC(message):
     if not Helpers.check_user_is_busy(message.from_user.id):
         create_shop(message)
+        return
 
 
 @bot.message_handler(commands=["sponsoraccount"])
@@ -95,18 +94,28 @@ def EnterAdminCabinet(message):
     if not Helpers.check_user_is_busy(message.from_user.id):
         create_admin_cabinet(message)
 
-# bot.edi
+
 @bot.message_handler(commands=["settings"])
 def settings(message):
     if not Helpers.check_user_is_busy(message.from_user.id):
         Settings(bot, message)
 
 
-@bot.message_handler(content_types=["video_note"])
+@bot.message_handler(commands=["help"], is_multihandler=True)
+def help(message):
+    if Helpers.check_user_is_busy(message.from_user.id):
+        pass
+
+
+@bot.message_handler()
 def test(message):
-    if message.voice:
-        if message.voice.duration < 15:
-            bot.send_voice(message.from_user.id, message.voice.file_id)
+    try:
+        t = bot.get_sticker_set(message.text.replace("/test", ""))
+        bot.send_sticker(message.chat.id, t.stickers[0].file_id)
+    except:
+        pass
+    # bot.send_message(message.from_user.id, "* A list item With multiple paragraphs* Bar", parse_mode=telegram.ParseMode.MARKDOWN_V2)
+    # bot.send_message(message.from_user.id, "term: definition")
 
 
 def create_registrator(message):
@@ -155,9 +164,9 @@ def create_reporter(message):
     if Helpers.check_user_exists(message.from_user.id):
         if not Helpers.check_user_is_banned(message.from_user.id):
             if not Helpers.check_user_is_deleted(message.from_user.id):
-                language = int(json.loads(requests.get(f"https://localhost:44381/GetUserLanguagePrefs/{message.from_user.id}", verify=False).text))
+                language = int(requests.get(f"https://localhost:44381/GetUserAppLanguage/{message.from_user.id}", verify=False).text)
                 visit = Helpers.check_user_has_visited_section(message.from_user.id, 7)
-                return FeedbackModule(bot, message, language, reporters, visit)
+                return FeedbackModule(bot, message, language, visit)
             else:
                 bot.send_message(message.from_user.id, "Hey! your account had been deleted recently. Would you like to pass a quick registration and save all your lost data?\n Then hit /register !")
         else:

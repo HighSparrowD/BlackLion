@@ -16,6 +16,8 @@ using MyWebApi.Entities.TestEntities;
 using static MyWebApi.Enums.SystemEnums;
 using MyWebApi.Entities.AdminEntities;
 using MyWebApi.Entities.EffectEntities;
+using MyWebApi.Entities.AdventureEntities;
+using MyWebApi.Enums;
 
 namespace MyWebApi.Controllers
 {
@@ -78,7 +80,7 @@ namespace MyWebApi.Controllers
         [HttpGet("/UserInfo/{userId}")]
         public async Task<ActionResult<User>> GetUserInfo(long userId)
         {
-            return await _repository.GetUserInfoAsync(userId);
+            return Ok(await _repository.GetUserInfoAsync(userId));
         }
 
         [HttpPost("/UpdateUserProfile")]
@@ -100,7 +102,7 @@ namespace MyWebApi.Controllers
                     location.CountryClassLocalisationId = model.UserAppLanguageId;
                 }
 
-                var uBase = new UserBaseInfo(model.Id, model.UserName, model.UserRealName, "", model.UserPhoto, model.IsPhotoReal);
+                var uBase = new UserBaseInfo(model.Id, model.UserName, model.UserRealName, "", model.UserMedia, model.IsPhotoReal, model.IsMediaPhoto);
                 uBase.UserRawDescription = model.UserDescription;
                 var uData = new UserDataInfo
                 {
@@ -120,7 +122,7 @@ namespace MyWebApi.Controllers
                             if ((await _repository.UpdateUserBaseAsync(uBase)) == 1)
                                 if ((await _repository.UpdateUserPreferencesAsync(uPrefs)) == 1)
                                     return 1;
-            return 0;
+                return 0;
             }
 
             return 1;
@@ -255,7 +257,7 @@ namespace MyWebApi.Controllers
                 throw new Exception($"This user cannot have more than {langCount} languages !");
 
             Location location = null;
-            var uBase = new UserBaseInfo(model.Id, model.UserName, model.UserRealName, model.UserDescription, model.UserPhoto, model.IsPhotoReal);
+            var uBase = new UserBaseInfo(model.Id, model.UserName, model.UserRealName, model.UserDescription, model.UserMedia, model.IsPhotoReal, model.IsMediaPhoto);
             var uData = new UserDataInfo
             {
                 Id = model.Id,
@@ -439,7 +441,7 @@ namespace MyWebApi.Controllers
         [HttpGet("/CheckUserHasPremium/{userId}")]
         public async Task<bool> CheckUserHasPremium(long userId)
         {
-            return await _repository.CheckUserHasPremium(userId);
+            return await _repository.CheckUserHasPremiumAsync(userId);
         }
 
         [HttpGet("/CheckBalanceIsSufficient/{userId}/{cost}")]
@@ -764,7 +766,7 @@ namespace MyWebApi.Controllers
         }
 
         [HttpGet("/GetTags/{userId}")]
-        public async Task<List<string>> UpdateTags(long userId)
+        public async Task<List<UserTag>> UpdateTags(long userId)
         {
             return await _repository.GetTags(userId);
         }
@@ -778,7 +780,7 @@ namespace MyWebApi.Controllers
         [HttpGet("/GetMaxTagCount/{userId}")]
         public async Task<int> GetMaxTagCount(long userId)
         {
-            if (await _repository.CheckUserHasPremium(userId))
+            if (await _repository.CheckUserHasPremiumAsync(userId))
             {
                 return 50;
             }
@@ -893,6 +895,12 @@ namespace MyWebApi.Controllers
             return await _repository.SetUserFreeSearchParamAsync(userId, freeSearch);
         }
 
+        [HttpGet("/SwitchUserFreeSearchParam/{userId}")]
+        public async Task<bool> SwitchUserFreeSearchParam(long userId)
+        {
+            return await _repository.SwitchUserFreeSearchParamAsync(userId);
+        }
+
         [HttpGet("/CheckUserHaveChosenFreeParam/{userId}")]
         public async Task<bool> CheckUserHaveChosenFreeParam(long userId)
         {
@@ -915,6 +923,12 @@ namespace MyWebApi.Controllers
         public async Task<List<ActiveEffect>> GetUserActiveEffects(long userId)
         {
             return await _repository.GetUserActiveEffects(userId);
+        }
+
+        [HttpGet("/CheckUserHasEffect/{userId}/{effectId}")]
+        public async Task<bool> CheckUserHasEffect(long userId, int effectId)
+        {
+            return await _repository.CheckUserHasEffectAsync(userId, effectId);
         }
 
         [HttpGet("/ActivateDurableEffect/{userId}/{effectId}")]
@@ -1003,6 +1017,67 @@ namespace MyWebApi.Controllers
         public async Task<bool> SwitchIncreasedFamiliarity(long userId)
         {
             return await _repository.SwitchIncreasedFamiliarityAsync(userId);
+        }
+
+        //Adventures
+        [HttpPost("/RegisterAdventure")]
+        public async Task<Guid> RegisterAdventure(Adventure model)
+        {
+            return await _repository.RegisterAdventureAsync(model);
+        }
+
+        [HttpPost("/ChangeAdventure")]
+        public async Task<bool> ChangeAdventure(ChangeAdventure model)
+        {
+            return await _repository.ChangeAdventureAsync(model);
+        }
+
+        [HttpDelete("/DeleteAdventure/{id}/{userId}")]
+        public async Task<bool> DeleteAdventure(Guid id, long userId)
+        {
+            return await _repository.DeleteAdventureAsync(id, userId);
+        }
+
+        [HttpGet("/SubscribeOnAdventure/{id}/{userId}")]
+        public async Task<bool> SubscribeOnAdventure(Guid id, long userId)
+        {
+            return await _repository.SubscribeOnAdventureAsync(id, userId);
+        }
+
+        [HttpGet("/ProcessSubscriptionRequest/{id}/{userId}/{status}")]
+        public async Task<bool> ProcessSubscriptionRequest(Guid id, long userId, AdventureRequestStatus status)
+        {
+            return await _repository.ProcessSubscriptionRequestAsync(id, userId, status);
+        }
+
+        [HttpGet("/GetAdventureAttendees/{id}")]
+        public async Task<List<AttendeeInfo>> GetAdventureAttendees(Guid id)
+        {
+            return await _repository.GetAdventureAttendeesAsync(id);
+        }
+
+        [HttpGet("/GetUsersAdventures/{userId}")]
+        public async Task<List<Adventure>> GetUsersAdventures(long userId)
+        {
+            return await _repository.GetUsersAdventuresAsync(userId);
+        }
+
+        [HttpGet("/GetUsersSubscribedAdventures/{userId}")]
+        public async Task<List<Adventure>> GetUsersSubscribedAdventures(long userId)
+        {
+            return await _repository.GetUsersSubscribedAdventuresAsync(userId);
+        }
+
+        [HttpGet("/AdventureCount/{userId}")]
+        public async Task<GetAdventureCount> GetAdventureCount(long userId)
+        {
+            return await _repository.GetAdventureCountAsync(userId);
+        }
+
+        [HttpGet("/GetSimilarityBetweenUsers/{userId1}/{userId2}")]
+        public async Task<SimilarityBetweenUsers> GetSimilarityBetweenUsers(long userId1, long userId2)
+        {
+            return await _repository.GetSimilarityBetweenUsersAsync(userId1, userId2);
         }
     }
 }

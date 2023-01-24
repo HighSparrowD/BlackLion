@@ -2,6 +2,7 @@
 using MyWebApi.Data;
 using MyWebApi.Entities.AchievementEntities;
 using MyWebApi.Entities.AdminEntities;
+using MyWebApi.Entities.AdventureEntities;
 using MyWebApi.Entities.DailyTaskEntities;
 using MyWebApi.Entities.EffectEntities;
 using MyWebApi.Entities.LocationEntities;
@@ -18,10 +19,8 @@ using QRCoder;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using static MyWebApi.Enums.SystemEnums;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace MyWebApi.Repositories
 {
@@ -120,7 +119,7 @@ namespace MyWebApi.Repositories
                             //Adds + 10 random effects to users inventory
                             var effecId = new Random().Next(5, 10);
                             await PurchaseEffectAsync(invitor.UserId, effecId, 0, (int)Currencies.Points, 10);
-                            await GrantPremiumToUser(model.UserId, 0, 30, (short)Currencies.Points);
+                            await GrantPremiumToUser(invitor.UserId, 0, 30, (short)Currencies.Points);
                         }
                         else
                             await TopUpUserWalletPointsBalance(invitor.UserId, 1999 * multiplier, $"User {invitor.UserId} has invited more than 10 users");
@@ -157,6 +156,7 @@ namespace MyWebApi.Repositories
                 //Add Starting test pack
                 //TODO: Add more tests here
                 await PurchaseTestAsync(model.UserId, 1, dataModel.LanguageId);
+                //await PurchaseTestAsync(model.UserId, 3, dataModel.LanguageId);
 
                 return model.UserId;
             }
@@ -200,6 +200,9 @@ namespace MyWebApi.Repositories
         {
             try
             {
+                //Actualize premium information
+                await CheckUserHasPremiumAsync(id);
+
                 return await _contx.SYSTEM_USERS.Where(u => u.UserId == id).Include(s => s.UserBaseInfo)
                     .Include(s => s.UserBaseInfo)
                     .Include(s => s.UserDataInfo).ThenInclude(s => s.Location)
@@ -225,7 +228,7 @@ namespace MyWebApi.Repositories
                 var currentUser = await GetUserInfoAsync(userId);
 
                 //Check if user STILL has premium
-                await CheckUserHasPremium(currentUser.UserId);
+                await CheckUserHasPremiumAsync(currentUser.UserId);
 
                 var currentUserEncounters = await GetUserEncounters(userId, (int)SystemEnums.Sections.Familiator); //I am not sure if it is 2 or 3 section
 
@@ -1709,7 +1712,7 @@ namespace MyWebApi.Repositories
             }
         }
 
-        public async Task<bool> CheckUserHasPremium(long userId)
+        public async Task<bool> CheckUserHasPremiumAsync(long userId)
         {
             try
             {
@@ -1719,10 +1722,15 @@ namespace MyWebApi.Repositories
                 
                 if (user != null)
                 {
-                    if ((bool)user.HasPremium && user.PremiumExpirationDate > timeNow)
+                    if ((user.HasPremium && user.PremiumExpirationDate < timeNow) || (user.HasPremium && user.PremiumExpirationDate == null))
+                    {
                         user.HasPremium = false;
+                        user.PremiumExpirationDate = null;
+                        //TODO: Notify user that his premium access has expired
+                    }
+                    else if (user.PremiumExpirationDate > timeNow)
+                        user.HasPremium = true;
 
-                    //TODO: Notify user that his premium access has expired
 
                     await _contx.SaveChangesAsync();
                     return user.HasPremium;
@@ -1764,7 +1772,7 @@ namespace MyWebApi.Repositories
             try
             {
                 var timeNow = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
-                var premiumFutureExpirationDate = DateTime.SpecifyKind(DateTime.Now.AddDays(dayDuration), DateTimeKind.Utc); //TODO: Possible feature: Countdown starts from 00:00 at the next day of purchase
+                var premiumFutureExpirationDate = DateTime.SpecifyKind(DateTime.Now.AddDays(dayDuration), DateTimeKind.Utc);
 
                 var user = await _contx.SYSTEM_USERS
                     .Where(u => u.UserId == userId)
@@ -1791,12 +1799,12 @@ namespace MyWebApi.Repositories
                 if (user.PremiumExpirationDate < timeNow || user.PremiumExpirationDate == null)
                     user.PremiumExpirationDate = premiumFutureExpirationDate;
                 else
-                    user.PremiumExpirationDate.Value.AddDays(dayDuration);
+                    user.PremiumExpirationDate = user.PremiumExpirationDate.Value.AddDays(dayDuration);
 
                 _contx.Update(user);
                 await _contx.SaveChangesAsync();
 
-                await AddUserNotificationAsync(new UserNotification { UserId = user.UserId, IsLikedBack = false, Severity = (short)Severities.Moderate, SectionId = (int)Sections.Neutral, Description = $"You have been granted premium access. Enjoy your benefits :)\nPremium expiration {user.PremiumExpirationDate.Value.ToShortTimeString()}" });
+                await AddUserNotificationAsync(new UserNotification { UserId1 = user.UserId, IsLikedBack = false, Severity = (short)Severities.Moderate, SectionId = (int)Sections.Neutral, Description = $"You have been granted premium access. Enjoy your benefits :)\nPremium expiration {user.PremiumExpirationDate.Value.ToString("dd.MM.yyyy")}" });
 
                 return user.PremiumExpirationDate.Value;
             }
@@ -1909,7 +1917,15 @@ namespace MyWebApi.Repositories
 
                 model.UserRawDescription = user.UserRawDescription;
                 model.UserDescription = user.GenerateUserDescription(user.UserName, data.UserAge, country, city, user.UserRawDescription);
-                model.UserPhoto = user.UserPhoto;
+
+                //Reactivate user tick request if user photo was changed
+                if (model.UserMedia != user.UserMedia)
+                {
+                    model.UserMedia = user.UserMedia;
+                    model.IsMediaPhoto = user.IsMediaPhoto;
+                    await ReactivateTickRequest(user.Id);
+                }
+
                 model.UserName = user.UserName;
                 model.UserRealName = user.UserRealName;
 
@@ -1998,10 +2014,10 @@ namespace MyWebApi.Repositories
                 var user = await _contx.SYSTEM_USERS.Where(u => u.UserId == userId)
                     .SingleOrDefaultAsync();
 
-                if (user != null)
+                if (user == null)
                     return false;
 
-                return (bool)user.IsBusy;
+                return user.IsBusy;
             }
             catch (Exception ex)
             {
@@ -2463,6 +2479,7 @@ namespace MyWebApi.Repositories
                     Id = id,
                     UserId = userId,
                     Link = linkBase + id,
+                    QRCode = await GetQRCode(userId)
                 };
 
                 await _contx.USER_INVITATION_CREDENTIALS.AddAsync(invitationCreds);
@@ -2609,7 +2626,7 @@ namespace MyWebApi.Repositories
         {
             try
             {
-                await AddUserNotificationAsync(new UserNotification {UserId=userId, Severity=(short)Severities.Urgent, SectionId=(int)Sections.Neutral, Description="Your premium access has expired"});
+                await AddUserNotificationAsync(new UserNotification {UserId1=userId, Severity=(short)Severities.Urgent, SectionId=(int)Sections.Neutral, Description="Your premium access has expired"});
                 return true;
             }
             catch
@@ -2940,7 +2957,7 @@ namespace MyWebApi.Repositories
             if (hasPremium == null || !(bool)hasPremium)
                 return 3;
 
-            return 250; //TODO: Think if value should be hardcoded 
+            return 450; //TODO: Think if value should be hardcoded 
         }
 
         public async Task<UserNotification> GetUserNotificationAsync(Guid notificationId)
@@ -3128,7 +3145,7 @@ namespace MyWebApi.Repositories
                 .SingleOrDefaultAsync();
 
             //Create user stats if they werent created before
-            if (userStats != null)
+            if (userStats == null)
             {
                 userStats = new UserPersonalityStats(model.UserId);
                 await _contx.USER_PERSONALITY_STATS.AddAsync(userStats);
@@ -3313,7 +3330,7 @@ namespace MyWebApi.Repositories
                     .SingleOrDefaultAsync();
 
                 //Give user 1 PP for passing the test for the first time
-                if (userTest.PassedOn != null)
+                if (userTest.PassedOn == null)
                 {
                     var userBalance = await GetUserWalletBalance(model.UserId);
                     userBalance.PersonalityPoints++;
@@ -3322,6 +3339,7 @@ namespace MyWebApi.Repositories
 
                 userTest.PassedOn = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
                 userTest.Result = testResult;
+                userTest.Tags = model.Tags;
 
                 _contx.user_tests.Update(userTest);
                 await _contx.SaveChangesAsync();
@@ -3336,39 +3354,28 @@ namespace MyWebApi.Repositories
         {
             try
             {
-                if(await CheckUserIsRegistered(model.UserId))
-                {
-                    //Comas are removed to avoid bugs
-                    var tags = model.RawTags.ToLower().Replace(",", "").Split(" ").ToList();
+                var userTags = await _contx.user_tags.Where(t => t.UserId == model.UserId)
+                    .ToListAsync();
 
-                    if(tags.Count > 0)
-                    {
-                        var user = await GetUserInfoAsync(model.UserId);
-                        user.UserDataInfo.Tags = tags;
+                var newTags = UserTag.CreateTagList(model.UserId, model.RawTags, " ", TagType.Tags);
 
-                        _contx.SYSTEM_USERS_DATA.Update(user.UserDataInfo);
-                        await _contx.SaveChangesAsync();
-                        return true;
-                    }    
-                }
-
-                return false;
+                _contx.user_tags.RemoveRange(userTags);
+                    
+                await _contx.user_tags.AddRangeAsync(newTags);
+                    
+                await _contx.SaveChangesAsync();
+                return true;
             }
             catch (NullReferenceException ) 
             { return false; }
         }
 
-        public async Task<List<string>> GetTags(long userId)
+        public async Task<List<UserTag>> GetTags(long userId)
         {
             try
             {
-                if (await CheckUserIsRegistered(userId))
-                {
-                     var userData = await _contx.SYSTEM_USERS_DATA.Where(u => u.Id == userId).FirstOrDefaultAsync();
-                    return userData.Tags;
-                }
-
-                return null;
+                return await _contx.user_tags.Where(t => t.UserId == userId && t.TagType == TagType.Tags)
+                    .ToListAsync();
             }
             catch (NullReferenceException)
             { return null; }
@@ -3404,7 +3411,7 @@ namespace MyWebApi.Repositories
 
             if (currentUser.UserPreferences.ShouldFilterUsersWithoutRealPhoto && currentUser.HasPremium)
             {
-                data.Where(u => u.UserBaseInfo.IsPhotoReal)
+                data = data.Where(u => u.UserBaseInfo.IsPhotoReal)
                     .ToList();
             }
 
@@ -3424,9 +3431,23 @@ namespace MyWebApi.Repositories
             currentUser.TagSearchesCount++;
             await _contx.SaveChangesAsync();
 
-            data = data.Where(d => d.UserDataInfo.Tags != null).ToList();
+            var usersTags = await GetUsersTagsAsync(data.Select(d => d.UserId).ToList(), TagType.Tags);
 
-            var user = data.OrderByDescending(u => u.UserDataInfo.Tags.Intersect(model.Tags).Count())
+            var users = new List<User>();
+
+            foreach (var tags in usersTags.Values)
+            {
+                var tagList = tags.Select(t => t.Tag).ToList();
+
+                if (tagList.Intersect(model.Tags).Count() >= 1)
+                    users.Add(data.Where(d => d.UserId == tags.FirstOrDefault().UserId).FirstOrDefault());
+            }
+
+            if (users.Count == 0)
+                return null;
+
+            //Shuffle users randomly
+            var user = users.OrderBy(u => Guid.NewGuid())
                 .FirstOrDefault();
 
             if(user.HasPremium && user.Nickname != null)
@@ -3435,7 +3456,7 @@ namespace MyWebApi.Repositories
                 user.UserBaseInfo.UserDescription = $"✔️{user.UserBaseInfo.UserDescription}";
             //Show tags if user has detector activated
             if (hasActiveDetector)
-                user.UserBaseInfo.UserDescription += String.Join(" ", user.UserDataInfo.Tags);
+                user.UserBaseInfo.UserDescription += String.Join(" ", usersTags[user.UserId]);
 
             return user;
         }
@@ -3519,7 +3540,7 @@ namespace MyWebApi.Repositories
         {
             try
             {
-                if (await CheckUserHasPremium(userId))
+                if (await CheckUserHasPremiumAsync(userId))
                 {
                     var user = await _contx.SYSTEM_USERS_DATA.Where(u => u.Id == userId)
                         .SingleOrDefaultAsync();
@@ -3544,7 +3565,7 @@ namespace MyWebApi.Repositories
                 .Select(d => new { d.AutoReplyText, d.AutoReplyVoice })
                 .SingleOrDefaultAsync();
 
-            if (await CheckUserHasPremium(userId))
+            if (await CheckUserHasPremiumAsync(userId))
             {
                 if (replyData.AutoReplyVoice != null)
                 {
@@ -3600,6 +3621,7 @@ namespace MyWebApi.Repositories
                             value = balance.Detectors > 0;
                             break;
                         case 8:
+                            await ActivateToggleEffectAsync(userId, effectId);
                             value = balance.Nullifiers > 0;
                             break;
                         case 9:
@@ -3640,30 +3662,42 @@ namespace MyWebApi.Repositories
                         {
                             if (AtLeastOneIsNotZero(userPoints))
                             {
-                                userBalance.Valentines--;
-                                effect = new TheValentine(userId);
-                                break;
+                                if (userBalance.Valentines > 0)
+                                {
+                                    userBalance.Valentines--;
+                                    effect = new TheValentine(userId);
+                                    break;
+                                }
+                                return null;
                             }
                             return null;
                         }
                         return null;
                     case 7:
-                        if (!(bool)await CheckUserUsesPersonality(userId))
-                            return null;
-                        userBalance.Detectors--;
-                        effect = new TheDetector(userId);
-                        break;
-                    case 8:
-                        if (!(bool)await CheckUserUsesPersonality(userId))
-                            return null;
-                        userBalance.Nullifiers--;
-                        effect = new TheWhiteDetector(userId);
-                        break;
+                        //Already checked on the Frontend
+
+                        //if (!(bool)await CheckUserUsesPersonality(userId))
+                        //    return null;
+
+                        if (userBalance.Detectors > 0)
+                        {
+                            userBalance.Detectors--;
+                            effect = new TheDetector(userId);
+                            break;
+                        }
+                        return null;
                     default:
                         return null;
                 }
 
-                await _contx.USER_ACTIVE_EFFECTS.AddAsync(effect);
+                var activeEffect = await _contx.USER_ACTIVE_EFFECTS.Where(e => e.EffectId == effectId && e.UserId == userId)
+                    .SingleOrDefaultAsync();
+
+                if (activeEffect == null)
+                    await _contx.USER_ACTIVE_EFFECTS.AddAsync(effect);
+                else
+                    effect.ExpirationTime = effect.ExpirationTime;
+
                 await _contx.SaveChangesAsync();
                 return effect.ExpirationTime;
             }
@@ -3679,32 +3713,52 @@ namespace MyWebApi.Repositories
                 switch (effectId)
                 {
                     case 5:
-                        userBalance.SecondChances--;
-                        await RegisterUserRequest(new UserNotification
+                        if (userBalance.SecondChances > 0)
                         {
-                            UserId = userId,
-                            UserId1 = (long)user2Id,
-                            IsLikedBack = false,
-                            Description = description,
-                            SectionId = (int)Sections.Familiator,
-                            Severity = (short)Severities.Moderate
-                        });
-                        await _contx.SaveChangesAsync();
-                        return true;
+                            userBalance.SecondChances--;
+                            await RegisterUserRequest(new UserNotification
+                            {
+                                UserId = userId,
+                                UserId1 = (long)user2Id,
+                                IsLikedBack = false,
+                                Description = description,
+                                SectionId = (int)Sections.Familiator,
+                                Severity = (short)Severities.Moderate
+                            });
+                            _contx.Update(userBalance);
+                            await _contx.SaveChangesAsync();
+                            return true;
+                        }
+                        return false;
                     case 8:
-                        userBalance.Nullifiers --;
-                        await _contx.SaveChangesAsync();
-                        return true;
+                        if (userBalance.Nullifiers > 0)
+                        {
+                            userBalance.Nullifiers --;
+                            _contx.Update(userBalance);
+                            await _contx.SaveChangesAsync();
+                            return true;
+                        }
+                        return false;
                     case 9:
-                        userBalance.CardDecksMini--;
-                        await AddMaxUserProfileViewCount(userId, 20);
-                        await _contx.SaveChangesAsync();
-                        return true;
+                        if (userBalance.CardDecksMini > 0)
+                        {
+                            userBalance.CardDecksMini--;
+                            await AddMaxUserProfileViewCount(userId, 20);
+                            _contx.Update(userBalance);
+                            await _contx.SaveChangesAsync();
+                            return true;
+                        }
+                        return false;
                     case 10:
-                        userBalance.CardDecksPlatinum--;
-                        await AddMaxUserProfileViewCount(userId, 50);
-                        await _contx.SaveChangesAsync();
-                        return true;
+                        if (userBalance.CardDecksPlatinum > 0)
+                        {
+                            userBalance.CardDecksPlatinum--;
+                            await AddMaxUserProfileViewCount(userId, 50);
+                            _contx.Update(userBalance);
+                            await _contx.SaveChangesAsync();
+                            return true;
+                        }
+                        return false;
                     default:
                         return false;
                 }
@@ -3990,6 +4044,8 @@ namespace MyWebApi.Repositories
                 throw new NullReferenceException($"User #{userId} does not exist");
 
             user.IsFree = freeStatus;
+            await _contx.SaveChangesAsync();
+
             return freeStatus;
         }
 
@@ -4057,6 +4113,8 @@ namespace MyWebApi.Repositories
                 throw new NullReferenceException($"User #{userId} does not exist");
 
             user.ShouldConsiderLanguages = !user.ShouldConsiderLanguages;
+
+            await _contx.SaveChangesAsync();
 
             return user.ShouldConsiderLanguages;
         }
@@ -4247,6 +4305,377 @@ namespace MyWebApi.Repositories
             await _contx.SaveChangesAsync();
 
             return user.IncreasedFamiliarity;
+        }
+
+        public async Task<bool> AddUserCommercialVector(long userId, string tagString)
+        {
+            var tags = tagString.Replace("#", "").Trim().Replace(" ", "").Split(",");
+
+            foreach (var tag in tags)
+            {
+                await _contx.user_tags.AddAsync(new UserTag
+                {
+                    UserId = userId, 
+                    Tag = tag,
+                    TagType = TagType.Interests
+                });
+
+            }
+
+            await _contx.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> SwitchUserFreeSearchParamAsync(long userId)
+        {
+            var user = await _contx.SYSTEM_USERS.FindAsync(userId);
+
+            if (user == null)
+                throw new NullReferenceException($"User #{userId} does not exist");
+
+            //null is the same thing as false in that case
+            if (user.IsFree == null)
+            {
+                user.IsFree = true;
+                await _contx.SaveChangesAsync();
+
+                return true;
+            }
+
+            user.IsFree = !user.IsFree;
+            await _contx.SaveChangesAsync();
+
+            return (bool)user.IsFree;
+        }
+
+        public async Task<Guid> RegisterAdventureAsync(Adventure model)
+        {
+            //Adventures created by user
+            var userAdventures = await _contx.adventures.Where(a => a.UserId == model.UserId)
+                .ToListAsync();
+
+            var adventureIds = await _contx.adventure_attendees
+                .Select(a => a.AdventureId)
+                .ToListAsync();
+
+            //Adventures user is subscribed on
+            var subscribedAdventures = await _contx.adventures.Where(a => adventureIds.Contains(a.Id))
+                .ToListAsync();
+
+            foreach (var userAdventure in userAdventures)
+            {
+                //Throw if new adventure overlaps with the other ones
+                if (userAdventure.IsOverlapping(model))
+                    throw new ArgumentException($"Overlapping detected between {userAdventure.Id} (created by user) and just created adventure");
+            }
+
+            foreach (var sAdventure in subscribedAdventures)
+            {
+                //Throw if new adventure overlaps with the other ones
+                if (sAdventure.IsOverlapping(model))
+                    throw new ArgumentException($"Overlapping detected between {sAdventure.Id} and just created adventure");
+            }
+
+            model.Id = Guid.NewGuid();
+            model.EndDateTime = DateTime.SpecifyKind(model.EndDateTime, DateTimeKind.Utc);
+            model.StartDateTime = DateTime.SpecifyKind(model.StartDateTime, DateTimeKind.Utc);
+
+            await _contx.AddAsync(model);
+            await _contx.SaveChangesAsync();
+
+            return model.Id;
+        }
+
+        public async Task<bool> ChangeAdventureAsync(ChangeAdventure model)
+        {
+            var existingAdventure = await _contx.adventures.Where(a => a.Id == model.Id)
+                .SingleOrDefaultAsync();
+
+            //Check overlapping only if datetime was changed
+            if (model.StartDateTime !=null || model.EndDateTime != null)
+            {
+                var hasPremium = await CheckUserHasPremiumAsync(model.UserId);
+
+                //Adventures created by user without currently managed one
+                var userAdventures = await _contx.adventures.Where(a => a.UserId == model.UserId && a.Id != model.Id)
+                    .ToListAsync();
+
+                var adventureIds = await _contx.adventure_attendees
+                    .Select(a => a.AdventureId)
+                    .ToListAsync();
+
+                //Adventures user is subscribed on
+                var subscribedAdventures = await _contx.adventures.Where(a => adventureIds.Contains(a.Id))
+                    .ToListAsync();
+
+                foreach (var userAdventure in userAdventures)
+                {
+                    //Throw if new adventure overlaps with the other ones
+                    if (userAdventure.IsOverlapping(model))
+                        throw new ArgumentException($"Overlapping detected between changed adventure and {userAdventure.Id} adventure while attempting to subscribe on the last one");
+                }
+
+                foreach (var sAdventure in subscribedAdventures)
+                {
+                    //Throw if new adventure overlaps with the other ones
+                    if (sAdventure.IsOverlapping(model))
+                        throw new ArgumentException($"Overlapping detected between changed adventure and already subscribed andventure {sAdventure.Id}");
+                }
+
+                existingAdventure.StartDateTime = DateTime.SpecifyKind((DateTime)model.StartDateTime, DateTimeKind.Utc);
+                existingAdventure.EndDateTime = DateTime.SpecifyKind((DateTime)model.EndDateTime, DateTimeKind.Utc);
+            }
+
+            if (model.Languages != null)
+                existingAdventure.Languages = model.Languages;
+
+            else if (model.Capacity != null)
+                existingAdventure.Capacity = (short)model.Capacity;
+
+            else if (model.IsOnline != null)
+                existingAdventure.IsOnline = (bool)model.IsOnline;
+
+            //In those two cases 0 is replaces null
+            else if (model.CountryId != 0)
+                existingAdventure.CountryId = model.CountryId;
+
+            //In those two cases 0 is replaces null
+            else if (model.CityId != 0)
+                existingAdventure.CityId = (short)model.CityId;
+
+            else if (model.Capacity != null)
+                existingAdventure.Capacity = (short)model.Capacity;
+
+            else if (model.MinAge != null)
+                existingAdventure.MinAge = (short)model.MinAge;
+
+            else if (model.MaxAge != null)
+                existingAdventure.MaxAge = (short)model.MaxAge;
+
+            else if (model.Description != null)
+                existingAdventure.Description = model.Description;
+
+            else if (model.Adress != null)
+                existingAdventure.Adress = model.Adress;
+
+            _contx.adventures.Update(existingAdventure);
+            await _contx.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> DeleteAdventureAsync(Guid adventureId, long userId)
+        {
+            var adventure = await _contx.adventures.Where(a => a.Id == adventureId && a.UserId == userId)
+                .SingleOrDefaultAsync();
+
+            if (adventure == null)
+                throw new NullReferenceException($"Adventure {adventureId} does not exist or it does not belong to user {userId}");
+
+            var attendees = await _contx.adventure_attendees.Where(a => a.UserId == userId && a.AdventureId == adventureId)
+                .ToListAsync();
+
+            //Notify all attendees about adventure cancelation
+            foreach (var attendee in attendees)
+            {
+                await AddUserNotificationAsync(new UserNotification
+                {
+                    UserId1 = attendee.UserId,
+                    IsLikedBack = false,
+                    Severity = (short)Severities.Urgent,
+                    SectionId = (int)Sections.Adventurer,
+                    Description = $"Hey! We are very sorry, but adventure <b><i>'{adventure.Name}'</i></b> was canceled by its creator"
+                });
+            }
+
+            _contx.adventure_attendees.RemoveRange(attendees);
+            _contx.adventures.Remove(adventure);
+            await _contx.SaveChangesAsync();
+
+            return true;
+        }
+
+        public async Task<bool> SubscribeOnAdventureAsync(Guid adventureId, long userId)
+        {
+            var adventure = await _contx.adventures.Where(a => a.Id == adventureId)
+                .AsNoTracking()
+                .SingleOrDefaultAsync(); 
+
+            if (adventure == null)
+                throw new NullReferenceException($"Adventure {adventureId} does not exist");
+
+
+            //Adventures created by user
+            var userAdventures = await _contx.adventures.Where(a => a.UserId == userId)
+                .ToListAsync();
+
+            var adventureIds = await _contx.adventure_attendees
+                .Select(a => a.AdventureId)
+                .ToListAsync();
+
+            //Adventures user is subscribed on
+            var subscribedAdventures = await _contx.adventures.Where(a => adventureIds.Contains(a.Id))
+                .ToListAsync();
+
+            foreach (var userAdventure in userAdventures)
+            {
+                //Throw if new adventure overlaps with the other ones
+                if (adventure.IsOverlapping(userAdventure))
+                    throw new ArgumentException($"Overlapping detected between {userAdventure.Id} (created by user) and {adventure.Id} adventure while attempting to subscribe on the last one");
+            }
+
+            foreach (var sAdventure in subscribedAdventures)
+            {
+                //Throw if new adventure overlaps with the other ones
+                if (adventure.IsOverlapping(sAdventure))
+                    throw new ArgumentException($"Overlapping detected between {sAdventure.Id} and newly subscribed adventure {adventure.Id}");
+            }
+            
+
+            var userName = await _contx.SYSTEM_USERS_BASES.Where(u => u.Id == userId)
+                .Select(a => a.UserRealName)
+                .SingleOrDefaultAsync();
+
+            await _contx.adventure_attendees.AddAsync(new AdventureAttendee
+            {
+                AdventureId = adventureId,
+                UserId = userId,
+                Username = userName,
+                Status = AdventureRequestStatus.New
+            });
+            await _contx.SaveChangesAsync();
+
+            return true;
+        }
+
+        public async Task<bool> ProcessSubscriptionRequestAsync(Guid adventureId, long userId, AdventureRequestStatus status)
+        {
+            var attendee = await _contx.adventure_attendees.Where(a => a.UserId == userId && a.AdventureId == adventureId)
+                .SingleOrDefaultAsync();
+
+            if (attendee == null)
+                throw new NullReferenceException($"No attendee with id {userId} was subscribed on adventure {adventureId}");
+
+            attendee.Status = status;
+
+            _contx.adventure_attendees.Update(attendee);
+            await _contx.SaveChangesAsync();
+
+            return true;
+        }
+
+        public async Task<List<AttendeeInfo>> GetAdventureAttendeesAsync(Guid adventureId)
+        {
+            return await _contx.adventure_attendees.Where(a => a.AdventureId == adventureId && a.Status == AdventureRequestStatus.Accepted)
+            .Select(a => new AttendeeInfo
+            {
+                UserId = a.UserId,
+                Username = a.Username,
+            }).ToListAsync();
+        }
+
+        public async Task<List<Adventure>> GetUsersSubscribedAdventuresAsync(long userId)
+        {
+            var adventureIds = await _contx.adventure_attendees.Where(a => a.UserId == userId)
+                .Select(a => a.AdventureId)
+                .ToListAsync();
+
+            return await _contx.adventures.Where(a => adventureIds.Contains(a.Id))
+                .ToListAsync();
+        }
+
+        public async Task<List<Adventure>> GetUsersAdventuresAsync(long userId)
+        {
+            return await _contx.adventures.Where(a => a.UserId == userId)
+                .ToListAsync();
+        }
+
+        public async Task<GetAdventureCount> GetAdventureCountAsync(long userId)
+        {
+            var createdCount = await _contx.adventures.Where(a => a.UserId == userId)
+                .CountAsync();
+
+            var subscribedCount = await _contx.adventure_attendees.Where(a => a.UserId == userId)
+                .CountAsync();
+
+            return new GetAdventureCount
+            {
+                Created = createdCount,
+                Subscribed = subscribedCount
+            };
+        }
+
+        private async Task ReactivateTickRequest(long userId)
+        {
+            var tickRequest = await _contx.tick_requests.Where(r => r.UserId == userId)
+                .SingleOrDefaultAsync();
+
+            //Return if tick request does not exists, because not all users has tick request
+            if (tickRequest == null)
+                return;
+
+            var user = await _contx.SYSTEM_USERS.Where(u => u.UserId == userId)
+                .SingleOrDefaultAsync();
+
+            //Throw if user does not exist, because that method should not be called by not existing user
+            if (user == null)
+                throw new NullReferenceException($"User {userId} does not exist");
+
+            tickRequest.State = (short)TickRequestStatus.Changed;
+            user.IsIdentityConfirmed = false;
+
+            await _contx.SaveChangesAsync();
+        }
+
+        public async Task<SimilarityBetweenUsers> GetSimilarityBetweenUsersAsync(long user1, long user2)
+        {
+            var userTags1 = await GetUserTagsAsync(user1);
+            var userTags2 = await GetUserTagsAsync(user2);
+
+            var intersections = userTags1.FullTags.Where(tag => userTags2.FullTags
+            .Any(t => t.Tag == tag.Tag && t.TagType == tag.TagType))
+            .Select(t => t.TagType)
+            .ToList();
+
+            var similarity = new SimilarityBetweenUsers
+            {
+                SimilarBy = intersections,
+
+                SimilarityCount = userTags1.Tags.Intersect(userTags2.Tags).Count()
+            };
+
+            return similarity;
+        }
+
+        private async Task<GetUserTags> GetUserTagsAsync(long userId)
+        {
+            var tags = await _contx.user_tags.Where(t => t.UserId == userId)
+                .ToListAsync();
+
+            return new GetUserTags
+            {
+                FullTags = tags.Select(t => new UserTags
+                {
+                    Tag = t.Tag,
+                    TagType = t.TagType
+                }).ToList(),
+
+                Tags = tags.Select(t => t.Tag)
+                .ToList()
+            };
+        }
+
+        private async Task<List<UserTag>> GetUserTagsAsync(long userId, TagType tagType)
+        {
+            return await _contx.user_tags.Where(t => t.UserId == userId && t.TagType == tagType)
+                .ToListAsync();
+        }
+
+        private async Task<Dictionary<long, List<UserTag>>> GetUsersTagsAsync(List<long> userIds, TagType tagType)
+        {
+            var list = await _contx.user_tags.Where(t => userIds.Contains(t.UserId) && t.TagType == tagType)
+                .ToListAsync();
+
+            return list.GroupBy(t => t.UserId).ToDictionary(t => t.FirstOrDefault().UserId, t => t.ToList());
         }
     }
 }

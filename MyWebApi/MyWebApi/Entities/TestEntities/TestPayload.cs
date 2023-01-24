@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace MyWebApi.Entities.TestEntities
 {
@@ -17,5 +18,6 @@ namespace MyWebApi.Entities.TestEntities
         public int Intellect { get; set; }
         public int Nature { get; set; }
         public int Creativity { get; set; }
+        public List<string> Tags{ get; set; }
     }
 }

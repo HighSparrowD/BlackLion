@@ -15,7 +15,8 @@
             Eventer = 9,
             Shop = 10, 
             Settings = 11,
-            Neutral = 12
+            Neutral = 12,
+            Adventurer = 13
         }
 
         public enum Localisations

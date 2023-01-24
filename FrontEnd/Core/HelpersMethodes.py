@@ -379,7 +379,11 @@ def grant_premium_for_real_money(userId, cost, dayDuration):
 
 
 def purchase_effect_for_points(userId, effectId, cost, count=1):
-    return json.loads(requests.get(f"https://localhost:44381/PurchaseEffect/{userId}/{effectId}/{cost}/{count}", verify=False).text)
+    return json.loads(requests.get(f"https://localhost:44381/PurchaseEffect/{userId}/{effectId}/{cost}/1/{count}", verify=False).text)
+
+
+def check_user_has_effect(userId, effectId):
+    return bool(json.loads(requests.get(f"https://localhost:44381/CheckUserHasEffect/{userId}/{effectId}", verify=False).text))
 
 
 #TODO: Change called API endpoint
@@ -402,7 +406,7 @@ def switch_admin_status(userId):
 
 
 def switch_personality_status(userId):
-    return requests.get(f"https://localhost:44381/SwitchIncreasedFamiliarity/{userId}",
+    return requests.get(f"https://localhost:44381/SwitchPersonalityUsage/{userId}",
                                                            verify=False)
 
 

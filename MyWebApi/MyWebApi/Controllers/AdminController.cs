@@ -155,7 +155,7 @@ namespace MyWebApi.Controllers
         }
 
         [HttpPost("/UploadPsTests")]
-        public async Task<byte> UploadPsTests(List<UploadTest> model)
+        public async Task<byte> UploadPsTests([FromBody] List<UploadTest> model)
         {
             return await _repository.UploadPsTestsAsync(model);
         }
