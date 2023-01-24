@@ -102,7 +102,7 @@ namespace MyWebApi.Controllers
                     location.CountryClassLocalisationId = model.UserAppLanguageId;
                 }
 
-                var uBase = new UserBaseInfo(model.Id, model.UserName, model.UserRealName, "", model.UserPhoto, model.IsPhotoReal);
+                var uBase = new UserBaseInfo(model.Id, model.UserName, model.UserRealName, "", model.UserMedia, model.IsPhotoReal, model.IsMediaPhoto);
                 uBase.UserRawDescription = model.UserDescription;
                 var uData = new UserDataInfo
                 {
@@ -122,7 +122,7 @@ namespace MyWebApi.Controllers
                             if ((await _repository.UpdateUserBaseAsync(uBase)) == 1)
                                 if ((await _repository.UpdateUserPreferencesAsync(uPrefs)) == 1)
                                     return 1;
-            return 0;
+                return 0;
             }
 
             return 1;
@@ -257,7 +257,7 @@ namespace MyWebApi.Controllers
                 throw new Exception($"This user cannot have more than {langCount} languages !");
 
             Location location = null;
-            var uBase = new UserBaseInfo(model.Id, model.UserName, model.UserRealName, model.UserDescription, model.UserPhoto, model.IsPhotoReal);
+            var uBase = new UserBaseInfo(model.Id, model.UserName, model.UserRealName, model.UserDescription, model.UserMedia, model.IsPhotoReal, model.IsMediaPhoto);
             var uData = new UserDataInfo
             {
                 Id = model.Id,
@@ -766,7 +766,7 @@ namespace MyWebApi.Controllers
         }
 
         [HttpGet("/GetTags/{userId}")]
-        public async Task<List<string>> UpdateTags(long userId)
+        public async Task<List<UserTag>> UpdateTags(long userId)
         {
             return await _repository.GetTags(userId);
         }
@@ -1072,6 +1072,12 @@ namespace MyWebApi.Controllers
         public async Task<GetAdventureCount> GetAdventureCount(long userId)
         {
             return await _repository.GetAdventureCountAsync(userId);
+        }
+
+        [HttpGet("/GetSimilarityBetweenUsers/{userId1}/{userId2}")]
+        public async Task<SimilarityBetweenUsers> GetSimilarityBetweenUsers(long userId1, long userId2)
+        {
+            return await _repository.GetSimilarityBetweenUsersAsync(userId1, userId2);
         }
     }
 }

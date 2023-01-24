@@ -132,7 +132,7 @@ namespace MyWebApi.Interfaces
         Task<bool?> CheckUserUsesPersonality(long userId);
         Task<bool> RegisterTestPassingAsync(TestPayload model, int testResult);
         Task<bool> UpdateTags(UpdateTags model);
-        Task<List<string>> GetTags(long userId);
+        Task<List<UserTag>> GetTags(long userId);
         Task<User> GetUserListByTagsAsync(GetUserByTags model);
         Task<bool> CheckEncounteredUserIsInBlackList(long userId, long encounteredUser);
         Task<string> RetreiveCommonLanguagesAsync(long user1Iq, long user2Id, int localisationId);
@@ -184,5 +184,6 @@ namespace MyWebApi.Interfaces
         Task<List<Adventure>> GetUsersSubscribedAdventuresAsync(long userId);
         Task<List<Adventure>> GetUsersAdventuresAsync(long userId);
         Task<GetAdventureCount> GetAdventureCountAsync(long userId);
+        Task<SimilarityBetweenUsers> GetSimilarityBetweenUsersAsync(long user1, long user2);
     }
 }

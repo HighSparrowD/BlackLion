@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.JSInterop;
 using MyWebApi.Data;
 using MyWebApi.Entities.AchievementEntities;
 using MyWebApi.Entities.AdminEntities;
@@ -1920,9 +1919,10 @@ namespace MyWebApi.Repositories
                 model.UserDescription = user.GenerateUserDescription(user.UserName, data.UserAge, country, city, user.UserRawDescription);
 
                 //Reactivate user tick request if user photo was changed
-                if (model.UserPhoto != user.UserPhoto)
+                if (model.UserMedia != user.UserMedia)
                 {
-                    model.UserPhoto = user.UserPhoto;
+                    model.UserMedia = user.UserMedia;
+                    model.IsMediaPhoto = user.IsMediaPhoto;
                     await ReactivateTickRequest(user.Id);
                 }
 
@@ -2957,7 +2957,7 @@ namespace MyWebApi.Repositories
             if (hasPremium == null || !(bool)hasPremium)
                 return 3;
 
-            return 250; //TODO: Think if value should be hardcoded 
+            return 450; //TODO: Think if value should be hardcoded 
         }
 
         public async Task<UserNotification> GetUserNotificationAsync(Guid notificationId)
@@ -3354,41 +3354,28 @@ namespace MyWebApi.Repositories
         {
             try
             {
-                if(await CheckUserIsRegistered(model.UserId))
-                {
-                    //Comas are removed to avoid bugs
-                    var tags = model.RawTags.ToLower().Replace(",", " ").Trim().Split(" ").ToList();
+                var userTags = await _contx.user_tags.Where(t => t.UserId == model.UserId)
+                    .ToListAsync();
 
-                    if(tags.Count > 0)
-                    {
-                        var user = await GetUserInfoAsync(model.UserId);
-                        user.UserDataInfo.Tags = tags;
+                var newTags = UserTag.CreateTagList(model.UserId, model.RawTags, " ", TagType.Tags);
 
-                        await AddUserCommercialVector(model.UserId, model.RawTags);
-
-                        _contx.SYSTEM_USERS_DATA.Update(user.UserDataInfo);
-                        await _contx.SaveChangesAsync();
-                        return true;
-                    }    
-                }
-
-                return false;
+                _contx.user_tags.RemoveRange(userTags);
+                    
+                await _contx.user_tags.AddRangeAsync(newTags);
+                    
+                await _contx.SaveChangesAsync();
+                return true;
             }
             catch (NullReferenceException ) 
             { return false; }
         }
 
-        public async Task<List<string>> GetTags(long userId)
+        public async Task<List<UserTag>> GetTags(long userId)
         {
             try
             {
-                if (await CheckUserIsRegistered(userId))
-                {
-                     var userData = await _contx.SYSTEM_USERS_DATA.Where(u => u.Id == userId).FirstOrDefaultAsync();
-                    return userData.Tags;
-                }
-
-                return null;
+                return await _contx.user_tags.Where(t => t.UserId == userId && t.TagType == TagType.Tags)
+                    .ToListAsync();
             }
             catch (NullReferenceException)
             { return null; }
@@ -3424,7 +3411,7 @@ namespace MyWebApi.Repositories
 
             if (currentUser.UserPreferences.ShouldFilterUsersWithoutRealPhoto && currentUser.HasPremium)
             {
-                data.Where(u => u.UserBaseInfo.IsPhotoReal)
+                data = data.Where(u => u.UserBaseInfo.IsPhotoReal)
                     .ToList();
             }
 
@@ -3444,9 +3431,23 @@ namespace MyWebApi.Repositories
             currentUser.TagSearchesCount++;
             await _contx.SaveChangesAsync();
 
-            data = data.Where(d => d.UserDataInfo.Tags != null).ToList();
+            var usersTags = await GetUsersTagsAsync(data.Select(d => d.UserId).ToList(), TagType.Tags);
 
-            var user = data.OrderByDescending(u => u.UserDataInfo.Tags.Intersect(model.Tags).Count())
+            var users = new List<User>();
+
+            foreach (var tags in usersTags.Values)
+            {
+                var tagList = tags.Select(t => t.Tag).ToList();
+
+                if (tagList.Intersect(model.Tags).Count() >= 1)
+                    users.Add(data.Where(d => d.UserId == tags.FirstOrDefault().UserId).FirstOrDefault());
+            }
+
+            if (users.Count == 0)
+                return null;
+
+            //Shuffle users randomly
+            var user = users.OrderBy(u => Guid.NewGuid())
                 .FirstOrDefault();
 
             if(user.HasPremium && user.Nickname != null)
@@ -3455,7 +3456,7 @@ namespace MyWebApi.Repositories
                 user.UserBaseInfo.UserDescription = $"✔️{user.UserBaseInfo.UserDescription}";
             //Show tags if user has detector activated
             if (hasActiveDetector)
-                user.UserBaseInfo.UserDescription += String.Join(" ", user.UserDataInfo.Tags);
+                user.UserBaseInfo.UserDescription += String.Join(" ", usersTags[user.UserId]);
 
             return user;
         }
@@ -4308,17 +4309,19 @@ namespace MyWebApi.Repositories
 
         public async Task<bool> AddUserCommercialVector(long userId, string tagString)
         {
-            var user = await _contx.SYSTEM_USERS.Where(u => u.UserId == userId)
-                .Include(u => u.UserDataInfo)
-                .SingleOrDefaultAsync();
+            var tags = tagString.Replace("#", "").Trim().Replace(" ", "").Split(",");
 
-            if (user == null)
-                throw new NullReferenceException($"User {userId} does not exist");
+            foreach (var tag in tags)
+            {
+                await _contx.user_tags.AddAsync(new UserTag
+                {
+                    UserId = userId, 
+                    Tag = tag,
+                    TagType = TagType.Interests
+                });
 
-            user.CommercialsTagsVector = (user.UserDataInfo.Tags + tagString).Replace("#", "")
-                .Trim().Replace(" ", "");
+            }
 
-            _contx.SYSTEM_USERS.Update(user);
             await _contx.SaveChangesAsync();
             return true;
         }
@@ -4621,6 +4624,58 @@ namespace MyWebApi.Repositories
             user.IsIdentityConfirmed = false;
 
             await _contx.SaveChangesAsync();
+        }
+
+        public async Task<SimilarityBetweenUsers> GetSimilarityBetweenUsersAsync(long user1, long user2)
+        {
+            var userTags1 = await GetUserTagsAsync(user1);
+            var userTags2 = await GetUserTagsAsync(user2);
+
+            var intersections = userTags1.FullTags.Where(tag => userTags2.FullTags
+            .Any(t => t.Tag == tag.Tag && t.TagType == tag.TagType))
+            .Select(t => t.TagType)
+            .ToList();
+
+            var similarity = new SimilarityBetweenUsers
+            {
+                SimilarBy = intersections,
+
+                SimilarityCount = userTags1.Tags.Intersect(userTags2.Tags).Count()
+            };
+
+            return similarity;
+        }
+
+        private async Task<GetUserTags> GetUserTagsAsync(long userId)
+        {
+            var tags = await _contx.user_tags.Where(t => t.UserId == userId)
+                .ToListAsync();
+
+            return new GetUserTags
+            {
+                FullTags = tags.Select(t => new UserTags
+                {
+                    Tag = t.Tag,
+                    TagType = t.TagType
+                }).ToList(),
+
+                Tags = tags.Select(t => t.Tag)
+                .ToList()
+            };
+        }
+
+        private async Task<List<UserTag>> GetUserTagsAsync(long userId, TagType tagType)
+        {
+            return await _contx.user_tags.Where(t => t.UserId == userId && t.TagType == tagType)
+                .ToListAsync();
+        }
+
+        private async Task<Dictionary<long, List<UserTag>>> GetUsersTagsAsync(List<long> userIds, TagType tagType)
+        {
+            var list = await _contx.user_tags.Where(t => userIds.Contains(t.UserId) && t.TagType == tagType)
+                .ToListAsync();
+
+            return list.GroupBy(t => t.UserId).ToDictionary(t => t.FirstOrDefault().UserId, t => t.ToList());
         }
     }
 }

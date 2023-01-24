@@ -53,6 +53,7 @@ namespace MyWebApi.Data
         public DbSet<TestAnswer> tests_answers { get; set; }
         public DbSet<TestResult> tests_results { get; set; }
         public DbSet<UserTest> user_tests { get; set; }
+        public DbSet<UserTag> user_tags { get; set; }
         public DbSet<Ad> SPONSOR_ADS { get; set; }
         public DbSet<Sponsor> SYSTEM_SPONSORS { get; set; }
         public DbSet<SponsorLanguage> SPONSOR_LANGUAGES { get; set; }
@@ -124,6 +125,7 @@ namespace MyWebApi.Data
             builder.Entity<DailyTask>().HasKey(t => new { t.Id, t.ClassLocalisationId });
             builder.Entity<UserDailyTask>().HasKey(t => new { t.UserId, t.DailyTaskId });
             builder.Entity<AdventureAttendee>().HasKey(t => new { t.UserId, t.AdventureId });
+            builder.Entity<UserTag>().HasKey(t => new { t.UserId, t.Tag });
 
             builder.Entity<Ad>();
 

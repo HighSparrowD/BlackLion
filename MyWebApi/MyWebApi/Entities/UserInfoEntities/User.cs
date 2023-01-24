@@ -34,7 +34,6 @@ namespace MyWebApi.Entities.UserInfoEntities
         public int ProfileViewsCount { get; set; }
         public int MaxProfileViewsCount { get; set; }
         public int TagSearchesCount { get; set; }
-        public string? CommercialsTagsVector { get; set; }
         public short? Currency { get; set; }
         public DateTime? PremiumExpirationDate{ get; set; }
         public string? EnteredPromoCodes { get; set; }
@@ -57,7 +56,12 @@ namespace MyWebApi.Entities.UserInfoEntities
 
         public bool CheckIfHasEncountered(List<Encounter> encounters, long userId)
         {
-            bool result = encounters.Where(e => e.UserId == userId).SingleOrDefault() != null || encounters.Where(e => e.EncounteredUserId == userId).SingleOrDefault() != null;
+            bool result = encounters.Where(e => e.UserId == userId)
+                .SingleOrDefault() != null 
+                || 
+                encounters
+                .Where(e => e.EncounteredUserId == userId)
+                .SingleOrDefault() != null;
             return result;
         }
 

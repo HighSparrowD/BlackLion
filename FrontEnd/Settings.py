@@ -1440,8 +1440,8 @@ class Settings:
         user = Helpers.get_user_info(self.current_managed_user)
 
         self.delete_active_message()
-        self.send_active_message_with_photo(f"{user['userBaseInfo']['userDescription']}\n\n<b><i>Please, choose an option from a list below</i></b>", self.encounterOptionMarkup, user["userBaseInfo"]["userPhoto"])
-        # self.bot.send_photo(self.current_user, user["userBaseInfo"]["userPhoto"], user["userBaseInfo"]["userDescription"], reply_markup=self.encounterOptionMarkup)
+        self.send_active_message_with_photo(f"{user['userBaseInfo']['userDescription']}\n\n<b><i>Please, choose an option from a list below</i></b>", self.encounterOptionMarkup, user["userBaseInfo"]["userMedia"])
+        # self.bot.send_photo(self.current_user, user["userBaseInfo"]["userMedia"], user["userBaseInfo"]["userDescription"], reply_markup=self.encounterOptionMarkup)
         self.bot.register_next_step_handler(self.message, self.encounter_list_management, acceptMode=True, chat_id=self.current_user)
 
     def construct_achievement_message(self, achievementId):
@@ -1517,6 +1517,13 @@ class Settings:
             return
 
         self.active_message = self.bot.send_photo(self.current_user, photo=photo, caption=text, reply_markup=markup).id
+
+    def send_active_message_with_video(self, text, markup, video):
+        if self.active_message:
+            self.bot.edit_message_media(media=video, chat_id=self.current_user, message_id=self.active_message, reply_markup=markup)
+            return
+
+        self.active_message = self.bot.send_video(self.current_user, video=video, caption=text, reply_markup=markup).id
 
     def edit_active_message_markup(self, markup):
         self.bot.edit_message_reply_markup(self.current_user, self.active_message, reply_markup=markup)

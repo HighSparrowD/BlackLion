@@ -12,7 +12,8 @@ namespace MyWebApi.Entities.UserInfoEntities
         public string? UserRealName { get; set; }
         public string? UserDescription { get; set; }
         public int UserAppLanguageId { get; set; }
-        public string? UserPhoto { get; set; }
+        public string? UserMedia { get; set; }
+        public bool IsMediaPhoto { get; set; }
         public int? UserCountryCode { get; set; }
         public int? UserCityCode { get; set; }
         public List<int>? UserLanguages { get; set; }

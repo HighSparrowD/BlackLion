@@ -71,14 +71,14 @@ class Requester:
                 self.get_request_sender_data()
 
                 if self.current_request["isLikedBack"]:
-                    self.bot.send_photo(self.current_user, self.current_managed_user["userPhoto"], f"<b>{self.current_request['description']}</b>\n\n{self.current_managed_user['userDescription']}", reply_markup=self.markup, parse_mode=telegram.ParseMode.HTML)
+                    self.bot.send_photo(self.current_user, self.current_managed_user["userMedia"], f"<b>{self.current_request['description']}</b>\n\n{self.current_managed_user['userDescription']}", reply_markup=self.markup, parse_mode=telegram.ParseMode.HTML)
                     Helpers.delete_user_request(self.current_request["id"])
                     self.request_list.pop(0)
                     self.process_request(message)
                     # self.bot.register_next_step_handler(message, self.process_request, acceptMode=True, chat_id=self.current_user)
                     return
 
-                self.bot.send_photo(self.current_user, self.current_managed_user["userPhoto"], f"<b>Someone have liked you</b>\n\n{self.current_managed_user['userDescription']}", reply_markup=self.markup, parse_mode=telegram.ParseMode.HTML)
+                self.bot.send_photo(self.current_user, self.current_managed_user["userMedia"], f"<b>Someone have liked you</b>\n\n{self.current_managed_user['userDescription']}", reply_markup=self.markup, parse_mode=telegram.ParseMode.HTML)
                 self.bot.register_next_step_handler(message, self.process_request, acceptMode=True, chat_id=self.current_user)
             else:
                 self.destruct()

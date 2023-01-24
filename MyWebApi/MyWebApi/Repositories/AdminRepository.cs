@@ -508,7 +508,7 @@ namespace MyWebApi.Repositories
         public async Task<string> GetUserPhotoAsync(long userId)
         {
             return await _contx.SYSTEM_USERS_BASES.Where(b => b.Id == userId)
-                .Select(u => u.UserPhoto)
+                .Select(u => u.UserMedia)
                 .FirstOrDefaultAsync();
         }
 
@@ -567,7 +567,7 @@ namespace MyWebApi.Repositories
                 if (model.UserLanguages.Count > langCount)
                     throw new Exception($"This user cannot have more than {langCount} languages !");
                 
-                uBase = new UserBaseInfo(model.Id + rand.Next(8000), model.UserName, model.UserRealName, model.UserDescription, model.UserPhoto, model.IsPhotoReal);
+                uBase = new UserBaseInfo(model.Id + rand.Next(8000), model.UserName, model.UserRealName, model.UserDescription, model.UserMedia, model.IsPhotoReal, model.IsMediaPhoto);
                 uData = new UserDataInfo
                 {
                     Id = uBase.Id,

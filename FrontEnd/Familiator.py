@@ -163,7 +163,12 @@ class Familiator:
     def show_person(self, message, acceptMode=False):
         if not acceptMode:
             user = self.active_user["userBaseInfo"]
-            self.bot.send_photo(self.current_user, user["userPhoto"], user["userDescription"], reply_markup=self.markup, parse_mode=telegram.ParseMode.HTML)
+
+            if user["isMediaPhoto"]:
+                self.bot.send_photo(self.current_user, user["userMedia"], user["userDescription"], reply_markup=self.markup)
+            else:
+                self.bot.send_video(self.current_user, video=user["userMedia"], caption=user["userDescription"], reply_markup=self.markup)
+
             self.bot.send_message(self.current_user, "Additional Actions:", reply_markup=self.actions_markup)
             self.bot.register_next_step_handler(message, self.show_person, acceptMode=True, chat_id=self.current_user)
         else:

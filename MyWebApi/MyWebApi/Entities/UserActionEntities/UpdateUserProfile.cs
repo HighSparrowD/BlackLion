@@ -10,7 +10,7 @@ namespace MyWebApi.Entities.UserActionEntities
         public string? UserRealName { get; set; }
         public string? UserDescription { get; set; }
         public int UserAppLanguageId { get; set; }
-        public string? UserPhoto { get; set; }
+        public string? UserMedia { get; set; }
         public int? UserCountryCode { get; set; }
         public int? UserCityCode { get; set; }
         public List<int>? UserLanguages { get; set; }
@@ -24,6 +24,7 @@ namespace MyWebApi.Entities.UserActionEntities
         public short UserGenderPrefs { get; set; }
         public bool ShouldUserPersonalityFunc { get; set; }
         public bool IsPhotoReal { get; set; }
+        public bool IsMediaPhoto { get; set; }
         public bool WasChanged { get; set; }
     }
 }

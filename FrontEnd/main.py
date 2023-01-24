@@ -107,7 +107,7 @@ def help(message):
         pass
 
 
-@bot.message_handler(commands=["test"])
+@bot.message_handler()
 def test(message):
     try:
         t = bot.get_sticker_set(message.text.replace("/test", ""))
