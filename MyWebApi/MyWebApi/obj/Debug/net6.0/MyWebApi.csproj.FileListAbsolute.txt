@@ -217,3 +217,7 @@ C:\Git\BlackLion\MyWebApi\MyWebApi\obj\Debug\net6.0\refint\MyWebApi.dll
 C:\Git\BlackLion\MyWebApi\MyWebApi\obj\Debug\net6.0\MyWebApi.pdb
 C:\Git\BlackLion\MyWebApi\MyWebApi\obj\Debug\net6.0\MyWebApi.genruntimeconfig.cache
 C:\Git\BlackLion\MyWebApi\MyWebApi\obj\Debug\net6.0\ref\MyWebApi.dll
+C:\Git\BlackLion\MyWebApi\MyWebApi\bin\Debug\net6.0\Microsoft.Win32.SystemEvents.dll
+C:\Git\BlackLion\MyWebApi\MyWebApi\bin\Debug\net6.0\System.Drawing.Common.dll
+C:\Git\BlackLion\MyWebApi\MyWebApi\bin\Debug\net6.0\runtimes\win\lib\net6.0\Microsoft.Win32.SystemEvents.dll
+C:\Git\BlackLion\MyWebApi\MyWebApi\bin\Debug\net6.0\runtimes\win\lib\net6.0\System.Drawing.Common.dll

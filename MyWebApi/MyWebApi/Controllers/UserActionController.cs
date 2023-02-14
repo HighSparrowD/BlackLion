@@ -176,12 +176,6 @@ namespace MyWebApi.Controllers
             return await _repository.GetUsersAsync(userId);
         }
 
-        [HttpGet("/GetUserList/TurnOffP/{userId}")]
-        public async Task<List<GetUserData>> GetUserList2(long userId)
-        {
-            return await _repository.GetUsersAsync(userId, turnOffPersonalityFunc: true);
-        }
-
         [HttpGet("/GetUserList/FreeSearch/{userId}")]
         public async Task<List<GetUserData>> GetUserList3(long userId)
         {
@@ -501,7 +495,13 @@ namespace MyWebApi.Controllers
         [HttpPost("/RegisterUserRequest")]
         public async Task<string> RegisterUserRequest(UserNotification request)
         {
-            return await _repository.RegisterUserRequest(request);
+            return await _repository.RegisterUserRequestAsync(request);
+        }
+
+        [HttpGet("/DeclineRequest/{user1}/{user2}")]
+        public async Task<string> DeclineRequest(long user1, long user2)
+        {
+            return await _repository.DeclineRequestAsync(user1, user2);
         }
 
         [HttpDelete("/DeleteUserRequest/{requestId}")]

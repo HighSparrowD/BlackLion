@@ -18,6 +18,8 @@ using MyWebApi.Interfaces;
 using QRCoder;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using static MyWebApi.Enums.SystemEnums;
@@ -137,7 +139,7 @@ namespace MyWebApi.Repositories
 
                     //User is instantly liked by an invitor if he is allowing it
                     if (invitor.IncreasedFamiliarity)
-                        await RegisterUserRequest(new UserNotification { UserId = invitor.UserId, UserId1 = model.UserId, IsLikedBack = false });
+                        await RegisterUserRequestAsync(new UserNotification { UserId = invitor.UserId, UserId1 = model.UserId, IsLikedBack = false });
                     //Invitor is notified about referential registration
                     await NotifyUserAboutReferentialRegistrationAsync(invitor.UserId, model.UserId);
                 }
@@ -218,7 +220,7 @@ namespace MyWebApi.Repositories
             }
         }
 
-        public async Task<List<GetUserData>> GetUsersAsync(long userId, bool turnOffPersonalityFunc = false, bool isRepeated=false, bool isFreeSearch = false)
+        public async Task<List<GetUserData>> GetUsersAsync(long userId, bool isRepeated=false, bool isFreeSearch = false)
         {
             try
             {
@@ -231,10 +233,6 @@ namespace MyWebApi.Repositories
                 await CheckUserHasPremiumAsync(currentUser.UserId);
 
                 var currentUserEncounters = await GetUserEncounters(userId, (int)SystemEnums.Sections.Familiator); //I am not sure if it is 2 or 3 section
-
-                //If user has elected to temporarily dissable PERSONALITY functionality (Change shold NOT be changed in th DB) 
-                if (turnOffPersonalityFunc)
-                    currentUser.UserPreferences.ShouldUsePersonalityFunc = false;
 
                 var data = await _contx.SYSTEM_USERS
                     .Where(u => u.UserId != currentUser.UserId)
@@ -256,15 +254,16 @@ namespace MyWebApi.Repositories
 
                 if (currentUser.UserPreferences.ShouldFilterUsersWithoutRealPhoto && currentUser.HasPremium)
                 {
-                    data.Where(u => u.UserBaseInfo.IsPhotoReal)
+                    data = data.Where(u => u.UserBaseInfo.IsPhotoReal)
                         .ToList();
                 }    
                 
                 if (currentUser.UserDataInfo.Location.CountryId != null)
                 {
-                    data.Where(u => u.UserDataInfo.Location.CountryId != null)
+                    data = data.Where(u => u.UserDataInfo.Location.CountryId != null)
                             .Where(u => u.UserPreferences.UserLocationPreferences.Contains((int)currentUser.UserDataInfo.Location.CountryId))
-                            .Where(u => currentUser.UserPreferences.UserLocationPreferences.Contains((int)u.UserDataInfo.Location.CountryId));
+                            .Where(u => currentUser.UserPreferences.UserLocationPreferences.Contains((int)u.UserDataInfo.Location.CountryId))
+                            .ToList();
                 }
 
                 //Check if users had encountered one another
@@ -280,7 +279,7 @@ namespace MyWebApi.Repositories
                 //Check if current user had already recieved request from user
                 data = data.Where(u => !CheckRequestExists(u.UserId, userId)).ToList();
 
-                //If user does NOT have gender prederences
+                //Don't check genders user does NOT have gender prederences
                 if (currentUser.UserPreferences.UserGenderPrefs != 3)
                 {
                     data = data.Where(u => u.UserDataInfo.UserGender == currentUser.UserPreferences.UserGenderPrefs)
@@ -293,373 +292,31 @@ namespace MyWebApi.Repositories
                     data = data.Where(u => u.IsFree != null && (bool)u.IsFree).ToList();
 
 
-                //If user uses PERSONALITY functionality and free search is disabled
-                if (currentUser.UserPreferences.ShouldUsePersonalityFunc && !isFreeSearch)
+                //If user uses PERSONALITY functionality
+                if (currentUser.UserPreferences.ShouldUsePersonalityFunc)
                 {
-                    var userActiveEffects = await GetUserActiveEffects(userId);
-
-                    var deviation = 0.15;
-                    var minDeviation = 0.05;
-
-                    var currentValueMax = 0d;
-                    var currentValueMin = 0d;
-
-                    var valentineBonus = 1d;
-
-                    var hasActiveValentine = await CheckEffectIsActiveAsync(userId, (int)Currencies.TheValentine);
-
-                    var userHasDetectorOn = await CheckEffectIsActiveAsync(userId, (int)Currencies.TheDetector);
-
-                    if (hasActiveValentine)
-                        valentineBonus = 2;
-
-                    if (isRepeated)
-                    {
-                        deviation *= 1.5;
-                        minDeviation *= 3.2;
-                    }
-
-                    var userPoints = await _contx.USER_PERSONALITY_POINTS.Where(p => p.UserId == currentUser.UserId)
-                    .SingleOrDefaultAsync();
-
-                    var userStats = await _contx.USER_PERSONALITY_STATS.Where(s => s.UserId == currentUser.UserId)
-                    .SingleOrDefaultAsync();
-
-                    var important = await userPoints.GetImportantParams();
 
                     for (int i = 0; i < data.Count; i++)
                     {
-                        var importantMatches = 0;
-                        var secondaryMatches = 0;
-                        var matchedBy = "";
-
-                        var u = data[i];
-
-                        //Check if user uses personality functionality and remove him from the list if he does not
-                        if (!u.UserPreferences.ShouldUsePersonalityFunc)
-                        {
-                            data.Remove(u);
-                            continue;
-                        }
-
-                        var user2Points = await _contx.USER_PERSONALITY_POINTS.Where(p => p.UserId == u.UserId)
-                        .SingleOrDefaultAsync();
-
-                        var user2Stats = await _contx.USER_PERSONALITY_STATS.Where(s => s.UserId == u.UserId)
-                        .SingleOrDefaultAsync();
-
-
-                        //Turns off the parameter if it is 0
-                        if (userPoints.Personality > 0 && userStats.Personality > 0 && user2Points.Personality > 0 && user2Stats.Personality > 0)
-                        {
-                            //TODO: create its own deviation variable depending on the number of personalities (It is likely to be grater than the nornal one)
-                            var personalitySim = await CalculateSimilarityAsync(userStats.Personality * valentineBonus, user2Stats.Personality);
-
-                            currentValueMax = ApplyMaxDeviation(userPoints.PersonalityPercentage, deviation);
-                            currentValueMin = ApplyMinDeviation(userPoints.PersonalityPercentage, minDeviation);
-
-                            //Negative conditions are applied, cuz this is an exclussive condition
-                            if (personalitySim <= currentValueMax && personalitySim >= currentValueMin)
-                            {
-                                currentValueMax = ApplyMaxDeviation(user2Points.PersonalityPercentage, deviation);
-                                currentValueMin = ApplyMinDeviation(user2Points.PersonalityPercentage, minDeviation);
-
-                                if (personalitySim <= currentValueMax && personalitySim >= currentValueMin)
-                                {
-                                    matchedBy += "P. ";
-                                    if (important.Contains(PersonalityStats.PersonalityType))
-                                    {
-                                        importantMatches++;
-                                    }
-                                    else
-                                        secondaryMatches++;
-                                }
-                            }
-                        }
-
-
-                        if (userPoints.EmotionalIntellect > 0 && userStats.EmotionalIntellect > 0 && user2Points.EmotionalIntellect > 0 && user2Stats.EmotionalIntellect > 0)
-                        {
-                            var emIntellectSim = await CalculateSimilarityAsync(userStats.EmotionalIntellect * valentineBonus, user2Stats.EmotionalIntellect);
-
-                            currentValueMax = ApplyMaxDeviation(userPoints.EmotionalIntellectPercentage, deviation);
-                            currentValueMin = ApplyMinDeviation(userPoints.EmotionalIntellectPercentage, minDeviation);
-
-                            if (emIntellectSim <= currentValueMax && emIntellectSim >= currentValueMin)
-                            {                            
-                                currentValueMax = ApplyMaxDeviation(user2Points.EmotionalIntellectPercentage, deviation);
-                                currentValueMin = ApplyMinDeviation(user2Points.EmotionalIntellectPercentage, minDeviation);
-
-                                if (emIntellectSim <= currentValueMax && emIntellectSim >= currentValueMin)
-                                {
-                                    matchedBy += "E. ";
-                                    if (important.Contains(PersonalityStats.EmotionalIntellect))
-                                    {
-                                        importantMatches++;
-                                    }
-                                    else
-                                        secondaryMatches++;
-                                }
-                            }
-                        }
-
-
-                        if (userPoints.Reliability > 0 && userStats.Reliability > 0 && user2Points.Reliability > 0 && user2Stats.Reliability > 0)
-                        {
-                            var reliabilitySim = await CalculateSimilarityAsync(userStats.Reliability * valentineBonus, user2Stats.Reliability);
-
-                            currentValueMax = ApplyMaxDeviation(userPoints.ReliabilityPercentage, deviation);
-                            currentValueMin = ApplyMinDeviation(userPoints.ReliabilityPercentage, minDeviation);
-
-                            if (reliabilitySim <= currentValueMax && reliabilitySim >= currentValueMin)
-                            {
-                                currentValueMax = ApplyMaxDeviation(user2Points.ReliabilityPercentage, deviation);
-                                currentValueMin = ApplyMinDeviation(user2Points.ReliabilityPercentage, minDeviation);
-
-                                if (reliabilitySim <= currentValueMax && reliabilitySim >= currentValueMin)
-                                {
-                                    matchedBy += "R. ";
-                                    if (important.Contains(PersonalityStats.Reliability))
-                                    {
-                                        importantMatches++;
-                                    }
-                                    else
-                                        secondaryMatches++;
-                                }
-                            }
-                        }
-
-
-                        if (userPoints.Compassion > 0 && userStats.Compassion > 0 && user2Points.Compassion > 0 && user2Stats.Compassion > 0)
-                        {
-                            var compassionSim = await CalculateSimilarityAsync(userStats.Compassion * valentineBonus, user2Stats.Compassion);
-
-                            currentValueMax = ApplyMaxDeviation(userPoints.CompassionPercentage, deviation);
-                            currentValueMin = ApplyMinDeviation(userPoints.CompassionPercentage, minDeviation);
-
-                            if (compassionSim <= currentValueMax && compassionSim >= currentValueMin)
-                            {
-                                currentValueMax = ApplyMaxDeviation(user2Points.CompassionPercentage, deviation);
-                                currentValueMin = ApplyMinDeviation(user2Points.CompassionPercentage, minDeviation);
-
-                                if (compassionSim <= currentValueMax && compassionSim >= currentValueMin)
-                                {
-                                    matchedBy += "S. ";
-                                    if (important.Contains(PersonalityStats.Compassion))
-                                    {
-                                        importantMatches++;
-                                    }
-                                    else
-                                        secondaryMatches++;
-                                }
-                            }
-                        }
-
-
-                        if (userPoints.OpenMindedness > 0 && userStats.OpenMindedness > 0 && user2Points.OpenMindedness > 0 && user2Stats.OpenMindedness > 0)
-                        {
-                            var openMindSim = await CalculateSimilarityAsync(userStats.OpenMindedness * valentineBonus, user2Stats.OpenMindedness);
-
-                            currentValueMax = ApplyMaxDeviation(userPoints.OpenMindednessPercentage, deviation);
-                            currentValueMin = ApplyMinDeviation(userPoints.OpenMindednessPercentage, minDeviation);
-
-                            if (openMindSim <= currentValueMax && openMindSim >= currentValueMin)
-                            {
-                                currentValueMax = ApplyMaxDeviation(user2Points.OpenMindednessPercentage, deviation);
-                                currentValueMin = ApplyMinDeviation(user2Points.OpenMindednessPercentage, minDeviation);
-
-                                if (openMindSim <= currentValueMax && openMindSim >= currentValueMin)
-                                {
-                                    matchedBy += "O. ";
-                                    if (important.Contains(PersonalityStats.OpenMindedness))
-                                    {
-                                        importantMatches++;
-                                    }
-                                    else
-                                        secondaryMatches++;
-                                }
-                            }
-                        }
-
-
-                        if (userPoints.Agreeableness > 0 && userStats.Agreeableness > 0 && user2Points.Agreeableness > 0 && user2Stats.Agreeableness > 0)
-                        {
-                            var agreeablenessSim = await CalculateSimilarityAsync(userStats.Agreeableness * valentineBonus, user2Stats.Agreeableness);
-
-                            currentValueMax = ApplyMaxDeviation(userPoints.AgreeablenessPercentage, deviation);
-                            currentValueMin = ApplyMinDeviation(userPoints.AgreeablenessPercentage, minDeviation);
-
-                            if (agreeablenessSim <= currentValueMax && agreeablenessSim >= currentValueMin)
-                            {
-                                currentValueMax = ApplyMaxDeviation(user2Points.AgreeablenessPercentage, deviation);
-                                currentValueMin = ApplyMinDeviation(user2Points.AgreeablenessPercentage, minDeviation);
-
-                                if (agreeablenessSim <= currentValueMax && agreeablenessSim >= currentValueMin)
-                                {
-                                    matchedBy += "N. ";
-                                    if (important.Contains(PersonalityStats.Agreeableness))
-                                    {
-                                        importantMatches++;
-                                    }
-                                    else
-                                        secondaryMatches++;
-                                }
-                            }
-                        }
-
-
-                        if (userPoints.SelfAwareness > 0 && userStats.SelfAwareness > 0 && user2Points.SelfAwareness > 0 && user2Stats.SelfAwareness > 0)
-                        {
-                            var selfAwerenessSim = await CalculateSimilarityAsync(userStats.SelfAwareness * valentineBonus, user2Stats.SelfAwareness);
-
-                            currentValueMax = ApplyMaxDeviation(userPoints.SelfAwarenessPercentage, deviation);
-                            currentValueMin = ApplyMinDeviation(userPoints.SelfAwarenessPercentage, minDeviation);
-
-                            if (selfAwerenessSim <= currentValueMax && selfAwerenessSim >= currentValueMin)
-                            {
-                                currentValueMax = ApplyMaxDeviation(user2Points.SelfAwarenessPercentage, deviation);
-                                currentValueMin = ApplyMinDeviation(user2Points.SelfAwarenessPercentage, minDeviation);
-
-                                if (selfAwerenessSim <= currentValueMax && selfAwerenessSim >= currentValueMin)
-                                {
-                                    matchedBy += "A. ";
-                                    if (important.Contains(PersonalityStats.SelfAwareness))
-                                    {
-                                        importantMatches++;
-                                    }
-                                    else
-                                        secondaryMatches++;
-                                }
-                            }
-                        }
-
-
-                        if (userPoints.LevelOfSense > 0 && userStats.LevelOfSense > 0 && user2Points.LevelOfSense > 0 && user2Stats.LevelOfSense > 0)
-                        {
-                            var levelOfSense = await CalculateSimilarityAsync(userStats.LevelOfSense * valentineBonus, user2Stats.LevelOfSense);
-
-                            currentValueMax = ApplyMaxDeviation(userPoints.LevelOfSensePercentage, deviation);
-                            currentValueMin = ApplyMinDeviation(userPoints.LevelOfSensePercentage, minDeviation);
-
-                            if (levelOfSense <= currentValueMax && levelOfSense >= currentValueMin)
-                            {
-                                currentValueMax = ApplyMaxDeviation(user2Points.LevelOfSensePercentage, deviation);
-                                currentValueMin = ApplyMinDeviation(user2Points.LevelOfSensePercentage, minDeviation);
-
-                                if (levelOfSense <= currentValueMax && levelOfSense >= currentValueMin)
-                                {
-                                    matchedBy += "L. ";
-                                    if (important.Contains(PersonalityStats.LevelsOfSense))
-                                    {
-                                        importantMatches++;
-                                    }
-                                    else
-                                        secondaryMatches++;
-                                }
-                            }
-                        }
-
-
-                        if (userPoints.Intellect > 0 && userStats.Intellect > 0 && user2Points.Intellect > 0 && user2Stats.Intellect > 0)
-                        {
-                            var intellectSim = await CalculateSimilarityAsync(userStats.Intellect * valentineBonus, user2Points.Intellect);
-
-                            currentValueMax = ApplyMaxDeviation(userPoints.IntellectPercentage, deviation);
-                            currentValueMin = ApplyMinDeviation(userPoints.IntellectPercentage, minDeviation);
-
-                            if (intellectSim <= currentValueMax && intellectSim >= currentValueMin)
-                            {
-                                currentValueMax = ApplyMaxDeviation(user2Points.IntellectPercentage, deviation);
-                                currentValueMin = ApplyMinDeviation(user2Points.IntellectPercentage, minDeviation);
-
-                                if (intellectSim <= currentValueMax && intellectSim >= currentValueMin)
-                                {
-                                    matchedBy += "I. ";
-                                    if (important.Contains(PersonalityStats.Intellect))
-                                    {
-                                        importantMatches++;
-                                    }
-                                    else
-                                        secondaryMatches++;
-                                }
-                            }
-                        }
-
-                        if (userPoints.Nature > 0 && userStats.Nature > 0 && user2Points.Nature > 0 && user2Stats.Nature > 0)
-                        {
-                            var natureSim = await CalculateSimilarityAsync(userStats.Nature * valentineBonus, user2Stats.Nature);
-
-                            currentValueMax = ApplyMaxDeviation(userPoints.NaturePercentage, deviation);
-                            currentValueMin = ApplyMinDeviation(userPoints.NaturePercentage, minDeviation);
-
-                            if (natureSim <= currentValueMax && natureSim >= currentValueMin)
-                            {
-                                currentValueMax = ApplyMaxDeviation(user2Points.NaturePercentage, deviation);
-                                currentValueMin = ApplyMinDeviation(user2Points.NaturePercentage, minDeviation);
-
-                                if (natureSim <= currentValueMax && natureSim >= currentValueMin)
-                                {
-                                    matchedBy += "T. ";
-                                    if (important.Contains(PersonalityStats.Nature))
-                                    {
-                                        importantMatches++;
-                                    }
-                                    else
-                                        secondaryMatches++;
-                                }
-                            }
-                        }
-
-
-                        if (userPoints.Creativity > 0 && userStats.Creativity > 0 && user2Points.Creativity > 0 && user2Stats.Creativity > 0)
-                        {
-                            var creativitySim = await CalculateSimilarityAsync(userStats.Creativity * valentineBonus, user2Stats.Creativity);
-
-                            currentValueMax = ApplyMaxDeviation(userPoints.CreativityPercentage, deviation);
-                            currentValueMin = ApplyMinDeviation(userPoints.CreativityPercentage, minDeviation);
-
-                            if (creativitySim <= currentValueMax && creativitySim >= currentValueMin)
-                            {
-                                currentValueMax = ApplyMaxDeviation(user2Points.CreativityPercentage, deviation);
-                                currentValueMin = ApplyMinDeviation(user2Points.CreativityPercentage, minDeviation);
-
-                                if (creativitySim <= currentValueMax && creativitySim >= currentValueMin)
-                                {
-                                    matchedBy += "Y. ";
-                                    if (important.Contains(PersonalityStats.Creativity))
-                                    {
-                                        importantMatches++;
-                                    }
-                                    else
-                                        secondaryMatches++;
-                                }
-                            }
-                        }
-
-                        if (importantMatches < 1 && secondaryMatches < 3)
-                        {
-                            data.Remove(u);
-                            continue;
-                        };
-
-                        var returnUser = new GetUserData(u, $"{u.UserBaseInfo.UserDescription}");
-
-                        if (userHasDetectorOn)
-                            returnUser.AddDescriptionBonus("<b>{matchedBy}</b>");
-
-                        returnData.Add(returnUser);
+                        returnData.Add(await GetPersonalityMatchResult(userId, currentUser, data[i], isRepeated));
                     }
                 }
                 else
                 {
-                    if(!isFreeSearch)
+                    for (int i = 0; i < data.Count; i++)
                     {
-                        //Remove users, who is using PERSONALITY fucntionality
-                        data.AsParallel().ForAll(u =>
-                        {
-                            if (u.UserPreferences.ShouldUsePersonalityFunc)
-                                data.Remove(u);
-                        });
+                        var u = data[i];
+                        var user = new GetUserData(u);
+                        var bonus = "";
+
+                        if (u.HasPremium && u.Nickname != "")
+                            bonus += $"<b>{u.Nickname}</b>\n";
+
+                        if (u.IsIdentityConfirmed)
+                             bonus += $"✔️\n\n";
+
+                        user.AddDescriptionBonus(bonus);
+                        returnData.Add(user);
                     }
                 }
 
@@ -667,42 +324,13 @@ namespace MyWebApi.Repositories
                 if (!isRepeated)
                 {
                     //Check if users count is less than the limit
-                    if (data.Count <= miminalProfileCount)
+                    if (returnData.Count <= miminalProfileCount)
                     {
-                        returnData = await GetUsersAsync(userId, turnOffPersonalityFunc:turnOffPersonalityFunc, isRepeated: true, isFreeSearch:isFreeSearch);
+                        returnData = await GetUsersAsync(userId, isRepeated: true, isFreeSearch:isFreeSearch);
                     }
 
                     //Add user trust exp only if method was not repeated
                     await AddUserTrustProgressAsync(userId, 0.000003);
-
-                    //Return users PERSONALITY usage property to normal (In case it was temporarily turned off)
-                    if (turnOffPersonalityFunc)
-                    {
-                        currentUser.UserPreferences.ShouldUsePersonalityFunc = true;
-                        await _contx.SaveChangesAsync();
-                    }
-
-                    //Fill-up return data if it wasnt filled in PERSONALITY check
-                    if (!currentUser.UserPreferences.ShouldUsePersonalityFunc)
-                    {
-                        await Task.Run(async () =>
-                        {
-                            for (int i = 0; i < data.Count; i++)
-                            {
-                                var u = data[i];
-                                string bonus = "";
-
-                                //Register user encounter
-                                await RegisterUserEncounter(new Encounter { UserId = userId, EncounteredUserId = u.UserId, SectionId = (int)Sections.Familiator });
-
-                                if (u.IsIdentityConfirmed)
-                                    bonus += $"✔️\n\n";
-                                if (u.HasPremium && u.Nickname != "")
-                                    bonus += $"<b>{u.Nickname}</b>\n";
-                                returnData.Add(new GetUserData(u, bonus));
-                            }
-                        });
-                    }
 
                     //Order user list randomly 
                     returnData = returnData.OrderBy(u => new Random().Next())
@@ -720,6 +348,365 @@ namespace MyWebApi.Repositories
                 await LogAdminErrorAsync(userId, ex.Message, (int)Sections.Familiator);
                 return null;
             }
+        }
+
+        private async Task<GetUserData> GetPersonalityMatchResult(long userId, User currentUser, User managedUser, bool isRepeated)
+        {
+            var returnUser = new GetUserData(managedUser);
+
+            var userActiveEffects = await GetUserActiveEffects(userId);
+            var deviation = 0.15;
+            var minDeviation = 0.05;
+
+            var currentValueMax = 0d;
+            var currentValueMin = 0d;
+
+            var valentineBonus = 1d;
+
+            var importantMatches = 0;
+            var secondaryMatches = 0;
+            var matchedBy = "";
+
+            var hasActiveValentine = userActiveEffects.Where(e => e.EffectId == (int)Currencies.TheValentine).SingleOrDefault() != null;
+
+            var userHasDetectorOn = userActiveEffects.Where(e => e.EffectId == (int)Currencies.TheDetector).SingleOrDefault() != null;
+
+            if (hasActiveValentine)
+                valentineBonus = 2;
+
+            if (isRepeated)
+            {
+                deviation *= 1.5;
+                minDeviation *= 3.2;
+            }
+
+            var userPoints = await _contx.USER_PERSONALITY_POINTS.Where(p => p.UserId == currentUser.UserId)
+            .SingleOrDefaultAsync();
+
+            var userStats = await _contx.USER_PERSONALITY_STATS.Where(s => s.UserId == currentUser.UserId)
+            .SingleOrDefaultAsync();
+
+            var important = await userPoints.GetImportantParams();
+
+            //Pass if user does not uses personality
+            if (!managedUser.UserPreferences.ShouldUsePersonalityFunc)
+                return returnUser;
+
+            var user2Points = await _contx.USER_PERSONALITY_POINTS.Where(p => p.UserId == managedUser.UserId)
+            .SingleOrDefaultAsync();
+
+            var user2Stats = await _contx.USER_PERSONALITY_STATS.Where(s => s.UserId == managedUser.UserId)
+            .SingleOrDefaultAsync();
+
+
+            //Turns off the parameter if it is 0
+            if (userPoints.Personality > 0 && userStats.Personality > 0 && user2Points.Personality > 0 && user2Stats.Personality > 0)
+            {
+                //TODO: create its own deviation variable depending on the number of personalities (It is likely to be grater than the nornal one)
+                var personalitySim = await CalculateSimilarityAsync(userStats.Personality * valentineBonus, user2Stats.Personality);
+
+                currentValueMax = ApplyMaxDeviation(userPoints.PersonalityPercentage, deviation);
+                currentValueMin = ApplyMinDeviation(userPoints.PersonalityPercentage, minDeviation);
+
+                //Negative conditions are applied, cuz this is an exclussive condition
+                if (personalitySim <= currentValueMax && personalitySim >= currentValueMin)
+                {
+                    currentValueMax = ApplyMaxDeviation(user2Points.PersonalityPercentage, deviation);
+                    currentValueMin = ApplyMinDeviation(user2Points.PersonalityPercentage, minDeviation);
+
+                    if (personalitySim <= currentValueMax && personalitySim >= currentValueMin)
+                    {
+                        matchedBy += "[P] ";
+                        if (important.Contains(PersonalityStats.PersonalityType))
+                        {
+                            importantMatches++;
+                        }
+                        else
+                            secondaryMatches++;
+                    }
+                }
+            }
+
+
+            if (userPoints.EmotionalIntellect > 0 && userStats.EmotionalIntellect > 0 && user2Points.EmotionalIntellect > 0 && user2Stats.EmotionalIntellect > 0)
+            {
+                var emIntellectSim = await CalculateSimilarityAsync(userStats.EmotionalIntellect * valentineBonus, user2Stats.EmotionalIntellect);
+
+                currentValueMax = ApplyMaxDeviation(userPoints.EmotionalIntellectPercentage, deviation);
+                currentValueMin = ApplyMinDeviation(userPoints.EmotionalIntellectPercentage, minDeviation);
+
+                if (emIntellectSim <= currentValueMax && emIntellectSim >= currentValueMin)
+                {
+                    currentValueMax = ApplyMaxDeviation(user2Points.EmotionalIntellectPercentage, deviation);
+                    currentValueMin = ApplyMinDeviation(user2Points.EmotionalIntellectPercentage, minDeviation);
+
+                    if (emIntellectSim <= currentValueMax && emIntellectSim >= currentValueMin)
+                    {
+                        matchedBy += "[E] ";
+                        if (important.Contains(PersonalityStats.EmotionalIntellect))
+                        {
+                            importantMatches++;
+                        }
+                        else
+                            secondaryMatches++;
+                    }
+                }
+            }
+
+
+            if (userPoints.Reliability > 0 && userStats.Reliability > 0 && user2Points.Reliability > 0 && user2Stats.Reliability > 0)
+            {
+                var reliabilitySim = await CalculateSimilarityAsync(userStats.Reliability * valentineBonus, user2Stats.Reliability);
+
+                currentValueMax = ApplyMaxDeviation(userPoints.ReliabilityPercentage, deviation);
+                currentValueMin = ApplyMinDeviation(userPoints.ReliabilityPercentage, minDeviation);
+
+                if (reliabilitySim <= currentValueMax && reliabilitySim >= currentValueMin)
+                {
+                    currentValueMax = ApplyMaxDeviation(user2Points.ReliabilityPercentage, deviation);
+                    currentValueMin = ApplyMinDeviation(user2Points.ReliabilityPercentage, minDeviation);
+
+                    if (reliabilitySim <= currentValueMax && reliabilitySim >= currentValueMin)
+                    {
+                        matchedBy += "[R] ";
+                        if (important.Contains(PersonalityStats.Reliability))
+                        {
+                            importantMatches++;
+                        }
+                        else
+                            secondaryMatches++;
+                    }
+                }
+            }
+
+
+            if (userPoints.Compassion > 0 && userStats.Compassion > 0 && user2Points.Compassion > 0 && user2Stats.Compassion > 0)
+            {
+                var compassionSim = await CalculateSimilarityAsync(userStats.Compassion * valentineBonus, user2Stats.Compassion);
+
+                currentValueMax = ApplyMaxDeviation(userPoints.CompassionPercentage, deviation);
+                currentValueMin = ApplyMinDeviation(userPoints.CompassionPercentage, minDeviation);
+
+                if (compassionSim <= currentValueMax && compassionSim >= currentValueMin)
+                {
+                    currentValueMax = ApplyMaxDeviation(user2Points.CompassionPercentage, deviation);
+                    currentValueMin = ApplyMinDeviation(user2Points.CompassionPercentage, minDeviation);
+
+                    if (compassionSim <= currentValueMax && compassionSim >= currentValueMin)
+                    {
+                        matchedBy += "[S] ";
+                        if (important.Contains(PersonalityStats.Compassion))
+                        {
+                            importantMatches++;
+                        }
+                        else
+                            secondaryMatches++;
+                    }
+                }
+            }
+
+
+            if (userPoints.OpenMindedness > 0 && userStats.OpenMindedness > 0 && user2Points.OpenMindedness > 0 && user2Stats.OpenMindedness > 0)
+            {
+                var openMindSim = await CalculateSimilarityAsync(userStats.OpenMindedness * valentineBonus, user2Stats.OpenMindedness);
+
+                currentValueMax = ApplyMaxDeviation(userPoints.OpenMindednessPercentage, deviation);
+                currentValueMin = ApplyMinDeviation(userPoints.OpenMindednessPercentage, minDeviation);
+
+                if (openMindSim <= currentValueMax && openMindSim >= currentValueMin)
+                {
+                    currentValueMax = ApplyMaxDeviation(user2Points.OpenMindednessPercentage, deviation);
+                    currentValueMin = ApplyMinDeviation(user2Points.OpenMindednessPercentage, minDeviation);
+
+                    if (openMindSim <= currentValueMax && openMindSim >= currentValueMin)
+                    {
+                        matchedBy += "[O] ";
+                        if (important.Contains(PersonalityStats.OpenMindedness))
+                        {
+                            importantMatches++;
+                        }
+                        else
+                            secondaryMatches++;
+                    }
+                }
+            }
+
+
+            if (userPoints.Agreeableness > 0 && userStats.Agreeableness > 0 && user2Points.Agreeableness > 0 && user2Stats.Agreeableness > 0)
+            {
+                var agreeablenessSim = await CalculateSimilarityAsync(userStats.Agreeableness * valentineBonus, user2Stats.Agreeableness);
+
+                currentValueMax = ApplyMaxDeviation(userPoints.AgreeablenessPercentage, deviation);
+                currentValueMin = ApplyMinDeviation(userPoints.AgreeablenessPercentage, minDeviation);
+
+                if (agreeablenessSim <= currentValueMax && agreeablenessSim >= currentValueMin)
+                {
+                    currentValueMax = ApplyMaxDeviation(user2Points.AgreeablenessPercentage, deviation);
+                    currentValueMin = ApplyMinDeviation(user2Points.AgreeablenessPercentage, minDeviation);
+
+                    if (agreeablenessSim <= currentValueMax && agreeablenessSim >= currentValueMin)
+                    {
+                        matchedBy += "[N] ";
+                        if (important.Contains(PersonalityStats.Agreeableness))
+                        {
+                            importantMatches++;
+                        }
+                        else
+                            secondaryMatches++;
+                    }
+                }
+            }
+
+
+            if (userPoints.SelfAwareness > 0 && userStats.SelfAwareness > 0 && user2Points.SelfAwareness > 0 && user2Stats.SelfAwareness > 0)
+            {
+                var selfAwerenessSim = await CalculateSimilarityAsync(userStats.SelfAwareness * valentineBonus, user2Stats.SelfAwareness);
+
+                currentValueMax = ApplyMaxDeviation(userPoints.SelfAwarenessPercentage, deviation);
+                currentValueMin = ApplyMinDeviation(userPoints.SelfAwarenessPercentage, minDeviation);
+
+                if (selfAwerenessSim <= currentValueMax && selfAwerenessSim >= currentValueMin)
+                {
+                    currentValueMax = ApplyMaxDeviation(user2Points.SelfAwarenessPercentage, deviation);
+                    currentValueMin = ApplyMinDeviation(user2Points.SelfAwarenessPercentage, minDeviation);
+
+                    if (selfAwerenessSim <= currentValueMax && selfAwerenessSim >= currentValueMin)
+                    {
+                        matchedBy += "[A] ";
+                        if (important.Contains(PersonalityStats.SelfAwareness))
+                        {
+                            importantMatches++;
+                        }
+                        else
+                            secondaryMatches++;
+                    }
+                }
+            }
+
+
+            if (userPoints.LevelOfSense > 0 && userStats.LevelOfSense > 0 && user2Points.LevelOfSense > 0 && user2Stats.LevelOfSense > 0)
+            {
+                var levelOfSense = await CalculateSimilarityAsync(userStats.LevelOfSense * valentineBonus, user2Stats.LevelOfSense);
+
+                currentValueMax = ApplyMaxDeviation(userPoints.LevelOfSensePercentage, deviation);
+                currentValueMin = ApplyMinDeviation(userPoints.LevelOfSensePercentage, minDeviation);
+
+                if (levelOfSense <= currentValueMax && levelOfSense >= currentValueMin)
+                {
+                    currentValueMax = ApplyMaxDeviation(user2Points.LevelOfSensePercentage, deviation);
+                    currentValueMin = ApplyMinDeviation(user2Points.LevelOfSensePercentage, minDeviation);
+
+                    if (levelOfSense <= currentValueMax && levelOfSense >= currentValueMin)
+                    {
+                        matchedBy += "[L] ";
+                        if (important.Contains(PersonalityStats.LevelsOfSense))
+                        {
+                            importantMatches++;
+                        }
+                        else
+                            secondaryMatches++;
+                    }
+                }
+            }
+
+
+            if (userPoints.Intellect > 0 && userStats.Intellect > 0 && user2Points.Intellect > 0 && user2Stats.Intellect > 0)
+            {
+                var intellectSim = await CalculateSimilarityAsync(userStats.Intellect * valentineBonus, user2Points.Intellect);
+
+                currentValueMax = ApplyMaxDeviation(userPoints.IntellectPercentage, deviation);
+                currentValueMin = ApplyMinDeviation(userPoints.IntellectPercentage, minDeviation);
+
+                if (intellectSim <= currentValueMax && intellectSim >= currentValueMin)
+                {
+                    currentValueMax = ApplyMaxDeviation(user2Points.IntellectPercentage, deviation);
+                    currentValueMin = ApplyMinDeviation(user2Points.IntellectPercentage, minDeviation);
+
+                    if (intellectSim <= currentValueMax && intellectSim >= currentValueMin)
+                    {
+                        matchedBy += "[I] ";
+                        if (important.Contains(PersonalityStats.Intellect))
+                        {
+                            importantMatches++;
+                        }
+                        else
+                            secondaryMatches++;
+                    }
+                }
+            }
+
+            if (userPoints.Nature > 0 && userStats.Nature > 0 && user2Points.Nature > 0 && user2Stats.Nature > 0)
+            {
+                var natureSim = await CalculateSimilarityAsync(userStats.Nature * valentineBonus, user2Stats.Nature);
+
+                currentValueMax = ApplyMaxDeviation(userPoints.NaturePercentage, deviation);
+                currentValueMin = ApplyMinDeviation(userPoints.NaturePercentage, minDeviation);
+
+                if (natureSim <= currentValueMax && natureSim >= currentValueMin)
+                {
+                    currentValueMax = ApplyMaxDeviation(user2Points.NaturePercentage, deviation);
+                    currentValueMin = ApplyMinDeviation(user2Points.NaturePercentage, minDeviation);
+
+                    if (natureSim <= currentValueMax && natureSim >= currentValueMin)
+                    {
+                        matchedBy += "[T] ";
+                        if (important.Contains(PersonalityStats.Nature))
+                        {
+                            importantMatches++;
+                        }
+                        else
+                            secondaryMatches++;
+                    }
+                }
+            }
+
+
+            if (userPoints.Creativity > 0 && userStats.Creativity > 0 && user2Points.Creativity > 0 && user2Stats.Creativity > 0)
+            {
+                var creativitySim = await CalculateSimilarityAsync(userStats.Creativity * valentineBonus, user2Stats.Creativity);
+
+                currentValueMax = ApplyMaxDeviation(userPoints.CreativityPercentage, deviation);
+                currentValueMin = ApplyMinDeviation(userPoints.CreativityPercentage, minDeviation);
+
+                if (creativitySim <= currentValueMax && creativitySim >= currentValueMin)
+                {
+                    currentValueMax = ApplyMaxDeviation(user2Points.CreativityPercentage, deviation);
+                    currentValueMin = ApplyMinDeviation(user2Points.CreativityPercentage, minDeviation);
+
+                    if (creativitySim <= currentValueMax && creativitySim >= currentValueMin)
+                    {
+                        matchedBy += "[Y] ";
+                        if (important.Contains(PersonalityStats.Creativity))
+                        {
+                            importantMatches++;
+                        }
+                        else
+                            secondaryMatches++;
+                    }
+                }
+            }
+
+            if (importantMatches < 1 && secondaryMatches < 3)
+            {
+                return returnUser;
+            };
+
+            var bonus = "";
+
+            if (managedUser.HasPremium && managedUser.Nickname != "")
+                bonus += $"<b>{managedUser.Nickname}</b>\n";
+
+            if (managedUser.IsIdentityConfirmed)
+                bonus += $"✔️\n\n";
+
+            if (userHasDetectorOn)
+                bonus += $"<b>PERSONALITY match!</b>\n<b>{matchedBy}</b>";
+            else
+                bonus += "<b>PERSONALITY match!</b>";
+
+            returnUser.AddDescriptionBonus(bonus);
+
+            return returnUser;
         }
 
         public async Task<Country> GetCountryAsync(long id)
@@ -1916,7 +1903,7 @@ namespace MyWebApi.Repositories
                 }
 
                 model.UserRawDescription = user.UserRawDescription;
-                model.UserDescription = user.GenerateUserDescription(user.UserName, data.UserAge, country, city, user.UserRawDescription);
+                model.UserDescription = user.GenerateUserDescription(user.UserRealName, data.UserAge, country, city, user.UserRawDescription);
 
                 //Reactivate user tick request if user photo was changed
                 if (model.UserMedia != user.UserMedia)
@@ -2088,7 +2075,7 @@ namespace MyWebApi.Repositories
             }
         }
 
-        public async Task<string> RegisterUserRequest(UserNotification request)
+        public async Task<string> RegisterUserRequestAsync(UserNotification request)
         {
             try
             {
@@ -2138,6 +2125,35 @@ namespace MyWebApi.Repositories
                 await LogAdminErrorAsync(request.UserId, ex.Message, (int)Sections.Requester);
                 return null;
             }
+        }
+
+        //TODO: Make more informative and interesting
+        public async Task<string> DeclineRequestAsync(long user1, long user2)
+        {
+            var sim = await GetSimilarityBetweenUsersAsync(user1, user2);
+
+            //Encounter is not registered anywhere but here in that case
+            await RegisterUserEncounter(new Encounter
+            {
+                UserId = user1,
+                EncounteredUserId = user2,
+                SectionId = (short)Sections.Familiator,
+                EncounterDate = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc),
+            });
+
+            switch (sim.SimilarBy.Count)
+            {
+                case 3:
+                    return "It is such a shame, you were a perfect match!";
+                case 2:
+                    return "Oh... You two were so alike :(";
+                case 1:
+                    return "It's a shame";
+                default:
+                    return null;
+            }
+
+
         }
 
         public async Task<byte> DeleteUserRequests(long userId)
@@ -3716,7 +3732,7 @@ namespace MyWebApi.Repositories
                         if (userBalance.SecondChances > 0)
                         {
                             userBalance.SecondChances--;
-                            await RegisterUserRequest(new UserNotification
+                            await RegisterUserRequestAsync(new UserNotification
                             {
                                 UserId = userId,
                                 UserId1 = (long)user2Id,

@@ -298,6 +298,14 @@ def register_user_request(senderId, receiverId, isLikedBack, description=""):
         return None
 
 
+def decline_user_request(user1, user2):
+    try:
+        return requests.get(f"https://localhost:44381/DeclineRequest/{user1}/{user2}",
+                                       verify=False).text
+    except:
+        return None
+
+
 def register_user_encounter(current_user_id, user_id, section_id):
     try:
         data = {

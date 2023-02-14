@@ -113,6 +113,11 @@ class Requester:
         self.destruct()
 
     def decline_request(self, message):
+        sadMessage = Helpers.decline_user_request(self.current_user, self.current_managed_user_id)
+
+        if sadMessage:
+            self.bot.send_message(self.current_user, sadMessage)
+
         Helpers.delete_user_request(self.current_request["id"])
         self.request_list.pop(0)
         self.process_request(message)

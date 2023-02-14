@@ -189,11 +189,19 @@ class Familiator:
                         Requester(self.bot, message, self.active_user_id, req_list)
                 except:
                     pass
+            elif message.text == self.btnNo:
+                sadMessage = Helpers.decline_user_request(self.current_user, self.active_user_id)
+
+                if sadMessage:
+                    self.bot.send_message(self.current_user, sadMessage)
+
             elif message.text == self.btnReport:
                 ReportModule(self.bot, self.msg, self.current_user, self.proceed)
+                return
 
             elif message.text == self.btnLeave:
                 self.start(message)
+                return
             else:
                 self.bot.send_message(self.current_user, "No such option", reply_markup=self.markup)
                 self.bot.register_next_step_handler(message, self.show_person, acceptMode=acceptMode, chat_id=self.current_user)

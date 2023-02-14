@@ -272,6 +272,8 @@ class Registrator:
         if not acceptMode:
             self.question_index = 9
 
+            self.send_encourage_message("Some of the people, who had registered received 100$... Or they had not")
+
             for reason in self.reasons.values():
                 self.reason_markup.add(KeyboardButton(reason))
             self.bot.send_message(msg.chat.id, "What are you searching for?", reply_markup=self.reason_markup)
@@ -328,6 +330,8 @@ class Registrator:
         if not acceptMode:
             self.question_index = 4
             self.markup_page = 1
+
+            self.send_encourage_message("You have done good job answering our questions. Keep it up!")
 
             reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page,
                         self.markup_pages_count)
@@ -525,6 +529,8 @@ class Registrator:
         if not acceptMode:
             self.question_index = 7
 
+            self.send_encourage_message("Yeah, i like that name :)")
+
             self.bot.send_message(msg.chat.id, "How old are you?")
             self.bot.register_next_step_handler(msg, self.age_step, acceptMode=True, editMode=editMode, chat_id=self.current_user)
         else:
@@ -554,11 +560,10 @@ class Registrator:
         if not acceptMode:
             self.question_index = 8
 
-            self.bot.send_message(msg.chat.id, "Tell something about yourself !")
+            self.bot.send_message(msg.chat.id, "Tell something about yourself !", reply_markup=self.skip_markup)
             self.bot.register_next_step_handler(msg, self.description_step, acceptMode=True, editMode=editMode, chat_id=self.current_user)
         else:
             if msg.text:
-
                 if len(msg.text) > 1000:
                     self.bot.send_message(self.current_user, "Description cannot contain more than 1000 characters")
                     self.bot.register_next_step_handler(msg, self.description_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
@@ -569,7 +574,9 @@ class Registrator:
                     self.photo_step(msg)
                 else:
                     self.checkout_step(msg)
-
+            elif msg.text == "skip":
+                self.data["userDescription"] = ""
+                self.bot.send_message(self.current_user, "No profile description, huh ?\nI highly don't recommend it, but it is you call :)")
             else:
                 self.bot.send_message(msg.chat.id,
                                       "Description cannot be empty. Just  describe yourself in a few words ;-)")
@@ -629,6 +636,8 @@ class Registrator:
     def gender_preferences_step(self, msg, acceptMode=False, editMode=False):
         if not acceptMode:
             self.question_index = 11
+
+            self.send_encourage_message("You are very close to finish! Dont stop!")
 
             self.gender_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
 
@@ -745,6 +754,8 @@ class Registrator:
             self.question_index = 14
             self.markup_page = 1
 
+            self.send_encourage_message("Almost there...")
+
             reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page,
                         self.markup_pages_count)
             count_pages(self.countries, self.current_markup_elements, self.markup_pages_count, True)
@@ -848,9 +859,9 @@ class Registrator:
         if not acceptMode:
 
             if not self.hasVisited:
-                self.bot.send_message(self.current_user, "Ok, now to the, final part. To be able to search people by tags you have to have your own as well.\nHow it works: -----------\nIf you want to use that functionality: type a few tags (up to 25) that describe you, your interests etc... Note that using tags which go against our policies can lead your account to be banned ---------\nIf you dont want to use that functionality: just hit 'skip' :-)", reply_markup=self.skip_markup)
+                self.bot.send_message(self.current_user, "Ok, now to the, final part. To be able to search people by tags you have to have your own as well.\nHow it works: -----------\nIf you want to use that functionality: type a few tags (up to 25) that describe you, your interests etc... Please, don't use more than two words in your tag. For instance: if you want to type #ILoveTea rather just use #tea tag :)\n<b>Note that using tags which go against our policies can lead your account to be banned ---------</b>\nIf you dont want to use that functionality: just hit 'skip' :-)", reply_markup=self.skip_markup)
             else:
-                self.bot.send_message(self.current_user, "Type a few tags (up to 25) that describe you, your interests etc... Note that using tags which go against our policies can lead your account to be banned. \nYour previous tag list will be overwritten", reply_markup=self.skip_markup)
+                self.bot.send_message(self.current_user, "Type a few tags (up to 25) that describe you, your interests etc...Please, don't use more than two words in your tag. For instance: if you want to type #ILoveTea rather just use #tea tag :)\n<b>Note that using tags which go against our policies can lead your account to be permanently banned.</b> \nYour previous tag list will be overwritten", reply_markup=self.skip_markup)
 
             self.bot.register_next_step_handler(msg, self.tags_step, acceptMode=True, editMode=editMode, chat_id=self.current_user)
         else:
@@ -1089,6 +1100,11 @@ class Registrator:
 
         return f"{self.data['userRealName']}, {countryName}, {cityName}\n{self.data['userAge']}\n{self.data['userDescription']}"
 
+    def send_encourage_message(self, text):
+        #If User is registering his profile
+        if not self.hasVisited:
+            self.bot.send_message(self.current_user, f"<i><b>{text}</b></i>")
+
     def spoken_languages_convertor(self, lang):
         for l in self.languages:
             if lang == self.languages[l]:
@@ -1261,7 +1277,6 @@ class Registrator:
         #     max_value = 100
 
         return f"{min_value} - {max_value}"
-
 
     def get_localisations(self):
         for language in json.loads(

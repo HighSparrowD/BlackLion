@@ -30,7 +30,8 @@ namespace MyWebApi.Interfaces
         Task<List<UserNotification>> GetUserRequests(long userId);
         Task<UserNotification> GetUserRequest(Guid requestId);
         bool CheckRequestExists(long senderId, long recieverId);
-        Task<string> RegisterUserRequest(UserNotification request);
+        Task<string> RegisterUserRequestAsync(UserNotification request);
+        Task<string> DeclineRequestAsync(long user1, long user2);
         Task<byte> DeleteUserRequests(long userId);
         Task<byte> DeleteUserRequest(Guid requestId);
         Task<User> GetUserInfoByUsrnameAsync(string username);
@@ -40,7 +41,7 @@ namespace MyWebApi.Interfaces
         Task<byte> UpdateUserPreferencesAsync(UserPreferences user);
         Task<byte> UpdateUserLocationAsync(Location location);
         Task<UserBaseInfo> GetUserBaseInfoAsync(long id);
-        Task<List<GetUserData>> GetUsersAsync(long userId, bool turnOffPersonalityFunc = false, bool isRepeated=false, bool isFreeSearch = false);
+        Task<List<GetUserData>> GetUsersAsync(long userId, bool isRepeated=false, bool isFreeSearch = false);
         Task<bool> CheckUserExists(long id);
         Task<int> GetUserAppLanguage(long id);
         Task<User> GetFriendInfoAsync(long id);
@@ -173,6 +174,7 @@ namespace MyWebApi.Interfaces
         Task<bool> GetUserIncreasedFamiliarityAsync(long userId);
         Task<bool> SwitchIncreasedFamiliarityAsync(long userId);
         Task<bool> AddUserCommercialVector(long userId, string tagString);
+        Task<SimilarityBetweenUsers> GetSimilarityBetweenUsersAsync(long user1, long user2);
 
         //Adventures
         Task<Guid> RegisterAdventureAsync(Adventure model);
@@ -184,6 +186,5 @@ namespace MyWebApi.Interfaces
         Task<List<Adventure>> GetUsersSubscribedAdventuresAsync(long userId);
         Task<List<Adventure>> GetUsersAdventuresAsync(long userId);
         Task<GetAdventureCount> GetAdventureCountAsync(long userId);
-        Task<SimilarityBetweenUsers> GetSimilarityBetweenUsersAsync(long user1, long user2);
     }
 }
