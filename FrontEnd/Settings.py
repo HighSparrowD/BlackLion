@@ -177,7 +177,8 @@ class Settings:
 
         self.settingConfirmationRequestMarkup = InlineKeyboardMarkup()\
             .add(InlineKeyboardButton("Partial", callback_data="240"), InlineKeyboardButton("ℹ", callback_data="340"))\
-            .add(InlineKeyboardButton("Full", callback_data="241"), InlineKeyboardButton("ℹ", callback_data="341"))
+            .add(InlineKeyboardButton("Full", callback_data="241"), InlineKeyboardButton("ℹ", callback_data="341")) \
+            .add(InlineKeyboardButton("Go Back", callback_data="-20"))
 
         self.black_listButton = InlineKeyboardButton("", callback_data="102")
         self.encounterOptionMarkup = InlineKeyboardMarkup() \
