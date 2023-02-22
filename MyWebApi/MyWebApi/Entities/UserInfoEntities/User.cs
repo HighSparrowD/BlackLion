@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using System.Data;
+using MyWebApi.Enums;
 #nullable enable
 
 namespace MyWebApi.Entities.UserInfoEntities
@@ -23,9 +24,9 @@ namespace MyWebApi.Entities.UserInfoEntities
         public bool HasPremium { get; set; }
         public bool HadReceivedReward { get; set; }
         public bool? IsFree { get; set; }
-        public bool IsIdentityConfirmed { get; set; }
+        public IdentityConfirmationType IdentityType { get; set; }
         public bool IncreasedFamiliarity { get; set; }
-        public short DailyRewardPoint { get; set; }
+        public short DailyRewardPoint { get; set; } 
         public double BonusIndex { get; set; }
         public int InvitedUsersCount { get; set; }
         public double InvitedUsersBonus { get; set; }

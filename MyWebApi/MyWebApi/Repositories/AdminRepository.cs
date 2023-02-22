@@ -340,19 +340,19 @@ namespace MyWebApi.Repositories
             if (requestId != null)
             {
                 //Returns only new, aborted or changed requests
-                return await _contx.tick_requests.Where(r => r.Id == requestId && (r.State == 1 || r.State == 2 || r.State == 6))
+                return await _contx.tick_requests.Where(r => r.Id == requestId && (r.State == TickRequestStatus.Added || r.State == TickRequestStatus.Changed || r.State == TickRequestStatus.Aborted))
                     .Include(r => r.User)
                     .SingleOrDefaultAsync();
             }
 
             //Return any request if id wasnt supplied. (Method is used on the frontend)
-            var request = await _contx.tick_requests.Where(r => r.State == 1 || r.State == 2 || r.State == 6)
+            var request = await _contx.tick_requests.Where(r => r.State == TickRequestStatus.Added || r.State == TickRequestStatus.Changed || r.State == TickRequestStatus.Aborted)
                 .Include(r => r.User)
                 .FirstOrDefaultAsync();
 
             if (request != null)
             {
-                request.State = (short)SystemEnums.TickRequestStatus.InProcess;
+                request.State = TickRequestStatus.InProcess;
                 await _contx.SaveChangesAsync();
             }
 
@@ -361,7 +361,7 @@ namespace MyWebApi.Repositories
 
         public async Task<bool> ResolveTickRequestAsync(Guid requestId, long adminId, bool isAccepted)
         {
-            var request = await _contx.tick_requests.Where(r => r.Id == requestId && (r.State == 3))
+            var request = await _contx.tick_requests.Where(r => r.Id == requestId && (r.State == TickRequestStatus.InProcess))
                 .Include(r => r.User)
                 .SingleOrDefaultAsync();
 
@@ -369,12 +369,13 @@ namespace MyWebApi.Repositories
                 throw new NullReferenceException("Request was not found");
 
             if (isAccepted)
-                request.State = (short)SystemEnums.TickRequestStatus.Accepted;
+                request.State = TickRequestStatus.Accepted;
             else
-                request.State = (short)SystemEnums.TickRequestStatus.Declined;
+                request.State = TickRequestStatus.Declined;
 
             request.AdminId = adminId;
-            request.User.IsIdentityConfirmed = isAccepted;
+            request.User.IdentityType = request.Type;
+
             await _contx.SaveChangesAsync();
 
             if (isAccepted)
@@ -500,7 +501,7 @@ namespace MyWebApi.Repositories
         {
             string returnData = "";
 
-            returnData = $"Recent feedbacks: {(await _userRep.GetMostRecentFeedbacks()).Count}\nActive tick requests {(await _contx.tick_requests.Where(r => (r.State == 1 || r.State == 2 || r.State == 6) && r.AdminId == null).ToListAsync()).Count}";
+            returnData = $"Recent feedbacks: {(await _userRep.GetMostRecentFeedbacks()).Count}\nActive tick requests {(await _contx.tick_requests.Where(r => (r.State == TickRequestStatus.Added || r.State == TickRequestStatus.Changed || r.State == TickRequestStatus.Aborted) && r.AdminId == null).ToListAsync()).Count}";
 
             return returnData;
         }
@@ -517,13 +518,13 @@ namespace MyWebApi.Repositories
             try
             {
                 //Get request if it was marked as processed
-                var request = await _contx.tick_requests.Where(r => r.Id == requestId && (r.State == 3))
+                var request = await _contx.tick_requests.Where(r => r.Id == requestId && (r.State == TickRequestStatus.InProcess))
                         .SingleOrDefaultAsync(); ;
 
                 if (request == null)
                     throw new NullReferenceException($"Request {requestId} is not in process rigt now");
 
-                request.State = (short)SystemEnums.TickRequestStatus.Aborted;
+                request.State = TickRequestStatus.Aborted;
                 await _contx.SaveChangesAsync();
 
                 return true;
@@ -541,7 +542,7 @@ namespace MyWebApi.Repositories
                 if (request == null)
                     throw new NullReferenceException($"Request {requestId} does not exist");
 
-                request.State = (short)SystemEnums.TickRequestStatus.Failed;
+                request.State = TickRequestStatus.Failed;
                 request.AdminId = adminId;
 
                 await _contx.SaveChangesAsync();
@@ -594,7 +595,7 @@ namespace MyWebApi.Repositories
                     InvitedUsersBonus = 0,
                     TagSearchesCount = 0,
                     MaxProfileViewsCount = 50,
-                    IsIdentityConfirmed = false,
+                    IdentityType = IdentityConfirmationType.None,
                 };
 
                 if (model.UserCityCode != null && model.UserCountryCode != null)

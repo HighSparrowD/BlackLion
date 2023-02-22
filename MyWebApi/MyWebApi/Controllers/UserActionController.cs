@@ -281,7 +281,7 @@ namespace MyWebApi.Controllers
                 MaxRTViewsCount = 25,
                 MaxTagSearchCount = 3,
                 MaxProfileViewsCount = 50,
-                IsIdentityConfirmed = false,
+                IdentityType = IdentityConfirmationType.None,
                 EnteredPromoCodes = model.Promo
             };
 
@@ -774,7 +774,7 @@ namespace MyWebApi.Controllers
         }
 
         [HttpPost("/GetUserByTags")]
-        public async Task<User> GetUserByTags(GetUserByTags model)
+        public async Task<GetUserData> GetUserByTags(GetUserByTags model)
         {
             return await _repository.GetUserListByTagsAsync(model);
         }

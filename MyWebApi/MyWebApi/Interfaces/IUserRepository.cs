@@ -134,7 +134,7 @@ namespace MyWebApi.Interfaces
         Task<bool> RegisterTestPassingAsync(TestPayload model, int testResult);
         Task<bool> UpdateTags(UpdateTags model);
         Task<List<UserTag>> GetTags(long userId);
-        Task<User> GetUserListByTagsAsync(GetUserByTags model);
+        Task<GetUserData> GetUserListByTagsAsync(GetUserByTags model);
         Task<bool> CheckEncounteredUserIsInBlackList(long userId, long encounteredUser);
         Task<string> RetreiveCommonLanguagesAsync(long user1Iq, long user2Id, int localisationId);
         Task<bool> LogAdminErrorAsync(long? userId, string description, int sectioId);

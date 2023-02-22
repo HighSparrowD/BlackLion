@@ -94,6 +94,8 @@ class Settings:
         self.active_secondary_message = 0
         self.active_error_message = 0
 
+        self.requestType = 0
+
         self.turnedOnSticker = "✅"
         self.turnedOffSticker = "❌"
 
@@ -172,6 +174,10 @@ class Settings:
         self.settingAdditionalActionsMarkup = InlineKeyboardMarkup() \
             .add(InlineKeyboardButton("Invitation Creds", callback_data="220")) \
             .add(InlineKeyboardButton("Increased Familiarity", callback_data="321"), self.increased_familiarityIndicator)
+
+        self.settingConfirmationRequestMarkup = InlineKeyboardMarkup()\
+            .add(InlineKeyboardButton("Partial", callback_data="240"), InlineKeyboardButton("ℹ", callback_data="340"))\
+            .add(InlineKeyboardButton("Full", callback_data="241"), InlineKeyboardButton("ℹ", callback_data="341"))
 
         self.black_listButton = InlineKeyboardButton("", callback_data="102")
         self.encounterOptionMarkup = InlineKeyboardMarkup() \
@@ -780,16 +786,27 @@ class Settings:
                     self.send_secondary_message("Something went wrong, please contact the administration")
                     # self.proceed()
 
-    def send_confirmation_request(self, message, acceptMode=False):
+    def choose_confirmation_request(self, message):
         self.previous_section = self.additional_actions_settings_choice
+        self.active_section = self.choose_confirmation_request
+
+        self.send_active_message("Please choose type of identity confirmation", markup=self.settingConfirmationRequestMarkup)
+
+    def send_confirmation_request(self, message, acceptMode=False):
+        self.previous_section = self.choose_confirmation_request
         self.active_section = self.send_confirmation_request
 
         if not acceptMode:
+            #TODO: add phrases, that must be said by users
+            action = "sending us a Video or 'Circle' (15 seconds max).\n!Your face have to be visible!\n\n<b><i>Warning! Your profile media has to be contain your face</i></b>"
+            if self.requestType == 2:
+                action = "Sending us your passport photo\n\n<b><i>Warning! Your profile media has to be contain your face</i></b>"
+
             if not self.requestStatus:
-                self.send_secondary_message("You can confirm your identity by sending us:\nVideo or 'Circle' (15 seconds max) in which you are saying the code frase 'LALALA'.\n!Your face have to be visible!", markup=self.abortMarkup)
+                self.send_secondary_message(f"You can confirm your identity by {action}", markup=self.abortMarkup)
 
             else:
-                self.send_secondary_message("You can update current request, you have sent by sending us:\nVideo or 'Circle' (15 seconds max) in which you are saying the code frase 'LALALA'.\n!Your face have to be visible!", markup=self.abortMarkup)
+                self.send_secondary_message(f"You can update current request by {action}", markup=self.abortMarkup)
 
             self.bot.register_next_step_handler(message, self.send_confirmation_request, acceptMode=True, chat_id=self.current_user)
         else:
@@ -799,31 +816,49 @@ class Settings:
                 return
 
             data = {
-                "userId": self.current_user
+                "userId": self.current_user,
+                "type": self.requestType
             }
-            if message.video:
-                if message.video.duration > 15:
-                    self.send_secondary_message("Video is too long")
-                    self.bot.register_next_step_handler(message, self.send_confirmation_request, acceptMode=acceptMode, chat_id=self.current_user)
 
-                data["video"] = message.video[len(message.video) - 1].file_id
-                d = json.dumps(data)
-                if bool(json.loads(requests.post(f"https://localhost:44381/SendTickRequest", d, headers={"Content-Type": "application/json"}, verify=False).text)):
-                    self.send_secondary_message("Done :)")
-                    self.proceed()
-            elif message.video_note:
-                if message.video_note.duration > 15:
-                    self.send_error_message(self.current_user, "Video is too long")
-                    self.bot.register_next_step_handler(message, self.send_confirmation_request, acceptMode=acceptMode, chat_id=self.current_user)
+            if self.requestType == 1:
+                if message.video:
+                    if message.video.duration > 15:
+                        self.send_secondary_message("Video is too long")
+                        self.bot.register_next_step_handler(message, self.send_confirmation_request, acceptMode=acceptMode, chat_id=self.current_user)
+                        return
 
-                data["circle"] = message.video_note.file_id
-                d = json.dumps(data)
-                if bool(json.loads(requests.post(f"https://localhost:44381/SendTickRequest", d, headers={"Content-Type": "application/json"}, verify=False).text)):
-                    self.send_secondary_message("Done :)")
-                    self.proceed()
-            else:
-                self.send_error_message("This type of data cannot be accepted as your identity confirmation", markup=self.abortMarkup)
-                self.bot.register_next_step_handler(message, self.send_confirmation_request, acceptMode=acceptMode, chat_id=self.current_user)
+                    data["video"] = message.video[len(message.video) - 1].file_id
+                    d = json.dumps(data)
+                    if bool(json.loads(requests.post(f"https://localhost:44381/SendTickRequest", d, headers={"Content-Type": "application/json"}, verify=False).text)):
+                        self.send_secondary_message("Done :)")
+                        self.proceed()
+                        return
+
+                elif message.video_note:
+                    if message.video_note.duration > 15:
+                        self.send_error_message(self.current_user, "Video is too long")
+                        self.bot.register_next_step_handler(message, self.send_confirmation_request, acceptMode=acceptMode, chat_id=self.current_user)
+                        return
+
+                    data["circle"] = message.video_note.file_id
+                    d = json.dumps(data)
+                    if bool(json.loads(requests.post(f"https://localhost:44381/SendTickRequest", d, headers={"Content-Type": "application/json"}, verify=False).text)):
+                        self.send_secondary_message("Done :)")
+                        self.proceed()
+                        return
+
+            elif self.requestType == 2:
+                if message.photo:
+                    data["photo"] = message.photo[len(message.photo) - 1].file_id
+                    d = json.dumps(data)
+
+                    if bool(json.loads(requests.post(f"https://localhost:44381/SendTickRequest", d, headers={"Content-Type": "application/json"}, verify=False).text)):
+                        self.send_secondary_message("Done :)")
+                        self.proceed()
+                        return
+
+            self.send_error_message("This type of data cannot be accepted as your identity confirmation", markup=self.abortMarkup)
+            self.bot.register_next_step_handler(message, self.send_confirmation_request, acceptMode=acceptMode, chat_id=self.current_user)
 
     def encounters_callback_handler(self, call):
         if call.message.id not in self.old_queries:
@@ -1061,6 +1096,18 @@ class Settings:
                 self.auto_reply_manager(call.message)
             elif call.data == "230":
                 self.currency_change_manager(call.message)
+            elif call.data == "240":
+                self.delete_secondary_message()
+                self.requestStatus = 1
+                self.send_confirmation_request(call.message)
+            elif call.data == "241":
+                self.delete_secondary_message()
+                self.requestStatus = 2
+                self.send_confirmation_request(call.message)
+            elif call.data == "340":
+                self.send_secondary_message("Partial identity confirmation:\n✅ Face confirmation\n⛔ Age confirmation\n⛔ Location confirmation")
+            elif call.data == "341":
+                self.send_secondary_message("Full identity confirmation:\n✅ Face confirmation\n✅ Age confirmation\n✅ Location confirmation")
             #TODO: Continue. Code below must be the last statement before 'else'
             elif call.data == "-20":
                 self.proceed()

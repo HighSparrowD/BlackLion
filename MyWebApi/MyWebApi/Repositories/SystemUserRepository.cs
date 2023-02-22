@@ -313,8 +313,11 @@ namespace MyWebApi.Repositories
                         if (u.HasPremium && u.Nickname != "")
                             bonus += $"<b>{u.Nickname}</b>\n";
 
-                        if (u.IsIdentityConfirmed)
-                             bonus += $"✔️\n\n";
+                        if (u.IdentityType == IdentityConfirmationType.Partial)
+                             bonus += $"✔\n\n";
+                        else if (u.IdentityType == IdentityConfirmationType.Full)
+                             bonus += $"✅\n\n";
+
 
                         user.AddDescriptionBonus(bonus);
                         returnData.Add(user);
@@ -693,12 +696,6 @@ namespace MyWebApi.Repositories
             };
 
             var bonus = "";
-
-            if (managedUser.HasPremium && managedUser.Nickname != "")
-                bonus += $"<b>{managedUser.Nickname}</b>\n";
-
-            if (managedUser.IsIdentityConfirmed)
-                bonus += $"✔️\n\n";
 
             if (userHasDetectorOn)
                 bonus += $"<b>PERSONALITY match!</b>\n<b>{matchedBy}</b>";
@@ -3401,7 +3398,7 @@ namespace MyWebApi.Repositories
             { return null; }
         }
 
-        public async Task<User> GetUserListByTagsAsync(GetUserByTags model)
+        public async Task<GetUserData> GetUserListByTagsAsync(GetUserByTags model)
         {
             var currentUser = await GetUserInfoAsync(model.UserId);
             var hasActiveDetector = await CheckEffectIsActiveAsync(currentUser.UserId, (int)Currencies.TheDetector);
@@ -3467,15 +3464,22 @@ namespace MyWebApi.Repositories
             var user = users.OrderBy(u => Guid.NewGuid())
                 .FirstOrDefault();
 
+            var returnUser = await GetPersonalityMatchResult(model.UserId, currentUser, user, false);
+
             if(user.HasPremium && user.Nickname != null)
-                user.UserBaseInfo.UserDescription = $"<b>{user.Nickname}</b>\n\n{user.UserBaseInfo.UserDescription}";
-            if(user.IsIdentityConfirmed)
-                user.UserBaseInfo.UserDescription = $"✔️{user.UserBaseInfo.UserDescription}";
+                returnUser.UserBaseInfo.UserDescription = $"<b>{user.Nickname}</b>\n\n{user.UserBaseInfo.UserDescription}";
+
+            if (user.IdentityType == IdentityConfirmationType.Partial)
+                returnUser.AddDescriptionBonus($"✔\n\n");
+
+            else if (user.IdentityType == IdentityConfirmationType.Full)
+                returnUser.AddDescriptionBonus($"✅\n\n");
+
             //Show tags if user has detector activated
             if (hasActiveDetector)
                 user.UserBaseInfo.UserDescription += String.Join(" ", usersTags[user.UserId]);
 
-            return user;
+            return returnUser;
         }
 
         public async Task<bool?> CheckUserUsesPersonality(long userId)
@@ -3886,9 +3890,11 @@ namespace MyWebApi.Repositories
                 //Update existing request if one already exists
                 if (existingRequest != null)
                 {
+                    existingRequest.Photo = request.Photo;
                     existingRequest.Video = request.Video;
                     existingRequest.Circle = request.Circle;
-                    existingRequest.State = (short)TickRequestStatus.Changed;
+                    existingRequest.Type = request.Type;
+                    existingRequest.State = TickRequestStatus.Changed;
 
                     _contx.tick_requests.Update(existingRequest);
                     await _contx.SaveChangesAsync();
@@ -3901,8 +3907,10 @@ namespace MyWebApi.Repositories
                     UserId = request.UserId,
                     AdminId = null,
                     State = null,
+                    Photo = request.Photo,
+                    Video = request.Video,
                     Circle = request.Circle,
-                    Video = request.Video
+                    Type = request.Type
                 };
 
                 await _contx.tick_requests.AddAsync(model);
@@ -4049,15 +4057,15 @@ namespace MyWebApi.Repositories
             //TODO: Get status from localizer !
             switch (request.State)
             {
-                case 1:
+                case TickRequestStatus.Added:
                     return "Added";
-                case 2:
+                case TickRequestStatus.Changed:
                     return "Changed";
-                case 3:
+                case TickRequestStatus.InProcess:
                     return "In Process";
-                case 4:
+                case TickRequestStatus.Declined:
                     return "Declined";
-                case 5:
+                case TickRequestStatus.Accepted:
                     return "1";
                 default:
                     return "Added";
@@ -4241,8 +4249,10 @@ namespace MyWebApi.Repositories
 
             var bonus = "";
 
-            if (sender.IsIdentityConfirmed)
-                bonus += $"✔️\n\n";
+            if (sender.IdentityType == IdentityConfirmationType.Partial)
+                bonus += $"✔\n\n";
+            else if (sender.IdentityType == IdentityConfirmationType.Full)
+                bonus += $"✅\n\n";
             if (sender.HasPremium && sender.Nickname != "")
                 bonus += $"<b>{sender.Nickname}</b>\n";
 
@@ -4648,8 +4658,8 @@ namespace MyWebApi.Repositories
             if (user == null)
                 throw new NullReferenceException($"User {userId} does not exist");
 
-            tickRequest.State = (short)TickRequestStatus.Changed;
-            user.IsIdentityConfirmed = false;
+            tickRequest.State = TickRequestStatus.Changed;
+            user.IdentityType = IdentityConfirmationType.None;
 
             await _contx.SaveChangesAsync();
         }
