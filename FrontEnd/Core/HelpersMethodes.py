@@ -136,10 +136,10 @@ def get_user_language_limit(userId):
         return None
 
 
-def get_user_tag_limit(userId):
+def get_user_limitations(userId):
     try:
         return int(
-            json.loads(requests.get(f"https://localhost:44381/GetMaxTagCount/{userId}", verify=False).text))
+            json.loads(requests.get(f"https://localhost:44381/limitations/{userId}", verify=False).text))
     except:
         return None
 

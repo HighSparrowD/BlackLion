@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using MyWebApi.Data;
 using MyWebApi.Entities.AchievementEntities;
 using MyWebApi.Entities.AdminEntities;
@@ -137,7 +138,7 @@ namespace MyWebApi.Repositories
                     _contx.SYSTEM_USERS.Update(model);
                     await _contx.SaveChangesAsync();
 
-                    //User is instantly liked by an invitor if he is allowing it
+                    //User is instantly liked by an invitor if he approves it
                     if (invitor.IncreasedFamiliarity)
                         await RegisterUserRequestAsync(new UserNotification { UserId = invitor.UserId, UserId1 = model.UserId, IsLikedBack = false });
                     //Invitor is notified about referential registration
@@ -2243,9 +2244,10 @@ namespace MyWebApi.Repositories
                 model.Id = Guid.NewGuid();
                 model.EncounterDate = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
 
+                var user = await _contx.SYSTEM_USERS.FindAsync(model.UserId);
+
                 if (model.SectionId == (int)Sections.Familiator || model.SectionId == (int)Sections.Requester)
                 {
-                    var user = await _contx.SYSTEM_USERS.FindAsync(model.UserId);
                     user.ProfileViewsCount++;
 
                     if (user.ProfileViewsCount == 15)
@@ -2255,6 +2257,8 @@ namespace MyWebApi.Repositories
                     else if (user.ProfileViewsCount == 50)
                         await TopUpUserWalletPointsBalance(user.UserId, 22, "User has viewed 50 profiles");
                 }
+                else if (model.SectionId == (int)Sections.RT)
+                    user.MaxRTViewsCount++;
 
                 await _contx.USER_ENCOUNTERS.AddAsync(model);
                 await _contx.SaveChangesAsync();
@@ -3402,11 +3406,8 @@ namespace MyWebApi.Repositories
             var currentUser = await GetUserInfoAsync(model.UserId);
             var hasActiveDetector = await CheckEffectIsActiveAsync(currentUser.UserId, (int)Currencies.TheDetector);
 
-            //Throw exception if user has reached his tag search limit
-            if (!currentUser.HasPremium && currentUser.TagSearchesCount >= 3)
-                return null;
-            //throw new ApplicationException($"User {model.UserId} has already reached his tag-search limit");
-            else if (currentUser.HasPremium && currentUser.TagSearchesCount >= 50)
+            //User has already reached his limit;
+            if (currentUser.TagSearchesCount > currentUser.MaxTagSearchCount)
                 return null;
 
             var currentUserEncounters = await GetUserEncounters(model.UserId, (int)Sections.Familiator); //I am not sure if it is 2 or 3 section
@@ -3759,7 +3760,8 @@ namespace MyWebApi.Repositories
                         if (userBalance.CardDecksMini > 0)
                         {
                             userBalance.CardDecksMini--;
-                            await AddMaxUserProfileViewCount(userId, 20);
+                            await AddMaxUserProfileViewCountAsync(userId, 20);
+                            await AddMaxRTProfileViewCountAsync(userId, 20);
                             _contx.Update(userBalance);
                             await _contx.SaveChangesAsync();
                             return true;
@@ -3769,7 +3771,8 @@ namespace MyWebApi.Repositories
                         if (userBalance.CardDecksPlatinum > 0)
                         {
                             userBalance.CardDecksPlatinum--;
-                            await AddMaxUserProfileViewCount(userId, 50);
+                            await AddMaxUserProfileViewCountAsync(userId, 50);
+                            await AddMaxRTProfileViewCountAsync(userId, 50);
                             _contx.Update(userBalance);
                             await _contx.SaveChangesAsync();
                             return true;
@@ -3841,10 +3844,19 @@ namespace MyWebApi.Repositories
             catch { return false; }
         }
 
-        public async Task<int> AddMaxUserProfileViewCount(long userId, int profileCount)
+        private async Task<int> AddMaxUserProfileViewCountAsync(long userId, int profileCount)
         {
             var userInfo = await _contx.SYSTEM_USERS.FindAsync(userId);
             userInfo.MaxProfileViewsCount += profileCount;
+            await _contx.SaveChangesAsync();
+
+            return userInfo.MaxProfileViewsCount;
+        }
+
+        private async Task<int> AddMaxRTProfileViewCountAsync(long userId, int increment)
+        {
+            var userInfo = await _contx.SYSTEM_USERS.FindAsync(userId);
+            userInfo.MaxProfileViewsCount += increment;
             await _contx.SaveChangesAsync();
 
             return userInfo.MaxProfileViewsCount;
@@ -4692,6 +4704,23 @@ namespace MyWebApi.Repositories
                 .ToListAsync();
 
             return list.GroupBy(t => t.UserId).ToDictionary(t => t.FirstOrDefault().UserId, t => t.ToList());
+        }
+
+        public async Task<GetLimitations> GetUserSearchLimitations(long userId)
+        {
+            //Refresh data regarding user premium status
+            var hasPremium = await CheckUserHasPremiumAsync(userId);
+
+            return await _contx.SYSTEM_USERS.Where(u => u.UserId == userId).Select(u => new GetLimitations
+            {
+                MaxTagViews = u.MaxTagSearchCount,
+                MaxProfileViews = u.MaxProfileViewsCount,
+                MaxRtViews = u.MaxRTViewsCount,
+                MaxTagsPerSearch = hasPremium? 50 : 25,
+                ActualTagViews = u.TagSearchesCount, 
+                ActualProfileViews = u.ProfileViewsCount,
+                ActualRtViews = u.RTViewsCount
+            }).SingleOrDefaultAsync();
         }
     }
 }

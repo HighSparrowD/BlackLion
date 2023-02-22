@@ -28,6 +28,8 @@ class RandomTalker:
 
         self.random_talkers = random_talkers
 
+        self.limitations = Helpers.get_user_limitations(self.current_user)
+
         self.YNmarkup = ReplyKeyboardMarkup(resize_keyboard=True, row_width=3, one_time_keyboard=True).add(KeyboardButton("yes")).add(KeyboardButton("no"))
         self.exit_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(KeyboardButton("/exit"))
         self.user_action_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(KeyboardButton("/stop"), KeyboardButton("/exit"))
@@ -39,6 +41,11 @@ class RandomTalker:
             self.enter()
 
     def enter(self):
+        if self.limitations["maxRtViews"] >= self.limitations["actualRtViews"]:
+            self.bot.send_message(self.current_user, "Sorry, you have run out of RT searches for today.\nYou can still use Card Deck Mini or Card Deck Premium to replenish your views, buy premium and thus double your view count, or wait until tomorrow :)")
+            self.destruct()
+            return
+
         self.bot.send_message(self.current_user, "Waiting for another user to join", reply_markup=self.exit_markup)
         self.ah = self.bot.register_message_handler(self.awaiting_handler, commands=["exit"], user_id=self.current_user)
         self.random_talkers.append(self)

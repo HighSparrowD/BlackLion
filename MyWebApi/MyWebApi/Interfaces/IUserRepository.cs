@@ -146,7 +146,6 @@ namespace MyWebApi.Interfaces
         Task<bool> ActivateToggleEffectAsync(long userId, int effectId, long? user2Id=null, string description=null);
         Task<List<ActiveEffect>> GetUserActiveEffects(long userId);
         Task<bool> DeactivateEffectAsync(long userId, Guid activeEffectId);
-        Task<int> AddMaxUserProfileViewCount(long userId, int profileCount);
         Task<bool> CheckEffectIsActiveAsync(long userId, int effectId);
         Task<bool> PurchaseEffectAsync(long userId, int effectId, int points, short currency, short count=1);
         Task<bool> PurchasePersonalityPointsAsync(long userId, int points, short currency, short count=1);
@@ -186,5 +185,6 @@ namespace MyWebApi.Interfaces
         Task<List<Adventure>> GetUsersSubscribedAdventuresAsync(long userId);
         Task<List<Adventure>> GetUsersAdventuresAsync(long userId);
         Task<GetAdventureCount> GetAdventureCountAsync(long userId);
+        Task<GetLimitations> GetUserSearchLimitations(long userId);
     }
 }

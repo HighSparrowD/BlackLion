@@ -135,6 +135,31 @@ def add_tick_to_element(bot, userId, messageId, current_markup_elements, markup_
         return None
 
 
+def add_tick_to_elements(bot, userId, messageId, current_markup_elements, markup_page, element_indexes):
+    try:
+        wasChanged = False
+        for button in current_markup_elements[markup_page - 1].keyboard:
+            if button[0].callback_data in element_indexes:
+                wasChanged = True
+                button[0].text += "✅"
+                break
+
+        if not wasChanged:
+            for key in current_markup_elements:
+                for button in key.keyboard:
+                    if button[0].callback_data in element_indexes:
+                        wasChanged = True
+                        button[0].text += "✅"
+                        break
+
+        if wasChanged:
+            markup = assemble_markup(markup_page, current_markup_elements, 0)
+            bot.edit_message_reply_markup(chat_id=userId, reply_markup=markup,
+                                               message_id=messageId)
+    except:
+        return None
+
+
 def remove_tick_from_element(bot, userId, messageId, current_markup_elements, markup_page, element_index):
     try:
         wasChanged = False
@@ -148,6 +173,31 @@ def remove_tick_from_element(bot, userId, messageId, current_markup_elements, ma
             for key in current_markup_elements:
                 for button in key.keyboard:
                     if button[0].callback_data == element_index:
+                        wasChanged = True
+                        button[0].text = button[0].text.replace("✅", "")
+                        break
+
+        if wasChanged:
+            markup = assemble_markup(markup_page, current_markup_elements, 0)
+            bot.edit_message_reply_markup(chat_id=userId, reply_markup=markup,
+                                               message_id=messageId)
+    except:
+        return None
+
+
+def remove_tick_from_elements(bot, userId, messageId, current_markup_elements, markup_page, element_indexes):
+    try:
+        wasChanged = False
+        for button in current_markup_elements[markup_page - 1].keyboard:
+            if button[0].callback_data in element_indexes:
+                wasChanged = True
+                button[0].text = button[0].text.replace("✅", "")
+                break
+
+        if not wasChanged:
+            for key in current_markup_elements:
+                for button in key.keyboard:
+                    if button[0].callback_data in element_indexes:
                         wasChanged = True
                         button[0].text = button[0].text.replace("✅", "")
                         break

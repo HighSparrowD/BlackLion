@@ -3,7 +3,7 @@ import copy
 import telegram
 from telebot.types import KeyboardButton, ReplyKeyboardMarkup
 from Core import HelpersMethodes as Helpers
-from Common.Menues import count_pages, assemble_markup, reset_pages, add_tick_to_element, remove_tick_from_element, index_converter
+from Common.Menues import count_pages, assemble_markup, reset_pages, add_tick_to_element, add_tick_to_elements, remove_tick_from_element, remove_tick_from_elements, index_converter
 import requests
 import json
 
@@ -36,7 +36,7 @@ class Registrator:
         self.old_queries = []
 
         self.tags = ""
-        self.maxTagCount = Helpers.get_user_tag_limit(self.current_user)
+        self.maxTagCount = Helpers.get_user_limitations(self.current_user)["maxTagsPerSearch"]
 
         self.current_markup_elements = []
         self.markup_last_element = 0
@@ -697,7 +697,7 @@ class Registrator:
                 if lang:  # TODO: Get string, separate by , and process it
                     if lang not in self.chosen_langs:
                         if len(self.chosen_langs) + 1 > self.lang_limit:
-                            self.bot.send_message(self.current_user, f"Sorry, users without premium can chose only up to {self.lang_limit} languages", reply_markup=self.okMarkup)
+                            self.bot.send_message(self.current_user, f"Sorry, users without premium can choose only up to {self.lang_limit} languages", reply_markup=self.okMarkup)
                         else:
                             self.chosen_langs.append(lang)
                             add_tick_to_element(self.bot, self.current_user, self.current_inline_message_id,
@@ -719,13 +719,6 @@ class Registrator:
                     self.bot.register_next_step_handler(msg, self.language_preferences_step, acceptMode=acceptMode, editMode=editMode,
                                                         chat_id=self.current_user)
                     return False
-            # elif msg_text == "Same as mine":
-            #     self.pref_langs = copy.copy(self.chosen_langs)
-            #     self.bot.send_message(self.current_user,
-            #                           "Got it! Press OK to move to the next step or add more languages if you want ;-)",
-            #                           reply_markup=self.okMarkup)
-            #     self.bot.register_next_step_handler(msg, self.language_preferences_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
-            #     return False
 
             if self.pref_langs:
                 self.old_queries.append(self.current_query)
@@ -787,7 +780,7 @@ class Registrator:
                 if country:  # TODO: Get string, separate by , and process it
                     if country not in self.pref_countries:
                         if len(self.chosen_langs) + 1 > self.lang_limit:
-                            self.bot.send_message(self.current_user, f"Sorry, users without premium can chose only up to {self.lang_limit} countries", reply_markup=self.okMarkup)
+                            self.bot.send_message(self.current_user, f"Sorry, users without premium can choose only up to {self.lang_limit} countries", reply_markup=self.okMarkup)
                         else:
                             self.pref_countries.append(country)
                             add_tick_to_element(self.bot, self.current_user, self.current_inline_message_id,
@@ -807,13 +800,6 @@ class Registrator:
                                           "Country was not recognized, try finding it in our list above")
                     self.bot.register_next_step_handler(msg, self.location_preferences_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
                     return False
-            elif msg.text == "Same as mine":
-                if self.country not in self.pref_countries:
-                    self.pref_countries.append(self.country)
-                    self.bot.send_message(self.current_user,
-                                          "Got it! Press OK to move to the next step or add more languages if you want ;-)",
-                                          reply_markup=self.okMarkup)
-                self.bot.register_next_step_handler(msg, self.location_preferences_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
 
             if self.pref_countries:
                 self.old_queries.append(self.current_query)
@@ -1171,7 +1157,7 @@ class Registrator:
                 if int(call.data) not in self.chosen_langs:
                     #Notify user if limit had been exceeded
                     if len(self.chosen_langs) + 1 > self.lang_limit:
-                        self.bot.send_message(self.current_user, f"Sorry, users without premium can chose only up to {self.lang_limit} languages")
+                        self.bot.send_message(self.current_user, f"Sorry, users without premium can choose only up to {self.lang_limit} languages")
                         return False
                     else:
                         # self.bot.send_message(chatId, call.data)
@@ -1215,18 +1201,21 @@ class Registrator:
 
             elif self.question_index == 12:
                 if int(call.data) == -5:
-                    for l in self.chosen_langs:
-                        if l not in self.pref_langs:
-                            add_tick_to_element(self.bot, self.current_user, self.current_inline_message_id, self.current_markup_elements, self.markup_page, str(l))
-                            self.pref_langs.append(l)
-                            self.bot.answer_callback_query(call.id, "Added")
+
+                    remove_tick_from_elements(self.bot, self.current_user, call.message.id, self.current_markup_elements, self.markup_page, self.pref_langs)
+                    add_tick_to_elements(self.bot, self.current_user, self.current_inline_message_id, self.current_markup_elements, self.markup_page, self.chosen_langs)
+                    # for l in self.chosen_langs:
+                    #     if l not in self.pref_langs:
+                    #         add_tick_to_element(self.bot, self.current_user, self.current_inline_message_id, self.current_markup_elements, self.markup_page, str(l))
+                    #         self.pref_langs.append(l)
+                    self.bot.answer_callback_query(call.id, "Added")
                     self.bot.send_message(self.current_user,
                                           "Got it! Press OK to move to the next step or add more languages if you want ;-)",
                                           reply_markup=self.okMarkup)
 
                 elif int(call.data) not in self.pref_langs:
                     if len(self.pref_langs) + 1 > self.lang_limit:
-                        self.bot.send_message(self.current_user, f"Sorry, users without premium can chose only up to {self.lang_limit} languages")
+                        self.bot.send_message(self.current_user, f"Sorry, users without premium can choose only up to {self.lang_limit} languages")
                         return False
                     else:
                         self.pref_langs.append(int(call.data))
@@ -1242,6 +1231,7 @@ class Registrator:
             elif self.question_index == 14:
                 if int(call.data) == -5:
                     if self.country not in self.pref_countries:
+                        remove_tick_from_elements(self.bot, self.current_user, call.message.id, self.current_markup_elements, self.markup_page, self.pref_countries)
                         self.pref_countries.append(self.country)
                         self.bot.send_message(self.current_user,
                                               "Got it! Press OK to move to the next step or add more countries if you want ;-)",
@@ -1252,7 +1242,7 @@ class Registrator:
 
                 elif int(call.data) not in self.pref_countries:
                     if len(self.pref_countries) + 1 > self.lang_limit:
-                        self.bot.send_message(self.current_user, f"Sorry, users without premium can chose only up to {self.lang_limit} languages")
+                        self.bot.send_message(self.current_user, f"Sorry, users without premium can choose only up to {self.lang_limit} languages")
                         return False
                     else:
                         self.pref_countries.append(int(call.data))

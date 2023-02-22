@@ -278,6 +278,8 @@ namespace MyWebApi.Controllers
                 InvitedUsersCount = 0,
                 InvitedUsersBonus = 0,
                 TagSearchesCount = 0,
+                MaxRTViewsCount = 25,
+                MaxTagSearchCount = 3,
                 MaxProfileViewsCount = 50,
                 IsIdentityConfirmed = false,
                 EnteredPromoCodes = model.Promo
@@ -777,16 +779,6 @@ namespace MyWebApi.Controllers
             return await _repository.GetUserListByTagsAsync(model);
         }
 
-        [HttpGet("/GetMaxTagCount/{userId}")]
-        public async Task<int> GetMaxTagCount(long userId)
-        {
-            if (await _repository.CheckUserHasPremiumAsync(userId))
-            {
-                return 50;
-            }
-            return 25;
-        }
-
         [HttpGet("/CheckUserUsesPersonality/{userId}")]
         public async Task<bool?> CheckUserUsesPersonality(long userId)
         {
@@ -1078,6 +1070,12 @@ namespace MyWebApi.Controllers
         public async Task<SimilarityBetweenUsers> GetSimilarityBetweenUsers(long userId1, long userId2)
         {
             return await _repository.GetSimilarityBetweenUsersAsync(userId1, userId2);
+        }
+
+        [HttpGet("/limitations/{userId}")]
+        public async Task<GetLimitations> Limitations(long userId, [FromServices] IUserRepository userRepo)
+        {
+            return await userRepo.GetUserSearchLimitations(userId);
         }
     }
 }

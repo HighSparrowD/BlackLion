@@ -32,7 +32,10 @@ namespace MyWebApi.Entities.UserInfoEntities
         public string? Nickname { get; set; }
         public long? ParentId { get; set; }
         public int ProfileViewsCount { get; set; }
+        public int RTViewsCount { get; set; }
         public int MaxProfileViewsCount { get; set; }
+        public int MaxRTViewsCount { get; set; }
+        public int MaxTagSearchCount { get; set; }
         public int TagSearchesCount { get; set; }
         public short? Currency { get; set; }
         public DateTime? PremiumExpirationDate{ get; set; }

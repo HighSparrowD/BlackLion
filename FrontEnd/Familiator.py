@@ -30,7 +30,9 @@ class Familiator:
         self.actions_markup = InlineKeyboardMarkup(row_width=5)
         self.actions_markup.add(InlineKeyboardButton("Report", callback_data=-1))
 
-        self.tagLimit = Helpers.get_user_tag_limit(self.current_user)
+        self.limitations = Helpers.get_user_limitations(self.current_user)
+        self.tagLimit = self.limitations["maxTagsPerSearch"]
+
         self.wasPersonalityTurnedOff = False
 
         self.start_message = "1. Normal search\n2. Search by tags\n3. Free search\n4.Exit"
@@ -86,16 +88,29 @@ class Familiator:
             self.bot.register_next_step_handler(message, self.start, acceptMode=True, chat_id=self.current_user)
         else:
             if message.text == "1":
-                self.normal_search_handler(message)
+                if self.limitations["actualProfileViews"] < self.limitations["maxProfileViews"]:
+                    self.normal_search_handler(message)
+                else:
+                    self.inform_about_limitations_with_message("Sorry, you have run out of profile searches for today.\nYou can still use Card Deck Mini or Card Deck Premium to replenish your views, buy premium and thus double your view count, or wait until tomorrow :)")
             elif message.text == "2":
-                self.search_by_tags(message)
+                if self.limitations["actualTagViews"] < self.limitations["maxTagViews"]:
+                    self.search_by_tags(message)
+                else:
+                    self.inform_about_limitations_with_message("Sorry, you have run out of tag searches for today.\nYou can still use Card Deck Mini or Card Deck Premium to replenish your views, buy premium and thus double your view count, or wait until tomorrow :)")
             elif message.text == "3":
-                self.free_search()
+                if self.limitations["actualProfileViews"] < self.limitations["maxProfileViews"]:
+                    self.free_search()
+                else:
+                    self.inform_about_limitations_with_message("Sorry, you have run out of profile searches for today.\nYou can still use Card Deck Mini or Card Deck Premium to replenish your views, buy premium and thus double your view count, or wait until tomorrow :)")
             elif message.text == "4":
                 self.destruct()
             else:
                 self.bot.send_message(self.current_user, "No such option", reply_markup=self.startMarkup)
                 self.bot.register_next_step_handler(message, self.start, acceptMode=acceptMode, chat_id=self.current_user)
+
+    def inform_about_limitations_with_message(self, msg):
+        self.bot.send_message(self.current_user, msg)
+        self.start(msg)
 
     def normal_search_handler(self, message):
         self.people = Helpers.get_user_list(self.current_user)
@@ -103,6 +118,7 @@ class Familiator:
             if self.set_active_person():
                 self.show_person(message)
         else:
+            #TODO: Remove
             self.personalityOff_handler(message)
 
     def search_by_tags(self, message, acceptMode=False):
@@ -128,6 +144,7 @@ class Familiator:
         Helpers.get_free_user_list(self.current_user)
         self.proceed()
 
+    #TODO: remove
     def personalityOff_handler(self, message, acceptMode=False):
         if not acceptMode:
             if Helpers.check_should_turnOf_personality(self.current_user) and not self.wasPersonalityTurnedOff:
