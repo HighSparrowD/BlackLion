@@ -1075,7 +1075,8 @@ namespace MyWebApi.Controllers
         [HttpGet("/limitations/{userId}")]
         public async Task<GetLimitations> Limitations(long userId, [FromServices] IUserRepository userRepo)
         {
-            return await userRepo.GetUserSearchLimitations(userId);
+            var t = await userRepo.GetUserSearchLimitations(userId);
+            return t;
         }
     }
 }

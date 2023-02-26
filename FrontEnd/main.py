@@ -94,7 +94,7 @@ def EnterAdminCabinet(message):
     if not Helpers.check_user_is_busy(message.from_user.id):
         create_admin_cabinet(message)
 
-
+# bot.next_step_backend.handlers.popitem()
 @bot.message_handler(commands=["settings"])
 def settings(message):
     if not Helpers.check_user_is_busy(message.from_user.id):

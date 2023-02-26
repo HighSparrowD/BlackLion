@@ -91,6 +91,7 @@ class Settings:
         self.achievements_data = {}
 
         self.active_message = 0
+        self.message_with_confirmation = 0
         self.active_secondary_message = 0
         self.active_error_message = 0
 
@@ -215,7 +216,11 @@ class Settings:
         self.cardDeckMiniDescription = "Instantly adds 20 profile views to your daily views"
         self.cardDeckPlatinumDescription = "Instantly adds 50 profile views to your daily views"
 
+        self.okMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Ok")
+
         self.helpHandler = self.bot.register_message_handler(self.help_handler, commands=["help"], user_id=self.current_user)
+
+        self.nextHandler = None
 
         self.subscribe_callback_handler(self.menu_callback_handler)
         self.setting_choice()
@@ -794,27 +799,27 @@ class Settings:
         self.send_active_message("Please choose type of identity confirmation", markup=self.settingConfirmationRequestMarkup)
 
     def send_confirmation_request(self, message, acceptMode=False):
-        self.previous_section = self.choose_confirmation_request
-        self.active_section = self.send_confirmation_request
+        # self.previous_section = self.choose_confirmation_request
+        # self.active_section = self.send_confirmation_request
 
         if not acceptMode:
             #TODO: add phrases, that must be said by users
-            action = "sending us a Video or 'Circle' (15 seconds max).\n!Your face have to be visible!\n\n<b><i>Warning! Your profile media has to be contain your face</i></b>"
+            action = "sending us a Video or 'Circle' (15 seconds max).\n!Your face have to be visible!\n\n<b><i>Warning! Your profile media has to contain your face</i></b>"
             if self.requestType == 2:
-                action = "Sending us your passport photo\n\n<b><i>Warning! Your profile media has to be contain your face</i></b>"
+                action = "Sending us your passport photo\n\n<b><i>Warning! Your profile media has to contain your face</i></b>"
 
             if not self.requestStatus:
-                self.send_secondary_message(f"You can confirm your identity by {action}", markup=self.abortMarkup)
+                self.send_secondary_message(f"You can confirm your identity by {action}")
 
             else:
-                self.send_secondary_message(f"You can update current request by {action}", markup=self.abortMarkup)
+                self.send_secondary_message(f"You can update current request by {action}")
 
-            self.bot.register_next_step_handler(message, self.send_confirmation_request, acceptMode=True, chat_id=self.current_user)
+            self.nextHandler = self.bot.register_next_step_handler(message, self.send_confirmation_request, acceptMode=True, chat_id=self.current_user)
         else:
-            self.bot.delete_message(self.current_user, message.id)
-            if message.text == "Go Back":
-                self.proceed()
-                return
+            try:
+                self.bot.delete_message(self.current_user, message.id)
+            except:
+                pass
 
             data = {
                 "userId": self.current_user,
@@ -831,8 +836,7 @@ class Settings:
                     data["video"] = message.video[len(message.video) - 1].file_id
                     d = json.dumps(data)
                     if bool(json.loads(requests.post(f"https://localhost:44381/SendTickRequest", d, headers={"Content-Type": "application/json"}, verify=False).text)):
-                        self.send_secondary_message("Done :)")
-                        self.proceed()
+                        self.send_message_with_confirmation("Done! Please wait until administration resolves your request.\nIf you have any questions, please contact @Admin")
                         return
 
                 elif message.video_note:
@@ -844,8 +848,7 @@ class Settings:
                     data["circle"] = message.video_note.file_id
                     d = json.dumps(data)
                     if bool(json.loads(requests.post(f"https://localhost:44381/SendTickRequest", d, headers={"Content-Type": "application/json"}, verify=False).text)):
-                        self.send_secondary_message("Done :)")
-                        self.proceed()
+                        self.send_message_with_confirmation("Done! Please wait until administration resolves your request.\nIf you have any questions, please contact @Admin")
                         return
 
             elif self.requestType == 2:
@@ -854,11 +857,10 @@ class Settings:
                     d = json.dumps(data)
 
                     if bool(json.loads(requests.post(f"https://localhost:44381/SendTickRequest", d, headers={"Content-Type": "application/json"}, verify=False).text)):
-                        self.send_secondary_message("Done :)")
-                        self.proceed()
+                        self.send_message_with_confirmation("Done! Please wait until administration resolves your request.\nIf you have any questions, please contact @Admin")
                         return
 
-            self.send_error_message("This type of data cannot be accepted as your identity confirmation", markup=self.abortMarkup)
+            self.send_error_message("This type of data cannot be accepted as your identity confirmation")
             self.bot.register_next_step_handler(message, self.send_confirmation_request, acceptMode=acceptMode, chat_id=self.current_user)
 
     def encounters_callback_handler(self, call):
@@ -1075,7 +1077,7 @@ class Settings:
             elif call.data == "321":
                 self.increased_familiarity_switch(True)
             elif call.data == "222":
-                self.send_confirmation_request(call.message)
+                self.choose_confirmation_request(call.message)
             elif call.data == "223":
                 self.show_creds_link()
             elif call.data == "224":
@@ -1085,7 +1087,7 @@ class Settings:
             elif call.data == "226":
                 self.encounter_list_management(call.message)
             elif call.data == "227":
-                #TODO: Probably change it to work the same way as other sections of Settings
+                #TODO: Probably change it to work the same way as the other sections of Settings
                 self.notInMenu = True
                 self.delete_active_message()
                 self.clear_callback_handler()
@@ -1098,13 +1100,15 @@ class Settings:
             elif call.data == "230":
                 self.currency_change_manager(call.message)
             elif call.data == "240":
-                self.delete_secondary_message()
-                self.requestStatus = 1
-                self.send_confirmation_request(call.message)
+                if self.requestType != 1:
+                    self.delete_secondary_message()
+                    self.requestType = 1
+                    self.send_confirmation_request(call.message)
             elif call.data == "241":
-                self.delete_secondary_message()
-                self.requestStatus = 2
-                self.send_confirmation_request(call.message)
+                if self.requestType != 2:
+                    self.delete_secondary_message()
+                    self.requestType = 2
+                    self.send_confirmation_request(call.message)
             elif call.data == "340":
                 self.send_secondary_message("Partial identity confirmation:\n✅ Face confirmation\n⛔ Age confirmation\n⛔ Location confirmation")
             elif call.data == "341":
@@ -1462,20 +1466,24 @@ class Settings:
             self.current_callback_handler = None
 
     def proceed(self, msg=None, **kwargs):
-        try:
-            self.isDeciding = False
-            #Return menu handler if it was replaced by another one
-            if self.notInMenu:
-                self.notInMenu = False
-                self.subscribe_callback_handler(self.menu_callback_handler)
-            self.delete_secondary_message()
 
-            if kwargs.get("backFromShop"):
-                self.userBalance = json.loads(requests.get(f"https://localhost:44381/GetActiveUserWalletBalance/{self.current_user}", verify=False).text)
+        self.requestType = 0
+        self.isDeciding = False
 
-            self.previous_section(self.message)
-        except:
-            pass
+        if self.nextHandler:
+            self.bot.remove_next_step_handler(self.current_user, self.nextHandler)
+            self.nextHandler = None
+
+        #Return menu handler if it was replaced by another one
+        if self.notInMenu:
+            self.notInMenu = False
+            self.subscribe_callback_handler(self.menu_callback_handler)
+        self.delete_secondary_message()
+
+        if kwargs.get("backFromShop"):
+            self.userBalance = json.loads(requests.get(f"https://localhost:44381/GetActiveUserWalletBalance/{self.current_user}", verify=False).text)
+
+        self.previous_section(self.message)
 
     def proceed_with_encounters(self):
         self.isInBlackList = Helpers.check_user_in_a_blacklist(self.current_user, self.current_managed_user)
@@ -1573,6 +1581,18 @@ class Settings:
 
         self.active_message = self.bot.send_video(self.current_user, video=video, caption=text, reply_markup=markup).id
 
+    def send_message_with_confirmation(self, text):
+        msgId = self.bot.send_message(self.current_user, text, reply_markup=self.okMarkup).id
+        self.bot.register_next_step_handler(self.message, self.delete_message_with_confirmation, messageToDelete=msgId, chat_id=self.current_user)
+
+    def delete_message_with_confirmation(self, message, messageToDelete):
+        try:
+            self.bot.delete_message(self.current_user, messageToDelete)
+            self.bot.delete_message(self.current_user, message.id)
+        except:
+            pass
+        self.proceed()
+
     def edit_active_message_markup(self, markup):
         self.bot.edit_message_reply_markup(self.current_user, self.active_message, reply_markup=markup)
 
@@ -1600,7 +1620,11 @@ class Settings:
             try:
                 self.bot.edit_message_text(text, self.current_user, self.active_error_message, reply_markup=markup)
             except:
-                self.bot.delete_message(self.current_user, self.active_error_message)
+                try:
+                    self.bot.delete_message(self.current_user, self.active_error_message)
+                except:
+                    pass
+
                 self.active_error_message = self.bot.send_message(self.current_user, text, reply_markup=markup).id
             return
 

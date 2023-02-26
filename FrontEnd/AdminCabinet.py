@@ -80,10 +80,13 @@ class AdminCabinet:
                 self.bot.send_photo(self.current_user, photo, "That is how the user looks like")
 
                 if self.current_request["video"]:
-                    self.bot.send_video(self.current_user, video=self.current_request["video"], caption="That is the message, confirming his identity")
+                    self.bot.send_video(self.current_user, video=self.current_request["video"], caption="That is the message.")
                 elif self.current_request["circle"]:
-                    self.bot.send_message(self.current_user, "That is the message, confirming his identity")
+                    self.bot.send_message(self.current_user, "That is the message.")
                     self.bot.send_video_note(self.current_user, data=self.current_request["circle"])
+                elif self.current_request["photo"]:
+                    self.bot.send_message(self.current_user, "That is the message. IT MUST CONTAIN PASSPORT DATA.")
+                    self.bot.send_photo(self.current_user, photo=self.current_request["photo"])
 
                 self.bot.send_message(self.current_user, "Would you like to confirm his identity ?", reply_markup=self.YNExitmarkup)
                 self.bot.register_next_step_handler(message, self.tick_request_handler, acceptMode=True, chat_id=self.current_user)

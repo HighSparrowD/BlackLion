@@ -138,8 +138,7 @@ def get_user_language_limit(userId):
 
 def get_user_limitations(userId):
     try:
-        return int(
-            json.loads(requests.get(f"https://localhost:44381/limitations/{userId}", verify=False).text))
+        return json.loads(requests.get(f"https://localhost:44381/limitations/{userId}", verify=False).text)
     except:
         return None
 
