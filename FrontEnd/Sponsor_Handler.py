@@ -1060,5 +1060,4 @@ class SponsorHandler:
         self.bot.message_handlers.remove(self.eh)
         self.sponsor_handlers.remove(self)
         go_back_to_main_menu(self.bot, self.current_user, self.message)
-        Helpers.switch_user_busy_status(self.current_user)
         del self

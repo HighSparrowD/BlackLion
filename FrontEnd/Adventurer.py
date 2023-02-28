@@ -366,6 +366,5 @@ class Adventurer:
             self.bot.callback_query_handlers.remove(self.current_callback_handler)
 
         self.delete_active_message()
-        Helpers.switch_user_busy_status(self.current_user)
         go_back_to_main_menu(self.bot, self.current_user, self.message)
         del self

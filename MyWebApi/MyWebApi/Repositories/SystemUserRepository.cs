@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Microsoft.Extensions.Options;
 using MyWebApi.Data;
 using MyWebApi.Entities.AchievementEntities;
@@ -22,6 +23,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using static MyWebApi.Enums.SystemEnums;
 
@@ -233,7 +235,7 @@ namespace MyWebApi.Repositories
                 //Check if user STILL has premium
                 await CheckUserHasPremiumAsync(currentUser.UserId);
 
-                var currentUserEncounters = await GetUserEncounters(userId, (int)SystemEnums.Sections.Familiator); //I am not sure if it is 2 or 3 section
+                var currentUserEncounters = await GetUserEncounters(userId, (int)Sections.Familiator); //I am not sure if it is 2 or 3 section
 
                 var data = await _contx.SYSTEM_USERS
                     .Where(u => u.UserId != currentUser.UserId)
@@ -2011,34 +2013,29 @@ namespace MyWebApi.Repositories
             }
         }
 
-        public async Task<bool> SwhitchUserBusyStatus(long userId)
+        public async Task<string> SwhitchUserBusyStatus(long userId)
         {
-            try
+            var user = await _contx.SYSTEM_USERS.Where(u => u.UserId == userId)
+                .Include(u => u.UserDataInfo)
+                .SingleOrDefaultAsync();
+
+            if  (user != null)
             {
-                var user = await _contx.SYSTEM_USERS.Where(u => u.UserId == userId).SingleOrDefaultAsync();
-                if  (user != null)
+                user.IsBusy = !user.IsBusy;
+
+                _contx.Update(user);
+                await _contx.SaveChangesAsync();
+
+
+                //Possible task -> visit any section x times
+                if (await CheckUserHasTasksInSectionAsync(userId, (int)Sections.Neutral))
                 {
-                    user.IsBusy = !user.IsBusy;
-
-                    _contx.Update(user);
-                    await _contx.SaveChangesAsync();
-
-
-                    //Possible task -> visit any section x times
-                    if (await CheckUserHasTasksInSectionAsync(userId, (int)Sections.Neutral))
-                    {
-                        //TODO find and topup user's task progress
-                    }
-
-                    return (bool)user.IsBusy;
+                    //TODO find and topup user's task progress
                 }
-                return false;
+
+                return await GetRandomHintAsync(user.UserDataInfo.LanguageId, null);
             }
-            catch (Exception ex)
-            {
-                await LogAdminErrorAsync(userId, ex.Message, (int)Sections.Neutral);
-                return false;
-            }
+            return "";
         }
 
         public async Task<List<UserNotification>> GetUserRequests(long userId)
@@ -2047,7 +2044,7 @@ namespace MyWebApi.Repositories
             {
                 return await _contx.USER_NOTIFICATIONS
                     .Where(r => r.UserId1 == userId)
-                    .Where(r => r.SectionId == (int)SystemEnums.Sections.Familiator || r.SectionId == (int)SystemEnums.Sections.Requester)
+                    .Where(r => r.SectionId == (int)Sections.Familiator || r.SectionId == (int)Sections.Requester)
                     .ToListAsync();
             }
             catch (Exception ex)
@@ -2063,7 +2060,7 @@ namespace MyWebApi.Repositories
             {
                 return await _contx.USER_NOTIFICATIONS
                     .Where(r => r.Id == requestId)
-                    .Where(r => r.SectionId == (int)SystemEnums.Sections.Familiator || r.SectionId == (int)SystemEnums.Sections.Requester)
+                    .Where(r => r.SectionId == (int)Sections.Familiator || r.SectionId == (int)Sections.Requester)
                     .SingleOrDefaultAsync();
             }
             catch (Exception ex)
@@ -2160,7 +2157,7 @@ namespace MyWebApi.Repositories
             {
                 var requests = await _contx.USER_NOTIFICATIONS
                     .Where(r => r.UserId1 == userId)
-                    .Where(r => r.SectionId == (int)SystemEnums.Sections.Familiator || r.SectionId == (int)SystemEnums.Sections.Requester)
+                    .Where(r => r.SectionId == (int)Sections.Familiator || r.SectionId == (int)Sections.Requester)
                     .ToListAsync();
 
                 _contx.RemoveRange(requests);
@@ -2181,7 +2178,7 @@ namespace MyWebApi.Repositories
             {
                 var request = await _contx.USER_NOTIFICATIONS
                     .Where(r => r.Id == requestId)
-                    .Where(r => r.SectionId == (int)SystemEnums.Sections.Familiator || r.SectionId == (int)SystemEnums.Sections.Requester)
+                    .Where(r => r.SectionId == (int)Sections.Familiator || r.SectionId == (int)Sections.Requester)
                     .SingleOrDefaultAsync();
 
                 _contx.Remove(request);
@@ -2202,7 +2199,7 @@ namespace MyWebApi.Repositories
             {
                 var requests = await _contx.USER_NOTIFICATIONS
                     .Where(r => r.UserId1 == userId)
-                    .Where(r => r.SectionId == (int)SystemEnums.Sections.Familiator || r.SectionId == (int)SystemEnums.Sections.Requester)
+                    .Where(r => r.SectionId == (int)Sections.Familiator || r.SectionId == (int)Sections.Requester)
                     .ToListAsync();
                 
                 return requests.Count > 0;
@@ -2305,7 +2302,7 @@ namespace MyWebApi.Repositories
         {
             return _contx.USER_NOTIFICATIONS
                 .Where(r => r.UserId == senderId && r.UserId1 == recieverId)
-                .Where(r => r.SectionId == (int)SystemEnums.Sections.Requester || r.SectionId == (int)SystemEnums.Sections.Familiator)
+                .Where(r => r.SectionId == (int)Sections.Requester || r.SectionId == (int)Sections.Familiator)
                 .FirstOrDefault() != null;
         }
 
@@ -2678,7 +2675,7 @@ namespace MyWebApi.Repositories
         public async Task<bool> CheckUserHasNotificationsAsync(long userId)
         {
             return await _contx.USER_NOTIFICATIONS
-                .Where(n => n.UserId1 == userId && n.SectionId != (int)SystemEnums.Sections.Familiator && n.SectionId != (int)SystemEnums.Sections.Requester)
+                .Where(n => n.UserId1 == userId && n.SectionId != (int)Sections.Familiator && n.SectionId != (int)Sections.Requester)
                 .CountAsync() > 0;
         }
 
@@ -2729,7 +2726,7 @@ namespace MyWebApi.Repositories
                 .ToListAsync();
 
             //Shuffle the achievement list
-            achievents = achievents.OrderBy(a => new Random().Next()).ToList();
+            achievents = achievents.OrderBy(a => Guid.NewGuid()).ToList();
 
             //Normal scenario. User still has more than 3 achievements to claim
             if (achievents.Count > 3)
@@ -4731,6 +4728,22 @@ namespace MyWebApi.Repositories
                 ActualProfileViews = u.ProfileViewsCount,
                 ActualRtViews = u.RTViewsCount
             }).SingleOrDefaultAsync();
+        }
+
+        public async Task<string> GetRandomHintAsync(int localisation, HintType? type)
+        {
+            if (type == null)
+            {
+                return await _contx.hints.Where(h => h.ClassLocalisationId == localisation)
+                    .OrderBy(r => EF.Functions.Random()).Take(1)
+                    .Select(h => h.Text)
+                    .FirstOrDefaultAsync();
+            }
+
+            return await _contx.hints.Where(h => h.ClassLocalisationId == localisation && h.Type == type)
+                    .OrderBy(r => EF.Functions.Random())
+                    .Select(h => h.Text)
+                    .FirstOrDefaultAsync();
         }
     }
 }

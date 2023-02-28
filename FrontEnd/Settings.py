@@ -1664,6 +1664,5 @@ class Settings:
         self.bot.message_handlers.remove(self.helpHandler)
 
         self.delete_active_message()
-        Helpers.switch_user_busy_status(self.current_user)
         go_back_to_main_menu(self.bot, self.current_user, self.message)
         del self

@@ -489,7 +489,6 @@ class Shop:
         if not self.activatedElsewhere:
             self.bot.delete_message(self.current_user, self.active_message)
             self.bot.callback_query_handlers.remove(self.ch)
-            Helpers.switch_user_busy_status(self.current_user)
             menues.go_back_to_main_menu(self.bot, self.current_user, self.message)
             return
 

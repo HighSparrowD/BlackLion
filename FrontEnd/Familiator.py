@@ -262,6 +262,5 @@ class Familiator:
         self.familiators.remove(self)
         self.bot.message_handlers.remove(self.eh)
         self.bot.message_handlers.remove(self.helpHandler)
-        Helpers.switch_user_busy_status(self.current_user)
         go_back_to_main_menu(self.bot, self.current_user, self.msg)
         del self

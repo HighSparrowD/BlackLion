@@ -22,7 +22,7 @@ namespace MyWebApi.Interfaces
         Task<bool> CheckUserHasVisitedSection(long userId, int sectionId);
         Task<bool> CheckUserIsBusy(long userId);
         Task<bool> CheckUserHasRequests(long userId);
-        Task<bool> SwhitchUserBusyStatus(long userId);
+        Task<string> SwhitchUserBusyStatus(long userId);
         Task<bool> CheckUserIsBanned(long userId);
         Task<bool> CheckUserIsDeleted(long userId);
         Task<bool> SetDebugProperties(); //TODO: remove in production

@@ -136,7 +136,6 @@ class RandomTalker:
         requests.get(f"https://localhost:44381/SetUserRtLanguagePrefs/{self.current_user}/{shouldBeConsidered}", verify=False)
 
     def destruct(self):
-        self.random_talkers.remove(self)
         if self.user2_base:
             if self.user2_base.user2_base:
                 self.user2_base.user2_base = None
@@ -145,6 +144,5 @@ class RandomTalker:
             self.bot.message_handlers.remove(self.ah)
         if self.rh in self.bot.message_handlers:
             self.bot.message_handlers.remove(self.rh)
-        Helpers.switch_user_busy_status(self.current_user)
         go_back_to_main_menu(self.bot, self.current_user, self.message)
         del self

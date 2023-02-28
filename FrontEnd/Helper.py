@@ -22,7 +22,7 @@ class Helper:
                 self.destruct()
                 return
             elif message.text == "/help":
-                self.bot.send_message(self.current_user, "Do you need a help with a... help???\nExit to the main menu, call /feedback command and describe your problem to us. We will contact you as soon as possible ;)")
+                self.bot.send_message(self.current_user, "Do you need a help with a... help???\nExit to the main menu, hit /feedback button and describe your problem to us. We will contact you as soon as possible ;)")
             self.start(message)
 
     def destruct(self):

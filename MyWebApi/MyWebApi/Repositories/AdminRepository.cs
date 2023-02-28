@@ -384,7 +384,7 @@ namespace MyWebApi.Repositories
                     Description = "Your tick request had been accepted :)",
                     UserId1 = request.UserId,
                     Severity = (short)SystemEnums.Severities.Urgent,
-                    SectionId = (int)SystemEnums.Sections.Neutral,
+                    SectionId = (int)Sections.Neutral,
                 });
             else
                 await _userRep.AddUserNotificationAsync(new Entities.UserActionEntities.UserNotification
@@ -392,7 +392,7 @@ namespace MyWebApi.Repositories
                     Description = "Sorry, your tick request had been denied.\nPlease contact the administration and try again",
                     UserId1 = request.UserId,
                     Severity = (short)SystemEnums.Severities.Urgent,
-                    SectionId = (int)SystemEnums.Sections.Neutral,
+                    SectionId = (int)Sections.Neutral,
                 });
 
             return isAccepted;

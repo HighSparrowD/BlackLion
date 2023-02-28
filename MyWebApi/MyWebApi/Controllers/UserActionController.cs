@@ -471,7 +471,7 @@ namespace MyWebApi.Controllers
         }
 
         [HttpGet("/SwhitchUserBusyStatus/{userId}")]
-        public async Task<bool> SwhitchUserBusyStatus(long userId)
+        public async Task<string> SwhitchUserBusyStatus(long userId)
         {
             return await _repository.SwhitchUserBusyStatus(userId);
         }

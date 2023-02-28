@@ -68,8 +68,7 @@ def check_user_is_busy(userId):
 
 def switch_user_busy_status(userId):
     try:
-        return bool(json.loads(
-            requests.get(f"https://localhost:44381/SwhitchUserBusyStatus/{userId}", verify=False).text))
+        return requests.get(f"https://localhost:44381/SwhitchUserBusyStatus/{userId}", verify=False).text
     except:
         return None
 
