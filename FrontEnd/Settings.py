@@ -672,7 +672,6 @@ class Settings:
                 self.send_active_message("Here are all users you have in your black list\nSelect a user to remove him from the black list", markup=markup)
             else:
                 self.send_error_message("There are no users in your blacklist :)")
-                self.proceed()
         else:
             self.bot.delete_message(self.current_user, message.id)
 
@@ -1471,8 +1470,11 @@ class Settings:
         self.isDeciding = False
 
         if self.nextHandler:
-            self.bot.remove_next_step_handler(self.current_user, self.nextHandler)
-            self.nextHandler = None
+            try:
+                self.bot.remove_next_step_handler(self.current_user, self.nextHandler)
+                self.nextHandler = None
+            except:
+                pass
 
         #Return menu handler if it was replaced by another one
         if self.notInMenu:

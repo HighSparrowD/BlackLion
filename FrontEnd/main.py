@@ -25,7 +25,7 @@ admin_sponsor_handlers = []
 admin_cabinets = []
 
 
-@bot.message_handler(commands=["start"], is_multihandler=True)
+@bot.message_handler(commands=["start"])
 def Start(message):
     #Allow only if user is not registered
     if not Helpers.check_user_is_registered(message.from_user.id):
@@ -107,13 +107,13 @@ def help(message):
         pass
 
 
-@bot.message_handler()
-def test(message):
-    try:
-        t = bot.get_sticker_set(message.text.replace("/test", ""))
-        bot.send_sticker(message.chat.id, t.stickers[0].file_id)
-    except:
-        pass
+# @bot.message_handler()
+# def test(message):
+#     try:
+#         t = bot.get_sticker_set(message.text.replace("/test", ""))
+#         bot.send_sticker(message.chat.id, t.stickers[0].file_id)
+#     except:
+#         pass
     # bot.send_message(message.from_user.id, "* A list item With multiple paragraphs* Bar", parse_mode=telegram.ParseMode.MARKDOWN_V2)
     # bot.send_message(message.from_user.id, "term: definition")
 
@@ -126,51 +126,45 @@ def create_registrator(message):
 
 def create_familiator(message, userId):
     if Helpers.check_user_exists(message.from_user.id):
-        if not Helpers.check_user_is_banned(message.from_user.id):
-            if not Helpers.check_user_is_deleted(message.from_user.id):
-                visit = Helpers.check_user_has_visited_section(message.from_user.id, 2)
-                return Familiator(bot, message, userId, familiators, visit)
-            else:
-                bot.send_message(message.from_user.id, "Hey! your account had been deleted recently. Would you like to pass a quick registration and save all your lost data?\n Then hit /register !")
+        if not Helpers.check_user_is_deleted(message.from_user.id):
+            visit = Helpers.check_user_has_visited_section(message.from_user.id, 2)
+            return Familiator(bot, message, userId, familiators, visit)
         else:
-            bot.send_message(message.from_user.id, "Sorry, you had been banned. Please contact the support team")
+            bot.send_message(message.from_user.id, "Hey! your account had been deleted recently. Would you like to pass a quick registration and save all your lost data?\n Then hit /register !")
     send_registration_warning(userId)
 
 
 def create_random_talker(message):
     if Helpers.check_user_exists(message.from_user.id):
-        if not Helpers.check_user_is_banned(message.from_user.id):
-            if not Helpers.check_user_is_deleted(message.from_user.id):
-                visit = Helpers.check_user_has_visited_section(message.from_user.id, 6)
-                return RandomTalker(bot, message, random_talkers, visit)
-            else:
-                bot.send_message(message.from_user.id, "Hey! your account had been deleted recently. Would you like to pass a quick registration and save all your lost data?\n Then hit /register !")
+        if not Helpers.check_user_is_deleted(message.from_user.id):
+            visit = Helpers.check_user_has_visited_section(message.from_user.id, 6)
+            return RandomTalker(bot, message, random_talkers, visit)
         else:
-            bot.send_message(message.from_user.id, "Sorry, you had been banned. Please contact the support team")
+            bot.send_message(message.from_user.id, "Hey! your account had been deleted recently. Would you like to pass a quick registration and save all your lost data?\n Then hit /register !")
     send_registration_warning(message.from_user.id)
 
 
 def create_shop(message):
+    if Helpers.check_user_is_banned(message.from_user.id):
+        bot.send_message(message.from_user.id, "Your reputation is to low. Please contact the administration to resolve that", reply_markup=Menus.menu_markup)
+        return
+
     if Helpers.check_user_exists(message.from_user.id):
-        if not Helpers.check_user_is_banned(message.from_user.id):
-            visit = Helpers.check_user_has_visited_section(message.from_user.id, 10)
-            return Shop(bot, message, visit)
-        else:
-            bot.send_message(message.from_user.id, "Sorry, you had been banned. Please contact the support team")
+        visit = Helpers.check_user_has_visited_section(message.from_user.id, 10)
+        return Shop(bot, message, visit)
+
     send_registration_warning(message.from_user.id)
 
 
 def create_reporter(message):
     if Helpers.check_user_exists(message.from_user.id):
-        if not Helpers.check_user_is_banned(message.from_user.id):
-            if not Helpers.check_user_is_deleted(message.from_user.id):
-                language = int(requests.get(f"https://localhost:44381/GetUserAppLanguage/{message.from_user.id}", verify=False).text)
-                visit = Helpers.check_user_has_visited_section(message.from_user.id, 7)
-                return FeedbackModule(bot, message, language, visit)
-            else:
-                bot.send_message(message.from_user.id, "Hey! your account had been deleted recently. Would you like to pass a quick registration and save all your lost data?\n Then hit /register !")
+        if not Helpers.check_user_is_deleted(message.from_user.id):
+            language = int(requests.get(f"https://localhost:44381/GetUserAppLanguage/{message.from_user.id}", verify=False).text)
+            visit = Helpers.check_user_has_visited_section(message.from_user.id, 7)
+            return FeedbackModule(bot, message, language, visit)
         else:
-            bot.send_message(message.from_user.id, "Sorry, you had been banned. Please contact the support team")
+            bot.send_message(message.from_user.id, "Hey! your account had been deleted recently. Would you like to pass a quick registration and save all your lost data?\n Then hit /register !")
+
     send_registration_warning(message.from_user.id)
 
 
@@ -179,11 +173,8 @@ def create_sponsor_handler(message):
         pass
         # return SponsorHandlerAdmin(bot, message, admin_sponsor_handlers)
     elif Helpers.check_user_exists(message.from_user.id):
-        if not Helpers.check_user_is_banned(message.from_user.id):
-            visit = Helpers.check_user_has_visited_section(message.from_user.id, 8)
-            # return SponsorHandler(bot, message, sponsor_handlers, visit)
-        else:
-            bot.send_message(message.from_user.id, "Sorry, you had been banned. Please contact the support team")
+        visit = Helpers.check_user_has_visited_section(message.from_user.id, 8)
+        # return SponsorHandler(bot, message, sponsor_handlers, visit)
     send_registration_warning(message.from_user.id)
 
 
@@ -195,12 +186,6 @@ def create_admin_cabinet(message):
 def send_registration_warning(userId):
     bot.send_message(userId, "Please register before entering this section", reply_markup=Menus.register_markup)
 
-
-def check_module_created(userId, module_array): #Probably redundant
-    for module in module_array:
-        if module.current_user == userId:
-            return True
-    return False
 
 
 bot.polling()

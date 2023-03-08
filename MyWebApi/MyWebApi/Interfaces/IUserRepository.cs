@@ -35,6 +35,7 @@ namespace MyWebApi.Interfaces
         Task<byte> DeleteUserRequests(long userId);
         Task<byte> DeleteUserRequest(Guid requestId);
         Task<User> GetUserInfoByUsrnameAsync(string username);
+        Task<BasicUserInfo> GetUserBasicInfo(long userId);
         Task<byte> UpdateUserAppLanguageAsync(long userId, int appLanguage);
         Task<byte> UpdateUserBaseAsync(UserBaseInfo user);
         Task<byte> UpdateUserDataAsync(UserDataInfo user);
@@ -51,11 +52,11 @@ namespace MyWebApi.Interfaces
         Task<Country> GetCountryAsync(long id);
         Task<List<long>> GetAllUsersAsync();
         Task<List<FeedbackReason>> GetFeedbackReasonsAsync(int localisationId);
-        Task<List<ReportReason>> GetReportReasonsAsync(int localisationId);
+        //Task<List<ReportReason>> GetReportReasonsAsync(int localisationId);
         Task<long> AddFeedbackAsync(Feedback report);
-        Task<long> AddUserReportAsync(Report report);
+        Task<Guid> AddUserReportAsync(SendUserReport report);
         Task<List<Report>> GetMostRecentReports();
-        Task<Report> GetSingleUserReportByIdAsync(long id);
+        Task<Report> GetSingleUserReportByIdAsync(Guid id);
         Task<List<Report>> GetAllReportsOnUserAsync(long userId);
         Task<List<Report>> GetAllUserReportsAsync(long userId);
         Task<List<Feedback>> GetMostRecentFeedbacks();

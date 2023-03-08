@@ -28,7 +28,8 @@ class RandomTalker:
 
         self.random_talkers = random_talkers
 
-        self.limitations = Helpers.get_user_limitations(self.current_user)
+        self.basic_info = Helpers.get_user_basic_info(self.current_user)
+        self.limitations = self.basic_info["limitations"]
 
         self.YNmarkup = ReplyKeyboardMarkup(resize_keyboard=True, row_width=3, one_time_keyboard=True).add(KeyboardButton("yes")).add(KeyboardButton("no"))
         self.exit_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(KeyboardButton("/exit"))
@@ -41,6 +42,10 @@ class RandomTalker:
             self.enter()
 
     def enter(self):
+        if self.basic_info["isBanned"]:
+            self.bot.send_message(self.current_user, "Your reputation is to low. Please contact the administration to resolve that")
+            return
+
         if self.limitations["maxRtViews"] >= self.limitations["actualRtViews"]:
             self.bot.send_message(self.current_user, "Sorry, you have run out of RT searches for today.\nYou can still use Card Deck Mini or Card Deck Premium to replenish your views, buy premium and thus double your view count, or wait until tomorrow :)")
             self.destruct()

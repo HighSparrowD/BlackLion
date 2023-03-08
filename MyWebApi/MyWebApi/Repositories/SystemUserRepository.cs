@@ -936,26 +936,39 @@ namespace MyWebApi.Repositories
             }
         }
 
-        public async Task<long> AddUserReportAsync(Report report)
+        public async Task<Guid> AddUserReportAsync(SendUserReport request)
         {
             try
             {
-                report.Id = await _contx.USER_REPORTS.CountAsync() +1;
-                await _contx.USER_REPORTS.AddAsync(report);
-                await _contx.SaveChangesAsync();
+                var reportedUser = await _contx.SYSTEM_USERS.Where(u => u.UserId == request.ReportedUser)
+                    .FirstOrDefaultAsync();
 
-                if (await CheckUserHasTasksInSectionAsync(report.UserBaseInfoId, (int)Sections.Reporter))
+                reportedUser.ReportCount++;
+
+                //Ban user if dailly report count is too high
+                if (reportedUser.ReportCount >= 5)
                 {
-                    //TODO find and topup user's task progress
+                    reportedUser.IsBanned = true;
+                    reportedUser.BanDate = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
                 }
+
+                var report = new Report
+                {
+                    Id = Guid.NewGuid(),
+                    UserBaseInfoId = request.Sender,
+                    UserBaseInfoId1 = request.ReportedUser,
+                    Text = request.Text,
+                    Reason = request.Reason,
+                    InsertedUtc = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc)
+                };
+
+                await _contx.USER_REPORTS.AddAsync(report);
+
+                await _contx.SaveChangesAsync();
 
                 return report.Id;
             }
-            catch (Exception ex)
-            {
-                await LogAdminErrorAsync(report.UserBaseInfoId, ex.Message, (int)Sections.Reporter);
-                return 0;
-            }
+            catch {return Guid.Empty;}
         }
 
         public async Task<List<Report>> GetMostRecentReports()
@@ -972,14 +985,13 @@ namespace MyWebApi.Repositories
             }
         }
 
-        public async Task<Report> GetSingleUserReportByIdAsync(long id)
+        public async Task<Report> GetSingleUserReportByIdAsync(Guid id)
         {
             try
             {
                 return await _contx.USER_REPORTS.Where(r => r.Id == id)
                     .Include(r => r.User)
                     .Include(r => r.Sender)
-                    .Include(r => r.Reason)
                     .SingleOrDefaultAsync();
             }
             catch (Exception ex)
@@ -1002,18 +1014,18 @@ namespace MyWebApi.Repositories
             }
         }
 
-        public async Task<List<ReportReason>> GetReportReasonsAsync(int localisationId)
-        {
-            try
-            {
-                return await _contx.REPORT_REASONS.Where(r => r.ClassLocalisationId == localisationId).ToListAsync();
-            }
-            catch (Exception ex)
-            {
-                await LogAdminErrorAsync(null, ex.Message, (int)Sections.Neutral);
-                return null;
-            }
-        }
+        //public async Task<List<ReportReason>> GetReportReasonsAsync(int localisationId)
+        //{
+        //    try
+        //    {
+        //        return await _contx.REPORT_REASONS.Where(r => r.ClassLocalisationId == localisationId).ToListAsync();
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        await LogAdminErrorAsync(null, ex.Message, (int)Sections.Neutral);
+        //        return null;
+        //    }
+        //}
 
         public async Task<bool> AddUserToBlackListAsync(long userId, long bannedUserId)
         {
@@ -1117,6 +1129,8 @@ namespace MyWebApi.Repositories
                 if (user.IsBanned)
                 {
                     user.IsBanned = false;
+                    user.BanDate = null;
+
                     _contx.SYSTEM_USERS.Update(user);
                     await _contx.SaveChangesAsync();
                     return 1;
@@ -1712,6 +1726,7 @@ namespace MyWebApi.Repositories
                     if ((user.HasPremium && user.PremiumExpirationDate < timeNow) || (user.HasPremium && user.PremiumExpirationDate == null))
                     {
                         user.HasPremium = false;
+                        user.PremiumDuration = null;
                         user.PremiumExpirationDate = null;
                         //TODO: Notify user that his premium access has expired
                     }
@@ -1740,9 +1755,9 @@ namespace MyWebApi.Repositories
 
                 if (user != null)
                 { 
-                    if (user.PremiumExpirationDate != null)
-                        return user.PremiumExpirationDate.Value;
-                    return (DateTime)user.PremiumExpirationDate;
+                    //if (user.PremiumExpirationDate != null)
+                    //    return user.PremiumExpirationDate.Value;
+                    return user.PremiumExpirationDate.Value;
                 }
                 else
                     return DateTime.MinValue;
@@ -1767,6 +1782,15 @@ namespace MyWebApi.Repositories
 
                 user.HasPremium = true;
                 user.BonusIndex = 2;
+
+                if (user.PremiumDuration != null)
+                {
+                    user.PremiumDuration += (short)dayDuration;
+                }
+                else
+                {
+                    user.PremiumDuration = (short)dayDuration;
+                }
 
                 //If transaction was made for points
                 if (currency == (short)Currencies.Points)
@@ -4718,16 +4742,30 @@ namespace MyWebApi.Repositories
             //Refresh data regarding user premium status
             var hasPremium = await CheckUserHasPremiumAsync(userId);
 
-            return await _contx.SYSTEM_USERS.Where(u => u.UserId == userId).Select(u => new GetLimitations
+            var limitations = await _contx.SYSTEM_USERS.Where(u => u.UserId == userId).Select(u => new GetLimitations
             {
                 MaxTagViews = u.MaxTagSearchCount,
                 MaxProfileViews = u.MaxProfileViewsCount,
                 MaxRtViews = u.MaxRTViewsCount,
-                MaxTagsPerSearch = hasPremium? 50 : 25,
-                ActualTagViews = u.TagSearchesCount, 
+                MaxTagsPerSearch = hasPremium ? 50 : 25,
+                ActualTagViews = u.TagSearchesCount,
                 ActualProfileViews = u.ProfileViewsCount,
                 ActualRtViews = u.RTViewsCount
             }).SingleOrDefaultAsync();
+
+            if (limitations != null)
+                return limitations;
+
+            return new GetLimitations
+            {
+                MaxTagViews = 25,
+                MaxProfileViews = 50,
+                MaxRtViews = 25,
+                MaxTagsPerSearch = 25,
+                ActualTagViews = 25,
+                ActualProfileViews = 25,
+                ActualRtViews = 25
+            };
         }
 
         public async Task<string> GetRandomHintAsync(int localisation, HintType? type)
@@ -4744,6 +4782,22 @@ namespace MyWebApi.Repositories
                     .OrderBy(r => EF.Functions.Random())
                     .Select(h => h.Text)
                     .FirstOrDefaultAsync();
+        }
+
+        public async Task<BasicUserInfo> GetUserBasicInfo(long userId)
+        {
+            var limitations = await GetUserSearchLimitations(userId);
+
+            return await _contx.SYSTEM_USERS.Where(u => u.UserId == userId).Select(u => new BasicUserInfo
+            {
+                Id = u.UserId,
+                Username = u.UserBaseInfo.UserName,
+                UserRealName = u.UserBaseInfo.UserRealName,
+                HasPremium = u.HasPremium,
+                IsBanned = u.IsBanned,
+                IsBusy = u.IsBusy,
+                Limitations = limitations
+            }).FirstOrDefaultAsync();
         }
     }
 }

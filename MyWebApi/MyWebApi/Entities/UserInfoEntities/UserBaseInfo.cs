@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using MyWebApi.Entities.UserActionEntities;
+using System.ComponentModel.DataAnnotations;
 #nullable enable
 
 namespace MyWebApi.Entities.UserInfoEntities

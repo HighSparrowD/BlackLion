@@ -38,5 +38,6 @@ namespace MyWebApi.Interfaces
         Task<bool> AbortTickRequestAsync(Guid requestId);
         Task<bool> NotifyFailierTickRequestAsync(Guid requestId, long adminId);
         Task<bool> CreateDecoyAsync(long? copyUserId=null, UserRegistrationModel model=null);
+        Task<List<long>> GetRecentlyBannedUsersAsync();
     }
 }

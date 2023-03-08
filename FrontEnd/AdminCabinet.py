@@ -1,4 +1,3 @@
-# noinspection PyBroadException
 import json
 import requests
 import telegram
@@ -18,6 +17,8 @@ class AdminCabinet:
                                    "\n\n/getuserbyid command allows you to get and then manage user by his id: /getuserbyid USERID" \
                                    "\n\n/getuserbyusername command allows you to get and then manage user by his username: /getuserbyusername USERNAME" \
                                    "\n\n/managetickrequests command allows you to go through active tick requests and resolve them. FUN!" \
+                                   "\n\n/recentfeedbacks command gives you recent feedbacks" \
+                                   "\n\n/bannedusers command gives you users banned automatically" \
                                    "\n\n/exit"
 
         self.admin_cabinets = admin_cabinets
@@ -42,23 +43,28 @@ class AdminCabinet:
                                            KeyboardButton("View all user's feedbacks"),
                                            KeyboardButton("View all user's reports"),
                                            KeyboardButton("Delete user"),
-                                           KeyboardButton("Top-up balance"))
+                                           KeyboardButton("Top-up balance"),
+                                           KeyboardButton("Go Back"))
 
         self.old_queries = []
         self.current_query = 0
+
+        self.banned_users = []
 
         self.manage_user_message = "What do you want to do with this user?"
 
         self.ch = self.bot.register_callback_query_handler("", self.callback_handler, user_id=self.current_user)
 
-        self.mh = bot.register_message_handler(self.message_handler, commands=["sendmessage", "viewreports", "getuserbyid", "getuserbyusername", "managetickrequests"], user_id=self.current_user)
+        self.mh = bot.register_message_handler(self.message_handler, commands=["sendmessage", "viewreports", "getuserbyid", "getuserbyusername", "managetickrequests", "bannedusers", "recentfeedbacks"], user_id=self.current_user)
         self.eh = bot.register_message_handler(self.exit_handler, commands=["exit"], user_id=self.current_user)
 
+        self.current_section = self.start
 
-        self.bot.send_message(self.current_user, self.show_new_data_count())
+        self.start()
+
+    def start(self):
         self.bot.send_message(self.current_user, self.admin_greet_message)
-
-        self.get_recent_feedbacks()
+        self.bot.send_message(self.current_user, self.show_new_data_count())
 
     def show_new_data_count(self):
         return requests.get(f"https://localhost:44381/GetNewNotificationsCount/{self.current_user}", verify=False).text
@@ -145,6 +151,10 @@ class AdminCabinet:
                         self.bot.send_message(self.current_user, "User was not found")
                 else:
                     self.bot.send_message(self.current_user, "Wrong command consistence")
+            elif "/recentfeedbacks" in command:
+                self.get_recent_feedbacks()
+            elif "/bannedusers" in command:
+                self.get_banned_users()
             elif command[0] == "/managetickrequests":
                 self.tick_request_handler(message)
 
@@ -158,6 +168,7 @@ class AdminCabinet:
             self.show_user(user)
         else:
             self.bot.send_message(self.current_user, "User was not found")
+            self.current_section()
 
     def get_recent_feedbacks(self):
         self.feedbacks_markup = InlineKeyboardMarkup()
@@ -170,6 +181,30 @@ class AdminCabinet:
             return False
 
         self.bot.send_message(self.current_user, "No recent feedbacks !")
+
+    def get_banned_users(self):
+        try:
+            self.banned_users = json.loads(requests.get(f"https://localhost:44381/banned-users", verify=False).text)
+            self.manage_banned_users(self.message)
+        except:
+            self.bot.send_message(self.current_user, "Something went wrong")
+            self.start()
+
+    def manage_banned_users(self, message, acceptMode=False):
+        if len(self.banned_users) > 0:
+            if not acceptMode:
+                self.bot.send_message(self.current_user, "Proceed?", reply_markup=self.YNmarkup)
+                self.bot.register_next_step_handler(message, self.manage_banned_users, acceptMode=True, chat_id=self.current_user)
+            else:
+                if message.text == "Yes":
+                    self.current_section = self.manage_banned_users
+                    user = Helpers.get_user_info(self.banned_users[0])
+                    self.manage_user(user)
+                else:
+                    self.start()
+        else:
+            self.start()
+
 
     def callback_handler(self, call):
         if int(call.data) == -4:
@@ -300,13 +335,16 @@ class AdminCabinet:
             except:
                 self.bot.send_message(self.current_user, "Something went wrong")
 
+        elif message.text == "Go Back":
+            self.current_section()
+
     def show_user(self, user):
         try:
             markup = InlineKeyboardMarkup()\
                 .add(InlineKeyboardButton("Achievements", callback_data=-4))
 
             self.bot.send_message(self.current_user, "Processing...", reply_markup=self.markup1, parse_mode=telegram.ParseMode.HTML)
-            self.bot.send_message(self.current_user, self.construct_user_data_message(user), reply_markup=markup, parse_mode=telegram.ParseMode.HTML)
+            self.bot.send_message(self.current_user, self.construct_user_data_message(user), reply_markup=markup)
             self.bot.register_next_step_handler(self.message, self.user_actions_checkout, chat_id=self.current_user)
         except:
             self.bot.send_message(self.current_user, "Something went wrong")

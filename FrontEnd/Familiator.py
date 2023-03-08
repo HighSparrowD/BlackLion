@@ -30,7 +30,8 @@ class Familiator:
         self.actions_markup = InlineKeyboardMarkup(row_width=5)
         self.actions_markup.add(InlineKeyboardButton("Report", callback_data=-1))
 
-        self.limitations = Helpers.get_user_limitations(self.current_user)
+        self.basic_info = Helpers.get_user_basic_info(self.current_user)
+        self.limitations = self.basic_info["limitations"]
         self.tagLimit = self.limitations["maxTagsPerSearch"]
 
         self.wasPersonalityTurnedOff = False
@@ -190,7 +191,8 @@ class Familiator:
             self.bot.register_next_step_handler(message, self.show_person, acceptMode=True, chat_id=self.current_user)
         else:
             if message.text == self.btnYes:
-                Helpers.register_user_request(self.current_user, self.active_user_id, False)
+                if not self.basic_info["isBanned"]:
+                    Helpers.register_user_request(self.current_user, self.active_user_id, False)
 
                 active_reply = Helpers.get_user_active_reply(self.active_user_id)
                 if active_reply:

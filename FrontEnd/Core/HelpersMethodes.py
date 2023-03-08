@@ -142,6 +142,13 @@ def get_user_limitations(userId):
         return None
 
 
+def get_user_basic_info(userId):
+    try:
+        return json.loads(requests.get(f"https://localhost:44381/basic-info/{userId}", verify=False).text)
+    except:
+        return None
+
+
 def get_user_app_language(userId):
     try:
         return int(

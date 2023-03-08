@@ -501,7 +501,18 @@ namespace MyWebApi.Repositories
         {
             string returnData = "";
 
-            returnData = $"Recent feedbacks: {(await _userRep.GetMostRecentFeedbacks()).Count}\nActive tick requests {(await _contx.tick_requests.Where(r => (r.State == TickRequestStatus.Added || r.State == TickRequestStatus.Changed || r.State == TickRequestStatus.Aborted) && r.AdminId == null).ToListAsync()).Count}";
+            var recentFeedbacks = await _userRep.GetMostRecentFeedbacks();
+            var tickRequests = await _contx.tick_requests
+                .Where(r => (r.State == TickRequestStatus.Added || 
+                r.State == TickRequestStatus.Changed || 
+                r.State == TickRequestStatus.Aborted) && 
+                r.AdminId == null)
+                .ToListAsync();
+
+
+            var bannedUsers = await GetRecentlyBannedUsersAsync();
+
+            returnData = $"Recent feedbacks: {recentFeedbacks.Count}\nActive tick requests {tickRequests.Count}\nRecently banned users{bannedUsers.Count}";
 
             return returnData;
         }
@@ -595,6 +606,7 @@ namespace MyWebApi.Repositories
                     InvitedUsersBonus = 0,
                     TagSearchesCount = 0,
                     MaxProfileViewsCount = 50,
+                    ReportCount = 0,
                     IdentityType = IdentityConfirmationType.None,
                 };
 
@@ -623,6 +635,13 @@ namespace MyWebApi.Repositories
             await _userRep.RegisterUserAsync(m, uBase, uData, uPrefs, location);
 
             return true;
+        }
+
+        public async Task<List<long>> GetRecentlyBannedUsersAsync()
+        {
+            return await _contx.SYSTEM_USERS.Where(u => u.IsBanned && u.BanDate != null)
+                .Select(u => u.UserId)
+                .ToListAsync();
         }
 
         //public Task<long> UploadInTest(UploadInTest model)

@@ -272,7 +272,7 @@ class Registrator:
         if not acceptMode:
             self.question_index = 9
 
-            self.send_encourage_message("Some of the people, who had registered received 100$... Or they had not")
+            self.send_encourage_message("Wow. You already here...")
 
             for reason in self.reasons.values():
                 self.reason_markup.add(KeyboardButton(reason))

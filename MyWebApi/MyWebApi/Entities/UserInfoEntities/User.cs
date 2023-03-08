@@ -1,9 +1,7 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
-using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
-using System.Diagnostics.CodeAnalysis;
 using System.Data;
 using MyWebApi.Enums;
 #nullable enable
@@ -20,12 +18,15 @@ namespace MyWebApi.Entities.UserInfoEntities
         public bool ShouldConsiderLanguages { get; set; }
         public bool IsBusy { get; set; }
         public bool IsBanned { get; set; }
+        public DateTime? BanDate { get; set; }
         public bool IsDeleted { get; set; }
         public bool HasPremium { get; set; }
         public bool HadReceivedReward { get; set; }
         public bool? IsFree { get; set; }
         public IdentityConfirmationType IdentityType { get; set; }
         public bool IncreasedFamiliarity { get; set; }
+        public short? PremiumDuration { get; set; }
+        public short ReportCount { get; set; }
         public short DailyRewardPoint { get; set; } 
         public double BonusIndex { get; set; }
         public int InvitedUsersCount { get; set; }

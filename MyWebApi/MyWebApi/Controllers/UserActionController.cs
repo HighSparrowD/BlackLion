@@ -221,11 +221,11 @@ namespace MyWebApi.Controllers
             return await _repository.GetFeedbackReasonsAsync(localisationId);
         }
 
-        [HttpGet("/GetReportReasons/{localisationId}")]
-        public async Task<List<ReportReason>> GetReportReasons(int localisationId)
-        {
-            return await _repository.GetReportReasonsAsync(localisationId);
-        }
+        //[HttpGet("/GetReportReasons/{localisationId}")]
+        //public async Task<List<ReportReason>> GetReportReasons(int localisationId)
+        //{
+        //    return await _repository.GetReportReasonsAsync(localisationId);
+        //}
 
 
         [HttpPost("/AddFeedback")]
@@ -236,12 +236,16 @@ namespace MyWebApi.Controllers
         }
 
         [HttpPost("/AddUserReport")]
-        public async Task<long> AddUserReport(Report report)
+        public async Task<Guid> AddUserReport([FromBody] SendUserReport report)
         {
-            report.InsertedUtc = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
             return await _repository.AddUserReportAsync(report);
         }
 
+        [HttpGet("/basic-info/{userId}")]
+        public async Task<BasicUserInfo> AddUserReport([FromRoute] long userId)
+        {
+            return await _repository.GetUserBasicInfo(userId);
+        }
 
         [HttpPost("/RegisterUser")]
         public async Task<long> AddUser(UserRegistrationModel model)
@@ -280,6 +284,7 @@ namespace MyWebApi.Controllers
                 TagSearchesCount = 0,
                 MaxRTViewsCount = 25,
                 MaxTagSearchCount = 3,
+                ReportCount = 0,
                 MaxProfileViewsCount = 50,
                 IdentityType = IdentityConfirmationType.None,
                 EnteredPromoCodes = model.Promo
@@ -321,7 +326,7 @@ namespace MyWebApi.Controllers
         }
 
         [HttpGet("/GetSingleUserReportById/{id}")]
-        public async Task<Report> GetSingleUserReportByIdAsync(long id)
+        public async Task<Report> GetSingleUserReportByIdAsync(Guid id)
         {
             return await _repository.GetSingleUserReportByIdAsync(id);
         }

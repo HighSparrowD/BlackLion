@@ -34,7 +34,6 @@ namespace MyWebApi.Data
         public DbSet<Feedback> SYSTEM_FEEDBACKS { get; set; }
         public DbSet<FeedbackReason> FEEDBACK_REASONS { get; set; }
         public DbSet<Report> USER_REPORTS { get; set; }
-        public DbSet<ReportReason> REPORT_REASONS { get; set; }
         public DbSet<Achievement> SYSTEM_ACHIEVEMENTS { get; set; }
         public DbSet<UserAchievement> USER_ACHIEVEMENTS { get; set; }
         public DbSet<Balance> USER_WALLET_BALANCES { get; set; }
@@ -113,7 +112,6 @@ namespace MyWebApi.Data
             builder.Entity<City>().HasKey(c => new {c.Id, c.CountryClassLocalisationId});
             builder.Entity<UserReason>().HasKey(g => new { g.Id, g.ClassLocalisationId });
             builder.Entity<FeedbackReason>().HasKey(g => new { g.Id, g.ClassLocalisationId });
-            builder.Entity<ReportReason>().HasKey(g => new { g.Id, g.ClassLocalisationId });
             builder.Entity<Visit>().HasKey(g => new { g.UserId, g.SectionId });
             builder.Entity<Achievement>().HasKey(g => new { g.Id, g.ClassLocalisationId });
             builder.Entity<UserAchievement>().HasKey(g => new { g.UserBaseInfoId, g.AchievementId });
