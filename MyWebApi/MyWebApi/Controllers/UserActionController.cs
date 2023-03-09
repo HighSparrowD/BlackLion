@@ -273,7 +273,9 @@ namespace MyWebApi.Controllers
                 IsDeleted = false,
                 IsBanned = false,
                 ShouldConsiderLanguages = false,
+                IsUpdated = false,
                 HasPremium = false,
+                ShouldEnhance = false,
                 HadReceivedReward = false,
                 IncreasedFamiliarity = true,
                 DailyRewardPoint = 0,
@@ -287,7 +289,7 @@ namespace MyWebApi.Controllers
                 ReportCount = 0,
                 MaxProfileViewsCount = 50,
                 IdentityType = IdentityConfirmationType.None,
-                EnteredPromoCodes = model.Promo
+                EnteredPromoCodes = model.Promo,
             };
 
             if (model.UserCityCode != null && model.UserCountryCode != null)

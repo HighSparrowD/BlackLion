@@ -387,10 +387,28 @@ namespace MyWebApi.Repositories
             }
 
             var userPoints = await _contx.USER_PERSONALITY_POINTS.Where(p => p.UserId == currentUser.UserId)
-            .SingleOrDefaultAsync();
+                .AsNoTracking()
+                .SingleOrDefaultAsync();
 
             var userStats = await _contx.USER_PERSONALITY_STATS.Where(s => s.UserId == currentUser.UserId)
-            .SingleOrDefaultAsync();
+                .AsNoTracking()
+                .SingleOrDefaultAsync();
+
+            //Enhanse users PP if condition is met
+            if(currentUser.ShouldEnhance)
+            {
+                userPoints.PersonalityPercentage = 0.1;
+                userPoints.EmotionalIntellectPercentage = 0.1;
+                userPoints.ReliabilityPercentage = 0.1;
+                userPoints.CompassionPercentage = 0.1;
+                userPoints.OpenMindednessPercentage = 0.1;
+                userPoints.SelfAwarenessPercentage = 0.1;
+                userPoints.AgreeablenessPercentage = 0.1;
+                userPoints.LevelOfSensePercentage = 0.1;
+                userPoints.IntellectPercentage = 0.1;
+                userPoints.NaturePercentage = 0.1;
+                userPoints.CreativityPercentage = 0.1;
+            }
 
             var important = await userPoints.GetImportantParams();
 
@@ -399,16 +417,18 @@ namespace MyWebApi.Repositories
                 return returnUser;
 
             var user2Points = await _contx.USER_PERSONALITY_POINTS.Where(p => p.UserId == managedUser.UserId)
-            .SingleOrDefaultAsync();
+                .AsNoTracking()
+                .SingleOrDefaultAsync();
 
             var user2Stats = await _contx.USER_PERSONALITY_STATS.Where(s => s.UserId == managedUser.UserId)
-            .SingleOrDefaultAsync();
+                .AsNoTracking()
+                .SingleOrDefaultAsync();
 
 
             //Turns off the parameter if it is 0
             if (userPoints.Personality > 0 && userStats.Personality > 0 && user2Points.Personality > 0 && user2Stats.Personality > 0)
             {
-                //TODO: create its own deviation variable depending on the number of personalities (It is likely to be grater than the nornal one)
+                //TODO: create its own deviation variable depending on the number of personalities (It is likely to be grater than the normal one)
                 var personalitySim = await CalculateSimilarityAsync(userStats.Personality * valentineBonus, user2Stats.Personality);
 
                 currentValueMax = ApplyMaxDeviation(userPoints.PersonalityPercentage, deviation);
@@ -1216,8 +1236,8 @@ namespace MyWebApi.Repositories
                 {
                     UserId1 = userId,
                     IsLikedBack = false,
-                    SectionId = achievement.Achievement.SectionId,
-                    Severity = (byte)Severities.Minor,
+                    Section = (Sections)achievement.Achievement.SectionId,
+                    Severity = Severities.Minor,
                     Description = achievement.AcquireMessage
                 });
 
@@ -1370,6 +1390,8 @@ namespace MyWebApi.Repositories
                     startingUser.IsBusy = false;
                     startingUser.IsBanned = false;
                     startingUser.IsDeleted = false;
+                    startingUser.IsUpdated = false;
+                    startingUser.ShouldEnhance = false;
 
                     await RegisterUserAsync(startingUser, startingUserBase, startingUserData, startingUserPrefs, userLocation, wasRegistered:true);
                 }
@@ -1815,7 +1837,7 @@ namespace MyWebApi.Repositories
                 _contx.Update(user);
                 await _contx.SaveChangesAsync();
 
-                await AddUserNotificationAsync(new UserNotification { UserId1 = user.UserId, IsLikedBack = false, Severity = (short)Severities.Moderate, SectionId = (int)Sections.Neutral, Description = $"You have been granted premium access. Enjoy your benefits :)\nPremium expiration {user.PremiumExpirationDate.Value.ToString("dd.MM.yyyy")}" });
+                await AddUserNotificationAsync(new UserNotification { UserId1 = user.UserId, IsLikedBack = false, Severity = Severities.Moderate, Section = Sections.Neutral, Description = $"You have been granted premium access. Enjoy your benefits :)\nPremium expiration {user.PremiumExpirationDate.Value.ToString("dd.MM.yyyy")}" });
 
                 return user.PremiumExpirationDate.Value;
             }
@@ -2045,21 +2067,18 @@ namespace MyWebApi.Repositories
 
             if  (user != null)
             {
+
                 user.IsBusy = !user.IsBusy;
+                user.IsUpdated = false;
 
                 _contx.Update(user);
                 await _contx.SaveChangesAsync();
 
-
                 //Possible task -> visit any section x times
-                if (await CheckUserHasTasksInSectionAsync(userId, (int)Sections.Neutral))
-                {
-                    //TODO find and topup user's task progress
-                }
 
                 return await GetRandomHintAsync(user.UserDataInfo.LanguageId, null);
             }
-            return "";
+            return null;
         }
 
         public async Task<List<UserNotification>> GetUserRequests(long userId)
@@ -2068,7 +2087,7 @@ namespace MyWebApi.Repositories
             {
                 return await _contx.USER_NOTIFICATIONS
                     .Where(r => r.UserId1 == userId)
-                    .Where(r => r.SectionId == (int)Sections.Familiator || r.SectionId == (int)Sections.Requester)
+                    .Where(r => r.Section == Sections.Familiator || r.Section == Sections.Requester)
                     .ToListAsync();
             }
             catch (Exception ex)
@@ -2084,7 +2103,7 @@ namespace MyWebApi.Repositories
             {
                 return await _contx.USER_NOTIFICATIONS
                     .Where(r => r.Id == requestId)
-                    .Where(r => r.SectionId == (int)Sections.Familiator || r.SectionId == (int)Sections.Requester)
+                    .Where(r => r.Section == Sections.Familiator || r.Section == Sections.Requester)
                     .SingleOrDefaultAsync();
             }
             catch (Exception ex)
@@ -2096,54 +2115,47 @@ namespace MyWebApi.Repositories
 
         public async Task<string> RegisterUserRequestAsync(UserNotification request)
         {
-            try
+            request.Severity = Severities.Moderate;
+            var returnMessage = "";
+
+            if (request.IsLikedBack)
             {
-                request.Severity = (short)Severities.Moderate;
-                var returnMessage = "";
+                request.Section = Sections.Requester;
 
-                if (request.IsLikedBack)
+                if ((byte)new Random().Next(0, 2) == 0)
                 {
-                    request.SectionId = (short)Sections.Requester;
+                    var senderUserName = await _contx.SYSTEM_USERS_BASES.Where(d => d.Id == request.UserId).Select(d => d.UserName).SingleOrDefaultAsync();
 
-                    if ((byte)new Random().Next(0, 2) == 0)
-                    {
-                        var senderUserName = await _contx.SYSTEM_USERS_BASES.Where(d => d.Id == request.UserId).Select(d => d.UserName).SingleOrDefaultAsync();
+                    //Delete request, user had just answered
+                    var requestId = await _contx.USER_NOTIFICATIONS.Where(n => n.UserId == request.UserId1 && n.UserId1 == request.UserId).Select(n => n.Id).SingleOrDefaultAsync();
+                    await DeleteUserRequest(requestId);
 
-                        //Delete request, user had just answered
-                        var requestId = await _contx.USER_NOTIFICATIONS.Where(n => n.UserId == request.UserId1 && n.UserId1 == request.UserId).Select(n => n.Id).SingleOrDefaultAsync();
-                        await DeleteUserRequest(requestId);
-
-                        //TODO: Get message from localizer based on users`s localization 
-                        request.Description = $"Hey! I have got a match for you. This person was notified about it, but he did not receive your username, thus he cannot write you first everything is in your hands, do not miss your chance!\n\n@{senderUserName}";
-                        returnMessage = "Hey! I have a match for you. Right now this person is deciding whether or not to write you Just wait for it!\n\n";
-                    }
-                    else
-                    {
-                        var receiverUserName = await _contx.SYSTEM_USERS_BASES.Where(d => d.Id == request.UserId1).Select(d => d.UserName).SingleOrDefaultAsync();
-
-                        //Delete request, user had just answered
-                        var requestId = await _contx.USER_NOTIFICATIONS.Where(n => n.UserId == request.UserId1 && n.UserId1 == request.UserId).Select(n => n.Id).SingleOrDefaultAsync();
-                        await DeleteUserRequest(requestId);
-
-                        //TODO: Get message from localizer based on users`s localization 
-                        request.Description = "Hey! I have a match for you. Right now this person is deciding whether or not to write you Just wait for it!\n\n";
-                        returnMessage = $"Hey! I have got a match for you. This person was notified about it, but he did not receive your username, thus he cannot write you first everything is in your hands, do not miss your chance!\n\n@{receiverUserName}";
-                    }
+                    //TODO: Get message from localizer based on users`s localization 
+                    request.Description = $"Hey! I have got a match for you. This person was notified about it, but he did not receive your username, thus he cannot write you first everything is in your hands, do not miss your chance!\n\n@{senderUserName}";
+                    returnMessage = "Hey! I have a match for you. Right now this person is deciding whether or not to write you Just wait for it!\n\n";
                 }
                 else
-                    request.SectionId = (short)Sections.Familiator;
+                {
+                    var receiverUserName = await _contx.SYSTEM_USERS_BASES.Where(d => d.Id == request.UserId1).Select(d => d.UserName).SingleOrDefaultAsync();
 
-                await RegisterUserEncounter(new Encounter { UserId = (long)request.UserId, EncounteredUserId = request.UserId1, SectionId = (int)Sections.Requester });
+                    //Delete request, user had just answered
+                    var requestId = await _contx.USER_NOTIFICATIONS.Where(n => n.UserId == request.UserId1 && n.UserId1 == request.UserId).Select(n => n.Id).SingleOrDefaultAsync();
+                    await DeleteUserRequest(requestId);
 
-                var id = await AddUserNotificationAsync(request);
-
-                return returnMessage;
+                    //TODO: Get message from localizer based on users`s localization 
+                    request.Description = "Hey! I have a match for you. Right now this person is deciding whether or not to write you Just wait for it!\n\n";
+                    returnMessage = $"Hey! I have got a match for you. This person was notified about it, but he did not receive your username, thus he cannot write you first everything is in your hands, do not miss your chance!\n\n@{receiverUserName}";
+                }
             }
-            catch (Exception ex)
-            {
-                await LogAdminErrorAsync(request.UserId, ex.Message, (int)Sections.Requester);
-                return null;
-            }
+            else
+                request.Section = Sections.Familiator;
+
+            await RegisterUserEncounter(new Encounter { UserId = (long)request.UserId, EncounteredUserId = request.UserId1, SectionId = (int)Sections.Requester });
+
+            var id = await AddUserNotificationAsync(request);
+
+            return returnMessage;
+            
         }
 
         //TODO: Make more informative and interesting
@@ -2181,7 +2193,7 @@ namespace MyWebApi.Repositories
             {
                 var requests = await _contx.USER_NOTIFICATIONS
                     .Where(r => r.UserId1 == userId)
-                    .Where(r => r.SectionId == (int)Sections.Familiator || r.SectionId == (int)Sections.Requester)
+                    .Where(r => r.Section == Sections.Familiator || r.Section == Sections.Requester)
                     .ToListAsync();
 
                 _contx.RemoveRange(requests);
@@ -2202,7 +2214,7 @@ namespace MyWebApi.Repositories
             {
                 var request = await _contx.USER_NOTIFICATIONS
                     .Where(r => r.Id == requestId)
-                    .Where(r => r.SectionId == (int)Sections.Familiator || r.SectionId == (int)Sections.Requester)
+                    .Where(r => r.Section == Sections.Familiator || r.Section == Sections.Requester)
                     .SingleOrDefaultAsync();
 
                 _contx.Remove(request);
@@ -2223,7 +2235,7 @@ namespace MyWebApi.Repositories
             {
                 var requests = await _contx.USER_NOTIFICATIONS
                     .Where(r => r.UserId1 == userId)
-                    .Where(r => r.SectionId == (int)Sections.Familiator || r.SectionId == (int)Sections.Requester)
+                    .Where(r => r.Section == Sections.Familiator || r.Section == Sections.Requester)
                     .ToListAsync();
                 
                 return requests.Count > 0;
@@ -2326,7 +2338,7 @@ namespace MyWebApi.Repositories
         {
             return _contx.USER_NOTIFICATIONS
                 .Where(r => r.UserId == senderId && r.UserId1 == recieverId)
-                .Where(r => r.SectionId == (int)Sections.Requester || r.SectionId == (int)Sections.Familiator)
+                .Where(r => r.Section == Sections.Requester || r.Section == Sections.Familiator)
                 .FirstOrDefault() != null;
         }
 
@@ -2649,8 +2661,8 @@ namespace MyWebApi.Repositories
                     UserId1 = userId,
                     IsLikedBack = false,
                     Description = $"Hey! new user had been registered via your link. Thanks for helping us grow!\nSo far, you have invited: {invitedUsersCount} people. \nYou receive 1p for every action they are maiking ;-)",
-                    SectionId = (int)Sections.Registration,
-                    Severity = (short)Severities.Moderate
+                    Section = Sections.Registration,
+                    Severity = Severities.Moderate
                 });
 
                 return true;
@@ -2664,7 +2676,7 @@ namespace MyWebApi.Repositories
         {
             try
             {
-                await AddUserNotificationAsync(new UserNotification {UserId1=userId, Severity=(short)Severities.Urgent, SectionId=(int)Sections.Neutral, Description="Your premium access has expired"});
+                await AddUserNotificationAsync(new UserNotification {UserId1=userId, Severity=Severities.Urgent, Section=Sections.Neutral, Description="Your premium access has expired"});
                 return true;
             }
             catch
@@ -2699,7 +2711,7 @@ namespace MyWebApi.Repositories
         public async Task<bool> CheckUserHasNotificationsAsync(long userId)
         {
             return await _contx.USER_NOTIFICATIONS
-                .Where(n => n.UserId1 == userId && n.SectionId != (int)Sections.Familiator && n.SectionId != (int)Sections.Requester)
+                .Where(n => n.UserId1 == userId && n.Section != Sections.Familiator && n.Section != Sections.Requester)
                 .CountAsync() > 0;
         }
 
@@ -2855,9 +2867,9 @@ namespace MyWebApi.Repositories
             {
                 UserId1 = userId,
                 IsLikedBack = false,
-                Severity = (short)Severities.Moderate,
+                Severity = Severities.Moderate,
                 Description = task.AcquireMessage,
-                SectionId = task.DailyTask.SectionId
+                Section = (Sections)task.DailyTask.SectionId
             });
 
             if (task.DailyTask.RewardCurrency == (byte)Currencies.Points)
@@ -3764,8 +3776,8 @@ namespace MyWebApi.Repositories
                                 UserId1 = (long)user2Id,
                                 IsLikedBack = false,
                                 Description = description,
-                                SectionId = (int)Sections.Familiator,
-                                Severity = (short)Severities.Moderate
+                                Section = Sections.Familiator,
+                                Severity = Severities.Moderate
                             });
                             _contx.Update(userBalance);
                             await _contx.SaveChangesAsync();
@@ -3872,7 +3884,7 @@ namespace MyWebApi.Repositories
         private async Task<int> AddMaxUserProfileViewCountAsync(long userId, int profileCount)
         {
             var userInfo = await _contx.SYSTEM_USERS.FindAsync(userId);
-            userInfo.MaxProfileViewsCount += profileCount;
+            userInfo.ProfileViewsCount -= profileCount;
             await _contx.SaveChangesAsync();
 
             return userInfo.MaxProfileViewsCount;
@@ -3881,7 +3893,7 @@ namespace MyWebApi.Repositories
         private async Task<int> AddMaxRTProfileViewCountAsync(long userId, int increment)
         {
             var userInfo = await _contx.SYSTEM_USERS.FindAsync(userId);
-            userInfo.MaxProfileViewsCount += increment;
+            userInfo.RTViewsCount -= increment;
             await _contx.SaveChangesAsync();
 
             return userInfo.MaxProfileViewsCount;
@@ -4540,8 +4552,8 @@ namespace MyWebApi.Repositories
                 {
                     UserId1 = attendee.UserId,
                     IsLikedBack = false,
-                    Severity = (short)Severities.Urgent,
-                    SectionId = (int)Sections.Adventurer,
+                    Severity = Severities.Urgent,
+                    Section = Sections.Adventurer,
                     Description = $"Hey! We are very sorry, but adventure <b><i>'{adventure.Name}'</i></b> was canceled by its creator"
                 });
             }

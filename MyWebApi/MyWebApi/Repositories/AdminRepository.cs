@@ -383,16 +383,16 @@ namespace MyWebApi.Repositories
                 {
                     Description = "Your tick request had been accepted :)",
                     UserId1 = request.UserId,
-                    Severity = (short)SystemEnums.Severities.Urgent,
-                    SectionId = (int)Sections.Neutral,
+                    Severity = Severities.Urgent,
+                    Section = Sections.Neutral,
                 });
             else
                 await _userRep.AddUserNotificationAsync(new Entities.UserActionEntities.UserNotification
                 {
                     Description = "Sorry, your tick request had been denied.\nPlease contact the administration and try again",
                     UserId1 = request.UserId,
-                    Severity = (short)SystemEnums.Severities.Urgent,
-                    SectionId = (int)Sections.Neutral,
+                    Severity = Severities.Urgent,
+                    Section = Sections.Neutral,
                 });
 
             return isAccepted;
@@ -596,6 +596,8 @@ namespace MyWebApi.Repositories
                     IsBusy = false,
                     IsDeleted = false,
                     IsBanned = false,
+                    IsUpdated = false,
+                    ShouldEnhance = false,
                     ShouldConsiderLanguages = false,
                     HasPremium = false,
                     HadReceivedReward = false,

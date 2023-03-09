@@ -19,6 +19,7 @@ using System.Globalization;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Localization.Routing;
 using Microsoft.Extensions.Options;
+using MyWebApi.Services.Background;
 
 namespace MyWebApi
 {
@@ -53,6 +54,8 @@ namespace MyWebApi
                 //}));
             });
 
+            services.AddHostedService<BackgroundWorker>();
+
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
@@ -63,6 +66,7 @@ namespace MyWebApi
             services.AddScoped<ITestRepository, TestRepository>();
             services.AddScoped<IAdminRepository, AdminRepository>();
             services.AddScoped<ISponsorRepository, SponsorRepository>();
+            services.AddScoped<IBackgroundRepository, BackgroundRepository>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

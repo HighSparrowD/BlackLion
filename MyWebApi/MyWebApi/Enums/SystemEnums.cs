@@ -9,13 +9,6 @@
             Ukrainian = 2
         }
 
-        public enum Severities
-        {
-            Minor = 1, 
-            Moderate = 2,
-            Urgent = 3
-        }
-
         public enum LanguageLevels
         {
             A1 = 1,

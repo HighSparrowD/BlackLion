@@ -23,6 +23,7 @@ namespace MyWebApi.Entities.UserInfoEntities
         public bool HasPremium { get; set; }
         public bool HadReceivedReward { get; set; }
         public bool? IsFree { get; set; }
+        public bool ShouldEnhance { get; set; }
         public IdentityConfirmationType IdentityType { get; set; }
         public bool IncreasedFamiliarity { get; set; }
         public short? PremiumDuration { get; set; }
@@ -42,6 +43,7 @@ namespace MyWebApi.Entities.UserInfoEntities
         public short? Currency { get; set; }
         public DateTime? PremiumExpirationDate{ get; set; }
         public string? EnteredPromoCodes { get; set; }
+        public bool IsUpdated { get; set; }
         public virtual UserBaseInfo? UserBaseInfo { get; set; }
         public virtual UserDataInfo? UserDataInfo  { get; set; }
         public virtual UserPreferences? UserPreferences { get; set; }

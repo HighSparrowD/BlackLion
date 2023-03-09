@@ -417,7 +417,7 @@ namespace MyWebApi.Repositories
             try
             {
                 var attendees = await GetEventAttendees(eventId);
-                var notification = new UserNotification { Severity = (short)Severities.Urgent, SectionId = (short)Sections.Eventer, IsLikedBack = false, Description = comment };
+                var notification = new UserNotification { Severity = Severities.Urgent, Section = Sections.Eventer, IsLikedBack = false, Description = comment };
 
                 foreach (var attendee in attendees)
                 {
