@@ -24,6 +24,8 @@ namespace MyWebApi.Entities.UserInfoEntities
         public bool HadReceivedReward { get; set; }
         public bool? IsFree { get; set; }
         public bool ShouldEnhance { get; set; }
+        public bool ShouldComment { get; set; }
+        public bool ShouldSendHints { get; set; }
         public IdentityConfirmationType IdentityType { get; set; }
         public bool IncreasedFamiliarity { get; set; }
         public short? PremiumDuration { get; set; }

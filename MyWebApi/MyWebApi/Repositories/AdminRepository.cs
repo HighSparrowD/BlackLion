@@ -339,8 +339,11 @@ namespace MyWebApi.Repositories
         {
             if (requestId != null)
             {
-                //Returns only new, aborted or changed requests
-                return await _contx.tick_requests.Where(r => r.Id == requestId && (r.State == TickRequestStatus.Added || r.State == TickRequestStatus.Changed || r.State == TickRequestStatus.Aborted))
+                //Returns only new, aborted, failed or changed requests
+                return await _contx.tick_requests.Where(r => r.Id == requestId && (r.State == TickRequestStatus.Added 
+                || r.State == TickRequestStatus.Changed 
+                || r.State == TickRequestStatus.Aborted 
+                || r.State == TickRequestStatus.Failed))
                     .Include(r => r.User)
                     .SingleOrDefaultAsync();
             }
@@ -359,29 +362,29 @@ namespace MyWebApi.Repositories
             return request;
         }
 
-        public async Task<bool> ResolveTickRequestAsync(Guid requestId, long adminId, bool isAccepted)
+        public async Task<bool> ResolveTickRequestAsync(ResolveTickRequest model)
         {
-            var request = await _contx.tick_requests.Where(r => r.Id == requestId && (r.State == TickRequestStatus.InProcess))
+            var request = await _contx.tick_requests.Where(r => r.Id == model.Id && (r.State == TickRequestStatus.InProcess))
                 .Include(r => r.User)
                 .SingleOrDefaultAsync();
 
             if (request == null)
                 throw new NullReferenceException("Request was not found");
 
-            if (isAccepted)
+            if (model.IsAccepted)
                 request.State = TickRequestStatus.Accepted;
             else
                 request.State = TickRequestStatus.Declined;
 
-            request.AdminId = adminId;
+            request.AdminId = model.AdminId;
             request.User.IdentityType = request.Type;
 
             await _contx.SaveChangesAsync();
 
-            if (isAccepted)
+            if (model.IsAccepted)
                 await _userRep.AddUserNotificationAsync(new Entities.UserActionEntities.UserNotification
                 {
-                    Description = "Your tick request had been accepted :)",
+                    Description = $"Your identity confirmation had been accepted :)\n{model.Comment}",
                     UserId1 = request.UserId,
                     Severity = Severities.Urgent,
                     Section = Sections.Neutral,
@@ -389,13 +392,13 @@ namespace MyWebApi.Repositories
             else
                 await _userRep.AddUserNotificationAsync(new Entities.UserActionEntities.UserNotification
                 {
-                    Description = "Sorry, your tick request had been denied.\nPlease contact the administration and try again",
+                    Description = $"Sorry, your identity confirmation request had been denied.\n{model.Comment}",
                     UserId1 = request.UserId,
                     Severity = Severities.Urgent,
                     Section = Sections.Neutral,
                 });
 
-            return isAccepted;
+            return model.IsAccepted;
         }
 
         public async Task<byte> UploadPsTestsAsync(List<UploadTest> tests)
@@ -505,7 +508,8 @@ namespace MyWebApi.Repositories
             var tickRequests = await _contx.tick_requests
                 .Where(r => (r.State == TickRequestStatus.Added || 
                 r.State == TickRequestStatus.Changed || 
-                r.State == TickRequestStatus.Aborted) && 
+                r.State == TickRequestStatus.Aborted || 
+                r.State == TickRequestStatus.Failed) && 
                 r.AdminId == null)
                 .ToListAsync();
 
@@ -601,6 +605,8 @@ namespace MyWebApi.Repositories
                     ShouldConsiderLanguages = false,
                     HasPremium = false,
                     HadReceivedReward = false,
+                    ShouldComment = false,
+                    ShouldSendHints = true,
                     DailyRewardPoint = 0,
                     BonusIndex = 1,
                     ProfileViewsCount = 0,

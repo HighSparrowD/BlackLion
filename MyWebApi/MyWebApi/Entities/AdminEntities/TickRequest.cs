@@ -16,6 +16,7 @@ namespace MyWebApi.Entities.AdminEntities
         public string? Photo { get; set; }
         public string? Video { get; set; }
         public string? Circle { get; set; }
+        public string? Gesture { get; set; }
         public IdentityConfirmationType Type { get; set; }
         public virtual User? User{ get; set; }
     }

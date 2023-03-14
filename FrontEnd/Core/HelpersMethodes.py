@@ -428,6 +428,16 @@ def switch_familiarity_status(userId):
                                                            verify=False)
 
 
+def switch_hint_status(userId):
+    return requests.get(f"https://localhost:44381/set-hint-status/{userId}",
+                                                           verify=False)
+
+
+def switch_comment_status(userId):
+    return requests.get(f"https://localhost:44381/set-comment-status/{userId}",
+                                                           verify=False)
+
+
 def get_increased_familiarity_status(userId):
     return bool(json.loads(requests.get(f"https://localhost:44381/GetUserIncreasedFamiliarity/{userId}",
                                                            verify=False).text))

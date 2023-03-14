@@ -29,12 +29,15 @@ class AdminCabinet:
         self.markup1 = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
         self.feedbacks_markup = InlineKeyboardMarkup()
         self.YNmarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(KeyboardButton("Yes"), KeyboardButton("No"))
+        self.SilentMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(KeyboardButton("Leave empty"))
         self.YNExitmarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(KeyboardButton("Yes"), KeyboardButton("No"), KeyboardButton("Exit"))
 
         self.isCheckout = False
 
         self.current_message = 0
         self.current_managed_user = 0
+
+        self.request_data = {}
 
         self.markup1.add(KeyboardButton("Grant an achievement"),
                                            KeyboardButton("View all reports on this user"),
@@ -74,32 +77,41 @@ class AdminCabinet:
             requestText = requests.get(f"https://localhost:44381/GetTickRequest", verify=False).text
             if requestText:
                 self.current_request = json.loads(requestText)
-                photo = requests.get(f"https://localhost:44381/GetUserPhoto/{self.current_request['userId']}", verify=False).text
 
-                #Proceed if we were unable to read user photo
-                if not photo:
+                try:
+                    media = json.loads(requests.get(f"https://localhost:44381/get-user-media/{self.current_request['userId']}", verify=False).text)
+
+                    if media["isPhoto"]:
+                        self.bot.send_photo(self.current_user, media["media"], "That is how the user looks like")
+                    else:
+                        self.bot.send_video(self.current_user, video=media["media"], caption="That is how the user looks like")
+
+                    if self.current_request["video"]:
+                        self.bot.send_video(self.current_user, video=self.current_request["video"], caption="That is the message.")
+                    elif self.current_request["circle"]:
+                        self.bot.send_message(self.current_user, "That is the message.")
+                        self.bot.send_video_note(self.current_user, data=self.current_request["circle"])
+                    elif self.current_request["photo"]:
+                        self.bot.send_message(self.current_user, "That is the message. IT MUST CONTAIN PASSPORT DATA.")
+                        self.bot.send_photo(self.current_user, photo=self.current_request["photo"])
+
+                    if self.current_request["gesture"]:
+                        self.bot.send_message(self.current_user, f"That is a gesture this user had to send: \n{self.current_request['gesture']}")
+
+                    self.bot.send_message(self.current_user, f"Would you like to grant the user identity confirmation type {self.current_request['type']} ?", reply_markup=self.YNExitmarkup)
+                    self.bot.register_next_step_handler(message, self.tick_request_handler, acceptMode=True, chat_id=self.current_user)
+                except:
+                    #Proceed if we were unable to read user photo
                     response = requests.get(f"https://localhost:44381/NotifyFailierTickRequest/{self.current_request['id']}/{self.current_user}", verify=False).text
-                    self.bot.send_message(self.current_user, "Unable to load user photo")
+                    self.bot.send_message(self.current_user, "Unable to load users media")
                     self.tick_request_handler(message)
                     return False
-
-                self.bot.send_photo(self.current_user, photo, "That is how the user looks like")
-
-                if self.current_request["video"]:
-                    self.bot.send_video(self.current_user, video=self.current_request["video"], caption="That is the message.")
-                elif self.current_request["circle"]:
-                    self.bot.send_message(self.current_user, "That is the message.")
-                    self.bot.send_video_note(self.current_user, data=self.current_request["circle"])
-                elif self.current_request["photo"]:
-                    self.bot.send_message(self.current_user, "That is the message. IT MUST CONTAIN PASSPORT DATA.")
-                    self.bot.send_photo(self.current_user, photo=self.current_request["photo"])
-
-                self.bot.send_message(self.current_user, "Would you like to confirm his identity ?", reply_markup=self.YNExitmarkup)
-                self.bot.register_next_step_handler(message, self.tick_request_handler, acceptMode=True, chat_id=self.current_user)
             else:
                 self.bot.send_message(self.current_user, "No more requests to handle :)")
                 self.bot.send_message(self.current_user, self.admin_greet_message)
         else:
+            data = {}
+
             isResolved = False
             if message.text == "Yes":
                 isResolved = True
@@ -112,7 +124,26 @@ class AdminCabinet:
                 self.bot.register_next_step_handler(message, self.tick_request_handler, acceptMode=acceptMode, chat_id=self.current_user)
                 return False
 
-            response = requests.get(f"https://localhost:44381/ResolveTickRequest/{self.current_request['id']}/{self.current_user}/{isResolved}", verify=False).text
+            self.request_data["adminId"] = self.current_user
+            self.request_data["id"] = self.current_request['id']
+            self.request_data["isAccepted"] = isResolved
+
+
+    def comment_request(self, message, acceptMode=False):
+        if not acceptMode:
+            self.bot.send_message(self.current_user, "Comment your decide. This comment will be shown to user, so, please, dont be to honest ;)", reply_markup=self.SilentMarkup)
+            self.bot.register_next_step_handler(message, self.comment_request, acceptMode=True, chat_id=self.current_user)
+        else:
+            if message != "Leave empty":
+                self.request_data["comment"] = message.text
+                pass
+
+            jdata = json.dumps(self.request_data)
+
+            self.request_data = {}
+            response = requests.post(f"https://localhost:44381/ResolveTickRequest", jdata,
+                                     headers={"Content-Type": "application/json"},
+                                     verify=False).text
 
             self.tick_request_handler(message)
 

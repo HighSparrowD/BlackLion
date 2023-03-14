@@ -312,6 +312,10 @@ namespace MyWebApi.Repositories
                         var user = new GetUserData(u);
                         var bonus = "";
 
+                        //Add comment if user wants it
+                        if (currentUser.ShouldComment)
+                            user.Comment = await GetRandomHintAsync(currentUser.UserDataInfo.LanguageId, HintType.Search);
+
                         if (u.HasPremium && u.Nickname != "")
                             bonus += $"<b>{u.Nickname}</b>\n";
 
@@ -2076,6 +2080,9 @@ namespace MyWebApi.Repositories
 
                 //Possible task -> visit any section x times
 
+                if (!user.ShouldSendHints)
+                    return null;
+
                 return await GetRandomHintAsync(user.UserDataInfo.LanguageId, null);
             }
             return null;
@@ -3497,9 +3504,15 @@ namespace MyWebApi.Repositories
             var user = users.OrderBy(u => Guid.NewGuid())
                 .FirstOrDefault();
 
-            var returnUser = await GetPersonalityMatchResult(model.UserId, currentUser, user, false);
+            var returnUser = new GetUserData(user);
 
-            if(user.HasPremium && user.Nickname != null)
+            if (currentUser.UserPreferences.ShouldUsePersonalityFunc)
+                returnUser = await GetPersonalityMatchResult(model.UserId, currentUser, user, false);
+
+            if (currentUser.ShouldComment)
+                returnUser.Comment = await GetRandomHintAsync(currentUser.UserDataInfo.LanguageId, HintType.Search);
+
+            if (user.HasPremium && user.Nickname != null)
                 returnUser.UserBaseInfo.UserDescription = $"<b>{user.Nickname}</b>\n\n{user.UserBaseInfo.UserDescription}";
 
             if (user.IdentityType == IdentityConfirmationType.Partial)
@@ -3926,6 +3939,7 @@ namespace MyWebApi.Repositories
                     existingRequest.Photo = request.Photo;
                     existingRequest.Video = request.Video;
                     existingRequest.Circle = request.Circle;
+                    existingRequest.Gesture = request.Gesture;
                     existingRequest.Type = request.Type;
                     existingRequest.State = TickRequestStatus.Changed;
 
@@ -3943,6 +3957,7 @@ namespace MyWebApi.Repositories
                     Photo = request.Photo,
                     Video = request.Video,
                     Circle = request.Circle,
+                    Gesture = request.Gesture,
                     Type = request.Type
                 };
 
@@ -4784,11 +4799,15 @@ namespace MyWebApi.Repositories
         {
             if (type == null)
             {
-                return await _contx.hints.Where(h => h.ClassLocalisationId == localisation)
+                return await _contx.hints.Where(h => h.ClassLocalisationId == localisation && h.Type != HintType.Search)
                     .OrderBy(r => EF.Functions.Random()).Take(1)
                     .Select(h => h.Text)
                     .FirstOrDefaultAsync();
             }
+
+            //25% chance to send a hint
+            if (new Random().Next(1, 4) != 1)
+                return null;
 
             return await _contx.hints.Where(h => h.ClassLocalisationId == localisation && h.Type == type)
                     .OrderBy(r => EF.Functions.Random())
@@ -4809,6 +4828,39 @@ namespace MyWebApi.Repositories
                 IsBanned = u.IsBanned,
                 IsBusy = u.IsBusy,
                 Limitations = limitations
+            }).FirstOrDefaultAsync();
+        }
+
+        public async Task SwitchHintsVisibilityAsync(long userId)
+        {
+            var user = await  _contx.SYSTEM_USERS.Where(u => u.UserId == userId)
+                .FirstOrDefaultAsync();
+
+            if (user == null)
+                return;
+
+            user.ShouldSendHints = !user.ShouldSendHints;
+            await _contx.SaveChangesAsync();
+        }
+
+        public async Task SwitchSearchCommentsVisibilityAsync(long userId)
+        {
+            var user = await _contx.SYSTEM_USERS.Where(u => u.UserId == userId)
+                .FirstOrDefaultAsync();
+
+            if (user == null)
+                return;
+
+            user.ShouldComment = !user.ShouldComment;
+            await _contx.SaveChangesAsync();
+        }
+
+        public async Task<GetUserMedia> GetUserMediaAsync(long userId)
+        {
+            return await _contx.SYSTEM_USERS_BASES.Where(u => u.Id == userId).Select(u => new GetUserMedia
+            {
+                Media = u.UserMedia,
+                IsPhoto = u.IsMediaPhoto
             }).FirstOrDefaultAsync();
         }
     }

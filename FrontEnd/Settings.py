@@ -1,4 +1,5 @@
 import base64
+import random
 
 from Registration import *
 from ReportModule import *
@@ -50,11 +51,16 @@ class Settings:
         self.current_callback_handler = None
         self.current_user_data = Helpers.get_user_info(self.current_user)
 
+        self.gestures = ["👍","👎","💪","✊","👊","🖐","✋","👋","👌","✌","🤘","🤟 ","🤙","🤞","🖕","🖖","☝","👆", "👇", "👉","👈"]
+        self.gesture = None
+
         #TODO: check this parameter instead of calling API every time
         self.uses_Personality = self.current_user_data["userPreferences"]["shouldUsePersonalityFunc"]
         self.has_Premium = self.current_user_data["hasPremium"]
         self.language_cons_status = self.current_user_data["shouldConsiderLanguages"]
         self.free_status = self.current_user_data["isFree"]
+        self.comments_status = self.current_user_data["shouldComment"]
+        self.hints_status = self.current_user_data["shouldSendHints"]
         self.real_photo_filter_status = self.current_user_data["userPreferences"]["shouldFilterUsersWithoutRealPhoto"]
         self.increased_familiarity_status = self.current_user_data["increasedFamiliarity"]
         self.user_language = self.current_user_data["userDataInfo"]["languageId"]
@@ -146,14 +152,20 @@ class Settings:
 
         self.language_considerationIndicator = InlineKeyboardButton("", callback_data="210")
         self.free_statusIndicator = InlineKeyboardButton("", callback_data="211")
+        self.hints_statusIndicator = InlineKeyboardButton("", callback_data="242")
+        self.comments_statusIndicator = InlineKeyboardButton("", callback_data="243")
         self.real_photo_filterIndicator = InlineKeyboardButton("", callback_data="212")
 
         self.language_considerationIndicator.text = self.turnedOnSticker if self.language_cons_status else self.turnedOffSticker
         self.free_statusIndicator.text = self.turnedOnSticker if self.free_status else self.turnedOffSticker
+        self.hints_statusIndicator.text = self.turnedOnSticker if self.hints_status else self.turnedOffSticker
+        self.comments_statusIndicator.text = self.turnedOnSticker if self.comments_status else self.turnedOffSticker
         self.real_photo_filterIndicator.text = self.turnedOnSticker if self.real_photo_filter_status else self.turnedOffSticker
 
         self.settingFiltersSettingsMarkup = InlineKeyboardMarkup().add(InlineKeyboardButton("Consider languages in Random Conversations", callback_data="310"), self.language_considerationIndicator) \
             .add(InlineKeyboardButton("Free today", callback_data="311"), self.free_statusIndicator) \
+            .add(InlineKeyboardButton("Send Hints", callback_data="342"), self.hints_statusIndicator) \
+            .add(InlineKeyboardButton("Comment on user profiles", callback_data="343"), self.comments_statusIndicator) \
             .add(InlineKeyboardButton("⭐Filter by a real photo⭐", callback_data="312"), self.real_photo_filterIndicator) \
             .add(InlineKeyboardButton("Go back", callback_data="-20"))
 
@@ -354,7 +366,7 @@ class Settings:
             else:
                 self.send_secondary_message("Something went wrong. Please, contact the administration")
 
-    def free_status_manager(self, message, showDescription=False):
+    def free_status_manager(self, showDescription=False):
         self.active_section = self.free_status_manager
 
         if showDescription:
@@ -363,9 +375,41 @@ class Settings:
             self.send_secondary_message(description)
         else:
             response = requests.get(f"https://localhost:44381/SwitchUserFreeSearchParam/{self.current_user}", verify=False)
-            self.free_status = not self.language_cons_status
+            self.free_status = not self.free_status
             if response.status_code == 200:
                 self.switch_toggle_filter(self.free_statusIndicator)
+                self.edit_active_message_markup(self.settingFiltersSettingsMarkup)
+            else:
+                self.send_secondary_message("Something went wrong. Please, contact the administration")
+
+    def comment_status_manager(self, showDescription=False):
+        self.active_section = self.free_status_manager
+
+        if showDescription:
+            description = ""
+
+            self.send_secondary_message(description)
+        else:
+            response = Helpers.switch_comment_status(self.current_user)
+            self.comments_status = not self.comments_status
+            if response.status_code == 200:
+                self.switch_toggle_filter(self.comments_statusIndicator)
+                self.edit_active_message_markup(self.settingFiltersSettingsMarkup)
+            else:
+                self.send_secondary_message("Something went wrong. Please, contact the administration")
+
+    def hints_status_manager(self, showDescription=False):
+        self.active_section = self.free_status_manager
+
+        if showDescription:
+            description = ""
+
+            self.send_secondary_message(description)
+        else:
+            response = Helpers.switch_hint_status(self.current_user)
+            self.hints_status = not self.hints_status
+            if response.status_code == 200:
+                self.switch_toggle_filter(self.hints_statusIndicator)
                 self.edit_active_message_markup(self.settingFiltersSettingsMarkup)
             else:
                 self.send_secondary_message("Something went wrong. Please, contact the administration")
@@ -802,8 +846,10 @@ class Settings:
         # self.active_section = self.send_confirmation_request
 
         if not acceptMode:
-            #TODO: add phrases, that must be said by users
-            action = "sending us a Video or 'Circle' (15 seconds max).\n!Your face have to be visible!\n\n<b><i>Warning! Your profile media has to contain your face</i></b>"
+            self.gesture = random.choice(self.gestures)
+            self.gesture += " " + random.choice(self.gestures)
+
+            action = f"sending us a Video or 'Circle' (15 seconds max), in which you are showing those two gestures one after another: {self.gesture} .\n!Your face has to be visible!\n\n<b><i>Warning! Your profile media has to contain your face</i></b>"
             if self.requestType == 2:
                 action = "Sending us your passport photo\n\n<b><i>Warning! Your profile media has to contain your face</i></b>"
 
@@ -822,7 +868,8 @@ class Settings:
 
             data = {
                 "userId": self.current_user,
-                "type": self.requestType
+                "type": self.requestType,
+                "gesture": self.gesture
             }
 
             if self.requestType == 1:
@@ -1039,9 +1086,9 @@ class Settings:
             elif call.data == "310":
                 self.language_consideration_manager(call.message, True)
             elif call.data == "211":
-                self.free_status_manager(call.message)
+                self.free_status_manager()
             elif call.data == "311":
-                self.free_status_manager(call.message, True)
+                self.free_status_manager(True)
             elif call.data == "212":
                 self.real_photo_filter_manager(call.message)
             elif call.data == "312":
@@ -1108,9 +1155,19 @@ class Settings:
                     self.delete_secondary_message()
                     self.requestType = 2
                     self.send_confirmation_request(call.message)
+            elif call.data == "242":
+                self.hints_status_manager()
+            elif call.data == "342":
+                self.hints_status_manager(True)
+            elif call.data == "243":
+                self.comment_status_manager()
+            elif call.data == "343":
+                self.comment_status_manager(True)
             elif call.data == "340":
+                # self.requestType = 0
                 self.send_secondary_message("Partial identity confirmation:\n✅ Face confirmation\n⛔ Age confirmation\n⛔ Location confirmation")
             elif call.data == "341":
+                # self.requestType = 0
                 self.send_secondary_message("Full identity confirmation:\n✅ Face confirmation\n✅ Age confirmation\n✅ Location confirmation")
             #TODO: Continue. Code below must be the last statement before 'else'
             elif call.data == "-20":
@@ -1564,10 +1621,13 @@ class Settings:
             indicator.text = self.turnedOnSticker
 
     def send_active_message(self, text, markup=None):
-        if self.active_message:
-            self.bot.edit_message_text(text, self.current_user, self.active_message, reply_markup=markup)
-            return
-        self.active_message = self.bot.send_message(self.current_user, text, reply_markup=markup).id
+        try:
+            if self.active_message:
+                self.bot.edit_message_text(text, self.current_user, self.active_message, reply_markup=markup)
+                return
+            self.active_message = self.bot.send_message(self.current_user, text, reply_markup=markup).id
+        except:
+            pass
 
     def send_active_message_with_photo(self, text, markup, photo):
         if self.active_message:

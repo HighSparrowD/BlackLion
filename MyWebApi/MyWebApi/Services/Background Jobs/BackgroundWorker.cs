@@ -26,11 +26,12 @@ namespace MyWebApi.Services.Background
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                //await CorrectTimerAsync();
+                await CorrectTimerAsync();
                 await Beat();
             }
         }
 
+        //TODO: manage multipliers
         public async Task CorrectTimerAsync()
         {
             var now = DateTime.UtcNow;
@@ -86,7 +87,7 @@ namespace MyWebApi.Services.Background
                             {
                                 //TODO: Enhance something else
                                 //Enhance user stats
-                                user.ShouldEnhance = true;
+                                user.ShouldEnhance = true && user.PremiumDuration >= 30;
                             }
                             else
                             {

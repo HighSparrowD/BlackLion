@@ -182,6 +182,9 @@ class Familiator:
         if not acceptMode:
             user = self.active_user["userBaseInfo"]
 
+            if self.active_user["comment"]:
+                self.bot.send_message(self.current_user, self.active_user["comment"])
+
             if user["isMediaPhoto"]:
                 self.bot.send_photo(self.current_user, user["userMedia"], user["userDescription"], reply_markup=self.markup)
             else:

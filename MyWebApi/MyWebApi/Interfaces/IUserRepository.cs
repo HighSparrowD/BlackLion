@@ -22,7 +22,6 @@ namespace MyWebApi.Interfaces
         Task<bool> CheckUserHasVisitedSection(long userId, int sectionId);
         Task<bool> CheckUserIsBusy(long userId);
         Task<bool> CheckUserHasRequests(long userId);
-        Task<string> SwhitchUserBusyStatus(long userId);
         Task<bool> CheckUserIsBanned(long userId);
         Task<bool> CheckUserIsDeleted(long userId);
         Task<bool> SetDebugProperties(); //TODO: remove in production
@@ -130,7 +129,6 @@ namespace MyWebApi.Interfaces
         Task<bool> UpdateUserPersonalityPoints(PointsPayload model);
         Task<UserPersonalityStats> GetUserPersonalityStats(long userId);
         Task<UserPersonalityPoints> GetUserPersonalityPoints(long userId);
-        Task<bool> SwitchPersonalityUsage(long userId);
         Task<bool?> CheckUserUsesPersonality(long userId);
         Task<bool> RegisterTestPassingAsync(TestPayload model, int testResult);
         Task<bool> UpdateTags(UpdateTags model);
@@ -163,10 +161,8 @@ namespace MyWebApi.Interfaces
         Task<bool> CheckUserHaveChosenFreeParamAsync(long userId);
         Task<bool> CheckShouldTurnOffPersonalityAsync(long userId);
         Task<bool> SetUserFreeSearchParamAsync(long userId, bool freeStatus);
-        Task<bool> SwitchUserFreeSearchParamAsync(long userId);
         //Get stats user can invest points in
         Task<PersonalityCaps> GetUserPersonalityCapsAsync(long userId);
-        Task<bool> SwitchUserRTLanguageConsiderationAsync(long userId);
         Task<bool> GetUserRTLanguageConsiderationAsync(long userId);
         Task SetUserCurrencyAsync(long userId, short currency);
         Task<GetUserData> GetRequestSenderAsync(Guid requestId);
@@ -175,6 +171,15 @@ namespace MyWebApi.Interfaces
         Task<bool> SwitchIncreasedFamiliarityAsync(long userId);
         Task<bool> AddUserCommercialVector(long userId, string tagString);
         Task<SimilarityBetweenUsers> GetSimilarityBetweenUsersAsync(long user1, long user2);
+        Task<GetUserMedia> GetUserMediaAsync(long userId);
+
+        //Toggle Settings 
+        Task SwitchHintsVisibilityAsync(long userId);
+        Task<bool> SwitchPersonalityUsage(long userId);
+        Task<string> SwhitchUserBusyStatus(long userId);
+        Task SwitchSearchCommentsVisibilityAsync(long userId);
+        Task<bool> SwitchUserFreeSearchParamAsync(long userId);
+        Task<bool> SwitchUserRTLanguageConsiderationAsync(long userId);
 
         //Adventures
         Task<Guid> RegisterAdventureAsync(Adventure model);

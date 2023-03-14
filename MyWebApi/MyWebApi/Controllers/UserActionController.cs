@@ -278,6 +278,8 @@ namespace MyWebApi.Controllers
                 ShouldEnhance = false,
                 HadReceivedReward = false,
                 IncreasedFamiliarity = true,
+                ShouldComment = false,
+                ShouldSendHints = true,
                 DailyRewardPoint = 0,
                 BonusIndex = 1,
                 ProfileViewsCount = 0,
@@ -1079,11 +1081,28 @@ namespace MyWebApi.Controllers
             return await _repository.GetSimilarityBetweenUsersAsync(userId1, userId2);
         }
 
+        [HttpGet("/get-user-media/{userId}")]
+        public async Task<GetUserMedia> UserMedia([FromRoute] long userId, [FromServices] IUserRepository userRepo)
+        {
+            return await userRepo.GetUserMediaAsync(userId);
+        }
+
         [HttpGet("/limitations/{userId}")]
         public async Task<GetLimitations> Limitations(long userId, [FromServices] IUserRepository userRepo)
         {
-            var t = await userRepo.GetUserSearchLimitations(userId);
-            return t;
+            return await userRepo.GetUserSearchLimitations(userId);
+        }
+
+        [HttpGet("/set-comment-status/{userId}")]
+        public async Task SetCommentStatus([FromRoute]long userId, [FromServices] IUserRepository userRepo)
+        {
+            await userRepo.SwitchSearchCommentsVisibilityAsync(userId);
+        }
+
+        [HttpGet("/set-hint-status/{userId}")]
+        public async Task SetHintStatus([FromRoute] long userId, [FromServices] IUserRepository userRepo)
+        {
+            await userRepo.SwitchHintsVisibilityAsync(userId);
         }
     }
 }

@@ -136,10 +136,10 @@ namespace MyWebApi.Controllers
             return await _repository.GetTickRequestAsync(id);
         }
 
-        [HttpGet("/ResolveTickRequest/{id}/{adminId}/{isAccepted}")]
-        public async Task<bool> ResolveTickRequest(Guid id, long adminId, bool isAccepted)
+        [HttpPost("/ResolveTickRequest")]
+        public async Task<bool> ResolveTickRequest([FromBody] ResolveTickRequest request)
         {
-            return await _repository.ResolveTickRequestAsync(id, adminId, isAccepted);
+            return await _repository.ResolveTickRequestAsync(request);
         }
 
         [HttpGet("/AbortTickRequest/{id}")]
