@@ -141,13 +141,13 @@ class Settings:
             .add(InlineKeyboardButton("Go back", callback_data="-20")) \
 
         # self.settingPersonalitySettingsMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4")
-        self.settingPersonalitySettingsMarkup_TurnedOn = InlineKeyboardMarkup().add(InlineKeyboardButton("Turn Off P.E.R.S.O.N.A.L.I.T.Y", callback_data="205")) \
+        self.settingPersonalitySettingsMarkup_TurnedOn = InlineKeyboardMarkup().add(InlineKeyboardButton("Turn Off PERSONALITY", callback_data="205")) \
             .add(InlineKeyboardButton("Manage P.E.R.S.O.N.A.L.I.T.Y points", callback_data="206")) \
             .add(InlineKeyboardButton("Pass Tests", callback_data="207")) \
             .add(InlineKeyboardButton("Go back", callback_data="-20"))
 
         self.settingPersonalitySettingsMarkup_TurnedOff = InlineKeyboardMarkup()\
-            .add(InlineKeyboardButton("Turn On P.E.R.S.O.N.A.L.I.T.Y", callback_data="205")) \
+            .add(InlineKeyboardButton("Turn On PERSONALITY", callback_data="205")) \
             .add(InlineKeyboardButton("Go back", callback_data="-20"))
 
         self.language_considerationIndicator = InlineKeyboardButton("", callback_data="210")
@@ -227,6 +227,8 @@ class Settings:
         self.nullifierDescription = "Allows you to pass any test one more time, without waiting. It can be activated from the 'Test' section"
         self.cardDeckMiniDescription = "Instantly adds 20 profile views to your daily views"
         self.cardDeckPlatinumDescription = "Instantly adds 50 profile views to your daily views"
+
+        self.personality_description = "P.E.R.S.O.N.A.L.I.T.Y system is a test-based system, which helps you in finding people or adventures that you need.\n\nEvery P.E.R.S.O.N.A.L.I.T.Y test you pass provides us with better opportunity to give you search result that may suit you the most.\n\n"
 
         self.okMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Ok")
 
@@ -764,7 +766,7 @@ class Settings:
                 status = "Offline"
                 switchMessage = "Would you like to turn it on?"
 
-            self.send_secondary_message(f"P.E.R.S.O.N.A.L.I.T.Y is currently {status}\n{switchMessage}", markup=self.YNMarkup)
+            self.send_secondary_message(f"{self.personality_description}P.E.R.S.O.N.A.L.I.T.Y is currently {status}\n{switchMessage}", markup=self.YNMarkup)
             self.bot.register_next_step_handler(message, self.personality_switch, acceptMode=True, chat_id=self.current_user)
 
         else:
@@ -1149,11 +1151,17 @@ class Settings:
                 if self.requestType != 1:
                     self.delete_secondary_message()
                     self.requestType = 1
+
+                    self.remove_next_step_handler_local()
+
                     self.send_confirmation_request(call.message)
             elif call.data == "241":
                 if self.requestType != 2:
                     self.delete_secondary_message()
                     self.requestType = 2
+
+                    self.remove_next_step_handler_local()
+
                     self.send_confirmation_request(call.message)
             elif call.data == "242":
                 self.hints_status_manager()
@@ -1164,10 +1172,10 @@ class Settings:
             elif call.data == "343":
                 self.comment_status_manager(True)
             elif call.data == "340":
-                # self.requestType = 0
+                self.requestType = 0
                 self.send_secondary_message("Partial identity confirmation:\n✅ Face confirmation\n⛔ Age confirmation\n⛔ Location confirmation")
             elif call.data == "341":
-                # self.requestType = 0
+                self.requestType = 0
                 self.send_secondary_message("Full identity confirmation:\n✅ Face confirmation\n✅ Age confirmation\n✅ Location confirmation")
             #TODO: Continue. Code below must be the last statement before 'else'
             elif call.data == "-20":
@@ -1526,12 +1534,7 @@ class Settings:
         self.requestType = 0
         self.isDeciding = False
 
-        if self.nextHandler:
-            try:
-                self.bot.remove_next_step_handler(self.current_user, self.nextHandler)
-                self.nextHandler = None
-            except:
-                pass
+        self.remove_next_step_handler_local()
 
         #Return menu handler if it was replaced by another one
         if self.notInMenu:
@@ -1713,6 +1716,14 @@ class Settings:
         if self.active_error_message:
             self.bot.delete_message(self.current_user, self.active_error_message)
             self.active_error_message = None
+
+    def remove_next_step_handler_local(self):
+        if self.nextHandler:
+            try:
+                self.bot.remove_next_step_handler(self.current_user, self.nextHandler)
+                self.nextHandler = None
+            except:
+                pass
 
     @staticmethod
     def index_converter(index):

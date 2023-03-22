@@ -221,11 +221,14 @@ namespace MyWebApi.Controllers
             return await _repository.GetFeedbackReasonsAsync(localisationId);
         }
 
-        //[HttpGet("/GetReportReasons/{localisationId}")]
-        //public async Task<List<ReportReason>> GetReportReasons(int localisationId)
-        //{
-        //    return await _repository.GetReportReasonsAsync(localisationId);
-        //}
+        [HttpGet("/GetReportReasons/{localisationId}")]
+        public List<string> GetReportReasons(int localisationId)
+        {
+            var reasons = new List<string>();
+
+            reasons.Add(ReportReason.Spam.ToString());
+            return reasons;
+        }
 
 
         [HttpPost("/AddFeedback")]
@@ -657,7 +660,7 @@ namespace MyWebApi.Controllers
         }
 
         [HttpGet("/GetRandomAchievements/{userId}")]
-        public async Task<List<UserAchievement>> GetRandomAchievements(long userId)
+        public async Task<List<string>> GetRandomAchievements(long userId)
         {
             return await _repository.GetRandomAchievements(userId);
         }
@@ -1103,6 +1106,12 @@ namespace MyWebApi.Controllers
         public async Task SetHintStatus([FromRoute] long userId, [FromServices] IUserRepository userRepo)
         {
             await userRepo.SwitchHintsVisibilityAsync(userId);
+        }
+
+        [HttpGet("/user-partial-data/{userId}")]
+        public async Task<UserPartialData> GetUserPartialData([FromRoute] long userId, [FromServices] IUserRepository userRepo)
+        {
+            return await userRepo.GetUserPartialData(userId);
         }
     }
 }

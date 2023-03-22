@@ -320,9 +320,9 @@ namespace MyWebApi.Repositories
                             bonus += $"<b>{u.Nickname}</b>\n";
 
                         if (u.IdentityType == IdentityConfirmationType.Partial)
-                             bonus += $"✔\n\n";
+                             bonus += $"☑️☑️☑️\n\n";
                         else if (u.IdentityType == IdentityConfirmationType.Full)
-                             bonus += $"✅\n\n";
+                             bonus += $"✅✅✅\n\n";
 
 
                         user.AddDescriptionBonus(bonus);
@@ -2760,15 +2760,15 @@ namespace MyWebApi.Repositories
             catch { return false; }
         }
 
-        public async Task<List<UserAchievement>> GetRandomAchievements(long userId)
+        public async Task<List<string>> GetRandomAchievements(long userId)
         {
             var achievents = await _contx.USER_ACHIEVEMENTS
                 .Where(a => a.UserBaseInfoId == userId)
                 .Where(a => !a.IsAcquired)
-                .Include(a => a.Achievement)
+                .Select(a => $"{a.Achievement.Name}\n{a.Achievement.Description}\n\n{a.Achievement.ConditionValue} / {a.Achievement.Value}")
                 .ToListAsync();
 
-            //Shuffle the achievement list
+            //Shuffle achievement list
             achievents = achievents.OrderBy(a => Guid.NewGuid()).ToList();
 
             //Normal scenario. User still has more than 3 achievements to claim
@@ -3516,10 +3516,10 @@ namespace MyWebApi.Repositories
                 returnUser.UserBaseInfo.UserDescription = $"<b>{user.Nickname}</b>\n\n{user.UserBaseInfo.UserDescription}";
 
             if (user.IdentityType == IdentityConfirmationType.Partial)
-                returnUser.AddDescriptionBonus($"✔\n\n");
+                returnUser.AddDescriptionBonus($"☑️☑️☑️\n\n");
 
             else if (user.IdentityType == IdentityConfirmationType.Full)
-                returnUser.AddDescriptionBonus($"✅\n\n");
+                returnUser.AddDescriptionBonus($"✅✅✅\n\n");
 
             //Show tags if user has detector activated
             if (hasActiveDetector)
@@ -4298,9 +4298,10 @@ namespace MyWebApi.Repositories
             var bonus = "";
 
             if (sender.IdentityType == IdentityConfirmationType.Partial)
-                bonus += $"✔\n\n";
+                bonus += $"☑️☑️☑️\n\n";
             else if (sender.IdentityType == IdentityConfirmationType.Full)
-                bonus += $"✅\n\n";
+                bonus += $"✅✅✅\n\n";
+
             if (sender.HasPremium && sender.Nickname != "")
                 bonus += $"<b>{sender.Nickname}</b>\n";
 
@@ -4861,6 +4862,17 @@ namespace MyWebApi.Repositories
             {
                 Media = u.UserMedia,
                 IsPhoto = u.IsMediaPhoto
+            }).FirstOrDefaultAsync();
+        }
+
+        public async Task<UserPartialData> GetUserPartialData(long userId)
+        {
+            return await _contx.SYSTEM_USERS.Where(u => u.UserId == userId).Select(u => new UserPartialData
+            {
+                Id = u.UserId,
+                AppLanguage = u.UserDataInfo.LanguageId,
+                Media = u.UserBaseInfo.UserMedia,
+                IsPhoto = u.UserBaseInfo.IsMediaPhoto
             }).FirstOrDefaultAsync();
         }
     }

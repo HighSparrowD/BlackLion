@@ -1,7 +1,13 @@
-﻿namespace MyWebApi.Enums;
+﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 
-//TODO: Fill-Up
+namespace MyWebApi.Enums;
+
+//TODO: Fill-Up 
 public enum ReportReason : short
 {
-    TestReason = 1
+    [Display(Name = "ReportReason_TestReason")]
+    TestReason = 1,
+    [Display(Name = "ReportReason_Spam")]
+    Spam = 2
 }

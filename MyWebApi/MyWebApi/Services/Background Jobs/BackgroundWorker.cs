@@ -78,6 +78,17 @@ namespace MyWebApi.Services.Background
                     user.MaxRTViewsCount = 25;
                     user.MaxTagSearchCount = 3;
 
+                    //Random achievements
+                    //TODO: Localize
+                    var achievements = await userRepo.GetRandomAchievements(user.UserId);
+                    await userRepo.AddUserNotificationAsync(new UserNotification
+                    {
+                        Description = "<b>Today's Random Achievements</b>\n\n" + string.Join("\n\n", achievements),
+                        UserId1 = user.UserId,
+                        Severity = Severities.Moderate,
+                        Section = Sections.Neutral
+                    });
+
                     if (user.PremiumExpirationDate != null)
                     {
                         var untillExpiration = user.PremiumExpirationDate.Value.Subtract(now);

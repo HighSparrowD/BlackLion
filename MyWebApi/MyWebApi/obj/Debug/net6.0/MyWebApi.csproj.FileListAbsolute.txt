@@ -193,11 +193,6 @@ C:\Git\BlackLion\MyWebApi\MyWebApi\bin\Debug\net6.0\Swashbuckle.AspNetCore.Swagg
 C:\Git\BlackLion\MyWebApi\MyWebApi\bin\Debug\net6.0\Swashbuckle.AspNetCore.SwaggerGen.dll
 C:\Git\BlackLion\MyWebApi\MyWebApi\bin\Debug\net6.0\Swashbuckle.AspNetCore.SwaggerUI.dll
 C:\Git\BlackLion\MyWebApi\MyWebApi\obj\Debug\net6.0\MyWebApi.csproj.AssemblyReference.cache
-C:\Git\BlackLion\MyWebApi\MyWebApi\obj\Debug\net6.0\MyWebApi.Resources.Controllers.AdminController.resources
-C:\Git\BlackLion\MyWebApi\MyWebApi\obj\Debug\net6.0\MyWebApi.Resources.Controllers.AdminController.ru.resources
-C:\Git\BlackLion\MyWebApi\MyWebApi\obj\Debug\net6.0\MyWebApi.Resources.Controllers.RegistrationController.en.resources
-C:\Git\BlackLion\MyWebApi\MyWebApi\obj\Debug\net6.0\MyWebApi.Resources.Controllers.RegistrationController.ru.resources
-C:\Git\BlackLion\MyWebApi\MyWebApi\obj\Debug\net6.0\MyWebApi.Resources.Controllers.RegistrationController.uk.resources
 C:\Git\BlackLion\MyWebApi\MyWebApi\obj\Debug\net6.0\MyWebApi.csproj.GenerateResource.cache
 C:\Git\BlackLion\MyWebApi\MyWebApi\obj\Debug\net6.0\MyWebApi.GeneratedMSBuildEditorConfig.editorconfig
 C:\Git\BlackLion\MyWebApi\MyWebApi\obj\Debug\net6.0\MyWebApi.AssemblyInfoInputs.cache
@@ -221,3 +216,9 @@ C:\Git\BlackLion\MyWebApi\MyWebApi\bin\Debug\net6.0\Microsoft.Win32.SystemEvents
 C:\Git\BlackLion\MyWebApi\MyWebApi\bin\Debug\net6.0\System.Drawing.Common.dll
 C:\Git\BlackLion\MyWebApi\MyWebApi\bin\Debug\net6.0\runtimes\win\lib\net6.0\Microsoft.Win32.SystemEvents.dll
 C:\Git\BlackLion\MyWebApi\MyWebApi\bin\Debug\net6.0\runtimes\win\lib\net6.0\System.Drawing.Common.dll
+C:\Git\BlackLion\MyWebApi\MyWebApi\obj\Debug\net6.0\MyWebApi.Resources.Controllers.AdminController.resources
+C:\Git\BlackLion\MyWebApi\MyWebApi\obj\Debug\net6.0\MyWebApi.Resources.Resources.resources
+C:\Git\BlackLion\MyWebApi\MyWebApi\obj\Debug\net6.0\MyWebApi.Resources.Controllers.AdminController.ru.resources
+C:\Git\BlackLion\MyWebApi\MyWebApi\obj\Debug\net6.0\MyWebApi.Resources.Controllers.RegistrationController.en.resources
+C:\Git\BlackLion\MyWebApi\MyWebApi\obj\Debug\net6.0\MyWebApi.Resources.Controllers.RegistrationController.ru.resources
+C:\Git\BlackLion\MyWebApi\MyWebApi\obj\Debug\net6.0\MyWebApi.Resources.Controllers.RegistrationController.uk.resources

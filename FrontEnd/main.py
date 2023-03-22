@@ -103,9 +103,8 @@ def settings(message):
 
 @bot.message_handler(commands=["help"], is_multihandler=True)
 def help(message):
-    if Helpers.check_user_is_busy(message.from_user.id):
+    if not Helpers.check_user_is_busy(message.from_user.id):
         pass
-
 
 # @bot.message_handler()
 # def test(message):

@@ -24,6 +24,7 @@ class AdminCabinet:
         self.admin_cabinets = admin_cabinets
         self.admin_cabinets.append(self)
         self.current_request = None
+        self.managed_user_data = None
 
         #self.start_markup = ReplyKeyboardMarkup(KeyboardButton(""))
         self.markup1 = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
@@ -54,6 +55,12 @@ class AdminCabinet:
 
         self.banned_users = []
 
+        self.languages = {
+            0: "English",
+            1: "Russian",
+            2: "Ukrainian"
+        }
+
         self.manage_user_message = "What do you want to do with this user?"
 
         self.ch = self.bot.register_callback_query_handler("", self.callback_handler, user_id=self.current_user)
@@ -79,12 +86,13 @@ class AdminCabinet:
                 self.current_request = json.loads(requestText)
 
                 try:
-                    media = json.loads(requests.get(f"https://localhost:44381/get-user-media/{self.current_request['userId']}", verify=False).text)
+                    self.managed_user_data = json.loads(requests.get(f"https://localhost:44381/user-partial-data/{self.current_request['userId']}", verify=False).text)
+                    media = self.managed_user_data["media"]
 
-                    if media["isPhoto"]:
-                        self.bot.send_photo(self.current_user, media["media"], "That is how the user looks like")
+                    if self.managed_user_data["isPhoto"]:
+                        self.bot.send_photo(self.current_user, media, "That is how the user looks like")
                     else:
-                        self.bot.send_video(self.current_user, video=media["media"], caption="That is how the user looks like")
+                        self.bot.send_video(self.current_user, video=media, caption="That is how the user looks like")
 
                     if self.current_request["video"]:
                         self.bot.send_video(self.current_user, video=self.current_request["video"], caption="That is the message.")
@@ -128,10 +136,12 @@ class AdminCabinet:
             self.request_data["id"] = self.current_request['id']
             self.request_data["isAccepted"] = isResolved
 
+            self.comment_request(message)
+
 
     def comment_request(self, message, acceptMode=False):
         if not acceptMode:
-            self.bot.send_message(self.current_user, "Comment your decide. This comment will be shown to user, so, please, dont be to honest ;)", reply_markup=self.SilentMarkup)
+            self.bot.send_message(self.current_user, f"Comment your decide. This comment will be shown to user, so, please, don't be too honest ;)\nUser prefers {self.languages[self.managed_user_data['appLanguage']]} language", reply_markup=self.SilentMarkup)
             self.bot.register_next_step_handler(message, self.comment_request, acceptMode=True, chat_id=self.current_user)
         else:
             if message != "Leave empty":

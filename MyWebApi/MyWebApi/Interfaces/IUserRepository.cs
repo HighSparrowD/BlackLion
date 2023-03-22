@@ -35,6 +35,7 @@ namespace MyWebApi.Interfaces
         Task<byte> DeleteUserRequest(Guid requestId);
         Task<User> GetUserInfoByUsrnameAsync(string username);
         Task<BasicUserInfo> GetUserBasicInfo(long userId);
+        Task<UserPartialData> GetUserPartialData(long userId);
         Task<byte> UpdateUserAppLanguageAsync(long userId, int appLanguage);
         Task<byte> UpdateUserBaseAsync(UserBaseInfo user);
         Task<byte> UpdateUserDataAsync(UserDataInfo user);
@@ -112,7 +113,7 @@ namespace MyWebApi.Interfaces
         Task<byte> SendNotificationConfirmationCodeAsync(Guid notidicationId);
         Task<bool> DeleteUserNotification(Guid notificationId);
         Task<bool> DeleteUserNotification(UserNotification notification);
-        Task<List<UserAchievement>> GetRandomAchievements(long userId);
+        Task<List<string>> GetRandomAchievements(long userId);
         Task<double> CalculateSimilarityAsync(double param1, double param2);
         Task<DailyTask> GetDailyTaskByIdAsync(long id);
         Task<UserDailyTask> GetUserDailyTaskByIdAsync(long userId, long taskId);
