@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Data;
 using MyWebApi.Enums;
+using MyWebApi.Entities.LocationEntities;
 #nullable enable
 
 namespace MyWebApi.Entities.UserInfoEntities

@@ -27,7 +27,8 @@ def check_sponsor_is_maxed(userId):
 
 
 def check_user_keyword_is_correct(userId, keyword):
-    return bool(json.loads(requests.get(f"https://localhost:44381/CheckUserKeyWordIsCorrect/{userId}/{keyword}", verify=False).text))
+    return bool(json.loads(
+        requests.get(f"https://localhost:44381/CheckUserKeyWordIsCorrect/{userId}/{keyword}", verify=False).text))
 
 
 def check_user_is_admin(userId):
@@ -48,7 +49,8 @@ def check_user_is_registered(userId):
 def check_user_has_visited_section(userId, sectionId):
     try:
         return bool(json.loads(
-            requests.get(f"https://localhost:44381/CheckUserHasVisitedSection/{userId}/{sectionId}", verify=False).text))
+            requests.get(f"https://localhost:44381/CheckUserHasVisitedSection/{userId}/{sectionId}",
+                         verify=False).text))
     except:
         return None
 
@@ -80,11 +82,13 @@ def check_user_is_deleted(userId):
 
 def check_users_are_combinable(user1, user2):
     return bool(
-        json.loads(requests.get(f"https://localhost:44381/CheckUsersAreCombinableRT/{user1}/{user2}", verify=False).text))
+        json.loads(
+            requests.get(f"https://localhost:44381/CheckUsersAreCombinableRT/{user1}/{user2}", verify=False).text))
 
 
 def get_common_langs(user1Id, user2Id, localisationId):
-    return requests.get(f"https://localhost:44381/RetreiveCommonLanguages/{user1Id}/{user2Id}/{localisationId}", verify=False).text
+    return requests.get(f"https://localhost:44381/RetreiveCommonLanguages/{user1Id}/{user2Id}/{localisationId}",
+                        verify=False).text
 
 
 def check_user_has_requests(userId):
@@ -122,7 +126,9 @@ def check_user_uses_personality(userId):
 def check_user_in_a_blacklist(userId, encounteredUser):
     try:
         return bool(
-            json.loads(requests.get(f"https://localhost:44381/CheckEncounteredUserIsInBlackList/{userId}/{encounteredUser}", verify=False).text))
+            json.loads(
+                requests.get(f"https://localhost:44381/CheckEncounteredUserIsInBlackList/{userId}/{encounteredUser}",
+                             verify=False).text))
     except:
         return None
 
@@ -130,7 +136,8 @@ def check_user_in_a_blacklist(userId, encounteredUser):
 def get_user_language_limit(userId):
     try:
         return int(
-            json.loads(requests.get(f"https://localhost:44381/GetUserMaximumLanguageCount/{userId}", verify=False).text))
+            json.loads(
+                requests.get(f"https://localhost:44381/GetUserMaximumLanguageCount/{userId}", verify=False).text))
     except:
         return None
 
@@ -230,12 +237,13 @@ def delete_user_request(requestId):
 def delete_user_notification(notificationId):
     try:
         return bool(
-            json.loads(requests.get(f"https://localhost:44381/SendNotificationConfirmationCode/{notificationId}", verify=False).text))
+            json.loads(requests.get(f"https://localhost:44381/SendNotificationConfirmationCode/{notificationId}",
+                                    verify=False).text))
     except:
         return None
 
 
-def start_program_in_debug_mode(bot): # TODO: remove in production
+def start_program_in_debug_mode(bot):  # TODO: remove in production
     requests.get("https://localhost:44381/SetDebugProperties", verify=False)
     return json.loads(requests.get("https://localhost:44381/GetAllUsersIds", verify=False).text)
 
@@ -272,8 +280,8 @@ def get_user_list_by_tags(getUserByTagsModel):
     try:
         d = json.dumps(getUserByTagsModel)
         return json.loads(requests.post(f"https://localhost:44381/GetUserByTags", d,
-                                       headers={"Content-Type": "application/json"},
-                                       verify=False).text)
+                                        headers={"Content-Type": "application/json"},
+                                        verify=False).text)
     except:
         return None
 
@@ -297,8 +305,8 @@ def register_user_request(senderId, receiverId, isLikedBack, description=""):
 
         d = json.dumps(data)
         return requests.post(f"https://localhost:44381/RegisterUserRequest", d,
-                                       headers={"Content-Type": "application/json"},
-                                       verify=False).text
+                             headers={"Content-Type": "application/json"},
+                             verify=False).text
     except:
         return None
 
@@ -306,7 +314,7 @@ def register_user_request(senderId, receiverId, isLikedBack, description=""):
 def decline_user_request(user1, user2):
     try:
         return requests.get(f"https://localhost:44381/DeclineRequest/{user1}/{user2}",
-                                       verify=False).text
+                            verify=False).text
     except:
         return None
 
@@ -323,8 +331,8 @@ def register_user_encounter(current_user_id, user_id, section_id):
         d = json.dumps(data)
 
         de = requests.post("https://localhost:44381/RegisterUserEncounter", d,
-                      headers={"Content-Type": "application/json"},
-                      verify=False).text
+                           headers={"Content-Type": "application/json"},
+                           verify=False).text
         return json.loads(de)
     except:
         return None
@@ -354,13 +362,15 @@ def get_all_user_achievements_admin(userId):
 
 def get_active_user_balance(userId):
     try:
-        return json.loads(requests.get(f"https://localhost:44381/GetActiveUserWalletBalance/{userId}", verify=False).text)
+        return json.loads(
+            requests.get(f"https://localhost:44381/GetActiveUserWalletBalance/{userId}", verify=False).text)
     except:
         return None
 
 
 def top_up_user_balance(userId, amount, description):
-    return json.loads(requests.get(f"https://localhost:44381/TopUpUserWalletBalance/{userId}/{amount}/{description}", verify=False).text)
+    return json.loads(requests.get(f"https://localhost:44381/TopUpUserWalletBalance/{userId}/{amount}/{description}",
+                                   verify=False).text)
 
 
 def check_user_balance_is_sufficient(userId, cost):
@@ -380,32 +390,39 @@ def check_should_turnOf_personality(userId):
 
 def check_promo_is_valid(userId, promo, isActivatedBeforeRegistration):
     return bool(json.loads(
-        requests.get(f"https://localhost:44381/CheckPromoIsCorrect/{userId}/{promo}/{isActivatedBeforeRegistration}", verify=False).text))
+        requests.get(f"https://localhost:44381/CheckPromoIsCorrect/{userId}/{promo}/{isActivatedBeforeRegistration}",
+                     verify=False).text))
 
 
 def grant_premium_for_points(userId, cost, dayDuration):
-    return json.loads(requests.get(f"https://localhost:44381/GrantPremiumToUser/{userId}/{cost}/{dayDuration}/{1}", verify=False).text)
+    return json.loads(requests.get(f"https://localhost:44381/GrantPremiumToUser/{userId}/{cost}/{dayDuration}/{1}",
+                                   verify=False).text)
 
 
 def grant_premium_for_real_money(userId, cost, dayDuration):
-    return json.loads(requests.get(f"https://localhost:44381/GrantPremiumToUser/{userId}/{cost}/{dayDuration}/{4}", verify=False).text)
+    return json.loads(requests.get(f"https://localhost:44381/GrantPremiumToUser/{userId}/{cost}/{dayDuration}/{4}",
+                                   verify=False).text)
 
 
 def purchase_effect_for_points(userId, effectId, cost, count=1):
-    return json.loads(requests.get(f"https://localhost:44381/PurchaseEffect/{userId}/{effectId}/{cost}/1/{count}", verify=False).text)
+    return json.loads(
+        requests.get(f"https://localhost:44381/PurchaseEffect/{userId}/{effectId}/{cost}/1/{count}", verify=False).text)
 
 
 def check_user_has_effect(userId, effectId):
-    return bool(json.loads(requests.get(f"https://localhost:44381/CheckUserHasEffect/{userId}/{effectId}", verify=False).text))
+    return bool(
+        json.loads(requests.get(f"https://localhost:44381/CheckUserHasEffect/{userId}/{effectId}", verify=False).text))
 
 
-#TODO: Change called API endpoint
+# TODO: Change called API endpoint
 def purchase_effect_for_real_money(userId, effectId, cost):
-    return json.loads(requests.get(f"https://localhost:44381/GrantPremiumToUser/{userId}/{effectId}/{cost}/{4}", verify=False).text)
+    return json.loads(
+        requests.get(f"https://localhost:44381/GrantPremiumToUser/{userId}/{effectId}/{cost}/{4}", verify=False).text)
 
 
 def purchase_PP_for_points(userId, cost, count=1):
-    return json.loads(requests.get(f"https://localhost:44381/PurchesPPForPoints/{userId}/{cost}/{count}", verify=False).text)
+    return json.loads(
+        requests.get(f"https://localhost:44381/PurchesPPForPoints/{userId}/{cost}/{count}", verify=False).text)
 
 
 def switch_admin_status(userId):
@@ -420,27 +437,27 @@ def switch_admin_status(userId):
 
 def switch_personality_status(userId):
     return requests.get(f"https://localhost:44381/SwitchPersonalityUsage/{userId}",
-                                                           verify=False)
+                        verify=False)
 
 
 def switch_familiarity_status(userId):
     return requests.get(f"https://localhost:44381/SwitchIncreasedFamiliarity/{userId}",
-                                                           verify=False)
+                        verify=False)
 
 
 def switch_hint_status(userId):
     return requests.get(f"https://localhost:44381/set-hint-status/{userId}",
-                                                           verify=False)
+                        verify=False)
 
 
 def switch_comment_status(userId):
     return requests.get(f"https://localhost:44381/set-comment-status/{userId}",
-                                                           verify=False)
+                        verify=False)
 
 
 def get_increased_familiarity_status(userId):
     return bool(json.loads(requests.get(f"https://localhost:44381/GetUserIncreasedFamiliarity/{userId}",
-                                                           verify=False).text))
+                                        verify=False).text))
 
 
 def update_user_status(userId, status):
@@ -455,7 +472,7 @@ def get_admin_status(userId):
     }
 
     d = requests.get(f"https://localhost:44381/GethAdminStatus/{userId}",
-                                             verify=False)
+                     verify=False)
     if d.text:
         return data[bool(json.loads(d.text))]
     return None
@@ -463,9 +480,39 @@ def get_admin_status(userId):
 
 def set_user_currency(userId, currency):
     response = requests.get(f"https://localhost:44381/SetUserCurrency/{userId}/{currency}",
-                        verify=False)
+                            verify=False)
 
     if 100 < response.status_code < 300:
-        return  True
+        return True
 
     return False
+
+
+def register_adventure(adventureData):
+    try:
+        d = json.dumps(adventureData)
+        return requests.post(f"https://localhost:44381/RegisterAdventure", d,
+                             headers={"Content-Type": "application/json"},
+                             verify=False).text
+    except:
+        return None
+
+
+def change_adventure(adventureData):
+    try:
+        d = json.dumps(adventureData)
+        return requests.post(f"https://localhost:44381/ChangeAdventure", d,
+                             headers={"Content-Type": "application/json"},
+                             verify=False).status_code
+    except:
+        return None
+
+
+def save_template(adventureData):
+    try:
+        d = json.dumps(adventureData)
+        return requests.post(f"https://localhost:44381/SaveTemplate", d,
+                             headers={"Content-Type": "application/json"},
+                             verify=False).status_code
+    except:
+        return None

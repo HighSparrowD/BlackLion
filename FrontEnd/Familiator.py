@@ -1,18 +1,14 @@
 import requests
-import telegram
-from telebot.types import *
 
 from Common.Menues import go_back_to_main_menu
-from Helper import Helper
-from ReportModule import ReportModule
 from Requester import *
 
 
 class Familiator:
-    def __init__(self, bot, msg, cr_user, familiators, hasVisited=True):
+    def __init__(self, bot, msg, cr_user, hasVisited=True):
         self.btnYes = "👌"
         self.btnNo = "🙊"
-        self.btnReport = "⚠"
+        # self.btnReport = "⚠"
         self.btnLeave = "🔙"
 
         self.finish_message = "That is all for now, please wait until we find someone else for you"
@@ -21,14 +17,17 @@ class Familiator:
         self.msg = msg
         self.current_user = cr_user
         Helpers.switch_user_busy_status(self.current_user)
-        self.familiators = familiators
-        self.familiators.append(self)
         self.active_user = None
         self.active_user_id = 0
-        self.markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add(self.btnYes, self.btnNo, self.btnReport, self.btnLeave)
+        self.markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add(self.btnYes, self.btnNo, self.btnLeave)
         self.YNmarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("Yes", "No")
-        self.actions_markup = InlineKeyboardMarkup(row_width=5)
-        self.actions_markup.add(InlineKeyboardButton("Report", callback_data=-1))
+
+        self.goBackmarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("Go Back")
+
+        self.actions_markup = InlineKeyboardMarkup().add(InlineKeyboardButton("⚠ Report ⚠", callback_data=self.active_user_id)) \
+            .add(InlineKeyboardButton("🔖 Help 🔖", callback_data="11"))
+
+        self.reactToCallback = True
 
         self.basic_info = Helpers.get_user_basic_info(self.current_user)
         self.limitations = self.basic_info["limitations"]
@@ -45,8 +44,9 @@ class Familiator:
         self.people = []
         self.reasons_markup = None
 
-        self.eh = self.bot.register_message_handler(self.exit_handler, commands=["exit"], user_id=self.current_user)
-        self.helpHandler = self.bot.register_message_handler(self.help_handler, commands=["help"], user_id=self.current_user)
+        # self.eh = self.bot.register_message_handler(self.exit_handler, commands=["exit"], user_id=self.current_user)
+        # self.helpHandler = self.bot.register_message_handler(self.help_handler, commands=["help"], user_id=self.current_user)
+        self.ch = self.bot.register_callback_query_handler("", self.callback_handler, user_id=self.current_user)
 
         if not Helpers.check_user_have_chosen_free_search(self.current_user):
             self.free_search_switch(msg)
@@ -124,9 +124,13 @@ class Familiator:
 
     def search_by_tags(self, message, acceptMode=False):
         if not acceptMode:
-            self.bot.send_message(self.current_user, f"Sent me up to {self.tagLimit} tags to conduct the search")
+            self.bot.send_message(self.current_user, f"Sent me up to {self.tagLimit} tags to conduct the search", reply_markup=self.goBackmarkup)
             self.bot.register_next_step_handler(message, self.search_by_tags, acceptMode=True, chat_id=self.current_user)
         else:
+            if message.text == "Go Back":
+                self.start(message)
+                return
+
             tags = message.text.split()
             #TODO: check tags formatting
             if 0 < len(tags) <= self.tagLimit:
@@ -135,7 +139,13 @@ class Familiator:
                     "tags": tags
                 }
 
-                self.people.append(Helpers.get_user_list_by_tags(data))
+                person = Helpers.get_user_list_by_tags(data)
+                if not person:
+                    self.bot.send_message(self.current_user, "No users matches your request yet. Try again with another tag list :)")
+                    self.bot.register_next_step_handler(message, self.search_by_tags, acceptMode=True, chat_id=self.current_user)
+                    return
+
+                self.people.append(person)
                 self.proceed()
             else:
                 self.bot.send_message(self.current_user, f"Invalid tag count")
@@ -175,6 +185,8 @@ class Familiator:
             Helpers.register_user_encounter_familiator(self.current_user, self.active_user_id)
             self.active_user_id = self.active_user["userId"]
             self.people.pop(0)
+
+            self.set_report_button_value()
             return True
         return False
 
@@ -193,6 +205,11 @@ class Familiator:
             self.bot.send_message(self.current_user, "Additional Actions:", reply_markup=self.actions_markup)
             self.bot.register_next_step_handler(message, self.show_person, acceptMode=True, chat_id=self.current_user)
         else:
+            if not self.reactToCallback:
+                self.bot.delete_message(self.current_user, message.id)
+                self.bot.register_next_step_handler(message, self.show_person, acceptMode=acceptMode,chat_id=self.current_user)
+                return
+
             if message.text == self.btnYes:
                 if not self.basic_info["isBanned"]:
                     Helpers.register_user_request(self.current_user, self.active_user_id, False)
@@ -217,10 +234,6 @@ class Familiator:
                 if sadMessage:
                     self.bot.send_message(self.current_user, sadMessage)
 
-            elif message.text == self.btnReport:
-                ReportModule(self.bot, self.msg, self.current_user, self.proceed)
-                return
-
             elif message.text == self.btnLeave:
                 self.start(message)
                 return
@@ -243,18 +256,25 @@ class Familiator:
             #Go back to search options
             self.start(self.msg)
 
-    def exit_handler(self, message):
-        self.destruct()
+    def callback_handler(self, call):
+        if call.data == "11":
+            self.help_handler(self.msg)
+        else:
+            if self.reactToCallback:
+                ReportModule(self.bot, self.msg, call.data, self.proceed)
 
     def help_handler(self, message):
+        self.reactToCallback = False
         Helper(self.bot, message, self.proceed_h)
 
-    #Proceed method meant for exiting from Helper only
+    #Proceed method meant only for exiting Helper
     def proceed_h(self, message):
-        if self.set_active_person(message):
-            self.show_person(message)
-        else:
-            self.start(message)
+        self.reactToCallback = True
+        pass
+        # self.show_person(message)
+        # if self.set_active_person(message):
+        # else:
+        #     self.start(message)
 
     def move_to_next_user(self, message):
         if self.set_active_person():
@@ -263,9 +283,10 @@ class Familiator:
             self.bot.send_message(self.current_user, self.finish_message)
             self.destruct()
 
+    def set_report_button_value(self):
+        self.actions_markup.keyboard[0][0].callback_data = self.active_user_id
+
     def destruct(self):
-        self.familiators.remove(self)
-        self.bot.message_handlers.remove(self.eh)
-        self.bot.message_handlers.remove(self.helpHandler)
+        self.bot.callback_query_handlers.remove(self.ch)
         go_back_to_main_menu(self.bot, self.current_user, self.msg)
         del self

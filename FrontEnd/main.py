@@ -1,6 +1,7 @@
 from telebot import *
 
 import Common.Menues as Menus
+from Adventurer import Adventurer
 from Familiator import *
 from RandomTalker import *
 from Settings import *
@@ -18,7 +19,6 @@ bot = TeleBot("5488749379:AAEJ0t9RksogDD14zJLRYqSisBUpu2pS2WU") #TODO: relocate 
 bot.parse_mode = telegram.ParseMode.HTML
 Menus.start_program_in_debug_mode(bot) #TODO: remove in production
 
-familiators = []
 random_talkers = []
 sponsor_handlers = []
 admin_sponsor_handlers = []
@@ -94,6 +94,7 @@ def EnterAdminCabinet(message):
     if not Helpers.check_user_is_busy(message.from_user.id):
         create_admin_cabinet(message)
 
+
 # bot.next_step_backend.handlers.popitem()
 @bot.message_handler(commands=["settings"])
 def settings(message):
@@ -101,10 +102,15 @@ def settings(message):
         Settings(bot, message)
 
 
+@bot.message_handler(commands=["adventure"])
+def adventurer(message):
+    create_adventurer(message)
+
+
 @bot.message_handler(commands=["help"], is_multihandler=True)
 def help(message):
     if not Helpers.check_user_is_busy(message.from_user.id):
-        pass
+        Helper(bot, message)
 
 # @bot.message_handler()
 # def test(message):
@@ -127,7 +133,7 @@ def create_familiator(message, userId):
     if Helpers.check_user_exists(message.from_user.id):
         if not Helpers.check_user_is_deleted(message.from_user.id):
             visit = Helpers.check_user_has_visited_section(message.from_user.id, 2)
-            return Familiator(bot, message, userId, familiators, visit)
+            return Familiator(bot, message, userId, visit)
         else:
             bot.send_message(message.from_user.id, "Hey! your account had been deleted recently. Would you like to pass a quick registration and save all your lost data?\n Then hit /register !")
     send_registration_warning(userId)
@@ -167,6 +173,17 @@ def create_reporter(message):
     send_registration_warning(message.from_user.id)
 
 
+def create_adventurer(message):
+    if Helpers.check_user_exists(message.from_user.id):
+        if not Helpers.check_user_is_deleted(message.from_user.id):
+            visit = Helpers.check_user_has_visited_section(message.from_user.id, 13)
+            return Adventurer(bot, message, visit)
+        else:
+            bot.send_message(message.from_user.id, "Hey! your account had been deleted recently. Would you like to pass a quick registration and save all your lost data?\n Then hit /register !")
+
+    send_registration_warning(message.from_user.id)
+
+
 def create_sponsor_handler(message):
     if Helpers.check_user_is_admin(message.from_user.id):
         pass
@@ -184,7 +201,6 @@ def create_admin_cabinet(message):
 
 def send_registration_warning(userId):
     bot.send_message(userId, "Please register before entering this section", reply_markup=Menus.register_markup)
-
 
 
 bot.polling()

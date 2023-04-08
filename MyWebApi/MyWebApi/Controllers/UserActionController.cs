@@ -1025,15 +1025,21 @@ namespace MyWebApi.Controllers
 
         //Adventures
         [HttpPost("/RegisterAdventure")]
-        public async Task<Guid> RegisterAdventure(Adventure model)
+        public async Task<string> RegisterAdventure([FromBody] ManageAdventure model)
         {
             return await _repository.RegisterAdventureAsync(model);
         }
 
         [HttpPost("/ChangeAdventure")]
-        public async Task<bool> ChangeAdventure(ChangeAdventure model)
+        public async Task ChangeAdventure(ManageAdventure model)
         {
-            return await _repository.ChangeAdventureAsync(model);
+            await _repository.ChangeAdventureAsync(model);
+        }
+
+        [HttpPost("/SendAdventureRequestByCode")]
+        public async Task<bool> SendAdventureRequestByCode(ParticipationRequest model)
+        {
+            return await _repository.SendAdventureRequestByCodeAsync(model);
         }
 
         [HttpDelete("/DeleteAdventure/{id}/{userId}")]
@@ -1045,7 +1051,7 @@ namespace MyWebApi.Controllers
         [HttpGet("/SubscribeOnAdventure/{id}/{userId}")]
         public async Task<bool> SubscribeOnAdventure(Guid id, long userId)
         {
-            return await _repository.SubscribeOnAdventureAsync(id, userId);
+            return await _repository.SendAdventureRequestAsync(id, userId);
         }
 
         [HttpGet("/ProcessSubscriptionRequest/{id}/{userId}/{status}")]
@@ -1060,10 +1066,16 @@ namespace MyWebApi.Controllers
             return await _repository.GetAdventureAttendeesAsync(id);
         }
 
-        [HttpGet("/GetUsersAdventures/{userId}")]
-        public async Task<List<Adventure>> GetUsersAdventures(long userId)
+        [HttpGet("/GetUserAdventures/{userId}")]
+        public async Task<List<GetAdventure>> GetUsersAdventures(long userId)
         {
-            return await _repository.GetUsersAdventuresAsync(userId);
+            return await _repository.GetUserAdventuresAsync(userId);
+        }
+
+        [HttpGet("/GetAdventure/{id}")]
+        public async Task<Adventure> GetAdventure(Guid id)
+        {
+            return await _repository.GetAdventureAsync(id);
         }
 
         [HttpGet("/GetUsersSubscribedAdventures/{userId}")]
@@ -1072,16 +1084,16 @@ namespace MyWebApi.Controllers
             return await _repository.GetUsersSubscribedAdventuresAsync(userId);
         }
 
-        [HttpGet("/AdventureCount/{userId}")]
-        public async Task<GetAdventureCount> GetAdventureCount(long userId)
-        {
-            return await _repository.GetAdventureCountAsync(userId);
-        }
-
         [HttpGet("/GetSimilarityBetweenUsers/{userId1}/{userId2}")]
         public async Task<SimilarityBetweenUsers> GetSimilarityBetweenUsers(long userId1, long userId2)
         {
             return await _repository.GetSimilarityBetweenUsersAsync(userId1, userId2);
+        }
+
+        [HttpPost("/SaveTemplate")]
+        public async Task<bool> SaveTemplate(ManageTemplate model)
+        {
+            return await _repository.SaveAdventureTemplateAsync(model);
         }
 
         [HttpGet("/get-user-media/{userId}")]

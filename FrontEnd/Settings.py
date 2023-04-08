@@ -10,8 +10,9 @@ from Shop import Shop
 
 
 class Settings:
-    def __init__(self, bot, message):
+    def __init__(self, bot, message, verificationOnly=False, activeMessage=0, returnMethod=None):
         self.isInBlackList = False
+        self.verificationOnly = verificationOnly
         #Indicates whether if callback query handler must be deleted. Set to true if it should
         self.notInMenu = False
         self.isDeciding = False
@@ -96,10 +97,12 @@ class Settings:
         self.achievements = {}
         self.achievements_data = {}
 
-        self.active_message = 0
+        self.active_message = activeMessage
         self.message_with_confirmation = 0
         self.active_secondary_message = 0
         self.active_error_message = 0
+
+        self.return_method = returnMethod
 
         self.requestType = 0
 
@@ -237,6 +240,11 @@ class Settings:
         self.nextHandler = None
 
         self.subscribe_callback_handler(self.menu_callback_handler)
+
+        if self.verificationOnly:
+            self.choose_confirmation_request(message)
+            return
+
         self.setting_choice()
 
     def setting_choice(self, message=None):
@@ -906,6 +914,9 @@ class Settings:
 
                     if bool(json.loads(requests.post(f"https://localhost:44381/SendTickRequest", d, headers={"Content-Type": "application/json"}, verify=False).text)):
                         self.send_message_with_confirmation("Done! Please wait until administration resolves your request.\nIf you have any questions, please contact @Admin")
+
+                        if self.verificationOnly:
+                            self.destruct()
                         return
 
             self.send_error_message("This type of data cannot be accepted as your identity confirmation")
@@ -1595,8 +1606,10 @@ class Settings:
             .add(InlineKeyboardButton("Card Deck Platinum", callback_data="10"), self.cardDeckPlatinum_indicator) \
             .add(InlineKeyboardButton("Go Back", callback_data="-20")) \
 
+
     def help_handler(self, message):
-        Helper(self.bot, message, self.active_section, isEncountered=self.isEncounter)
+        self.bot.delete_message(self.current_user, message.id)
+        Helper(self.bot, message, self.active_section, activeMessageId=self.active_message, secondaryMessageId=self.active_secondary_message, isEncounter=self.isEncounter)
 
     def construct_active_effects_message(self, effects):
         msg = ""
@@ -1737,5 +1750,10 @@ class Settings:
         self.bot.message_handlers.remove(self.helpHandler)
 
         self.delete_active_message()
+
+        if self.verificationOnly:
+            self.return_method(True)
+            return
+
         go_back_to_main_menu(self.bot, self.current_user, self.message)
         del self

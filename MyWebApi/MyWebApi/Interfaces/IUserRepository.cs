@@ -183,15 +183,17 @@ namespace MyWebApi.Interfaces
         Task<bool> SwitchUserRTLanguageConsiderationAsync(long userId);
 
         //Adventures
-        Task<Guid> RegisterAdventureAsync(Adventure model);
-        Task<bool> ChangeAdventureAsync(ChangeAdventure model);
+        Task<string> RegisterAdventureAsync(ManageAdventure model);
+        Task ChangeAdventureAsync(ManageAdventure model);
         Task<bool> DeleteAdventureAsync(Guid adventureId, long userId);
-        Task<bool> SubscribeOnAdventureAsync(Guid adventureId, long userId);
+        Task<bool> SendAdventureRequestAsync(Guid adventureId, long userId);
+        Task<bool> SendAdventureRequestByCodeAsync(ParticipationRequest request);
         Task<bool> ProcessSubscriptionRequestAsync(Guid adventureId, long userId, AdventureRequestStatus status);
         Task<List<AttendeeInfo>> GetAdventureAttendeesAsync(Guid adventureId);
         Task<List<Adventure>> GetUsersSubscribedAdventuresAsync(long userId);
-        Task<List<Adventure>> GetUsersAdventuresAsync(long userId);
-        Task<GetAdventureCount> GetAdventureCountAsync(long userId);
+        Task<List<GetAdventure>> GetUserAdventuresAsync(long userId);
+        Task<Adventure> GetAdventureAsync(Guid id);
         Task<GetLimitations> GetUserSearchLimitations(long userId);
+        Task<bool> SaveAdventureTemplateAsync(ManageTemplate model);
     }
 }

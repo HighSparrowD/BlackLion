@@ -27,8 +27,8 @@ namespace MyWebApi.Data
         public DbSet<Location> USER_LOCATIONS { get; set; }
         public DbSet<UserReason> USER_REASONS { get; set; }
         public DbSet<Visit> USER_VISITS { get; set; }
-        public DbSet<Country> COUNTRIES { get; set; }
-        public DbSet<City> CITIES { get; set; }
+        public DbSet<Country> countries { get; set; }
+        public DbSet<City> cities { get; set; }
         public DbSet<Language> LANGUAGES { get; set; }
         public DbSet<BlackList> USER_BLACKLISTS { get; set; }
         public DbSet<Feedback> SYSTEM_FEEDBACKS { get; set; }
@@ -75,7 +75,10 @@ namespace MyWebApi.Data
         public DbSet<AdminErrorLog> ADMIN_ERROR_LOGS { get; set; }
         public DbSet<ActiveEffect> USER_ACTIVE_EFFECTS { get; set; }
         public DbSet<TickRequest> tick_requests { get; set; }
+
+        //Adventures
         public DbSet<Adventure> adventures { get; set; }
+        public DbSet<AdventureTemplate> adventure_templates { get; set; }
         public DbSet<AdventureAttendee> adventure_attendees { get; set; }
         public DbSet<PromoCode> promo_codes { get; set; }
         public DbSet<Hint> hints { get; set; }

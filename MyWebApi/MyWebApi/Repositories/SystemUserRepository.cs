@@ -53,8 +53,8 @@ namespace MyWebApi.Repositories
                 if (location != null)
                 {
                     await _contx.USER_LOCATIONS.AddAsync(location);
-                    country = (await _contx.COUNTRIES.Where(c => c.Id == location.CountryId && c.ClassLocalisationId == location.CountryClassLocalisationId).Select(c => c.CountryName).SingleOrDefaultAsync());
-                    city = (await _contx.CITIES.Where(c => c.Id == location.CountryId && c.CountryClassLocalisationId == location.CityCountryClassLocalisationId).Select(c => c.CityName).SingleOrDefaultAsync());
+                    country = (await _contx.countries.Where(c => c.Id == location.CountryId && c.ClassLocalisationId == location.CountryClassLocalisationId).Select(c => c.CountryName).SingleOrDefaultAsync());
+                    city = (await _contx.cities.Where(c => c.Id == location.CountryId && c.CountryClassLocalisationId == location.CityCountryClassLocalisationId).Select(c => c.CityName).SingleOrDefaultAsync());
                 }
 
                 baseModel.UserRawDescription = baseModel.UserDescription;
@@ -208,12 +208,12 @@ namespace MyWebApi.Repositories
                 //Actualize premium information
                 await CheckUserHasPremiumAsync(id);
 
-                return await _contx.SYSTEM_USERS.Where(u => u.UserId == id).Include(s => s.UserBaseInfo)
-                    .Include(s => s.UserBaseInfo)
-                    .Include(s => s.UserDataInfo).ThenInclude(s => s.Location)
-                    .Include(s => s.UserDataInfo).ThenInclude(s => s.Reason)
-                    .Include(s => s.UserPreferences)
-                    .Include(s => s.UserBlackList)
+                return await _contx.SYSTEM_USERS.Where(u => u.UserId == id)
+                    .Include(u => u.UserBaseInfo)
+                    .Include(u => u.UserDataInfo).ThenInclude(s => s.Location)
+                    .Include(u => u.UserDataInfo).ThenInclude(s => s.Reason)
+                    .Include(u => u.UserPreferences)
+                    .Include(u => u.UserBlackList)
                     .SingleOrDefaultAsync();
             }
             catch (Exception ex)
@@ -737,7 +737,7 @@ namespace MyWebApi.Repositories
         {
             try
             {
-                var c = await _contx.COUNTRIES.Include(c => c.Cities).SingleAsync(c => c.Id == id);
+                var c = await _contx.countries.Include(c => c.Cities).SingleAsync(c => c.Id == id);
                 return c;
             }
             catch (Exception ex)
@@ -1942,11 +1942,11 @@ namespace MyWebApi.Repositories
 
                 if (location.CountryId != null)
                 {
-                    country = await _contx.COUNTRIES
+                    country = await _contx.countries
                         .Where(c => c.Id == location.CountryId && c.ClassLocalisationId == location.CountryClassLocalisationId)
                         .Select(c => c.CountryName)
                         .SingleOrDefaultAsync();
-                    city = await _contx.CITIES
+                    city = await _contx.cities
                         .Where(c => c.Id == location.CityId && c.CountryClassLocalisationId == location.CityCountryClassLocalisationId)
                         .Select(c => c.CityName)
                         .SingleOrDefaultAsync(); ;
@@ -2090,18 +2090,12 @@ namespace MyWebApi.Repositories
 
         public async Task<List<UserNotification>> GetUserRequests(long userId)
         {
-            try
-            {
-                return await _contx.USER_NOTIFICATIONS
-                    .Where(r => r.UserId1 == userId)
-                    .Where(r => r.Section == Sections.Familiator || r.Section == Sections.Requester)
-                    .ToListAsync();
-            }
-            catch (Exception ex)
-            {
-                await LogAdminErrorAsync(userId, ex.Message, (int)Sections.Requester);
-                return null;
-            }
+
+            return await _contx.USER_NOTIFICATIONS
+                .Where(r => r.UserId1 == userId && r.UserId != null)
+                .Where(r => r.Section == Sections.Familiator || r.Section == Sections.Requester)
+                .ToListAsync();
+
         }
 
         public async Task<UserNotification> GetUserRequest(Guid requestId)
@@ -2259,11 +2253,14 @@ namespace MyWebApi.Repositories
             try
             {
                 var encounters = await _contx.USER_ENCOUNTERS.ToListAsync();
+
                 _contx.USER_ENCOUNTERS.RemoveRange(encounters);
-                await _contx.SaveChangesAsync();
+
                 var users = await _contx.SYSTEM_USERS.ToListAsync();
+
                 users.ForEach(u => u.IsBusy = false);
                 _contx.SYSTEM_USERS.UpdateRange(users);
+
                 await _contx.SaveChangesAsync();
                 return true;
             }
@@ -4435,202 +4432,120 @@ namespace MyWebApi.Repositories
             return (bool)user.IsFree;
         }
 
-        public async Task<Guid> RegisterAdventureAsync(Adventure model)
+        public async Task<string> RegisterAdventureAsync(ManageAdventure model)
         {
-            //Adventures created by user
-            var userAdventures = await _contx.adventures.Where(a => a.UserId == model.UserId)
-                .ToListAsync();
-
-            var adventureIds = await _contx.adventure_attendees
-                .Select(a => a.AdventureId)
-                .ToListAsync();
-
-            //Adventures user is subscribed on
-            var subscribedAdventures = await _contx.adventures.Where(a => adventureIds.Contains(a.Id))
-                .ToListAsync();
-
-            foreach (var userAdventure in userAdventures)
+            var adventure = new Adventure
             {
-                //Throw if new adventure overlaps with the other ones
-                if (userAdventure.IsOverlapping(model))
-                    throw new ArgumentException($"Overlapping detected between {userAdventure.Id} (created by user) and just created adventure");
-            }
+                Id = Guid.NewGuid(),
+                UserId = model.UserId,
+                Name = model.Name,
+                Address = model.Address,
+                Application = model.Application,
+                AttendeesDescription = model.AttendeesDescription,
+                CityId = model.CityId,
+                CountryId = model.CountryId,
+                Date = model.Date,
+                Time = model.Time,
+                Description = model.Description,
+                Duration = model.Duration,
+                Experience = model.Experience,
+                UnwantedAttendeesDescription = model.UnwantedAttendeesDescription,
+                Gratitude = model.Gratitude,
+                IsMediaPhoto = model.IsMediaPhoto,
+                Media = model.Media,
+                IsAutoReplyText = model.IsAutoReplyText,
+                AutoReply = model.AutoReply,
+                IsOffline = model.IsOffline,
+                UniqueLink = Guid.NewGuid().ToString("N").Substring(0, 7).ToUpper(),
+                Status = AdventureStatus.New
+            };
 
-            foreach (var sAdventure in subscribedAdventures)
-            {
-                //Throw if new adventure overlaps with the other ones
-                if (sAdventure.IsOverlapping(model))
-                    throw new ArgumentException($"Overlapping detected between {sAdventure.Id} and just created adventure");
-            }
-
-            model.Id = Guid.NewGuid();
-            model.EndDateTime = DateTime.SpecifyKind(model.EndDateTime, DateTimeKind.Utc);
-            model.StartDateTime = DateTime.SpecifyKind(model.StartDateTime, DateTimeKind.Utc);
-
-            await _contx.AddAsync(model);
+            await _contx.adventures.AddAsync(adventure);
             await _contx.SaveChangesAsync();
 
-            return model.Id;
+            return adventure.UniqueLink;
         }
 
-        public async Task<bool> ChangeAdventureAsync(ChangeAdventure model)
+        public async Task ChangeAdventureAsync(ManageAdventure model)
         {
-            var existingAdventure = await _contx.adventures.Where(a => a.Id == model.Id)
-                .SingleOrDefaultAsync();
+            var adventure = await _contx.adventures.Where(a => a.Id == model.Id)
+                .FirstOrDefaultAsync();
 
-            //Check overlapping only if datetime was changed
-            if (model.StartDateTime !=null || model.EndDateTime != null)
-            {
-                var hasPremium = await CheckUserHasPremiumAsync(model.UserId);
+            if (adventure == null)
+                throw new InvalidOperationException($"Adventure with id #{model.Id} does not exist");
 
-                //Adventures created by user without currently managed one
-                var userAdventures = await _contx.adventures.Where(a => a.UserId == model.UserId && a.Id != model.Id)
-                    .ToListAsync();
+            adventure.Duration = model.Duration;
+            adventure.Name = model.Name;
+            adventure.Address = model.Address;
+            adventure.Application = model.Application;
+            adventure.Gratitude = model.Gratitude;
+            adventure.AttendeesDescription = model.AttendeesDescription;
+            adventure.UnwantedAttendeesDescription = model.UnwantedAttendeesDescription;
+            adventure.Media = model.Media;
+            adventure.IsMediaPhoto = model.IsMediaPhoto;
+            adventure.CityId = model.CityId;
+            adventure.CountryId = model.CountryId;
+            adventure.Description = model.Description;
+            adventure.Experience = model.Experience;
+            adventure.Date = model.Date;
+            adventure.Time = model.Time;
+            adventure.IsAutoReplyText = model.IsAutoReplyText;
+            adventure.AutoReply = model.AutoReply;
+            adventure.Status = AdventureStatus.Changed;
 
-                var adventureIds = await _contx.adventure_attendees
-                    .Select(a => a.AdventureId)
-                    .ToListAsync();
-
-                //Adventures user is subscribed on
-                var subscribedAdventures = await _contx.adventures.Where(a => adventureIds.Contains(a.Id))
-                    .ToListAsync();
-
-                foreach (var userAdventure in userAdventures)
-                {
-                    //Throw if new adventure overlaps with the other ones
-                    if (userAdventure.IsOverlapping(model))
-                        throw new ArgumentException($"Overlapping detected between changed adventure and {userAdventure.Id} adventure while attempting to subscribe on the last one");
-                }
-
-                foreach (var sAdventure in subscribedAdventures)
-                {
-                    //Throw if new adventure overlaps with the other ones
-                    if (sAdventure.IsOverlapping(model))
-                        throw new ArgumentException($"Overlapping detected between changed adventure and already subscribed andventure {sAdventure.Id}");
-                }
-
-                existingAdventure.StartDateTime = DateTime.SpecifyKind((DateTime)model.StartDateTime, DateTimeKind.Utc);
-                existingAdventure.EndDateTime = DateTime.SpecifyKind((DateTime)model.EndDateTime, DateTimeKind.Utc);
-            }
-
-            if (model.Languages != null)
-                existingAdventure.Languages = model.Languages;
-
-            else if (model.Capacity != null)
-                existingAdventure.Capacity = (short)model.Capacity;
-
-            else if (model.IsOnline != null)
-                existingAdventure.IsOnline = (bool)model.IsOnline;
-
-            //In those two cases 0 is replaces null
-            else if (model.CountryId != 0)
-                existingAdventure.CountryId = model.CountryId;
-
-            //In those two cases 0 is replaces null
-            else if (model.CityId != 0)
-                existingAdventure.CityId = (short)model.CityId;
-
-            else if (model.Capacity != null)
-                existingAdventure.Capacity = (short)model.Capacity;
-
-            else if (model.MinAge != null)
-                existingAdventure.MinAge = (short)model.MinAge;
-
-            else if (model.MaxAge != null)
-                existingAdventure.MaxAge = (short)model.MaxAge;
-
-            else if (model.Description != null)
-                existingAdventure.Description = model.Description;
-
-            else if (model.Adress != null)
-                existingAdventure.Adress = model.Adress;
-
-            _contx.adventures.Update(existingAdventure);
             await _contx.SaveChangesAsync();
+        }
+
+        public async Task<bool> SendAdventureRequestByCodeAsync(ParticipationRequest request)
+        {
+            var adventure = await _contx.adventures.Where(a => a.UniqueLink == request.InvitationCode)
+                .FirstOrDefaultAsync();
+
+            if (adventure == null)
+                return false;
+
+            var existingAttendee = await _contx.adventure_attendees.Where(a => a.AdventureId == adventure.Id && a.UserId == request.UserId)
+                .FirstOrDefaultAsync();
+
+            //TODO: Perhaps return something more informative
+            if (existingAttendee != null)
+                return false;
+
+            var userName = await _contx.SYSTEM_USERS_BASES.Where(u => u.Id == request.UserId)
+                .Select(u => u.UserName)
+                .FirstOrDefaultAsync();
+
+            await AddUserNotificationAsync(new UserNotification
+            {
+                Section = Sections.Adventurer,
+                Severity = Severities.Urgent,
+                Description = "Someone had requested participation in your adventure using unique code :)",
+                UserId = request.UserId,
+                UserId1 = adventure.UserId
+            });
+
+            //await _contx.adventure_attendees.AddAsync();
+            var newAttendee = new AdventureAttendee
+            {
+                Status = AdventureRequestStatus.New,
+                AdventureId = adventure.Id,
+                UserId = request.UserId,
+                Username = userName
+            };
+
+            await _contx.adventure_attendees.AddAsync(newAttendee);
+            await _contx.SaveChangesAsync();
+
             return true;
         }
 
         public async Task<bool> DeleteAdventureAsync(Guid adventureId, long userId)
         {
-            var adventure = await _contx.adventures.Where(a => a.Id == adventureId && a.UserId == userId)
-                .SingleOrDefaultAsync();
-
-            if (adventure == null)
-                throw new NullReferenceException($"Adventure {adventureId} does not exist or it does not belong to user {userId}");
-
-            var attendees = await _contx.adventure_attendees.Where(a => a.UserId == userId && a.AdventureId == adventureId)
-                .ToListAsync();
-
-            //Notify all attendees about adventure cancelation
-            foreach (var attendee in attendees)
-            {
-                await AddUserNotificationAsync(new UserNotification
-                {
-                    UserId1 = attendee.UserId,
-                    IsLikedBack = false,
-                    Severity = Severities.Urgent,
-                    Section = Sections.Adventurer,
-                    Description = $"Hey! We are very sorry, but adventure <b><i>'{adventure.Name}'</i></b> was canceled by its creator"
-                });
-            }
-
-            _contx.adventure_attendees.RemoveRange(attendees);
-            _contx.adventures.Remove(adventure);
-            await _contx.SaveChangesAsync();
-
             return true;
         }
 
-        public async Task<bool> SubscribeOnAdventureAsync(Guid adventureId, long userId)
+        public async Task<bool> SendAdventureRequestAsync(Guid adventureId, long userId)
         {
-            var adventure = await _contx.adventures.Where(a => a.Id == adventureId)
-                .AsNoTracking()
-                .SingleOrDefaultAsync(); 
-
-            if (adventure == null)
-                throw new NullReferenceException($"Adventure {adventureId} does not exist");
-
-
-            //Adventures created by user
-            var userAdventures = await _contx.adventures.Where(a => a.UserId == userId)
-                .ToListAsync();
-
-            var adventureIds = await _contx.adventure_attendees
-                .Select(a => a.AdventureId)
-                .ToListAsync();
-
-            //Adventures user is subscribed on
-            var subscribedAdventures = await _contx.adventures.Where(a => adventureIds.Contains(a.Id))
-                .ToListAsync();
-
-            foreach (var userAdventure in userAdventures)
-            {
-                //Throw if new adventure overlaps with the other ones
-                if (adventure.IsOverlapping(userAdventure))
-                    throw new ArgumentException($"Overlapping detected between {userAdventure.Id} (created by user) and {adventure.Id} adventure while attempting to subscribe on the last one");
-            }
-
-            foreach (var sAdventure in subscribedAdventures)
-            {
-                //Throw if new adventure overlaps with the other ones
-                if (adventure.IsOverlapping(sAdventure))
-                    throw new ArgumentException($"Overlapping detected between {sAdventure.Id} and newly subscribed adventure {adventure.Id}");
-            }
-            
-
-            var userName = await _contx.SYSTEM_USERS_BASES.Where(u => u.Id == userId)
-                .Select(a => a.UserRealName)
-                .SingleOrDefaultAsync();
-
-            await _contx.adventure_attendees.AddAsync(new AdventureAttendee
-            {
-                AdventureId = adventureId,
-                UserId = userId,
-                Username = userName,
-                Status = AdventureRequestStatus.New
-            });
-            await _contx.SaveChangesAsync();
-
             return true;
         }
 
@@ -4640,11 +4555,10 @@ namespace MyWebApi.Repositories
                 .SingleOrDefaultAsync();
 
             if (attendee == null)
-                throw new NullReferenceException($"No attendee with id {userId} was subscribed on adventure {adventureId}");
+                throw new NullReferenceException($"No attendee with id #{userId} had been subscribed to adventure {adventureId}");
 
             attendee.Status = status;
 
-            _contx.adventure_attendees.Update(attendee);
             await _contx.SaveChangesAsync();
 
             return true;
@@ -4670,9 +4584,15 @@ namespace MyWebApi.Repositories
                 .ToListAsync();
         }
 
-        public async Task<List<Adventure>> GetUsersAdventuresAsync(long userId)
+        public async Task<List<GetAdventure>> GetUserAdventuresAsync(long userId)
         {
             return await _contx.adventures.Where(a => a.UserId == userId)
+                .Select(a => new GetAdventure
+                {
+                    Id = a.Id,
+                    Name = a.Name,
+                    Status = a.Status
+                })
                 .ToListAsync();
         }
 
@@ -4874,6 +4794,74 @@ namespace MyWebApi.Repositories
                 Media = u.UserBaseInfo.UserMedia,
                 IsPhoto = u.UserBaseInfo.IsMediaPhoto
             }).FirstOrDefaultAsync();
+        }
+
+        public async Task<Adventure> GetAdventureAsync(Guid id)
+        {
+            return await _contx.adventures.Where(a => a.Id == id)
+                .FirstOrDefaultAsync();
+        }
+
+        public async Task<bool> SaveAdventureTemplateAsync(ManageTemplate model)
+        {
+            var existingTemplate = await _contx.adventure_templates.Where(t => t.Id == model.Id)
+                .FirstOrDefaultAsync();
+
+            //Update template instead of creating it, if exists
+            if (existingTemplate != null)
+            {
+                existingTemplate.Name = model.Name;
+                existingTemplate.UserId = model.UserId;
+                existingTemplate.Address = model.Address;
+                existingTemplate.Application = model.Application;
+                existingTemplate.AttendeesDescription = model.AttendeesDescription;
+                existingTemplate.UnwantedAttendeesDescription = model.UnwantedAttendeesDescription;
+                existingTemplate.CountryId = model.CountryId;
+                existingTemplate.CityId = model.CityId;
+                existingTemplate.Description = model.Description;
+                existingTemplate.Duration = model.Duration;
+                existingTemplate.Date = model.Date;
+                existingTemplate.Time = model.Time;
+                existingTemplate.Experience = model.Experience;
+                existingTemplate.Gratitude = model.Gratitude;
+                existingTemplate.Media = model.Media;
+                existingTemplate.IsMediaPhoto = model.IsMediaPhoto;
+                existingTemplate.AutoReply = model.AutoReply;
+                existingTemplate.IsAutoReplyText = model.IsAutoReplyText;
+
+                await _contx.SaveChangesAsync();
+                return true;
+            }
+
+            //Create template
+            var template = new AdventureTemplate
+            {
+                Id = Guid.NewGuid(),
+                Name = model.Name,
+                UserId = model.UserId,
+                IsOffline = model.IsOffline,
+                Address = model.Address,
+                Application = model.Application,
+                AttendeesDescription = model.AttendeesDescription,
+                UnwantedAttendeesDescription = model.UnwantedAttendeesDescription,
+                CountryId = model.CountryId,
+                CityId = model.CityId,
+                Description = model.Description,
+                Duration = model.Duration,
+                Date = model.Date,
+                Time = model.Time,
+                Experience = model.Experience,
+                Gratitude = model.Gratitude,
+                Media = model.Media,
+                IsMediaPhoto = model.IsMediaPhoto,
+                AutoReply = model.AutoReply,
+                IsAutoReplyText = model.IsAutoReplyText
+            };
+
+            await _contx.AddAsync(template);
+            await _contx.SaveChangesAsync();
+
+            return true;
         }
     }
 }

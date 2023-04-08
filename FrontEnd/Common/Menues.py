@@ -10,6 +10,7 @@ menu_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True) 
          KeyboardButton("/random"),
          KeyboardButton("/feedback"),
          KeyboardButton("/settings"),
+         KeyboardButton("/adventure"),
          KeyboardButton("/shop"))
 
 admin_menu_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True) \
@@ -27,11 +28,12 @@ def go_back_to_main_menu(bot, user, message, shouldSwitch=True):
     if shouldSwitch:
         phrase = Helpers.switch_user_busy_status(user)
 
-    if Helpers.check_user_has_requests(user):
         request_list = Helpers.get_user_requests(user)
-        if message:
-            Requester(bot, message, user, request_list)
-        return False
+
+        if request_list:
+            if message:
+                Requester(bot, message, user, request_list)
+            return False
 
     notification_list = Helpers.get_user_notifications(user)
     if notification_list:

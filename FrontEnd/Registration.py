@@ -876,7 +876,7 @@ class Registrator:
                                                             editMode=editMode, chat_id=self.current_user)
 
                 else:
-                    self.bot.send_message(self.current_user, "No tags found", reply_markup=self.skip_markup)
+                    self.bot.send_message(self.current_user, "Empty Message", reply_markup=self.skip_markup)
                     self.bot.register_next_step_handler(msg, self.tags_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
 
     def auto_reply_step(self, message, acceptMode=False, editMode=False):

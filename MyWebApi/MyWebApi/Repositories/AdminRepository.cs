@@ -32,7 +32,7 @@ namespace MyWebApi.Repositories
 
         public async Task<long> UploadCities(List<City> cities)
         {
-            cities.ForEach(async c => await _contx.CITIES.AddAsync(c));
+            cities.ForEach(async c => await _contx.cities.AddAsync(c));
             await _contx.SaveChangesAsync();
             return cities.Count;
         }
@@ -41,10 +41,10 @@ namespace MyWebApi.Repositories
         {
             countries.ForEach(async c => 
             {
-                if (!_contx.COUNTRIES.Contains(c))
-                    await _contx.COUNTRIES.AddAsync(c);
+                if (!_contx.countries.Contains(c))
+                    await _contx.countries.AddAsync(c);
                 else
-                    _contx.COUNTRIES.Update(c);
+                    _contx.countries.Update(c);
             });
             await _contx.SaveChangesAsync();
 
