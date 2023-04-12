@@ -1125,5 +1125,11 @@ namespace MyWebApi.Controllers
         {
             return await userRepo.GetUserPartialData(userId);
         }
+
+        [HttpGet("/report-reasons")]
+        public List<GetReportReason> ReportReasons([FromServices] IUserRepository userRepo)
+        {
+            return userRepo.GetReportReasonsAsync();
+        }
     }
 }

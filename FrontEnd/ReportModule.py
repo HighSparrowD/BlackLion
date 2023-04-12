@@ -30,17 +30,17 @@ class ReportModule:
 
         self.report_data = {}
 
-        self.reasons = json.loads(requests.get(f"https://localhost:44381/GetFeedbackReasons/{self.user_language}", verify=False).text)
-        self.reas = []
+        # self.reasons = json.loads(requests.get(f"https://localhost:44381/GetFeedbackReasons/{self.user_language}", verify=False).text)
+        # self.reas = []
 
         self.markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
         self.checkoutMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("1", "2", "3", "4")
         self.YNmarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("yes", "no")
         self.ASmarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("/skip", "/abort")
 
-        for reason in self.reasons:
-            self.reas.append(reason["description"])
-            self.markup.add(KeyboardButton(reason["description"]))
+        # for reason in self.reasons:
+        #     self.reas.append(reason["description"])
+        #     self.markup.add(KeyboardButton(reason["description"]))
 
         self.start_text = "Hello, what are you willing to report? "
         self.middle_text = "Write us a message!"
@@ -77,11 +77,9 @@ class ReportModule:
                 return
 
             elif message.text in self.report_reasons.values():
-                self.report_data = {"id": 0,
-                                    "UserBaseInfoId": self.current_user,
-                                    "UserBaseInfoId1": self.active_user,
-                                    "ReasonId": self.reason_converter(message.text),
-                                    "ReasonClassLocalisationId": 0,
+                self.report_data = {"Sender": self.current_user,
+                                    "ReportedUser": self.active_user,
+                                    "Reason": self.reason_converter(message.text),
                                     }
 
                 if not editMode:
@@ -108,7 +106,7 @@ class ReportModule:
                 self.abort_checkout(message, stage=self.report_user, editMode=editMode)
                 self.edit_mode = None
                 return
-            elif message.text == "/skip":
+            elif message.text != "/skip":
                 self.report_data["text"] = message.text
                 self.edit_mode = None
 
@@ -186,10 +184,10 @@ class ReportModule:
         Helper(self.bot, self.message, self.current_section, editMode=self.edit_mode)
 
     def load_report_reasons(self, localisationId):
-        data = json.loads(requests.get(f"https://localhost:44381/GetReportReasons/{localisationId}", verify=False).text)
+        data = Helpers.get_report_reasons(localisationId)
 
         for reason in data:
-            self.report_reasons[reason['id']] = reason['description']
+            self.report_reasons[reason['id']] = reason['name']
 
     def reason_converter(self, reason):
         for reas in self.report_reasons:

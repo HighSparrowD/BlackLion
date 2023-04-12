@@ -1,6 +1,12 @@
 import json
 import requests
 
+#Used to for translating Accept-Language header
+languages = {
+    0: "en-US",
+    1: "ru-RU",
+    2: "uk-UA"
+}
 
 def check_user_exists(userId):
     return bool(json.loads(requests.get(f"https://localhost:44381/CheckUserExists/{userId}", verify=False).text))
@@ -514,5 +520,14 @@ def save_template(adventureData):
         return requests.post(f"https://localhost:44381/SaveTemplate", d,
                              headers={"Content-Type": "application/json"},
                              verify=False).status_code
+    except:
+        return None
+
+
+def get_report_reasons(language):
+    try:
+        langHeader = languages[language]
+        return json.loads(requests.get(f"https://localhost:44381/report-reasons", headers={"Accept-Language": langHeader},
+                                       verify=False).text)
     except:
         return None

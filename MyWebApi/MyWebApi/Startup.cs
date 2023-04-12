@@ -35,23 +35,16 @@ namespace MyWebApi
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddLocalization(options => options.ResourcesPath = "Resources");
+            // Configure supported cultures
+            var defaultCulture = _config["Globalization:DefaultCulture"];
+            var supportedCultures = _config.GetSection("Globalization:SupportedCultures")
+                .Get<string[]>();
 
             services.Configure<RequestLocalizationOptions>(options =>
             {
-                var supportedCultures = new List<CultureInfo>
-                {
-                    new CultureInfo("en"),
-                    new CultureInfo("ru"),
-                    new CultureInfo("uk"),
-                };
-                options.DefaultRequestCulture = new RequestCulture("ru");
-                options.SupportedCultures = supportedCultures;
-                //options.AddInitialRequestCultureProvider(new CustomRequestCultureProvider(async context =>
-                //{
-                //    Console.WriteLine((string)context.Request.Headers.AcceptLanguage);
-                //    return await Task.FromResult(new ProviderCultureResult(context.Request.Headers.AcceptLanguage.ToString()));
-                //}));
+                options.DefaultRequestCulture = new RequestCulture(_config["Globalization:DefaultCulture"]);
+                options.SupportedCultures = supportedCultures.Select(c => new CultureInfo(c)).ToList();
+                options.SupportedUICultures = supportedCultures.Select(c => new CultureInfo(c)).ToList();
             });
 
             services.AddHostedService<BackgroundWorker>();
@@ -72,15 +65,12 @@ namespace MyWebApi
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            app.UseRequestLocalization();
+
             app.UseStaticFiles();
 
             var localizeOptions = app.ApplicationServices.GetService<IOptions<RequestLocalizationOptions>>();
             app.UseRequestLocalization(localizeOptions.Value);
-
-            //app.UseRequestLocalization(new RequestLocalizationOptions 
-            //{ 
-            //    ApplyCurrentCultureToResponseHeaders = true
-            //});
 
             if (env.IsDevelopment())
             {

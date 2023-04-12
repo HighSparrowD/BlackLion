@@ -1,4 +1,5 @@
-﻿using MyWebApi.Enums;
+﻿using MyWebApi.Entities.UserInfoEntities;
+using MyWebApi.Enums;
 using System;
 using System.ComponentModel.DataAnnotations;
 
@@ -29,6 +30,8 @@ namespace MyWebApi.Entities.AdventureEntities
         public string AutoReply { get; set; }
         public string UniqueLink { get; set; }
         public AdventureStatus Status { get; set; }
+
+        public virtual User Creator { get; set; }
     }
 
 }

@@ -162,6 +162,7 @@ namespace MyWebApi.Interfaces
         Task<bool> CheckUserHaveChosenFreeParamAsync(long userId);
         Task<bool> CheckShouldTurnOffPersonalityAsync(long userId);
         Task<bool> SetUserFreeSearchParamAsync(long userId, bool freeStatus);
+        List<GetReportReason> GetReportReasonsAsync();
         //Get stats user can invest points in
         Task<PersonalityCaps> GetUserPersonalityCapsAsync(long userId);
         Task<bool> GetUserRTLanguageConsiderationAsync(long userId);

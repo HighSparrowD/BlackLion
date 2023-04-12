@@ -1,14 +1,17 @@
-﻿using MyWebApi.Entities.ReportEntities;
-using MyWebApi.Enums;
-using System;
+﻿using MyWebApi.Enums;
+using System.Text.Json.Serialization;
 
 namespace MyWebApi.Entities.UserActionEntities
 {
     public class SendUserReport
     {
+        [JsonPropertyName("sender")]
         public long Sender { get; set; }
+        [JsonPropertyName("reportedUser")]
         public long ReportedUser { get; set; }
+        [JsonPropertyName("text")]
         public string Text { get; set; }
+        [JsonPropertyName("reason")]
         public ReportReason Reason { get; set; }
     }
 }

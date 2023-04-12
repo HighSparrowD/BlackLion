@@ -46,7 +46,7 @@ class RandomTalker:
             self.bot.send_message(self.current_user, "Your reputation is to low. Please contact the administration to resolve that")
             return
 
-        if self.limitations["maxRtViews"] >= self.limitations["actualRtViews"]:
+        if self.limitations["actualRtViews"] >= self.limitations["maxRtViews"]:
             self.bot.send_message(self.current_user, "Sorry, you have run out of RT searches for today.\nYou can still use Card Deck Mini or Card Deck Premium to replenish your views, buy premium and thus double your view count, or wait until tomorrow :)")
             self.destruct()
             return

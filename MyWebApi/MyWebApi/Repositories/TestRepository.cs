@@ -8,7 +8,6 @@ using MyWebApi.Entities.TestEntities;
 using MyWebApi.Entities.SecondaryEntities;
 using System.Linq;
 using MyWebApi.Entities.LocationEntities;
-using Microsoft.VisualBasic;
 
 namespace MyWebApi.Repositories
 {

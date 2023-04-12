@@ -17,6 +17,7 @@ using MyWebApi.Entities.UserActionEntities;
 using MyWebApi.Entities.UserInfoEntities;
 using MyWebApi.Enums;
 using MyWebApi.Interfaces;
+using MyWebApi.Utilities;
 using QRCoder;
 using System;
 using System.Collections.Generic;
@@ -1038,18 +1039,21 @@ namespace MyWebApi.Repositories
             }
         }
 
-        //public async Task<List<ReportReason>> GetReportReasonsAsync(int localisationId)
-        //{
-        //    try
-        //    {
-        //        return await _contx.REPORT_REASONS.Where(r => r.ClassLocalisationId == localisationId).ToListAsync();
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        await LogAdminErrorAsync(null, ex.Message, (int)Sections.Neutral);
-        //        return null;
-        //    }
-        //}
+        public List<GetReportReason> GetReportReasonsAsync()
+        {
+            var reasons = new List<GetReportReason>();
+
+            foreach (var reason in Enum.GetValues(typeof(ReportReason)))
+            {
+                reasons.Add(new GetReportReason
+                {
+                    Id = (short)reason,
+                    Name = EnumLocalizer.GetLocalizedValue((ReportReason)reason)
+                });
+            }
+
+            return reasons;
+        }
 
         public async Task<bool> AddUserToBlackListAsync(long userId, long bannedUserId)
         {
@@ -4504,14 +4508,26 @@ namespace MyWebApi.Repositories
             if (adventure == null)
                 return false;
 
-            var existingAttendee = await _contx.adventure_attendees.Where(a => a.AdventureId == adventure.Id && a.UserId == request.UserId)
+            return await SendAdventureRequestAsync(adventure.Id, request.UserId);
+        }
+        public async Task<bool> SendAdventureRequestAsync(Guid adventureId, long userId)
+        {
+            var adventure = await _contx.adventures.Where(a => a.Id == adventureId)
+                .FirstOrDefaultAsync();
+
+            if (adventure == null)
+                return false;
+                //throw new InvalidOperationException($"Adventure with id #{adventureId} does not exist");
+
+            var existingAttendee = await _contx.adventure_attendees
+                .Where(a => a.AdventureId == adventure.Id && a.UserId == userId)
                 .FirstOrDefaultAsync();
 
             //TODO: Perhaps return something more informative
             if (existingAttendee != null)
                 return false;
 
-            var userName = await _contx.SYSTEM_USERS_BASES.Where(u => u.Id == request.UserId)
+            var userName = await _contx.SYSTEM_USERS_BASES.Where(u => u.Id == userId)
                 .Select(u => u.UserName)
                 .FirstOrDefaultAsync();
 
@@ -4519,17 +4535,16 @@ namespace MyWebApi.Repositories
             {
                 Section = Sections.Adventurer,
                 Severity = Severities.Urgent,
-                Description = "Someone had requested participation in your adventure using unique code :)",
-                UserId = request.UserId,
+                Description = "Someone had requested participation in your adventure", //TODO: Perhaps clarify if actions had been done with use of unique code
+                UserId = userId,
                 UserId1 = adventure.UserId
             });
 
-            //await _contx.adventure_attendees.AddAsync();
             var newAttendee = new AdventureAttendee
             {
                 Status = AdventureRequestStatus.New,
                 AdventureId = adventure.Id,
-                UserId = request.UserId,
+                UserId = userId,
                 Username = userName
             };
 
@@ -4544,23 +4559,34 @@ namespace MyWebApi.Repositories
             return true;
         }
 
-        public async Task<bool> SendAdventureRequestAsync(Guid adventureId, long userId)
-        {
-            return true;
-        }
 
         public async Task<bool> ProcessSubscriptionRequestAsync(Guid adventureId, long userId, AdventureRequestStatus status)
         {
             var attendee = await _contx.adventure_attendees.Where(a => a.UserId == userId && a.AdventureId == adventureId)
                 .SingleOrDefaultAsync();
 
+
             if (attendee == null)
                 throw new NullReferenceException($"No attendee with id #{userId} had been subscribed to adventure {adventureId}");
 
+            var adventure = await _contx.adventures.Where(a => a.Id == adventureId)
+                .Include(a => a.Creator).ThenInclude(u => u.UserBaseInfo)
+                .FirstOrDefaultAsync();
+
             attendee.Status = status;
 
-            await _contx.SaveChangesAsync();
+            if (status == AdventureRequestStatus.Accepted)
+            {
+                await AddUserNotificationAsync(new UserNotification
+                {
+                    UserId1 = userId,
+                    Section = Sections.Adventurer,
+                    Severity = Severities.Moderate,
+                    Description = $"Your request to join adventure {adventure.Name} had been accepted.\nYou may contact its creator @{adventure.Creator.UserBaseInfo.UserName} and discuss details"
+                });
+            }
 
+            await _contx.SaveChangesAsync();
             return true;
         }
 
