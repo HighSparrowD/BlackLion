@@ -1036,8 +1036,20 @@ namespace MyWebApi.Controllers
             await _repository.ChangeAdventureAsync(model);
         }
 
-        [HttpPost("/SendAdventureRequestByCode")]
-        public async Task<bool> SendAdventureRequestByCode(ParticipationRequest model)
+        [HttpGet("/adventure-templates/{userId}")]
+        public async Task<List<GetTemplateShort>> AdventureTenmplates([FromRoute]long userId)
+        {
+            return await _repository.GetAdventureTemplatesAsync(userId);
+        }
+
+        [HttpGet("/adventure-template/{id}")]
+        public async Task<ManageTemplate> AdventureTenmplates([FromRoute] Guid id)
+        {
+            return await _repository.GetAdventureTemplateAsync(id);
+        }
+
+        [HttpGet("/SendAdventureRequestByCode")]
+        public async Task<ParticipationRequestStatus> SendAdventureRequestByCode(ParticipationRequest model)
         {
             return await _repository.SendAdventureRequestByCodeAsync(model);
         }
@@ -1049,7 +1061,7 @@ namespace MyWebApi.Controllers
         }
 
         [HttpGet("/SubscribeOnAdventure/{id}/{userId}")]
-        public async Task<bool> SubscribeOnAdventure(Guid id, long userId)
+        public async Task<ParticipationRequestStatus> SubscribeOnAdventure(Guid id, long userId)
         {
             return await _repository.SendAdventureRequestAsync(id, userId);
         }
@@ -1094,6 +1106,12 @@ namespace MyWebApi.Controllers
         public async Task<bool> SaveTemplate(ManageTemplate model)
         {
             return await _repository.SaveAdventureTemplateAsync(model);
+        }
+
+        [HttpDelete("/delete-template/{templateId}")]
+        public async Task<DeleteTemplateResult> DeleteTemplate([FromRoute]Guid templateId, [FromServices] IUserRepository userRepo)
+        {
+            return await userRepo.DeleteAdventureTemplateAsync(templateId);
         }
 
         [HttpGet("/get-user-media/{userId}")]

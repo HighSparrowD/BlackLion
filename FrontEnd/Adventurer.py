@@ -19,8 +19,8 @@ class Adventurer:
         self.isIdentityConfirmed = self.user_info["identityType"] != 0
         self.user_localization = self.user_info["userDataInfo"]["languageId"]
 
-        #Indicates whether if user is managing his own adventures (True) or subscribed adventures (False)
-        self.managingUsersAdventures = False
+        #Indicates whether if user is managing his own adventures (1), subscribed adventures (2), a template (3), create from template (4)
+        self.manageMode = 1
 
         Helpers.switch_user_busy_status(self.current_user)
 
@@ -49,15 +49,26 @@ class Adventurer:
         self.country = self.user_info["userDataInfo"]["location"]["countryId"]
         self.city = self.user_info["userDataInfo"]["location"]["cityId"]
 
+        #Used for template management
+        self.current_template = 0
+        self.isTemplate = False # Defines checkout's functionality
+
         self.countries = {}
         self.cities = {}
 
-        self.register_checkout_message = "1.Change name\n2.Change country\n3.Change city\n4.Change media\n5.Change description\n6.Change experience description\n7.Change attendees description \n8.Describe unwanted people\n9.Describe reward\n10.Change Date\n11.Change Time\n12.Change duration\n13.{commOption}\n14.Change Auto Reply\n15. ⭐Change Keywords (tags)⭐\n16.{action}"
+        self.register_checkout_message = "1.Change name\n2.Change country\n3.Change city\n4.Change media\n5.Change description\n6.Change experience description\n7.Change attendees description \n8.Describe unwanted people\n9.Describe reward\n10.Change Date\n11.Change Time\n12.Change duration\n13.{commOption}\n14.Change Auto Reply\n15. ⭐Change Keywords (tags)⭐\n16.{action}\n17. Abort"
+        self.register_template_checkout_message = "1.Change name\n2.Change country\n3.Change city\n4.Change media\n5.Change description\n6.Change experience description\n7.Change attendees description \n8.Describe unwanted people\n9.Describe reward\n10.Change Date\n11.Change Time\n12.Change duration\n13.{commOption}\n14.Change Auto Reply\n15.{action}\n16. Abort"
 
         self.start_markup = InlineKeyboardMarkup() \
             .add(InlineKeyboardButton("My adventures", callback_data="1")) \
             .add(InlineKeyboardButton("Adventures I have joined", callback_data="2")) \
             .add(InlineKeyboardButton("Find Adventures", callback_data="3")) \
+            .add(InlineKeyboardButton("My Templates", callback_data="6")) \
+            .add(InlineKeyboardButton("Go Back", callback_data="-20"))
+
+        self.pre_register_markup = InlineKeyboardMarkup() \
+            .add(InlineKeyboardButton("Create manually", callback_data="160")) \
+            .add(InlineKeyboardButton("Create from template", callback_data="161")) \
             .add(InlineKeyboardButton("Go Back", callback_data="-20"))
 
         self.search_markup = InlineKeyboardMarkup() \
@@ -70,6 +81,11 @@ class Adventurer:
             .add(InlineKeyboardButton("Offline", callback_data="5"), InlineKeyboardButton("❓", callback_data="305")) \
             .add(InlineKeyboardButton("Go Back", callback_data="-20"))
 
+        self.manage_template_markup = InlineKeyboardMarkup() \
+            .add(InlineKeyboardButton("Change", callback_data="7")) \
+            .add(InlineKeyboardButton("Delete", callback_data="8")) \
+            .add(InlineKeyboardButton("Go Back", callback_data="-20"))
+
         self.okMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Ok")
         self.YNMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Yes", "No")
         self.goBackMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Go Back")
@@ -77,10 +93,12 @@ class Adventurer:
         self.verificationMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Now", "Later")
         self.locationOfflineMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Use location from my profile", "Select manually")
         self.locationOnlineMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Use location from my profile").add("Select manually", "No matter")
-        self.registerCheckoutMarkup_N = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16")
         self.registerCheckoutMarkup_E = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17")
 
+        self.registerTemplateCheckoutMarkup_E = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14").add("15").add("16")
+
         self.my_adventuresMarkup = InlineKeyboardMarkup()
+        self.my_templatesMarkup = InlineKeyboardMarkup()
         self.subscribed_adventuresMarkup = InlineKeyboardMarkup()
 
         self.starting_message = "It's time for adventures!\n The Adventures feature allows users to create and join various adventures with other users.\n Creating adventures is simple: the user selects the desired activity, date and location, and then invites other users to join.\n When other users confirm their participation, they can start chatting and plan the details of the adventure in chat.\n You can offer anything, but only what is legal in your country"
@@ -114,14 +132,46 @@ class Adventurer:
         self.previous_section = self.destruct
         self.send_active_message("<b><i>Please, select an option</i></b>", markup=self.start_markup)
 
+    def register_pre_register(self):
+        self.previous_section = self.my_adventures_manager
+        self.send_active_message("Please, select an option:", markup=self.pre_register_markup)
+
+    def choose_template(self):
+        self.manageMode = 4
+        self.assemble_my_templates_markup(False)
+
+        self.send_active_message("Please, select a template", markup=self.my_templatesMarkup)
+
+    def register_from_template(self):
+        self.editMode = False
+        self.isTemplate = False
+        self.data.clear()
+
+        self.subscribe_callback_handler(self.registration_callback_handler)
+        self.data = Helpers.get_template(self.current_template)
+        self.register_checkout(self.message)
+
     def register_start(self):
         # if self.createdCount + 1 > self.creation_limit:
         #     self.send_secondary_message(f"You reached the limit. You can create up to {self.creation_limit} adventures. Please, wait until one of your adventures ends, or delete it manually.")
         # else:
+        self.data.clear()
+        self.editMode = False
+        self.isTemplate = False
+
         self.subscribe_callback_handler(self.registration_callback_handler)
         self.data["userId"] = self.current_user
-        self.editMode = False
         self.register_state_step()
+
+    def register_template_start(self):
+        self.previous_section = self.start
+
+        self.subscribe_callback_handler(self.registration_callback_handler)
+        self.data.clear()
+        self.data["userId"] = self.current_user
+        self.editMode = False
+        self.isTemplate = True
+        self.register_state_step(ignoreVerification=True)
 
     def register_state_step(self, ignoreVerification=False):
         self.current_registration_step = self.register_state_step
@@ -175,7 +225,10 @@ class Adventurer:
         self.delete_secondary_message()
 
         if not acceptMode:
-            self.send_active_message("Please, name your adventure")
+            if self.isTemplate:
+                self.send_active_message("Please, name your template")
+            else:
+                self.send_active_message("Please, name your adventure")
             self.bot.register_next_step_handler(message, self.register_name_step, acceptMode=True, chat_id=self.current_user)
         else:
             self.delete_message(message)
@@ -187,6 +240,10 @@ class Adventurer:
             self.data["name"] = message.text
 
             if self.editMode:
+                if self.isTemplate:
+                    self.register_template_checkout(message)
+                    return
+
                 self.register_checkout(message)
                 return
 
@@ -343,6 +400,10 @@ class Adventurer:
                 self.previous_item = ''
 
                 if self.editMode:
+                    if self.isTemplate:
+                        self.register_template_checkout(message)
+                        return
+
                     self.register_checkout(message)
                     return
 
@@ -378,6 +439,10 @@ class Adventurer:
                 return
 
             if self.editMode:
+                if self.isTemplate:
+                    self.register_template_checkout(message)
+                    return
+
                 self.register_checkout(message)
                 return
 
@@ -400,6 +465,10 @@ class Adventurer:
             self.data["description"] = message.text
 
             if self.editMode:
+                if self.isTemplate:
+                    self.register_template_checkout(message)
+                    return
+
                 self.register_checkout(message)
                 return
 
@@ -427,6 +496,10 @@ class Adventurer:
             self.data["experience"] = message.text
 
             if self.editMode:
+                if self.isTemplate:
+                    self.register_template_checkout(message)
+                    return
+
                 self.register_checkout(message)
                 return
 
@@ -454,6 +527,10 @@ class Adventurer:
             self.data["attendeesDescription"] = message.text
 
             if self.editMode:
+                if self.isTemplate:
+                    self.register_template_checkout(message)
+                    return
+
                 self.register_checkout(message)
                 return
 
@@ -481,6 +558,10 @@ class Adventurer:
             self.data["unwantedAttendeesDescription"] = message.text
 
             if self.editMode:
+                if self.isTemplate:
+                    self.register_template_checkout(message)
+                    return
+
                 self.register_checkout(message)
                 return
 
@@ -503,6 +584,10 @@ class Adventurer:
             self.data["gratitude"] = message.text
 
             if self.editMode:
+                if self.isTemplate:
+                    self.register_template_checkout(message)
+                    return
+
                 self.register_checkout(message)
                 return
 
@@ -525,6 +610,10 @@ class Adventurer:
             self.data["date"] = message.text
 
             if self.editMode:
+                if self.isTemplate:
+                    self.register_template_checkout(message)
+                    return
+
                 self.register_checkout(message)
                 return
 
@@ -547,6 +636,10 @@ class Adventurer:
             self.data["time"] = message.text
 
             if self.editMode:
+                if self.isTemplate:
+                    self.register_template_checkout(message)
+                    return
+
                 self.register_checkout(message)
                 return
 
@@ -569,6 +662,10 @@ class Adventurer:
             self.data["duration"] = message.text
 
             if self.editMode:
+                if self.isTemplate:
+                    self.register_template_checkout(message)
+                    return
+
                 self.register_checkout(message)
                 return
 
@@ -595,6 +692,10 @@ class Adventurer:
             self.data["application"] = message.text
 
             if self.editMode:
+                if self.isTemplate:
+                    self.register_template_checkout(message)
+                    return
+
                 self.register_checkout(message)
                 return
 
@@ -618,6 +719,10 @@ class Adventurer:
             self.data["address"] = message.text
 
             if self.editMode:
+                if self.isTemplate:
+                    self.register_template_checkout(message)
+                    return
+
                 self.register_checkout(message)
                 return
 
@@ -633,34 +738,42 @@ class Adventurer:
         else:
             self.delete_message(message)
             if message.text == "Skip":
-                self.register_checkout(message)
+                self.register_branch_move_next(message)
             elif message.text:
                 #TODO: check length (discuss), add to data
                 self.data["autoReply"] = message.text
                 self.data["isAutoReplyText"] = True
 
-                if self.hasPremium:
-                    self.registration_tags_step(message)
-                    return
-
-                self.register_checkout(message)
+                self.register_branch_move_next(message)
             elif message.voice:
                 #TODO: check length (discuss)
                 self.data["autoReply"] = message.voice.file_id
                 self.data["isAutoReplyText"] = False
 
-                if self.hasPremium:
-                    self.registration_tags_step(message)
-                    return
-
-                if self.editMode:
-                    self.register_checkout(message)
-                    return
-
-                self.register_checkout(message)
+                self.register_branch_move_next(message)
             else:
                 self.send_secondary_message("Empty message", self.skipMarkup)
                 self.bot.register_next_step_handler(message, self.register_auto_reply_step, acceptMode=acceptMode, chat_id=self.current_user)
+
+    #Used to define, which way should registration go after auto reply step
+    def register_branch_move_next(self, message):
+        if self.editMode:
+            if self.isTemplate:
+                self.register_template_checkout(message)
+                return
+
+            self.register_checkout(message)
+            return
+
+        if self.hasPremium and not self.isTemplate:
+            self.registration_tags_step(message)
+            return
+
+        if self.isTemplate:
+            self.register_template_checkout(message)
+            return
+
+        self.register_checkout(message)
 
     #TODO: Implement, Check formatting
     def registration_tags_step(self, message, acceptMode=False):
@@ -680,24 +793,21 @@ class Adventurer:
             addition1 = "Change Address"
             addition2 = "✨Create Adventure✨"
 
-            markup = self.registerCheckoutMarkup_N
-
             if not self.isOffline:
                 addition1 = "Change Application"
 
             if self.doesExist:
-                addition2 = "✨Save Changes✨\n17. ✨Discard Changes✨"
-                markup = self.registerCheckoutMarkup_E
+                addition2 = "✨Save Changes✨"
 
             msg = self.register_checkout_message.format(commOption=addition1, action=addition2)
 
             if self.data["isMediaPhoto"]:
-                self.send_active_message_with_photo(self.assemble_adventure_checkout_message(), self.data["media"], markup=markup)
+                self.send_active_message_with_photo(self.assemble_adventure_checkout_message(), self.data["media"], markup=self.registerCheckoutMarkup_E)
             else:
-                self.send_active_message_with_video(self.assemble_adventure_checkout_message(), self.data["media"], markup=markup)
+                self.send_active_message_with_video(self.assemble_adventure_checkout_message(), self.data["media"], markup=self.registerCheckoutMarkup_E)
 
             # self.send_active_message(self.assemble_adventure_checkout_message(), markup=self.registerCheckoutMarkup)
-            self.send_secondary_message(msg, markup=markup)
+            self.send_secondary_message(msg, markup=self.registerCheckoutMarkup_E)
 
             self.bot.register_next_step_handler(message, self.register_checkout, acceptMode=True, chat_id=self.current_user)
         else:
@@ -738,12 +848,8 @@ class Adventurer:
                 if self.hasPremium:
                     self.registration_tags_step(message)
                 else:
-                    markup = self.registerCheckoutMarkup_N
 
-                    if self.doesExist:
-                        markup = self.registerCheckoutMarkup_E
-
-                    self.send_simple_message("This functionality is available for premium users only", markup=markup)
+                    self.send_simple_message("This functionality is available for premium users only", markup=self.registerCheckoutMarkup_E)
                     self.bot.register_next_step_handler(message, self.register_checkout, acceptMode=True, chat_id=self.current_user)
             elif message.text == "16":
                 if self.doesExist:
@@ -755,10 +861,93 @@ class Adventurer:
 
                 code = Helpers.register_adventure(self.data)
 
+                #TODO: QR CODE
                 self.send_simple_message(f"Done :). Here is your invitation code: <b>{code}</b>. Other users will be able to find your adventure with it")
                 self.registration_template_step(message)
             elif message.text == "17":
                 self.registration_discard_changes(message)
+            else:
+                self.delete_message(message)
+                self.bot.register_next_step_handler(message, self.register_checkout, acceptMode=acceptMode, chat_id=self.current_user)
+
+    def register_template_checkout(self, message, acceptMode=False):
+        if not acceptMode:
+            addition1 = "Change Address"
+            addition2 = "✨Create Template✨"
+
+            if not self.isOffline:
+                addition1 = "Change Application"
+
+            if self.doesExist:
+                addition2 = "✨Save Changes✨"
+
+            msg = self.register_template_checkout_message.format(commOption=addition1, action=addition2)
+
+            if self.data["isMediaPhoto"]:
+                self.send_active_message_with_photo(self.assemble_adventure_checkout_message(), self.data["media"], markup=self.registerTemplateCheckoutMarkup_E)
+            else:
+                self.send_active_message_with_video(self.assemble_adventure_checkout_message(), self.data["media"], markup=self.registerTemplateCheckoutMarkup_E)
+
+            # self.send_active_message(self.assemble_adventure_checkout_message(), markup=self.registerCheckoutMarkup)
+            self.send_secondary_message(msg, markup=self.registerTemplateCheckoutMarkup_E)
+
+            self.bot.register_next_step_handler(message, self.register_template_checkout, acceptMode=True, chat_id=self.current_user)
+        else:
+            self.editMode = True
+
+            if message.text == "1":
+                self.register_name_step(message)
+            elif message.text == "2":
+                self.register_country_step(message)
+            elif message.text == "3":
+                self.register_city_step(message)
+            elif message.text == "4":
+                self.register_media_step(message)
+            elif message.text == "5":
+                self.register_description_step(message)
+            elif message.text == "6":
+                self.register_experience_step(message)
+            elif message.text == "7":
+                self.register_attendees_step(message)
+            elif message.text == "8":
+                self.register_unwanted_attendees_step(message)
+            elif message.text == "9":
+                self.register_gratitude_step(message)
+            elif message.text == "10":
+                self.register_date_step(message)
+            elif message.text == "11":
+                self.register_time_step(message)
+            elif message.text == "12":
+                self.register_duration_step(message)
+            elif message.text == "13":
+                if not self.isOffline:
+                    self.register_application_step(message)
+                    return
+                self.register_address_step(message)
+            elif message.text == "14":
+                self.register_auto_reply_step(message)
+            elif message.text == "15":
+                self.subscribe_callback_handler(self.start_callback_handler)
+
+                if self.doesExist:
+                    Helpers.save_template(self.data)
+                    self.send_secondary_message("Changes are saved successfully")
+                    self.previous_section()
+                    return
+
+                result = Helpers.save_template(self.data)
+
+                if result:
+                    self.send_simple_message(f"Done :)")
+                else:
+                    self.send_simple_message("Something went wrong! Please, contact the administration")
+
+                self.previous_section()
+            elif message.text == "16":
+                self.registration_discard_changes(message)
+            else:
+                self.delete_message(message)
+                self.bot.register_next_step_handler(message, self.register_checkout, acceptMode=acceptMode, chat_id=self.current_user)
 
     def registration_template_step(self, message, acceptMode=False):
         if not acceptMode:
@@ -766,8 +955,11 @@ class Adventurer:
             self.bot.register_next_step_handler(message, self.registration_template_step, acceptMode=True, chat_id=self.current_user)
         else:
             if message.text == "Yes":
-                Helpers.save_template(self.data)
-                self.send_secondary_message("Done :). You may access, change or use this template whenever you like in 'My Templates' section")
+                result = Helpers.save_template(self.data)
+                if result:
+                    self.send_secondary_message("Done :). You may access, change or use this template whenever you like in 'My Templates' section")
+                else:
+                    self.send_secondary_message("Something went wrong ! Please, contact the administration")
                 self.subscribe_callback_handler(self.start_callback_handler)
                 self.previous_section()
             elif message.text == "No":
@@ -784,9 +976,17 @@ class Adventurer:
         else:
             if message.text == "Yes":
                 self.subscribe_callback_handler(self.start_callback_handler)
+
+                if self.isTemplate:
+                    self.previous_section(self.current_template)
+                    return
+
                 self.previous_section()
             else:
-                self.register_checkout(message)
+                if self.isTemplate:
+                    self.register_template_checkout(message)
+                else:
+                    self.register_checkout(message)
 
     def registration_abandon(self, message, acceptMode=False):
         if not acceptMode:
@@ -802,39 +1002,89 @@ class Adventurer:
     def my_adventures_manager(self):
         self.previous_section = self.start
         self.assemble_my_adventures_markup()
-        self.managingUsersAdventures = True
+        self.manageMode = 1
         self.send_active_message("<b><i>Here are adventures created by you</i></b>", markup=self.my_adventuresMarkup)
 
     def subscribed_adventures_manager(self):
         self.previous_section = self.start
 
-        self.managingUsersAdventures = False
+        self.manageMode = 2
         if len(self.subscribed_adventuresMarkup) > 1:
             self.send_active_message("<b><i>Here are all adventures, you are subscribed on</i></b>", markup=self.subscribed_adventuresMarkup)
 
         self.send_active_message("<b><i>You are not subscribed on any adventures!\nTry finding them :)</b></i>", markup=self.search_markup)
 
     def search_choice(self):
-        self.bot.send_message(self.current_user, "<b><i>Please, chose an option</i></b>", reply_markup=self.search_markup)
+        self.send_active_message("<b><i>Please, chose an option</i></b>", markup=self.search_markup)
 
     def recurring_adventure_search(self):
         self.delete_active_message()
         self.delete_secondary_message()
-        self.previous_section = self.start
+        self.previous_section = self.search_choice
         #TODO: finish up
 
     def join_by_code(self, message, acceptMode=False):
         if not acceptMode:
-            self.bot.send_message(self.current_user, "Please, enter the code:", reply_markup=self.goBackMarkup)
+            self.previous_section = self.search_choice
+
+            self.send_active_message("Please, enter the code:", markup=self.goBackMarkup)
             self.bot.register_next_step_handler(message, self.join_by_code, acceptMode=True, chat_id=self.current_user)
         else:
-            #TODO: check if code exists. Send request to owner. Return result
-            result = False
-            if not result:
-                self.bot.send_message(self.current_user, "Invalid invitation code", reply_markup=self.goBackMarkup)
+            self.delete_message(message)
+            if message.text == "Go Back":
+                self.previous_section()
+                return
+
+            response = Helpers.send_adventure_request_by_code(self.current_user, message.text)
+            if response == 2:
+                self.send_secondary_message("Invalid invitation code", markup=self.goBackMarkup)
+                self.bot.register_next_step_handler(message, self.join_by_code, acceptMode=acceptMode, chat_id=self.current_user)
+            elif response == 3:
+                self.send_secondary_message("You are already participation in this adventure", markup=self.goBackMarkup)
+                self.bot.register_next_step_handler(message, self.join_by_code, acceptMode=acceptMode, chat_id=self.current_user)
+            elif response == 4:
+                self.send_secondary_message("Unable to join the adventure. You are its owner", markup=self.goBackMarkup)
                 self.bot.register_next_step_handler(message, self.join_by_code, acceptMode=acceptMode, chat_id=self.current_user)
             else:
-                self.bot.send_message(self.current_user, "Done! your request had been sent to the adventure's owner :)")
+                self.send_secondary_message("Done! your request had been sent to the adventure's owner :)")
+                self.previous_section()
+
+    def manage_templates(self):
+        self.manageMode = 3
+        self.previous_section = self.start
+        self.assemble_my_templates_markup()
+        self.send_active_message("<b><i>Please, select markup you want to manage</i></b>", markup=self.my_templatesMarkup)
+
+    def manage_single_template(self, templateId):
+        self.current_template = templateId
+        self.previous_section = self.manage_templates
+        self.send_active_message("<i><b>Please, select an option</b></i>", self.manage_template_markup)
+
+    def change_current_template(self):
+        self.isTemplate = True
+        self.doesExist = True
+        self.previous_section = self.manage_single_template
+        self.data = Helpers.get_template(self.current_template)
+        self.register_template_checkout(self.message)
+
+    def delete_current_template(self, message, acceptMode=False):
+        if not acceptMode:
+            self.send_secondary_message("Are you sure, you want to delete template ?", markup=self.YNMarkup)
+            self.bot.register_next_step_handler(message, self.delete_current_template, acceptMode=True, chat_id=self.current_user)
+        else:
+            if message.text == "Yes":
+                result = Helpers.delete_template(self.current_template)
+
+                if result == 1:
+                    self.send_secondary_message("Done !")
+                elif result == 2:
+                    self.send_secondary_message("Template does not exist !")
+                else:
+                    self.send_secondary_message("Something went wrong ! Please, contact administration")
+
+                self.manage_templates()
+            else:
+                self.manage_single_template(self.current_template)
 
     def start_callback_handler(self, call):
         if call.data == "1":
@@ -847,15 +1097,37 @@ class Adventurer:
             self.recurring_adventure_search()
         elif call.data == "5":
             self.join_by_code(call.message)
+        elif call.data == "6":
+            self.manage_templates()
+        elif call.data == "7":
+            self.change_current_template()
+        elif call.data == "8":
+            self.delete_current_template(call.message)
         elif call.data == "150":
+            self.register_pre_register()
+        elif call.data == "160":
             self.register_start()
+        elif call.data == "161":
+            self.choose_template()
+        elif call.data == "151":
+            self.register_template_start()
         elif call.data == "-20":
             self.previous_section()
-        #Adventure selection
+        #Adventure and Template selection
         else:
-            self.subscribe_callback_handler(self.registration_callback_handler)
-            self.load_adventure_data(call.data)
-            self.register_checkout(call.message)
+            if self.manageMode == 1:
+                self.isTemplate = False
+                self.subscribe_callback_handler(self.registration_callback_handler)
+                self.load_adventure_data(call.data)
+                self.register_checkout(call.message)
+            elif self.manageMode == 2:
+                pass
+            elif self.manageMode == 3:
+                self.previous_section = self.manage_templates
+                self.manage_single_template(call.data)
+            elif self.manageMode == 4:
+                self.current_template = call.data
+                self.register_from_template()
 
     def registration_callback_handler(self, call):
         if call.data == "-1" or call.data == "-2":
@@ -980,6 +1252,20 @@ class Adventurer:
             self.subscribed_adventuresMarkup.add(InlineKeyboardButton(adventure["name"], callback_data=adventure["id"]))
 
         self.subscribed_adventuresMarkup.add(InlineKeyboardButton("Go Back", callback_data="-20"))
+
+    def assemble_my_templates_markup(self, addNewButton=True):
+        templates = Helpers.get_templates(self.current_user)
+
+        self.my_templatesMarkup.clear()
+
+        for template in templates:
+            self.my_templatesMarkup.add(InlineKeyboardButton(template["name"], callback_data=template["id"]))
+
+        #TODO: Create its own separate limit
+        if addNewButton and len(templates) + 1 <= self.creation_limit:
+            self.my_templatesMarkup.add(InlineKeyboardButton("➕ Add ➕", callback_data="151"))
+
+        self.my_templatesMarkup.add(InlineKeyboardButton("Go Back", callback_data="-20"))
 
     def assemble_adventure_checkout_message(self):
         #Load dependencies if weren't loaded before

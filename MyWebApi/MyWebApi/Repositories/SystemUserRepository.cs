@@ -4500,32 +4500,33 @@ namespace MyWebApi.Repositories
             await _contx.SaveChangesAsync();
         }
 
-        public async Task<bool> SendAdventureRequestByCodeAsync(ParticipationRequest request)
+        public async Task<ParticipationRequestStatus> SendAdventureRequestByCodeAsync(ParticipationRequest request)
         {
             var adventure = await _contx.adventures.Where(a => a.UniqueLink == request.InvitationCode)
                 .FirstOrDefaultAsync();
 
             if (adventure == null)
-                return false;
+                return ParticipationRequestStatus.AdventureNotFound;
 
             return await SendAdventureRequestAsync(adventure.Id, request.UserId);
         }
-        public async Task<bool> SendAdventureRequestAsync(Guid adventureId, long userId)
+        public async Task<ParticipationRequestStatus> SendAdventureRequestAsync(Guid adventureId, long userId)
         {
             var adventure = await _contx.adventures.Where(a => a.Id == adventureId)
                 .FirstOrDefaultAsync();
 
             if (adventure == null)
-                return false;
-                //throw new InvalidOperationException($"Adventure with id #{adventureId} does not exist");
+                return ParticipationRequestStatus.AdventureNotFound;
+
+            if (adventure.UserId == userId)
+                return ParticipationRequestStatus.AdventuresOwner;
 
             var existingAttendee = await _contx.adventure_attendees
                 .Where(a => a.AdventureId == adventure.Id && a.UserId == userId)
                 .FirstOrDefaultAsync();
 
-            //TODO: Perhaps return something more informative
             if (existingAttendee != null)
-                return false;
+                return ParticipationRequestStatus.AlreadyParticipating;
 
             var userName = await _contx.SYSTEM_USERS_BASES.Where(u => u.Id == userId)
                 .Select(u => u.UserName)
@@ -4551,7 +4552,7 @@ namespace MyWebApi.Repositories
             await _contx.adventure_attendees.AddAsync(newAttendee);
             await _contx.SaveChangesAsync();
 
-            return true;
+            return ParticipationRequestStatus.Ok;
         }
 
         public async Task<bool> DeleteAdventureAsync(Guid adventureId, long userId)
@@ -4888,6 +4889,56 @@ namespace MyWebApi.Repositories
             await _contx.SaveChangesAsync();
 
             return true;
+        }
+
+        public async Task<List<GetTemplateShort>> GetAdventureTemplatesAsync(long userId)
+        {
+            return await _contx.adventure_templates.Where(t => t.UserId == userId).Select(t => new GetTemplateShort
+            {
+                Id = t.Id,
+                Name = t.Name
+            }).ToListAsync();
+        }
+
+        public async Task<ManageTemplate> GetAdventureTemplateAsync(Guid id)
+        {
+            return await _contx.adventure_templates.Where(t => t.Id == id).Select(t => new ManageTemplate
+            {
+                Id = t.Id,
+                Date = t.Date,
+                Time = t.Time,
+                Description = t.Description,
+                Duration = t.Duration,
+                Address = t.Address,
+                AttendeesDescription = t.AttendeesDescription,
+                Application = t.Application,
+                AutoReply = t.AutoReply,
+                IsAutoReplyText = t.IsAutoReplyText,
+                Media = t.Media,
+                IsMediaPhoto = t.IsMediaPhoto,
+                CityId = t.CityId,
+                CountryId = t.CountryId,
+                Experience = t.Experience,
+                Gratitude = t.Gratitude,
+                UnwantedAttendeesDescription = t.UnwantedAttendeesDescription,
+                IsOffline = t.IsOffline,
+                Name = t.Name,
+                UserId = t.UserId
+            }).FirstOrDefaultAsync();
+        }
+
+        public async Task<DeleteTemplateResult> DeleteAdventureTemplateAsync(Guid templateId)
+        {
+            var template = await _contx.adventure_templates.Where(t => t.Id == templateId)
+                .FirstOrDefaultAsync();
+
+            if (template == null)
+                return DeleteTemplateResult.DoesNotExist;
+
+            _contx.adventure_templates.Remove(template);
+            await _contx.SaveChangesAsync();
+
+            return DeleteTemplateResult.Success;
         }
     }
 }

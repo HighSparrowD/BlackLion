@@ -187,8 +187,10 @@ namespace MyWebApi.Interfaces
         Task<string> RegisterAdventureAsync(ManageAdventure model);
         Task ChangeAdventureAsync(ManageAdventure model);
         Task<bool> DeleteAdventureAsync(Guid adventureId, long userId);
-        Task<bool> SendAdventureRequestAsync(Guid adventureId, long userId);
-        Task<bool> SendAdventureRequestByCodeAsync(ParticipationRequest request);
+        Task<ParticipationRequestStatus> SendAdventureRequestAsync(Guid adventureId, long userId);
+        Task<ParticipationRequestStatus> SendAdventureRequestByCodeAsync(ParticipationRequest request);
+        Task<List<GetTemplateShort>> GetAdventureTemplatesAsync(long userId);
+        Task<ManageTemplate> GetAdventureTemplateAsync(Guid id);
         Task<bool> ProcessSubscriptionRequestAsync(Guid adventureId, long userId, AdventureRequestStatus status);
         Task<List<AttendeeInfo>> GetAdventureAttendeesAsync(Guid adventureId);
         Task<List<Adventure>> GetUsersSubscribedAdventuresAsync(long userId);
@@ -196,5 +198,6 @@ namespace MyWebApi.Interfaces
         Task<Adventure> GetAdventureAsync(Guid id);
         Task<GetLimitations> GetUserSearchLimitations(long userId);
         Task<bool> SaveAdventureTemplateAsync(ManageTemplate model);
+        Task<DeleteTemplateResult> DeleteAdventureTemplateAsync(Guid templateId);
     }
 }

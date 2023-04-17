@@ -529,8 +529,6 @@ class Registrator:
         if not acceptMode:
             self.question_index = 7
 
-            self.send_encourage_message("Yeah, i like that name :)")
-
             self.bot.send_message(msg.chat.id, "How old are you?")
             self.bot.register_next_step_handler(msg, self.age_step, acceptMode=True, editMode=editMode, chat_id=self.current_user)
         else:
@@ -636,8 +634,6 @@ class Registrator:
     def gender_preferences_step(self, msg, acceptMode=False, editMode=False):
         if not acceptMode:
             self.question_index = 11
-
-            self.send_encourage_message("You are very close to finish! Dont stop!")
 
             self.gender_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
 
@@ -747,8 +743,6 @@ class Registrator:
             self.question_index = 14
             self.markup_page = 1
 
-            self.send_encourage_message("Almost there...")
-
             reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page,
                         self.markup_pages_count)
             count_pages(self.countries, self.current_markup_elements, self.markup_pages_count, True)
@@ -769,7 +763,7 @@ class Registrator:
         else:
             if not msg.text:
                 self.bot.send_message(self.current_user,
-                                      "Language was not recognized, try finding it in our list above")
+                                      "Country was not recognized, try finding it in our list above")
                 self.bot.register_next_step_handler(msg, self.spoken_language_step, acceptMode=acceptMode,
                                                     editMode=editMode, chat_id=self.current_user)
                 return False

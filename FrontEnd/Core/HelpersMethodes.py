@@ -514,12 +514,47 @@ def change_adventure(adventureData):
         return None
 
 
-def save_template(adventureData):
+def send_adventure_request_by_code(userId, code):
     try:
-        d = json.dumps(adventureData)
+        data = {
+            "userId": userId,
+            "invitationCode": code
+        }
+        d = json.dumps(data)
+        return int(requests.post(f"https://localhost:44381/SendAdventureRequestByCode", d,
+                                 headers={"Content-Type": "application/json"},
+                                 verify=False).text)
+    except:
+        return None
+
+
+def save_template(templateData):
+    try:
+        d = json.dumps(templateData)
         return requests.post(f"https://localhost:44381/SaveTemplate", d,
                              headers={"Content-Type": "application/json"},
                              verify=False).status_code
+    except:
+        return None
+
+
+def get_template(templateId):
+    try:
+        return json.loads(requests.get(f"https://localhost:44381/adventure-template/{templateId}", verify=False).text)
+    except:
+        return None
+
+
+def get_templates(userId):
+    try:
+        return json.loads(requests.get(f"https://localhost:44381/adventure-templates/{userId}", verify=False).text)
+    except:
+        return None
+
+
+def delete_template(templateId):
+    try:
+        return int(requests.delete(f"https://localhost:44381/delete-template/{templateId}", verify=False).text)
     except:
         return None
 
