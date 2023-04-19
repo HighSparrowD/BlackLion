@@ -2,35 +2,11 @@
 {
     public static class SystemEnums
     {
-        public enum Sections
-        {
-            Registration = 1,
-            Familiator = 2,
-            Requester = 3,
-            TesterPs = 4,
-            TesterIn = 5,
-            RT = 6,
-            Reporter = 7,
-            Sponsor = 8,
-            Eventer = 9,
-            Shop = 10, 
-            Settings = 11,
-            Neutral = 12,
-            Adventurer = 13
-        }
-
         public enum Localisations
         {
             English = 0,
             Russian = 1,
             Ukrainian = 2
-        }
-
-        public enum Severities
-        {
-            Minor = 1, 
-            Moderate = 2,
-            Urgent = 3
         }
 
         public enum LanguageLevels
@@ -91,32 +67,6 @@
             Common = 1,
             Rare = 2,
             Premium = 3
-        }
-
-        public enum PersonalityStats
-        {
-            PersonalityType = 1,
-            EmotionalIntellect = 2,
-            Reliability = 3,
-            Compassion = 4,
-            OpenMindedness = 5,
-            Agreeableness = 6,
-            SelfAwareness = 7,
-            LevelsOfSense = 8,
-            Intellect = 9,
-            Nature = 10,
-            Creativity = 11
-        }
-
-        public enum TickRequestStatus
-        {
-            Added = 1,
-            Changed = 2,
-            InProcess = 3,
-            Declined = 4,
-            Accepted = 5,
-            Aborted = 6,
-            Failed = 7
         }
 
         public enum PaymentCurrencies

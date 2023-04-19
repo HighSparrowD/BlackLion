@@ -89,8 +89,10 @@ namespace MyWebApi.Controllers
             if (model.WasChanged)
             {
                 var langCount = await GetUserMaximumLanguageCount(model.Id);
-                if (model.UserLanguages.Count > langCount)
-                    throw new Exception($"This user cannot have more than {langCount} languages !");
+
+                //TODO: Uncoment when premium functionality is fully implemented
+                //if (model.UserLanguages.Count > langCount)
+                //    throw new Exception($"This user cannot have more than {langCount} languages !");
 
                 Location location = new Location { Id = model.Id};
 
@@ -176,12 +178,6 @@ namespace MyWebApi.Controllers
             return await _repository.GetUsersAsync(userId);
         }
 
-        [HttpGet("/GetUserList/TurnOffP/{userId}")]
-        public async Task<List<GetUserData>> GetUserList2(long userId)
-        {
-            return await _repository.GetUsersAsync(userId, turnOffPersonalityFunc: true);
-        }
-
         [HttpGet("/GetUserList/FreeSearch/{userId}")]
         public async Task<List<GetUserData>> GetUserList3(long userId)
         {
@@ -228,9 +224,12 @@ namespace MyWebApi.Controllers
         }
 
         [HttpGet("/GetReportReasons/{localisationId}")]
-        public async Task<List<ReportReason>> GetReportReasons(int localisationId)
+        public List<string> GetReportReasons(int localisationId)
         {
-            return await _repository.GetReportReasonsAsync(localisationId);
+            var reasons = new List<string>();
+
+            reasons.Add(ReportReason.Spam.ToString());
+            return reasons;
         }
 
 
@@ -242,12 +241,16 @@ namespace MyWebApi.Controllers
         }
 
         [HttpPost("/AddUserReport")]
-        public async Task<long> AddUserReport(Report report)
+        public async Task<Guid> AddUserReport([FromBody] SendUserReport report)
         {
-            report.InsertedUtc = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
             return await _repository.AddUserReportAsync(report);
         }
 
+        [HttpGet("/basic-info/{userId}")]
+        public async Task<BasicUserInfo> AddUserReport([FromRoute] long userId)
+        {
+            return await _repository.GetUserBasicInfo(userId);
+        }
 
         [HttpPost("/RegisterUser")]
         public async Task<long> AddUser(UserRegistrationModel model)
@@ -275,18 +278,25 @@ namespace MyWebApi.Controllers
                 IsDeleted = false,
                 IsBanned = false,
                 ShouldConsiderLanguages = false,
+                IsUpdated = false,
                 HasPremium = false,
+                ShouldEnhance = false,
                 HadReceivedReward = false,
                 IncreasedFamiliarity = true,
+                ShouldComment = false,
+                ShouldSendHints = true,
                 DailyRewardPoint = 0,
                 BonusIndex = 1,
                 ProfileViewsCount = 0,
                 InvitedUsersCount = 0,
                 InvitedUsersBonus = 0,
                 TagSearchesCount = 0,
+                MaxRTViewsCount = 25,
+                MaxTagSearchCount = 3,
+                ReportCount = 0,
                 MaxProfileViewsCount = 50,
-                IsIdentityConfirmed = false,
-                EnteredPromoCodes = model.Promo
+                IdentityType = IdentityConfirmationType.None,
+                EnteredPromoCodes = model.Promo,
             };
 
             if (model.UserCityCode != null && model.UserCountryCode != null)
@@ -325,7 +335,7 @@ namespace MyWebApi.Controllers
         }
 
         [HttpGet("/GetSingleUserReportById/{id}")]
-        public async Task<Report> GetSingleUserReportByIdAsync(long id)
+        public async Task<Report> GetSingleUserReportByIdAsync(Guid id)
         {
             return await _repository.GetSingleUserReportByIdAsync(id);
         }
@@ -474,10 +484,10 @@ namespace MyWebApi.Controllers
             return await _repository.SetDebugProperties();
         }
 
-        [HttpGet("/SwhitchUserBusyStatus/{userId}")]
-        public async Task<bool> SwhitchUserBusyStatus(long userId)
+        [HttpGet("/SwhitchUserBusyStatus/{userId}/{sectionId}")]
+        public async Task<SwitchBusyStatusResponse> SwhitchUserBusyStatus([FromRoute] long userId, [FromRoute]int sectionId)
         {
-            return await _repository.SwhitchUserBusyStatus(userId);
+            return await _repository.SwhitchUserBusyStatus(userId, sectionId);
         }
 
         [HttpGet("/GetUserRequest/{requestId}")]
@@ -501,7 +511,13 @@ namespace MyWebApi.Controllers
         [HttpPost("/RegisterUserRequest")]
         public async Task<string> RegisterUserRequest(UserNotification request)
         {
-            return await _repository.RegisterUserRequest(request);
+            return await _repository.RegisterUserRequestAsync(request);
+        }
+
+        [HttpGet("/DeclineRequest/{user1}/{user2}")]
+        public async Task<string> DeclineRequest(long user1, long user2)
+        {
+            return await _repository.DeclineRequestAsync(user1, user2);
         }
 
         [HttpDelete("/DeleteUserRequest/{requestId}")]
@@ -646,7 +662,7 @@ namespace MyWebApi.Controllers
         }
 
         [HttpGet("/GetRandomAchievements/{userId}")]
-        public async Task<List<UserAchievement>> GetRandomAchievements(long userId)
+        public async Task<List<string>> GetRandomAchievements(long userId)
         {
             return await _repository.GetRandomAchievements(userId);
         }
@@ -772,19 +788,9 @@ namespace MyWebApi.Controllers
         }
 
         [HttpPost("/GetUserByTags")]
-        public async Task<User> GetUserByTags(GetUserByTags model)
+        public async Task<GetUserData> GetUserByTags(GetUserByTags model)
         {
             return await _repository.GetUserListByTagsAsync(model);
-        }
-
-        [HttpGet("/GetMaxTagCount/{userId}")]
-        public async Task<int> GetMaxTagCount(long userId)
-        {
-            if (await _repository.CheckUserHasPremiumAsync(userId))
-            {
-                return 50;
-            }
-            return 25;
         }
 
         [HttpGet("/CheckUserUsesPersonality/{userId}")]
@@ -1021,15 +1027,33 @@ namespace MyWebApi.Controllers
 
         //Adventures
         [HttpPost("/RegisterAdventure")]
-        public async Task<Guid> RegisterAdventure(Adventure model)
+        public async Task<string> RegisterAdventure([FromBody] ManageAdventure model)
         {
             return await _repository.RegisterAdventureAsync(model);
         }
 
         [HttpPost("/ChangeAdventure")]
-        public async Task<bool> ChangeAdventure(ChangeAdventure model)
+        public async Task ChangeAdventure(ManageAdventure model)
         {
-            return await _repository.ChangeAdventureAsync(model);
+            await _repository.ChangeAdventureAsync(model);
+        }
+
+        [HttpGet("/adventure-templates/{userId}")]
+        public async Task<List<GetTemplateShort>> AdventureTenmplates([FromRoute]long userId)
+        {
+            return await _repository.GetAdventureTemplatesAsync(userId);
+        }
+
+        [HttpGet("/adventure-template/{id}")]
+        public async Task<ManageTemplate> AdventureTenmplates([FromRoute] Guid id)
+        {
+            return await _repository.GetAdventureTemplateAsync(id);
+        }
+
+        [HttpPost("/SendAdventureRequestByCode")]
+        public async Task<ParticipationRequestStatus> SendAdventureRequestByCode([FromBody] ParticipationRequest model)
+        {
+            return await _repository.SendAdventureRequestByCodeAsync(model);
         }
 
         [HttpDelete("/DeleteAdventure/{id}/{userId}")]
@@ -1039,27 +1063,34 @@ namespace MyWebApi.Controllers
         }
 
         [HttpGet("/SubscribeOnAdventure/{id}/{userId}")]
-        public async Task<bool> SubscribeOnAdventure(Guid id, long userId)
+        public async Task<ParticipationRequestStatus> SubscribeOnAdventure(Guid id, long userId)
         {
-            return await _repository.SubscribeOnAdventureAsync(id, userId);
+            return await _repository.SendAdventureRequestAsync(id, userId);
         }
 
-        [HttpGet("/ProcessSubscriptionRequest/{id}/{userId}/{status}")]
-        public async Task<bool> ProcessSubscriptionRequest(Guid id, long userId, AdventureRequestStatus status)
+        //TODO: perhaps change return type to enum
+        [HttpGet("/process-adventure-request/{id}/{userId}/{status}")]
+        public async Task<bool> ProcessSubscriptionRequest(Guid id, long userId, AdventureAttendeeStatus status)
         {
             return await _repository.ProcessSubscriptionRequestAsync(id, userId, status);
         }
 
-        [HttpGet("/GetAdventureAttendees/{id}")]
+        [HttpGet("/adventure-attendees/{id}")]
         public async Task<List<AttendeeInfo>> GetAdventureAttendees(Guid id)
         {
             return await _repository.GetAdventureAttendeesAsync(id);
         }
 
-        [HttpGet("/GetUsersAdventures/{userId}")]
-        public async Task<List<Adventure>> GetUsersAdventures(long userId)
+        [HttpGet("/GetUserAdventures/{userId}")]
+        public async Task<List<GetAdventure>> GetUsersAdventures(long userId)
         {
-            return await _repository.GetUsersAdventuresAsync(userId);
+            return await _repository.GetUserAdventuresAsync(userId);
+        }
+
+        [HttpGet("/GetAdventure/{id}")]
+        public async Task<Adventure> GetAdventure(Guid id)
+        {
+            return await _repository.GetAdventureAsync(id);
         }
 
         [HttpGet("/GetUsersSubscribedAdventures/{userId}")]
@@ -1068,16 +1099,58 @@ namespace MyWebApi.Controllers
             return await _repository.GetUsersSubscribedAdventuresAsync(userId);
         }
 
-        [HttpGet("/AdventureCount/{userId}")]
-        public async Task<GetAdventureCount> GetAdventureCount(long userId)
-        {
-            return await _repository.GetAdventureCountAsync(userId);
-        }
-
         [HttpGet("/GetSimilarityBetweenUsers/{userId1}/{userId2}")]
         public async Task<SimilarityBetweenUsers> GetSimilarityBetweenUsers(long userId1, long userId2)
         {
             return await _repository.GetSimilarityBetweenUsersAsync(userId1, userId2);
+        }
+
+        [HttpPost("/SaveTemplate")]
+        public async Task<bool> SaveTemplate(ManageTemplate model)
+        {
+            return await _repository.SaveAdventureTemplateAsync(model);
+        }
+
+        [HttpDelete("/delete-template/{templateId}")]
+        public async Task<DeleteTemplateResult> DeleteTemplate([FromRoute]Guid templateId, [FromServices] IUserRepository userRepo)
+        {
+            return await userRepo.DeleteAdventureTemplateAsync(templateId);
+        }
+
+        [HttpGet("/get-user-media/{userId}")]
+        public async Task<GetUserMedia> UserMedia([FromRoute] long userId, [FromServices] IUserRepository userRepo)
+        {
+            return await userRepo.GetUserMediaAsync(userId);
+        }
+
+        [HttpGet("/limitations/{userId}")]
+        public async Task<GetLimitations> Limitations(long userId, [FromServices] IUserRepository userRepo)
+        {
+            return await userRepo.GetUserSearchLimitations(userId);
+        }
+
+        [HttpGet("/set-comment-status/{userId}")]
+        public async Task SetCommentStatus([FromRoute]long userId, [FromServices] IUserRepository userRepo)
+        {
+            await userRepo.SwitchSearchCommentsVisibilityAsync(userId);
+        }
+
+        [HttpGet("/set-hint-status/{userId}")]
+        public async Task SetHintStatus([FromRoute] long userId, [FromServices] IUserRepository userRepo)
+        {
+            await userRepo.SwitchHintsVisibilityAsync(userId);
+        }
+
+        [HttpGet("/user-partial-data/{userId}")]
+        public async Task<UserPartialData> GetUserPartialData([FromRoute] long userId, [FromServices] IUserRepository userRepo)
+        {
+            return await userRepo.GetUserPartialData(userId);
+        }
+
+        [HttpGet("/report-reasons")]
+        public List<GetReportReason> ReportReasons([FromServices] IUserRepository userRepo)
+        {
+            return userRepo.GetReportReasonsAsync();
         }
     }
 }

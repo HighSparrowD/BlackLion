@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using MyWebApi.Entities.UserActionEntities;
+using System.ComponentModel.DataAnnotations;
 #nullable enable
 
 namespace MyWebApi.Entities.UserInfoEntities
@@ -37,6 +38,7 @@ namespace MyWebApi.Entities.UserInfoEntities
             UserDescription = model.UserDescription;
             UserMedia = model.UserMedia;
             IsPhotoReal = model.IsPhotoReal;
+            IsMediaPhoto = model.IsMediaPhoto;
         }
 
         public string GenerateUserDescription(string? name, int age, string? country, string? city, string? description)

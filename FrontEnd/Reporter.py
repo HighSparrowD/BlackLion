@@ -5,7 +5,6 @@ from telebot.types import ReplyKeyboardMarkup, KeyboardButton
 
 from Common.Menues import go_back_to_main_menu
 from Core import HelpersMethodes as Helpers
-from Helper import Helper
 
 
 class Reporter:
@@ -13,7 +12,6 @@ class Reporter:
         self.bot = bot
         self.message = msg
         self.current_user = msg.from_user.id
-        Helpers.switch_user_busy_status(self.current_user)
         self.reporters = reporters
         self.reporters.append(self)
 
@@ -74,5 +72,4 @@ class Reporter:
     def destruct(self):
         go_back_to_main_menu(self.bot, self.current_user, self.message)
         self.reporters.remove(self)
-        Helpers.switch_user_busy_status(self.current_user)
         del self

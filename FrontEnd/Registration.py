@@ -3,7 +3,7 @@ import copy
 import telegram
 from telebot.types import KeyboardButton, ReplyKeyboardMarkup
 from Core import HelpersMethodes as Helpers
-from Common.Menues import count_pages, assemble_markup, reset_pages, add_tick_to_element, remove_tick_from_element, index_converter
+from Common.Menues import count_pages, assemble_markup, reset_pages, add_tick_to_element, add_tick_to_elements, remove_tick_from_element, remove_tick_from_elements, index_converter
 import requests
 import json
 
@@ -19,7 +19,6 @@ class Registrator:
         self.previous_item = '' #Is used to remove a tick from single-type items (country, city, etc..)
         self.current_inline_message_id = 0 #Represents current message with inline markup
         self.current_user = msg.from_user.id
-        Helpers.switch_user_busy_status(self.current_user)
         self.hasVisited = hasVisited
         self.okMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(KeyboardButton("Ok"))
         self.YNmarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Yes", "No")
@@ -36,7 +35,7 @@ class Registrator:
         self.old_queries = []
 
         self.tags = ""
-        self.maxTagCount = Helpers.get_user_tag_limit(self.current_user)
+        self.maxTagCount = Helpers.get_user_limitations(self.current_user)["maxTagsPerSearch"]
 
         self.current_markup_elements = []
         self.markup_last_element = 0
@@ -272,6 +271,8 @@ class Registrator:
         if not acceptMode:
             self.question_index = 9
 
+            self.send_encourage_message("Wow. You already here...")
+
             for reason in self.reasons.values():
                 self.reason_markup.add(KeyboardButton(reason))
             self.bot.send_message(msg.chat.id, "What are you searching for?", reply_markup=self.reason_markup)
@@ -328,6 +329,8 @@ class Registrator:
         if not acceptMode:
             self.question_index = 4
             self.markup_page = 1
+
+            self.send_encourage_message("You have done good job answering our questions. Keep it up!")
 
             reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page,
                         self.markup_pages_count)
@@ -503,8 +506,7 @@ class Registrator:
             self.bot.register_next_step_handler(msg, self.name_step, acceptMode=True, editMode=editMode, chat_id=self.current_user)
         else:
             if msg.text:
-                if "userRealName" not in self.data:
-                    self.data["userRealName"] = msg.text
+                self.data["userRealName"] = msg.text
 
                 if len(msg.text) > 50:
                     self.bot.send_message(self.current_user, "Name cannot be longer than 50 characters")
@@ -554,11 +556,10 @@ class Registrator:
         if not acceptMode:
             self.question_index = 8
 
-            self.bot.send_message(msg.chat.id, "Tell something about yourself !")
+            self.bot.send_message(msg.chat.id, "Tell something about yourself !", reply_markup=self.skip_markup)
             self.bot.register_next_step_handler(msg, self.description_step, acceptMode=True, editMode=editMode, chat_id=self.current_user)
         else:
             if msg.text:
-
                 if len(msg.text) > 1000:
                     self.bot.send_message(self.current_user, "Description cannot contain more than 1000 characters")
                     self.bot.register_next_step_handler(msg, self.description_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
@@ -569,7 +570,9 @@ class Registrator:
                     self.photo_step(msg)
                 else:
                     self.checkout_step(msg)
-
+            elif msg.text == "skip":
+                self.data["userDescription"] = ""
+                self.bot.send_message(self.current_user, "No profile description, huh ?\nI highly don't recommend it, but it is you call :)")
             else:
                 self.bot.send_message(msg.chat.id,
                                       "Description cannot be empty. Just  describe yourself in a few words ;-)")
@@ -688,7 +691,7 @@ class Registrator:
                 if lang:  # TODO: Get string, separate by , and process it
                     if lang not in self.chosen_langs:
                         if len(self.chosen_langs) + 1 > self.lang_limit:
-                            self.bot.send_message(self.current_user, f"Sorry, users without premium can chose only up to {self.lang_limit} languages", reply_markup=self.okMarkup)
+                            self.bot.send_message(self.current_user, f"Sorry, users without premium can choose only up to {self.lang_limit} languages", reply_markup=self.okMarkup)
                         else:
                             self.chosen_langs.append(lang)
                             add_tick_to_element(self.bot, self.current_user, self.current_inline_message_id,
@@ -710,13 +713,6 @@ class Registrator:
                     self.bot.register_next_step_handler(msg, self.language_preferences_step, acceptMode=acceptMode, editMode=editMode,
                                                         chat_id=self.current_user)
                     return False
-            # elif msg_text == "Same as mine":
-            #     self.pref_langs = copy.copy(self.chosen_langs)
-            #     self.bot.send_message(self.current_user,
-            #                           "Got it! Press OK to move to the next step or add more languages if you want ;-)",
-            #                           reply_markup=self.okMarkup)
-            #     self.bot.register_next_step_handler(msg, self.language_preferences_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
-            #     return False
 
             if self.pref_langs:
                 self.old_queries.append(self.current_query)
@@ -765,7 +761,7 @@ class Registrator:
         else:
             if not msg.text:
                 self.bot.send_message(self.current_user,
-                                      "Language was not recognized, try finding it in our list above")
+                                      "Country was not recognized, try finding it in our list above")
                 self.bot.register_next_step_handler(msg, self.spoken_language_step, acceptMode=acceptMode,
                                                     editMode=editMode, chat_id=self.current_user)
                 return False
@@ -776,7 +772,7 @@ class Registrator:
                 if country:  # TODO: Get string, separate by , and process it
                     if country not in self.pref_countries:
                         if len(self.chosen_langs) + 1 > self.lang_limit:
-                            self.bot.send_message(self.current_user, f"Sorry, users without premium can chose only up to {self.lang_limit} countries", reply_markup=self.okMarkup)
+                            self.bot.send_message(self.current_user, f"Sorry, users without premium can choose only up to {self.lang_limit} countries", reply_markup=self.okMarkup)
                         else:
                             self.pref_countries.append(country)
                             add_tick_to_element(self.bot, self.current_user, self.current_inline_message_id,
@@ -796,13 +792,6 @@ class Registrator:
                                           "Country was not recognized, try finding it in our list above")
                     self.bot.register_next_step_handler(msg, self.location_preferences_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
                     return False
-            elif msg.text == "Same as mine":
-                if self.country not in self.pref_countries:
-                    self.pref_countries.append(self.country)
-                    self.bot.send_message(self.current_user,
-                                          "Got it! Press OK to move to the next step or add more languages if you want ;-)",
-                                          reply_markup=self.okMarkup)
-                self.bot.register_next_step_handler(msg, self.location_preferences_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
 
             if self.pref_countries:
                 self.old_queries.append(self.current_query)
@@ -848,9 +837,9 @@ class Registrator:
         if not acceptMode:
 
             if not self.hasVisited:
-                self.bot.send_message(self.current_user, "Ok, now to the, final part. To be able to search people by tags you have to have your own as well.\nHow it works: -----------\nIf you want to use that functionality: type a few tags (up to 25) that describe you, your interests etc... Note that using tags which go against our policies can lead your account to be banned ---------\nIf you dont want to use that functionality: just hit 'skip' :-)", reply_markup=self.skip_markup)
+                self.bot.send_message(self.current_user, "Ok, now to the, final part. To be able to search people by tags you have to have your own as well.\nHow it works: -----------\nIf you want to use that functionality: type a few tags (up to 25) that describe you, your interests etc... Please, don't use more than two words in your tag. For instance: if you want to type #ILoveTea rather just use #tea tag :)\n<b>Note that using tags which go against our policies can lead your account to be banned ---------</b>\nIf you dont want to use that functionality: just hit 'skip' :-)", reply_markup=self.skip_markup)
             else:
-                self.bot.send_message(self.current_user, "Type a few tags (up to 25) that describe you, your interests etc... Note that using tags which go against our policies can lead your account to be banned. \nYour previous tag list will be overwritten", reply_markup=self.skip_markup)
+                self.bot.send_message(self.current_user, "Type a few tags (up to 25) that describe you, your interests etc...Please, don't use more than two words in your tag. For instance: if you want to type #ILoveTea rather just use #tea tag :)\n<b>Note that using tags which go against our policies can lead your account to be permanently banned.</b> \nYour previous tag list will be overwritten", reply_markup=self.skip_markup)
 
             self.bot.register_next_step_handler(msg, self.tags_step, acceptMode=True, editMode=editMode, chat_id=self.current_user)
         else:
@@ -879,7 +868,7 @@ class Registrator:
                                                             editMode=editMode, chat_id=self.current_user)
 
                 else:
-                    self.bot.send_message(self.current_user, "No tags found", reply_markup=self.skip_markup)
+                    self.bot.send_message(self.current_user, "Empty Message", reply_markup=self.skip_markup)
                     self.bot.register_next_step_handler(msg, self.tags_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
 
     def auto_reply_step(self, message, acceptMode=False, editMode=False):
@@ -1089,6 +1078,11 @@ class Registrator:
 
         return f"{self.data['userRealName']}, {countryName}, {cityName}\n{self.data['userAge']}\n{self.data['userDescription']}"
 
+    def send_encourage_message(self, text):
+        #If User is registering his profile
+        if not self.hasVisited:
+            self.bot.send_message(self.current_user, f"<i><b>{text}</b></i>")
+
     def spoken_languages_convertor(self, lang):
         for l in self.languages:
             if lang == self.languages[l]:
@@ -1155,7 +1149,7 @@ class Registrator:
                 if int(call.data) not in self.chosen_langs:
                     #Notify user if limit had been exceeded
                     if len(self.chosen_langs) + 1 > self.lang_limit:
-                        self.bot.send_message(self.current_user, f"Sorry, users without premium can chose only up to {self.lang_limit} languages")
+                        self.bot.send_message(self.current_user, f"Sorry, users without premium can choose only up to {self.lang_limit} languages")
                         return False
                     else:
                         # self.bot.send_message(chatId, call.data)
@@ -1199,18 +1193,21 @@ class Registrator:
 
             elif self.question_index == 12:
                 if int(call.data) == -5:
-                    for l in self.chosen_langs:
-                        if l not in self.pref_langs:
-                            add_tick_to_element(self.bot, self.current_user, self.current_inline_message_id, self.current_markup_elements, self.markup_page, str(l))
-                            self.pref_langs.append(l)
-                            self.bot.answer_callback_query(call.id, "Added")
+
+                    remove_tick_from_elements(self.bot, self.current_user, call.message.id, self.current_markup_elements, self.markup_page, self.pref_langs)
+                    add_tick_to_elements(self.bot, self.current_user, self.current_inline_message_id, self.current_markup_elements, self.markup_page, self.chosen_langs)
+                    # for l in self.chosen_langs:
+                    #     if l not in self.pref_langs:
+                    #         add_tick_to_element(self.bot, self.current_user, self.current_inline_message_id, self.current_markup_elements, self.markup_page, str(l))
+                    #         self.pref_langs.append(l)
+                    self.bot.answer_callback_query(call.id, "Added")
                     self.bot.send_message(self.current_user,
                                           "Got it! Press OK to move to the next step or add more languages if you want ;-)",
                                           reply_markup=self.okMarkup)
 
                 elif int(call.data) not in self.pref_langs:
                     if len(self.pref_langs) + 1 > self.lang_limit:
-                        self.bot.send_message(self.current_user, f"Sorry, users without premium can chose only up to {self.lang_limit} languages")
+                        self.bot.send_message(self.current_user, f"Sorry, users without premium can choose only up to {self.lang_limit} languages")
                         return False
                     else:
                         self.pref_langs.append(int(call.data))
@@ -1226,6 +1223,7 @@ class Registrator:
             elif self.question_index == 14:
                 if int(call.data) == -5:
                     if self.country not in self.pref_countries:
+                        remove_tick_from_elements(self.bot, self.current_user, call.message.id, self.current_markup_elements, self.markup_page, self.pref_countries)
                         self.pref_countries.append(self.country)
                         self.bot.send_message(self.current_user,
                                               "Got it! Press OK to move to the next step or add more countries if you want ;-)",
@@ -1236,7 +1234,7 @@ class Registrator:
 
                 elif int(call.data) not in self.pref_countries:
                     if len(self.pref_countries) + 1 > self.lang_limit:
-                        self.bot.send_message(self.current_user, f"Sorry, users without premium can chose only up to {self.lang_limit} languages")
+                        self.bot.send_message(self.current_user, f"Sorry, users without premium can choose only up to {self.lang_limit} languages")
                         return False
                     else:
                         self.pref_countries.append(int(call.data))
@@ -1261,7 +1259,6 @@ class Registrator:
         #     max_value = 100
 
         return f"{min_value} - {max_value}"
-
 
     def get_localisations(self):
         for language in json.loads(
@@ -1291,7 +1288,7 @@ class Registrator:
     def destruct(self):
         self.bot.callback_query_handlers.remove(self.chCode)
         if self.hasVisited:
-            Helpers.switch_user_busy_status(self.current_user)
+            Helpers.switch_user_busy_status(self.current_user, 12)
         if self.return_method:
             self.return_method()
         else:

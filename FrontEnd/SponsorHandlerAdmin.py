@@ -10,7 +10,6 @@ class SponsorHandlerAdmin:
     def __init__(self, bot, message, sponsor_handlers):
         self.bot = bot
         self.current_user = message.from_user.id
-        Helpers.switch_user_busy_status(self.current_user)
         self.sponsor_handlers = sponsor_handlers
         self.sponsor_handlers.append(self)
 
@@ -238,6 +237,6 @@ class SponsorHandlerAdmin:
         self.bot.message_handlers.remove(self.eh)
         self.sponsor_handlers.remove(self)
         Coms.show_admin_markup(self.bot, self.current_user)
-        Helpers.switch_user_busy_status(self.current_user)
+        Helpers.switch_user_busy_status(self.current_user, 12)
         del self
 

@@ -32,7 +32,7 @@ namespace MyWebApi.Repositories
 
         public async Task<long> UploadCities(List<City> cities)
         {
-            cities.ForEach(async c => await _contx.CITIES.AddAsync(c));
+            cities.ForEach(async c => await _contx.cities.AddAsync(c));
             await _contx.SaveChangesAsync();
             return cities.Count;
         }
@@ -41,10 +41,10 @@ namespace MyWebApi.Repositories
         {
             countries.ForEach(async c => 
             {
-                if (!_contx.COUNTRIES.Contains(c))
-                    await _contx.COUNTRIES.AddAsync(c);
+                if (!_contx.countries.Contains(c))
+                    await _contx.countries.AddAsync(c);
                 else
-                    _contx.COUNTRIES.Update(c);
+                    _contx.countries.Update(c);
             });
             await _contx.SaveChangesAsync();
 
@@ -339,62 +339,66 @@ namespace MyWebApi.Repositories
         {
             if (requestId != null)
             {
-                //Returns only new, aborted or changed requests
-                return await _contx.tick_requests.Where(r => r.Id == requestId && (r.State == 1 || r.State == 2 || r.State == 6))
+                //Returns only new, aborted, failed or changed requests
+                return await _contx.tick_requests.Where(r => r.Id == requestId && (r.State == TickRequestStatus.Added 
+                || r.State == TickRequestStatus.Changed 
+                || r.State == TickRequestStatus.Aborted 
+                || r.State == TickRequestStatus.Failed))
                     .Include(r => r.User)
                     .SingleOrDefaultAsync();
             }
 
             //Return any request if id wasnt supplied. (Method is used on the frontend)
-            var request = await _contx.tick_requests.Where(r => r.State == 1 || r.State == 2 || r.State == 6)
+            var request = await _contx.tick_requests.Where(r => r.State == TickRequestStatus.Added || r.State == TickRequestStatus.Changed || r.State == TickRequestStatus.Aborted)
                 .Include(r => r.User)
                 .FirstOrDefaultAsync();
 
             if (request != null)
             {
-                request.State = (short)SystemEnums.TickRequestStatus.InProcess;
+                request.State = TickRequestStatus.InProcess;
                 await _contx.SaveChangesAsync();
             }
 
             return request;
         }
 
-        public async Task<bool> ResolveTickRequestAsync(Guid requestId, long adminId, bool isAccepted)
+        public async Task<bool> ResolveTickRequestAsync(ResolveTickRequest model)
         {
-            var request = await _contx.tick_requests.Where(r => r.Id == requestId && (r.State == 3))
+            var request = await _contx.tick_requests.Where(r => r.Id == model.Id && (r.State == TickRequestStatus.InProcess))
                 .Include(r => r.User)
                 .SingleOrDefaultAsync();
 
             if (request == null)
                 throw new NullReferenceException("Request was not found");
 
-            if (isAccepted)
-                request.State = (short)SystemEnums.TickRequestStatus.Accepted;
+            if (model.IsAccepted)
+                request.State = TickRequestStatus.Accepted;
             else
-                request.State = (short)SystemEnums.TickRequestStatus.Declined;
+                request.State = TickRequestStatus.Declined;
 
-            request.AdminId = adminId;
-            request.User.IsIdentityConfirmed = isAccepted;
+            request.AdminId = model.AdminId;
+            request.User.IdentityType = request.Type;
+
             await _contx.SaveChangesAsync();
 
-            if (isAccepted)
+            if (model.IsAccepted)
                 await _userRep.AddUserNotificationAsync(new Entities.UserActionEntities.UserNotification
                 {
-                    Description = "Your tick request had been accepted :)",
+                    Description = $"Your identity confirmation had been accepted :)\n{model.Comment}",
                     UserId1 = request.UserId,
-                    Severity = (short)SystemEnums.Severities.Urgent,
-                    SectionId = (int)SystemEnums.Sections.Neutral,
+                    Severity = Severities.Urgent,
+                    Section = Sections.Neutral,
                 });
             else
                 await _userRep.AddUserNotificationAsync(new Entities.UserActionEntities.UserNotification
                 {
-                    Description = "Sorry, your tick request had been denied.\nPlease contact the administration and try again",
+                    Description = $"Sorry, your identity confirmation request had been denied.\n{model.Comment}",
                     UserId1 = request.UserId,
-                    Severity = (short)SystemEnums.Severities.Urgent,
-                    SectionId = (int)SystemEnums.Sections.Neutral,
+                    Severity = Severities.Urgent,
+                    Section = Sections.Neutral,
                 });
 
-            return isAccepted;
+            return model.IsAccepted;
         }
 
         public async Task<byte> UploadPsTestsAsync(List<UploadTest> tests)
@@ -500,7 +504,19 @@ namespace MyWebApi.Repositories
         {
             string returnData = "";
 
-            returnData = $"Recent feedbacks: {(await _userRep.GetMostRecentFeedbacks()).Count}\nActive tick requests {(await _contx.tick_requests.Where(r => (r.State == 1 || r.State == 2 || r.State == 6) && r.AdminId == null).ToListAsync()).Count}";
+            var recentFeedbacks = await _userRep.GetMostRecentFeedbacks();
+            var tickRequests = await _contx.tick_requests
+                .Where(r => (r.State == TickRequestStatus.Added || 
+                r.State == TickRequestStatus.Changed || 
+                r.State == TickRequestStatus.Aborted || 
+                r.State == TickRequestStatus.Failed) && 
+                r.AdminId == null)
+                .ToListAsync();
+
+
+            var bannedUsers = await GetRecentlyBannedUsersAsync();
+
+            returnData = $"Recent feedbacks: {recentFeedbacks.Count}\nActive tick requests {tickRequests.Count}\nRecently banned users{bannedUsers.Count}";
 
             return returnData;
         }
@@ -517,13 +533,13 @@ namespace MyWebApi.Repositories
             try
             {
                 //Get request if it was marked as processed
-                var request = await _contx.tick_requests.Where(r => r.Id == requestId && (r.State == 3))
+                var request = await _contx.tick_requests.Where(r => r.Id == requestId && (r.State == TickRequestStatus.InProcess))
                         .SingleOrDefaultAsync(); ;
 
                 if (request == null)
                     throw new NullReferenceException($"Request {requestId} is not in process rigt now");
 
-                request.State = (short)SystemEnums.TickRequestStatus.Aborted;
+                request.State = TickRequestStatus.Aborted;
                 await _contx.SaveChangesAsync();
 
                 return true;
@@ -541,7 +557,7 @@ namespace MyWebApi.Repositories
                 if (request == null)
                     throw new NullReferenceException($"Request {requestId} does not exist");
 
-                request.State = (short)SystemEnums.TickRequestStatus.Failed;
+                request.State = TickRequestStatus.Failed;
                 request.AdminId = adminId;
 
                 await _contx.SaveChangesAsync();
@@ -584,9 +600,13 @@ namespace MyWebApi.Repositories
                     IsBusy = false,
                     IsDeleted = false,
                     IsBanned = false,
+                    IsUpdated = false,
+                    ShouldEnhance = false,
                     ShouldConsiderLanguages = false,
                     HasPremium = false,
                     HadReceivedReward = false,
+                    ShouldComment = false,
+                    ShouldSendHints = true,
                     DailyRewardPoint = 0,
                     BonusIndex = 1,
                     ProfileViewsCount = 0,
@@ -594,7 +614,8 @@ namespace MyWebApi.Repositories
                     InvitedUsersBonus = 0,
                     TagSearchesCount = 0,
                     MaxProfileViewsCount = 50,
-                    IsIdentityConfirmed = false,
+                    ReportCount = 0,
+                    IdentityType = IdentityConfirmationType.None,
                 };
 
                 if (model.UserCityCode != null && model.UserCountryCode != null)
@@ -622,6 +643,13 @@ namespace MyWebApi.Repositories
             await _userRep.RegisterUserAsync(m, uBase, uData, uPrefs, location);
 
             return true;
+        }
+
+        public async Task<List<long>> GetRecentlyBannedUsersAsync()
+        {
+            return await _contx.SYSTEM_USERS.Where(u => u.IsBanned && u.BanDate != null)
+                .Select(u => u.UserId)
+                .ToListAsync();
         }
 
         //public Task<long> UploadInTest(UploadInTest model)

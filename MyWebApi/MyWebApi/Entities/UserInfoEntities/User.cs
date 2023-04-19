@@ -1,10 +1,10 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
-using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
-using System.Diagnostics.CodeAnalysis;
 using System.Data;
+using MyWebApi.Enums;
+using MyWebApi.Entities.LocationEntities;
 #nullable enable
 
 namespace MyWebApi.Entities.UserInfoEntities
@@ -19,24 +19,34 @@ namespace MyWebApi.Entities.UserInfoEntities
         public bool ShouldConsiderLanguages { get; set; }
         public bool IsBusy { get; set; }
         public bool IsBanned { get; set; }
+        public DateTime? BanDate { get; set; }
         public bool IsDeleted { get; set; }
         public bool HasPremium { get; set; }
         public bool HadReceivedReward { get; set; }
         public bool? IsFree { get; set; }
-        public bool IsIdentityConfirmed { get; set; }
+        public bool ShouldEnhance { get; set; }
+        public bool ShouldComment { get; set; }
+        public bool ShouldSendHints { get; set; }
+        public IdentityConfirmationType IdentityType { get; set; }
         public bool IncreasedFamiliarity { get; set; }
-        public short DailyRewardPoint { get; set; }
+        public short? PremiumDuration { get; set; }
+        public short ReportCount { get; set; }
+        public short DailyRewardPoint { get; set; } 
         public double BonusIndex { get; set; }
         public int InvitedUsersCount { get; set; }
         public double InvitedUsersBonus { get; set; }
         public string? Nickname { get; set; }
         public long? ParentId { get; set; }
         public int ProfileViewsCount { get; set; }
+        public int RTViewsCount { get; set; }
         public int MaxProfileViewsCount { get; set; }
+        public int MaxRTViewsCount { get; set; }
+        public int MaxTagSearchCount { get; set; }
         public int TagSearchesCount { get; set; }
         public short? Currency { get; set; }
         public DateTime? PremiumExpirationDate{ get; set; }
         public string? EnteredPromoCodes { get; set; }
+        public bool IsUpdated { get; set; }
         public virtual UserBaseInfo? UserBaseInfo { get; set; }
         public virtual UserDataInfo? UserDataInfo  { get; set; }
         public virtual UserPreferences? UserPreferences { get; set; }

@@ -8,7 +8,6 @@ using MyWebApi.Entities.TestEntities;
 using MyWebApi.Entities.SecondaryEntities;
 using System.Linq;
 using MyWebApi.Entities.LocationEntities;
-using Microsoft.VisualBasic;
 
 namespace MyWebApi.Repositories
 {
@@ -63,13 +62,13 @@ namespace MyWebApi.Repositories
 
         public async Task<List<City>> GetCities(int countryId, int localisationId)
         {
-            var cities = await _contx.CITIES.Where(c => c.CountryId == countryId && c.CountryClassLocalisationId == localisationId).ToListAsync();
+            var cities = await _contx.cities.Where(c => c.CountryId == countryId && c.CountryClassLocalisationId == localisationId).ToListAsync();
             return cities;
         }
 
         public async Task<List<Country>> GetCountries(int localisationId)
         {
-            return await _contx.COUNTRIES.Where(c => c.ClassLocalisationId == localisationId)
+            return await _contx.countries.Where(c => c.ClassLocalisationId == localisationId)
                 .OrderBy(c => c.Priority)
                 .ToListAsync();
         }

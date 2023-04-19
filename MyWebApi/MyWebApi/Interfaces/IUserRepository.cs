@@ -22,7 +22,6 @@ namespace MyWebApi.Interfaces
         Task<bool> CheckUserHasVisitedSection(long userId, int sectionId);
         Task<bool> CheckUserIsBusy(long userId);
         Task<bool> CheckUserHasRequests(long userId);
-        Task<bool> SwhitchUserBusyStatus(long userId);
         Task<bool> CheckUserIsBanned(long userId);
         Task<bool> CheckUserIsDeleted(long userId);
         Task<bool> SetDebugProperties(); //TODO: remove in production
@@ -30,17 +29,20 @@ namespace MyWebApi.Interfaces
         Task<List<UserNotification>> GetUserRequests(long userId);
         Task<UserNotification> GetUserRequest(Guid requestId);
         bool CheckRequestExists(long senderId, long recieverId);
-        Task<string> RegisterUserRequest(UserNotification request);
+        Task<string> RegisterUserRequestAsync(UserNotification request);
+        Task<string> DeclineRequestAsync(long user1, long user2);
         Task<byte> DeleteUserRequests(long userId);
         Task<byte> DeleteUserRequest(Guid requestId);
         Task<User> GetUserInfoByUsrnameAsync(string username);
+        Task<BasicUserInfo> GetUserBasicInfo(long userId);
+        Task<UserPartialData> GetUserPartialData(long userId);
         Task<byte> UpdateUserAppLanguageAsync(long userId, int appLanguage);
         Task<byte> UpdateUserBaseAsync(UserBaseInfo user);
         Task<byte> UpdateUserDataAsync(UserDataInfo user);
         Task<byte> UpdateUserPreferencesAsync(UserPreferences user);
         Task<byte> UpdateUserLocationAsync(Location location);
         Task<UserBaseInfo> GetUserBaseInfoAsync(long id);
-        Task<List<GetUserData>> GetUsersAsync(long userId, bool turnOffPersonalityFunc = false, bool isRepeated=false, bool isFreeSearch = false);
+        Task<List<GetUserData>> GetUsersAsync(long userId, bool isRepeated=false, bool isFreeSearch = false);
         Task<bool> CheckUserExists(long id);
         Task<int> GetUserAppLanguage(long id);
         Task<User> GetFriendInfoAsync(long id);
@@ -50,11 +52,11 @@ namespace MyWebApi.Interfaces
         Task<Country> GetCountryAsync(long id);
         Task<List<long>> GetAllUsersAsync();
         Task<List<FeedbackReason>> GetFeedbackReasonsAsync(int localisationId);
-        Task<List<ReportReason>> GetReportReasonsAsync(int localisationId);
+        //Task<List<ReportReason>> GetReportReasonsAsync(int localisationId);
         Task<long> AddFeedbackAsync(Feedback report);
-        Task<long> AddUserReportAsync(Report report);
+        Task<Guid> AddUserReportAsync(SendUserReport report);
         Task<List<Report>> GetMostRecentReports();
-        Task<Report> GetSingleUserReportByIdAsync(long id);
+        Task<Report> GetSingleUserReportByIdAsync(Guid id);
         Task<List<Report>> GetAllReportsOnUserAsync(long userId);
         Task<List<Report>> GetAllUserReportsAsync(long userId);
         Task<List<Feedback>> GetMostRecentFeedbacks();
@@ -111,7 +113,7 @@ namespace MyWebApi.Interfaces
         Task<byte> SendNotificationConfirmationCodeAsync(Guid notidicationId);
         Task<bool> DeleteUserNotification(Guid notificationId);
         Task<bool> DeleteUserNotification(UserNotification notification);
-        Task<List<UserAchievement>> GetRandomAchievements(long userId);
+        Task<List<string>> GetRandomAchievements(long userId);
         Task<double> CalculateSimilarityAsync(double param1, double param2);
         Task<DailyTask> GetDailyTaskByIdAsync(long id);
         Task<UserDailyTask> GetUserDailyTaskByIdAsync(long userId, long taskId);
@@ -128,12 +130,11 @@ namespace MyWebApi.Interfaces
         Task<bool> UpdateUserPersonalityPoints(PointsPayload model);
         Task<UserPersonalityStats> GetUserPersonalityStats(long userId);
         Task<UserPersonalityPoints> GetUserPersonalityPoints(long userId);
-        Task<bool> SwitchPersonalityUsage(long userId);
         Task<bool?> CheckUserUsesPersonality(long userId);
         Task<bool> RegisterTestPassingAsync(TestPayload model, int testResult);
         Task<bool> UpdateTags(UpdateTags model);
         Task<List<UserTag>> GetTags(long userId);
-        Task<User> GetUserListByTagsAsync(GetUserByTags model);
+        Task<GetUserData> GetUserListByTagsAsync(GetUserByTags model);
         Task<bool> CheckEncounteredUserIsInBlackList(long userId, long encounteredUser);
         Task<string> RetreiveCommonLanguagesAsync(long user1Iq, long user2Id, int localisationId);
         Task<bool> LogAdminErrorAsync(long? userId, string description, int sectioId);
@@ -145,7 +146,6 @@ namespace MyWebApi.Interfaces
         Task<bool> ActivateToggleEffectAsync(long userId, int effectId, long? user2Id=null, string description=null);
         Task<List<ActiveEffect>> GetUserActiveEffects(long userId);
         Task<bool> DeactivateEffectAsync(long userId, Guid activeEffectId);
-        Task<int> AddMaxUserProfileViewCount(long userId, int profileCount);
         Task<bool> CheckEffectIsActiveAsync(long userId, int effectId);
         Task<bool> PurchaseEffectAsync(long userId, int effectId, int points, short currency, short count=1);
         Task<bool> PurchasePersonalityPointsAsync(long userId, int points, short currency, short count=1);
@@ -162,10 +162,9 @@ namespace MyWebApi.Interfaces
         Task<bool> CheckUserHaveChosenFreeParamAsync(long userId);
         Task<bool> CheckShouldTurnOffPersonalityAsync(long userId);
         Task<bool> SetUserFreeSearchParamAsync(long userId, bool freeStatus);
-        Task<bool> SwitchUserFreeSearchParamAsync(long userId);
+        List<GetReportReason> GetReportReasonsAsync();
         //Get stats user can invest points in
         Task<PersonalityCaps> GetUserPersonalityCapsAsync(long userId);
-        Task<bool> SwitchUserRTLanguageConsiderationAsync(long userId);
         Task<bool> GetUserRTLanguageConsiderationAsync(long userId);
         Task SetUserCurrencyAsync(long userId, short currency);
         Task<GetUserData> GetRequestSenderAsync(Guid requestId);
@@ -173,17 +172,32 @@ namespace MyWebApi.Interfaces
         Task<bool> GetUserIncreasedFamiliarityAsync(long userId);
         Task<bool> SwitchIncreasedFamiliarityAsync(long userId);
         Task<bool> AddUserCommercialVector(long userId, string tagString);
+        Task<SimilarityBetweenUsers> GetSimilarityBetweenUsersAsync(long user1, long user2);
+        Task<GetUserMedia> GetUserMediaAsync(long userId);
+        Task<GetLimitations> GetUserSearchLimitations(long userId);
+
+        //Toggle Settings 
+        Task SwitchHintsVisibilityAsync(long userId);
+        Task<bool> SwitchPersonalityUsage(long userId);
+        Task<SwitchBusyStatusResponse> SwhitchUserBusyStatus(long userId, int sectionId);
+        Task SwitchSearchCommentsVisibilityAsync(long userId);
+        Task<bool> SwitchUserFreeSearchParamAsync(long userId);
+        Task<bool> SwitchUserRTLanguageConsiderationAsync(long userId);
 
         //Adventures
-        Task<Guid> RegisterAdventureAsync(Adventure model);
-        Task<bool> ChangeAdventureAsync(ChangeAdventure model);
+        Task<string> RegisterAdventureAsync(ManageAdventure model);
+        Task ChangeAdventureAsync(ManageAdventure model);
         Task<bool> DeleteAdventureAsync(Guid adventureId, long userId);
-        Task<bool> SubscribeOnAdventureAsync(Guid adventureId, long userId);
-        Task<bool> ProcessSubscriptionRequestAsync(Guid adventureId, long userId, AdventureRequestStatus status);
+        Task<ParticipationRequestStatus> SendAdventureRequestAsync(Guid adventureId, long userId);
+        Task<ParticipationRequestStatus> SendAdventureRequestByCodeAsync(ParticipationRequest request);
+        Task<List<GetTemplateShort>> GetAdventureTemplatesAsync(long userId);
+        Task<ManageTemplate> GetAdventureTemplateAsync(Guid id);
+        Task<bool> ProcessSubscriptionRequestAsync(Guid adventureId, long userId, AdventureAttendeeStatus status);
         Task<List<AttendeeInfo>> GetAdventureAttendeesAsync(Guid adventureId);
         Task<List<Adventure>> GetUsersSubscribedAdventuresAsync(long userId);
-        Task<List<Adventure>> GetUsersAdventuresAsync(long userId);
-        Task<GetAdventureCount> GetAdventureCountAsync(long userId);
-        Task<SimilarityBetweenUsers> GetSimilarityBetweenUsersAsync(long user1, long user2);
+        Task<List<GetAdventure>> GetUserAdventuresAsync(long userId);
+        Task<Adventure> GetAdventureAsync(Guid id);
+        Task<bool> SaveAdventureTemplateAsync(ManageTemplate model);
+        Task<DeleteTemplateResult> DeleteAdventureTemplateAsync(Guid templateId);
     }
 }

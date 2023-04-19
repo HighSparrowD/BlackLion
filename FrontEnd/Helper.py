@@ -1,39 +1,106 @@
-from telebot.types import ReplyKeyboardMarkup
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+from Common import Menues as menues
 
 
 class Helper:
-    def __init__(self, bot, message, return_method, editMode=None, isEncountered=None):
+    def __init__(self, bot, message, return_method=None, editMode=None, isEncounter=None, activeMessageId=None, secondaryMessageId=None):
         self.bot = bot
         self.message = message
         self.current_user = message.from_user.id
         self.return_method = return_method
         self.editMode = editMode
-        self.isEncountered = isEncountered
+        self.isEncounter = isEncounter
 
-        self.functionality_message = "1. ❓PERSONALITY\n2. ❓PERSONALITY points\n3. ❓Achievements\n4. ❓Search by interests\n5. ❓Auto reply\n6. ❓Coins\n7. ❓Second chance\n8.❓Detector\n9. ❓Nullifier\n10. ❓Card Dec Mini\n11. ❓Card Dec Platinum\n12. 'Increased familiarity'\n13. Go Back"
-        self.startMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("1", "2", "3", "4", "5", "6", "7", "8", "9")
+        self.shouldCleanUp = not activeMessageId
 
-    def start(self, message, acceptMode=False):
-        if not acceptMode:
-            self.bot.send_message(self.current_user, self.functionality_message, reply_markup=self.startMarkup)
-        else:
-            #TODO: check input and give description
-            if message.text == "13":
-                self.destruct()
+        self.active_message_id = activeMessageId
+        self.secondary_message_id = secondaryMessageId
+
+        self.functionality_Markup = InlineKeyboardMarkup()\
+            .add(InlineKeyboardButton("❓PERSONALITY❓", callback_data="1001"))\
+            .add(InlineKeyboardButton("❓PERSONALITY points❓", callback_data="1002"))\
+            .add(InlineKeyboardButton("❓Achievements❓", callback_data="1003"))\
+            .add(InlineKeyboardButton("❓Search by interests❓", callback_data="1004"))\
+            .add(InlineKeyboardButton("❓Auto reply❓", callback_data="1005"))\
+            .add(InlineKeyboardButton("❓Coins❓", callback_data="1006"))\
+            .add(InlineKeyboardButton("❓Second chance❓", callback_data="1007"))\
+            .add(InlineKeyboardButton("❓Detector❓", callback_data="1008"))\
+            .add(InlineKeyboardButton("❓Nullifier❓", callback_data="1009"))\
+            .add(InlineKeyboardButton("❓Card Dec Mini❓", callback_data="1010"))\
+            .add(InlineKeyboardButton("❓Card Dec Platinum❓", callback_data="1011"))\
+            .add(InlineKeyboardButton("❓'Increased familiarity'❓", callback_data="1012"))\
+            .add(InlineKeyboardButton("Go Back", callback_data="-10"))\
+
+        self.current_callback_handler = self.bot.register_callback_query_handler("", self.callback_handler, user_id=self.current_user)
+        self.start()
+
+    def start(self):
+        self.send_active_message("<b>What is it you need help with ?</b>", markup=self.functionality_Markup)
+        pass
+
+    # TODO: probably rewrite to follow pattern like that: send... Dict[call.data]
+    def callback_handler(self, call):
+        self.bot.answer_callback_query(call.id, "")
+        if call.data == "1001":
+            self.send_secondary_message("LALALa")
+        elif call.data == "1002":
+            self.send_secondary_message("LA La")
+        elif call.data == "-10":
+            self.destruct()
+
+    def send_active_message(self, text, markup=None):
+        try:
+            if self.active_message_id:
+                self.bot.edit_message_text(text, self.current_user, self.active_message_id, reply_markup=markup)
                 return
-            elif message.text == "/help":
-                self.bot.send_message(self.current_user, "Do you need a help with a... help???\nExit to the main menu, call /feedback command and describe your problem to us. We will contact you as soon as possible ;)")
-            self.start(message)
+            self.active_message_id = self.bot.send_message(self.current_user, text, reply_markup=markup).id
+        except:
+            pass
+
+    def send_secondary_message(self, text):
+        try:
+            if self.secondary_message_id:
+                self.bot.edit_message_text(text, self.current_user, self.secondary_message_id)
+                return
+            self.secondary_message_id = self.bot.send_message(self.current_user, text).id
+        except:
+            pass
 
     def destruct(self):
+        if self.current_callback_handler:
+            self.bot.callback_query_handlers.remove(self.current_callback_handler)
+
+        if self.shouldCleanUp:
+            try:
+                self.bot.delete_message(self.current_user, self.active_message_id)
+            except:
+                pass
+
+        if self.secondary_message_id:
+            try:
+                self.bot.delete_message(self.current_user, self.secondary_message_id)
+            except:
+                pass
+
+        # Simultaneously means, that return method is present
         if self.editMode is not None:
             self.return_method(self.message, editMode=self.editMode)
             return
 
-        elif self.isEncountered is not None:
-            self.return_method(self.message, isEncountered=self.isEncountered)
+        # Simultaneously means, that return method is present
+        elif self.isEncounter is not None:
+            self.return_method(self.message, isEncountered=self.isEncounter)
             return
 
-        self.return_method(self.message)
+        if self.return_method:
+            self.return_method(self.message)
+            return
+
+        try:
+            self.bot.delete_message(self.current_user, self.active_message_id)
+        except:
+            pass
+
+        menues.go_back_to_main_menu(self.bot, self.current_user, self.message, shouldSwitch=False)
         return
 

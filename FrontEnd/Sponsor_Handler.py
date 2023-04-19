@@ -17,7 +17,6 @@ class SponsorHandler:
         self.message = message
         self.current_user = message.from_user.id
         self.current_user_info = None
-        Helpers.switch_user_busy_status(self.current_user)
         self.current_userName = message.from_user.username
         self.isSponsor = Helpers.check_user_is_sponsor(self.current_user)
         self.isAwaiting = Helpers.check_user_is_awaiting_by_username(self.current_userName)
@@ -1060,5 +1059,4 @@ class SponsorHandler:
         self.bot.message_handlers.remove(self.eh)
         self.sponsor_handlers.remove(self)
         go_back_to_main_menu(self.bot, self.current_user, self.message)
-        Helpers.switch_user_busy_status(self.current_user)
         del self

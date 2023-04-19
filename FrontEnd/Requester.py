@@ -1,5 +1,4 @@
-import telegram
-from telebot.types import KeyboardButton, ReplyKeyboardMarkup
+from telebot.types import KeyboardButton, ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
 from Core import HelpersMethodes as Helpers
 from Helper import Helper
 from ReportModule import ReportModule
@@ -20,21 +19,23 @@ class Requester:
 
         self.active_section = None
 
-        Helpers.switch_user_busy_status(self.current_user)
+        self.active_user_id = "0"
 
         self.bYes = "😏"
         self.bNo = "👽"
-        self.btnReport = "⚠"
+
+        self.reactToCallback = True
 
         self.start_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)\
             .add(KeyboardButton("Show all"), KeyboardButton("Accept all"), KeyboardButton("Decline all"))
         self.markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(self.bYes, self.bNo)
 
+        self.actions_markup = InlineKeyboardMarkup().add(InlineKeyboardButton("⚠ Report ⚠", callback_data=self.active_user_id)) \
+            .add(InlineKeyboardButton("🔖 Help 🔖", callback_data="11"))
+
         self.match_message = "You have got a match!\n"
         self.start_message = "Some people have liked you!"
         self.m = "<b>Someone liked you\n</b>"
-        self.m1 = f"Hey! I have got a match for you. This person was notified about it, but he did not receive your username, thus he cannot write you first everything is in your hands, do not miss your chance!\n\n" #{data["userRealName"]}
-        self.m2 = f"Hey! I have a match for you. Right now this person is deciding whether or not to write you Just wait for it!\n\n"
 
         self.menu_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True) \
             .add(KeyboardButton("/search"),
@@ -42,7 +43,7 @@ class Requester:
                  KeyboardButton("/feedback"),
                  KeyboardButton("/settings"))
 
-        self.helpHandler = self.bot.register_message_handler(self.help_handler, commands=["help"], user_id=self.current_user)
+        self.ch = self.bot.register_callback_query_handler("", self.callback_handler, user_id=self.current_user)
 
         self.start(message)
 
@@ -71,24 +72,30 @@ class Requester:
                 self.get_request_sender_data()
 
                 if self.current_request["isLikedBack"]:
-                    self.bot.send_photo(self.current_user, self.current_managed_user["userMedia"], f"<b>{self.current_request['description']}</b>\n\n{self.current_managed_user['userDescription']}", reply_markup=self.markup, parse_mode=telegram.ParseMode.HTML)
-                    Helpers.delete_user_request(self.current_request["id"])
+                    # self.bot.send_photo(self.current_user, self.current_managed_user["userMedia"], f"<b>{self.current_request['description']}</b>\n\n{self.current_managed_user['userDescription']}", reply_markup=self.markup, parse_mode=telegram.ParseMode.HTML)
+                    self.send_user_media(True)
+                    Helpers.delete_user_request(self.active_user_id)
                     self.request_list.pop(0)
                     self.process_request(message)
                     # self.bot.register_next_step_handler(message, self.process_request, acceptMode=True, chat_id=self.current_user)
                     return
 
-                self.bot.send_photo(self.current_user, self.current_managed_user["userMedia"], f"<b>Someone have liked you</b>\n\n{self.current_managed_user['userDescription']}", reply_markup=self.markup, parse_mode=telegram.ParseMode.HTML)
+                self.send_user_media(False)
+
+                # self.bot.send_photo(self.current_user, self.current_managed_user["userMedia"], f"<b>Someone had liked you</b>\n\n{self.current_managed_user['userDescription']}", reply_markup=self.markup)
                 self.bot.register_next_step_handler(message, self.process_request, acceptMode=True, chat_id=self.current_user)
             else:
                 self.destruct()
         else:
+            if not self.reactToCallback:
+                self.bot.delete_message(self.current_user, message.id)
+                self.bot.register_next_step_handler(message, self.process_request, acceptMode=acceptMode, chat_id=self.current_user)
+                return
+
             if message.text == self.bYes:
                 self.accept_request(message)
             elif message.text == self.bNo:
                 self.decline_request(message)
-            elif message.text == self.btnReport:
-                ReportModule(self.bot, message, self.current_managed_user['id'], self.process_request)
             else:
                 self.bot.send_message(self.current_user, "No such option", reply_markup=self.markup)
                 self.bot.register_next_step_handler(message, self.process_request, acceptMode=acceptMode, chat_id=self.current_user)
@@ -113,29 +120,65 @@ class Requester:
         self.destruct()
 
     def decline_request(self, message):
-        Helpers.delete_user_request(self.current_request["id"])
+        sadMessage = Helpers.decline_user_request(self.current_user, self.current_managed_user_id)
+
+        if sadMessage:
+            self.bot.send_message(self.current_user, sadMessage)
+
+        Helpers.delete_user_request(self.active_user_id)
         self.request_list.pop(0)
         self.process_request(message)
 
     def set_current_request(self):
         if len(self.request_list) > 0:
             self.current_request = self.request_list[0]
+            self.active_user_id = self.current_request["id"]
             return True
         return False
 
+    def send_user_media(self, isLikedBack):
+        bonus = "<b>Someone had liked you</b>\n\n"
+
+        if isLikedBack:
+            bonus = f"<b>{self.current_request['description']}</b>"
+
+        if self.current_managed_user["isMediaPhoto"]:
+            self.bot.send_photo(self.current_user, self.current_managed_user["userMedia"],
+                                f"{bonus}{self.current_managed_user['userDescription']}",
+                                reply_markup=self.markup)
+        else:
+            self.bot.send_video(self.current_user, video=self.current_managed_user["userMedia"],
+                                caption=f"{bonus}{self.current_managed_user['userDescription']}",
+                                reply_markup=self.markup)
+
+        self.bot.send_message(self.current_user, "Additional Actions:", reply_markup=self.actions_markup)
+
     def get_request_sender_data(self):
-        user = Helpers.get_request_sender(self.current_request['id'])
+        user = Helpers.get_request_sender(self.active_user_id)
         self.current_managed_user_id = user["userId"]
         self.current_managed_user = user["userBaseInfo"]
 
     def help_handler(self, message):
-        Helper(self.bot, message, self.active_section)
+        self.reactToCallback = False
+        Helper(self.bot, message, self.proceed_h)
+
+    #Proceed method meant only for exiting Helper
+    def proceed_h(self, message):
+        self.reactToCallback = True
+
+    def callback_handler(self, call):
+        if call.data == "11":
+            self.help_handler(self.message)
+        else:
+            if self.reactToCallback:
+                ReportModule(self.bot, self.message, call.data, self.process_request)
 
     def destruct(self):
         self.bot.send_message(self.current_user, "That is all for now :)")
-        Helpers.switch_user_busy_status(self.current_user)
 
-        self.bot.message_handlers.remove(self.helpHandler)
+        self.bot.callback_query_handlers.remove(self.ch)
+
+        Helpers.switch_user_busy_status(self.current_user, 12)
 
         if self.returnMethod:
             self.returnMethod(self.message)

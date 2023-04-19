@@ -8,6 +8,7 @@ namespace MyWebApi.Entities.UserActionEntities
     public class GetUserData
     {
         public long UserId { get; set; }
+        public string Comment { get; set; }
         public UserBaseInfo? UserBaseInfo { get; set; }
         public UserDataInfo? UserDataInfo { get; set; }
         public UserPreferences? UserPreferences { get; set; }

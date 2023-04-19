@@ -136,10 +136,10 @@ namespace MyWebApi.Controllers
             return await _repository.GetTickRequestAsync(id);
         }
 
-        [HttpGet("/ResolveTickRequest/{id}/{adminId}/{isAccepted}")]
-        public async Task<bool> ResolveTickRequest(Guid id, long adminId, bool isAccepted)
+        [HttpPost("/ResolveTickRequest")]
+        public async Task<bool> ResolveTickRequest([FromBody] ResolveTickRequest request)
         {
-            return await _repository.ResolveTickRequestAsync(id, adminId, isAccepted);
+            return await _repository.ResolveTickRequestAsync(request);
         }
 
         [HttpGet("/AbortTickRequest/{id}")]
@@ -182,6 +182,12 @@ namespace MyWebApi.Controllers
         public async Task<bool> CreateDecoy(UserRegistrationModel model)
         {
             return await _repository.CreateDecoyAsync(model: model);
+        }
+
+        [HttpGet("/banned-users")]
+        public async Task<List<long>> GetBannedUsers()
+        {
+            return await _repository.GetRecentlyBannedUsersAsync();
         }
     }
 }

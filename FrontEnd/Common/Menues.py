@@ -10,6 +10,7 @@ menu_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True) 
          KeyboardButton("/random"),
          KeyboardButton("/feedback"),
          KeyboardButton("/settings"),
+         KeyboardButton("/adventure"),
          KeyboardButton("/shop"))
 
 admin_menu_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True) \
@@ -21,17 +22,27 @@ register_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=Tr
     .add(KeyboardButton("/registration"))
 
 
-def go_back_to_main_menu(bot, user, message):
-    if Helpers.check_user_has_requests(user):
+def go_back_to_main_menu(bot, user, message, shouldSwitch=True):
+    response = None
+
+    if shouldSwitch:
+        response = Helpers.switch_user_busy_status(user, 12)
+
         request_list = Helpers.get_user_requests(user)
-        if message:
-            Requester(bot, message, user, request_list)
-        return False
+
+        if request_list:
+            if message:
+                Requester(bot, message, user, request_list)
+            return False
+
     notification_list = Helpers.get_user_notifications(user)
     if notification_list:
         for notif in notification_list: #TODO: Maybe create a separate module for handling that
             bot.send_message(notif["userId1"], notif["description"])
             Helpers.delete_user_notification(notif["id"])
+    else:
+        if response and response["comment"]:
+            bot.send_message(user, response["comment"])
     bot.send_message(user, "What are we doing next? 😊", reply_markup=menu_markup)
 
 
@@ -42,7 +53,7 @@ def show_admin_markup(bot, user):
 def start_program_in_debug_mode(bot): # TODO: remove in production
     users = Helpers.start_program_in_debug_mode(bot)
     for user in users:
-        go_back_to_main_menu(bot, user, None)
+        go_back_to_main_menu(bot, user, None, False)
 
 
 def count_pages(section_elements, current_markup_elements, markup_pages_count, prefs=False, additionalButton=False, buttonText="", buttonData=0):
@@ -135,6 +146,31 @@ def add_tick_to_element(bot, userId, messageId, current_markup_elements, markup_
         return None
 
 
+def add_tick_to_elements(bot, userId, messageId, current_markup_elements, markup_page, element_indexes):
+    try:
+        wasChanged = False
+        for button in current_markup_elements[markup_page - 1].keyboard:
+            if button[0].callback_data in element_indexes:
+                wasChanged = True
+                button[0].text += "✅"
+                break
+
+        if not wasChanged:
+            for key in current_markup_elements:
+                for button in key.keyboard:
+                    if button[0].callback_data in element_indexes:
+                        wasChanged = True
+                        button[0].text += "✅"
+                        break
+
+        if wasChanged:
+            markup = assemble_markup(markup_page, current_markup_elements, 0)
+            bot.edit_message_reply_markup(chat_id=userId, reply_markup=markup,
+                                               message_id=messageId)
+    except:
+        return None
+
+
 def remove_tick_from_element(bot, userId, messageId, current_markup_elements, markup_page, element_index):
     try:
         wasChanged = False
@@ -148,6 +184,31 @@ def remove_tick_from_element(bot, userId, messageId, current_markup_elements, ma
             for key in current_markup_elements:
                 for button in key.keyboard:
                     if button[0].callback_data == element_index:
+                        wasChanged = True
+                        button[0].text = button[0].text.replace("✅", "")
+                        break
+
+        if wasChanged:
+            markup = assemble_markup(markup_page, current_markup_elements, 0)
+            bot.edit_message_reply_markup(chat_id=userId, reply_markup=markup,
+                                               message_id=messageId)
+    except:
+        return None
+
+
+def remove_tick_from_elements(bot, userId, messageId, current_markup_elements, markup_page, element_indexes):
+    try:
+        wasChanged = False
+        for button in current_markup_elements[markup_page - 1].keyboard:
+            if button[0].callback_data in element_indexes:
+                wasChanged = True
+                button[0].text = button[0].text.replace("✅", "")
+                break
+
+        if not wasChanged:
+            for key in current_markup_elements:
+                for button in key.keyboard:
+                    if button[0].callback_data in element_indexes:
                         wasChanged = True
                         button[0].text = button[0].text.replace("✅", "")
                         break

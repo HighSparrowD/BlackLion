@@ -186,14 +186,20 @@ C:\Git\BlackLion\MyWebApi\MyWebApi\bin\Debug\net6.0\Microsoft.EntityFrameworkCor
 C:\Git\BlackLion\MyWebApi\MyWebApi\bin\Debug\net6.0\Microsoft.EntityFrameworkCore.Relational.dll
 C:\Git\BlackLion\MyWebApi\MyWebApi\bin\Debug\net6.0\Microsoft.Extensions.Caching.Memory.dll
 C:\Git\BlackLion\MyWebApi\MyWebApi\bin\Debug\net6.0\Microsoft.OpenApi.dll
+C:\Git\BlackLion\MyWebApi\MyWebApi\bin\Debug\net6.0\Microsoft.Win32.SystemEvents.dll
 C:\Git\BlackLion\MyWebApi\MyWebApi\bin\Debug\net6.0\Npgsql.dll
 C:\Git\BlackLion\MyWebApi\MyWebApi\bin\Debug\net6.0\Npgsql.EntityFrameworkCore.PostgreSQL.dll
 C:\Git\BlackLion\MyWebApi\MyWebApi\bin\Debug\net6.0\QRCoder.dll
 C:\Git\BlackLion\MyWebApi\MyWebApi\bin\Debug\net6.0\Swashbuckle.AspNetCore.Swagger.dll
 C:\Git\BlackLion\MyWebApi\MyWebApi\bin\Debug\net6.0\Swashbuckle.AspNetCore.SwaggerGen.dll
 C:\Git\BlackLion\MyWebApi\MyWebApi\bin\Debug\net6.0\Swashbuckle.AspNetCore.SwaggerUI.dll
+C:\Git\BlackLion\MyWebApi\MyWebApi\bin\Debug\net6.0\System.Drawing.Common.dll
+C:\Git\BlackLion\MyWebApi\MyWebApi\bin\Debug\net6.0\runtimes\win\lib\net6.0\Microsoft.Win32.SystemEvents.dll
+C:\Git\BlackLion\MyWebApi\MyWebApi\bin\Debug\net6.0\runtimes\win\lib\net6.0\System.Drawing.Common.dll
 C:\Git\BlackLion\MyWebApi\MyWebApi\obj\Debug\net6.0\MyWebApi.csproj.AssemblyReference.cache
+C:\Git\BlackLion\MyWebApi\MyWebApi\obj\Debug\net6.0\MyWebApi.App_GlobalResources.Resources.resources
 C:\Git\BlackLion\MyWebApi\MyWebApi\obj\Debug\net6.0\MyWebApi.Resources.Controllers.AdminController.resources
+C:\Git\BlackLion\MyWebApi\MyWebApi\obj\Debug\net6.0\MyWebApi.App_GlobalResources.Resources.ru.resources
 C:\Git\BlackLion\MyWebApi\MyWebApi\obj\Debug\net6.0\MyWebApi.Resources.Controllers.AdminController.ru.resources
 C:\Git\BlackLion\MyWebApi\MyWebApi\obj\Debug\net6.0\MyWebApi.Resources.Controllers.RegistrationController.en.resources
 C:\Git\BlackLion\MyWebApi\MyWebApi\obj\Debug\net6.0\MyWebApi.Resources.Controllers.RegistrationController.ru.resources
@@ -217,3 +223,4 @@ C:\Git\BlackLion\MyWebApi\MyWebApi\obj\Debug\net6.0\refint\MyWebApi.dll
 C:\Git\BlackLion\MyWebApi\MyWebApi\obj\Debug\net6.0\MyWebApi.pdb
 C:\Git\BlackLion\MyWebApi\MyWebApi\obj\Debug\net6.0\MyWebApi.genruntimeconfig.cache
 C:\Git\BlackLion\MyWebApi\MyWebApi\obj\Debug\net6.0\ref\MyWebApi.dll
+C:\Git\BlackLion\MyWebApi\MyWebApi\obj\Debug\net6.0\MyWebApi.App_GlobalResources.Resources.uk.resources

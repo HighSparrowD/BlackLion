@@ -1,4 +1,3 @@
-# noinspection PyBroadException
 import json
 import requests
 import telegram
@@ -18,22 +17,28 @@ class AdminCabinet:
                                    "\n\n/getuserbyid command allows you to get and then manage user by his id: /getuserbyid USERID" \
                                    "\n\n/getuserbyusername command allows you to get and then manage user by his username: /getuserbyusername USERNAME" \
                                    "\n\n/managetickrequests command allows you to go through active tick requests and resolve them. FUN!" \
+                                   "\n\n/recentfeedbacks command gives you recent feedbacks" \
+                                   "\n\n/bannedusers command gives you users banned automatically" \
                                    "\n\n/exit"
 
         self.admin_cabinets = admin_cabinets
         self.admin_cabinets.append(self)
         self.current_request = None
+        self.managed_user_data = None
 
         #self.start_markup = ReplyKeyboardMarkup(KeyboardButton(""))
         self.markup1 = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
         self.feedbacks_markup = InlineKeyboardMarkup()
         self.YNmarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(KeyboardButton("Yes"), KeyboardButton("No"))
+        self.SilentMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(KeyboardButton("Leave empty"))
         self.YNExitmarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(KeyboardButton("Yes"), KeyboardButton("No"), KeyboardButton("Exit"))
 
         self.isCheckout = False
 
         self.current_message = 0
         self.current_managed_user = 0
+
+        self.request_data = {}
 
         self.markup1.add(KeyboardButton("Grant an achievement"),
                                            KeyboardButton("View all reports on this user"),
@@ -42,23 +47,34 @@ class AdminCabinet:
                                            KeyboardButton("View all user's feedbacks"),
                                            KeyboardButton("View all user's reports"),
                                            KeyboardButton("Delete user"),
-                                           KeyboardButton("Top-up balance"))
+                                           KeyboardButton("Top-up balance"),
+                                           KeyboardButton("Go Back"))
 
         self.old_queries = []
         self.current_query = 0
+
+        self.banned_users = []
+
+        self.languages = {
+            0: "English",
+            1: "Russian",
+            2: "Ukrainian"
+        }
 
         self.manage_user_message = "What do you want to do with this user?"
 
         self.ch = self.bot.register_callback_query_handler("", self.callback_handler, user_id=self.current_user)
 
-        self.mh = bot.register_message_handler(self.message_handler, commands=["sendmessage", "viewreports", "getuserbyid", "getuserbyusername", "managetickrequests"], user_id=self.current_user)
+        self.mh = bot.register_message_handler(self.message_handler, commands=["sendmessage", "viewreports", "getuserbyid", "getuserbyusername", "managetickrequests", "bannedusers", "recentfeedbacks"], user_id=self.current_user)
         self.eh = bot.register_message_handler(self.exit_handler, commands=["exit"], user_id=self.current_user)
 
+        self.current_section = self.start
 
-        self.bot.send_message(self.current_user, self.show_new_data_count())
+        self.start()
+
+    def start(self):
         self.bot.send_message(self.current_user, self.admin_greet_message)
-
-        self.get_recent_feedbacks()
+        self.bot.send_message(self.current_user, self.show_new_data_count())
 
     def show_new_data_count(self):
         return requests.get(f"https://localhost:44381/GetNewNotificationsCount/{self.current_user}", verify=False).text
@@ -68,29 +84,42 @@ class AdminCabinet:
             requestText = requests.get(f"https://localhost:44381/GetTickRequest", verify=False).text
             if requestText:
                 self.current_request = json.loads(requestText)
-                photo = requests.get(f"https://localhost:44381/GetUserPhoto/{self.current_request['userId']}", verify=False).text
 
-                #Proceed if we were unable to read user photo
-                if not photo:
+                try:
+                    self.managed_user_data = json.loads(requests.get(f"https://localhost:44381/user-partial-data/{self.current_request['userId']}", verify=False).text)
+                    media = self.managed_user_data["media"]
+
+                    if self.managed_user_data["isPhoto"]:
+                        self.bot.send_photo(self.current_user, media, "That is how the user looks like")
+                    else:
+                        self.bot.send_video(self.current_user, video=media, caption="That is how the user looks like")
+
+                    if self.current_request["video"]:
+                        self.bot.send_video(self.current_user, video=self.current_request["video"], caption="That is the message.")
+                    elif self.current_request["circle"]:
+                        self.bot.send_message(self.current_user, "That is the message.")
+                        self.bot.send_video_note(self.current_user, data=self.current_request["circle"])
+                    elif self.current_request["photo"]:
+                        self.bot.send_message(self.current_user, "That is the message. IT MUST CONTAIN PASSPORT DATA.")
+                        self.bot.send_photo(self.current_user, photo=self.current_request["photo"])
+
+                    if self.current_request["gesture"]:
+                        self.bot.send_message(self.current_user, f"That is a gesture this user had to send: \n{self.current_request['gesture']}")
+
+                    self.bot.send_message(self.current_user, f"Would you like to grant the user identity confirmation type {self.current_request['type']} ?", reply_markup=self.YNExitmarkup)
+                    self.bot.register_next_step_handler(message, self.tick_request_handler, acceptMode=True, chat_id=self.current_user)
+                except:
+                    #Proceed if we were unable to read user photo
                     response = requests.get(f"https://localhost:44381/NotifyFailierTickRequest/{self.current_request['id']}/{self.current_user}", verify=False).text
-                    self.bot.send_message(self.current_user, "Unable to load user photo")
+                    self.bot.send_message(self.current_user, "Unable to load users media")
                     self.tick_request_handler(message)
                     return False
-
-                self.bot.send_photo(self.current_user, photo, "That is how the user looks like")
-
-                if self.current_request["video"]:
-                    self.bot.send_video(self.current_user, video=self.current_request["video"], caption="That is the message, confirming his identity")
-                elif self.current_request["circle"]:
-                    self.bot.send_message(self.current_user, "That is the message, confirming his identity")
-                    self.bot.send_video_note(self.current_user, data=self.current_request["circle"])
-
-                self.bot.send_message(self.current_user, "Would you like to confirm his identity ?", reply_markup=self.YNExitmarkup)
-                self.bot.register_next_step_handler(message, self.tick_request_handler, acceptMode=True, chat_id=self.current_user)
             else:
                 self.bot.send_message(self.current_user, "No more requests to handle :)")
                 self.bot.send_message(self.current_user, self.admin_greet_message)
         else:
+            data = {}
+
             isResolved = False
             if message.text == "Yes":
                 isResolved = True
@@ -103,7 +132,28 @@ class AdminCabinet:
                 self.bot.register_next_step_handler(message, self.tick_request_handler, acceptMode=acceptMode, chat_id=self.current_user)
                 return False
 
-            response = requests.get(f"https://localhost:44381/ResolveTickRequest/{self.current_request['id']}/{self.current_user}/{isResolved}", verify=False).text
+            self.request_data["adminId"] = self.current_user
+            self.request_data["id"] = self.current_request['id']
+            self.request_data["isAccepted"] = isResolved
+
+            self.comment_request(message)
+
+
+    def comment_request(self, message, acceptMode=False):
+        if not acceptMode:
+            self.bot.send_message(self.current_user, f"Comment your decide. This comment will be shown to user, so, please, don't be too honest ;)\nUser prefers {self.languages[self.managed_user_data['appLanguage']]} language", reply_markup=self.SilentMarkup)
+            self.bot.register_next_step_handler(message, self.comment_request, acceptMode=True, chat_id=self.current_user)
+        else:
+            if message != "Leave empty":
+                self.request_data["comment"] = message.text
+                pass
+
+            jdata = json.dumps(self.request_data)
+
+            self.request_data = {}
+            response = requests.post(f"https://localhost:44381/ResolveTickRequest", jdata,
+                                     headers={"Content-Type": "application/json"},
+                                     verify=False).text
 
             self.tick_request_handler(message)
 
@@ -142,6 +192,10 @@ class AdminCabinet:
                         self.bot.send_message(self.current_user, "User was not found")
                 else:
                     self.bot.send_message(self.current_user, "Wrong command consistence")
+            elif "/recentfeedbacks" in command:
+                self.get_recent_feedbacks()
+            elif "/bannedusers" in command:
+                self.get_banned_users()
             elif command[0] == "/managetickrequests":
                 self.tick_request_handler(message)
 
@@ -155,6 +209,7 @@ class AdminCabinet:
             self.show_user(user)
         else:
             self.bot.send_message(self.current_user, "User was not found")
+            self.current_section()
 
     def get_recent_feedbacks(self):
         self.feedbacks_markup = InlineKeyboardMarkup()
@@ -167,6 +222,30 @@ class AdminCabinet:
             return False
 
         self.bot.send_message(self.current_user, "No recent feedbacks !")
+
+    def get_banned_users(self):
+        try:
+            self.banned_users = json.loads(requests.get(f"https://localhost:44381/banned-users", verify=False).text)
+            self.manage_banned_users(self.message)
+        except:
+            self.bot.send_message(self.current_user, "Something went wrong")
+            self.start()
+
+    def manage_banned_users(self, message, acceptMode=False):
+        if len(self.banned_users) > 0:
+            if not acceptMode:
+                self.bot.send_message(self.current_user, "Proceed?", reply_markup=self.YNmarkup)
+                self.bot.register_next_step_handler(message, self.manage_banned_users, acceptMode=True, chat_id=self.current_user)
+            else:
+                if message.text == "Yes":
+                    self.current_section = self.manage_banned_users
+                    user = Helpers.get_user_info(self.banned_users[0])
+                    self.manage_user(user)
+                else:
+                    self.start()
+        else:
+            self.start()
+
 
     def callback_handler(self, call):
         if int(call.data) == -4:
@@ -297,13 +376,16 @@ class AdminCabinet:
             except:
                 self.bot.send_message(self.current_user, "Something went wrong")
 
+        elif message.text == "Go Back":
+            self.current_section()
+
     def show_user(self, user):
         try:
             markup = InlineKeyboardMarkup()\
                 .add(InlineKeyboardButton("Achievements", callback_data=-4))
 
             self.bot.send_message(self.current_user, "Processing...", reply_markup=self.markup1, parse_mode=telegram.ParseMode.HTML)
-            self.bot.send_message(self.current_user, self.construct_user_data_message(user), reply_markup=markup, parse_mode=telegram.ParseMode.HTML)
+            self.bot.send_message(self.current_user, self.construct_user_data_message(user), reply_markup=markup)
             self.bot.register_next_step_handler(self.message, self.user_actions_checkout, chat_id=self.current_user)
         except:
             self.bot.send_message(self.current_user, "Something went wrong")

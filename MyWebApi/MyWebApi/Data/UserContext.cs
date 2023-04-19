@@ -5,6 +5,7 @@ using MyWebApi.Entities.AdventureEntities;
 using MyWebApi.Entities.DailyRewardEntities;
 using MyWebApi.Entities.DailyTaskEntities;
 using MyWebApi.Entities.EffectEntities;
+using MyWebApi.Entities.HintEntities;
 using MyWebApi.Entities.LocalisationEntities;
 using MyWebApi.Entities.LocationEntities;
 using MyWebApi.Entities.ReasonEntities;
@@ -26,14 +27,13 @@ namespace MyWebApi.Data
         public DbSet<Location> USER_LOCATIONS { get; set; }
         public DbSet<UserReason> USER_REASONS { get; set; }
         public DbSet<Visit> USER_VISITS { get; set; }
-        public DbSet<Country> COUNTRIES { get; set; }
-        public DbSet<City> CITIES { get; set; }
+        public DbSet<Country> countries { get; set; }
+        public DbSet<City> cities { get; set; }
         public DbSet<Language> LANGUAGES { get; set; }
         public DbSet<BlackList> USER_BLACKLISTS { get; set; }
         public DbSet<Feedback> SYSTEM_FEEDBACKS { get; set; }
         public DbSet<FeedbackReason> FEEDBACK_REASONS { get; set; }
         public DbSet<Report> USER_REPORTS { get; set; }
-        public DbSet<ReportReason> REPORT_REASONS { get; set; }
         public DbSet<Achievement> SYSTEM_ACHIEVEMENTS { get; set; }
         public DbSet<UserAchievement> USER_ACHIEVEMENTS { get; set; }
         public DbSet<Balance> USER_WALLET_BALANCES { get; set; }
@@ -75,9 +75,13 @@ namespace MyWebApi.Data
         public DbSet<AdminErrorLog> ADMIN_ERROR_LOGS { get; set; }
         public DbSet<ActiveEffect> USER_ACTIVE_EFFECTS { get; set; }
         public DbSet<TickRequest> tick_requests { get; set; }
+
+        //Adventures
         public DbSet<Adventure> adventures { get; set; }
+        public DbSet<AdventureTemplate> adventure_templates { get; set; }
         public DbSet<AdventureAttendee> adventure_attendees { get; set; }
         public DbSet<PromoCode> promo_codes { get; set; }
+        public DbSet<Hint> hints { get; set; }
 
 
 
@@ -111,7 +115,6 @@ namespace MyWebApi.Data
             builder.Entity<City>().HasKey(c => new {c.Id, c.CountryClassLocalisationId});
             builder.Entity<UserReason>().HasKey(g => new { g.Id, g.ClassLocalisationId });
             builder.Entity<FeedbackReason>().HasKey(g => new { g.Id, g.ClassLocalisationId });
-            builder.Entity<ReportReason>().HasKey(g => new { g.Id, g.ClassLocalisationId });
             builder.Entity<Visit>().HasKey(g => new { g.UserId, g.SectionId });
             builder.Entity<Achievement>().HasKey(g => new { g.Id, g.ClassLocalisationId });
             builder.Entity<UserAchievement>().HasKey(g => new { g.UserBaseInfoId, g.AchievementId });
@@ -126,6 +129,7 @@ namespace MyWebApi.Data
             builder.Entity<UserDailyTask>().HasKey(t => new { t.UserId, t.DailyTaskId });
             builder.Entity<AdventureAttendee>().HasKey(t => new { t.UserId, t.AdventureId });
             builder.Entity<UserTag>().HasKey(t => new { t.UserId, t.Tag });
+            builder.Entity<Hint>().HasKey(t => new { t.Id, t.ClassLocalisationId });
 
             builder.Entity<Ad>();
 

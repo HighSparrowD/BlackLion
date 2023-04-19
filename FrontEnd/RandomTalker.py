@@ -18,7 +18,6 @@ class RandomTalker:
         self.exit_message = ""
         self.current_user = message.chat.id
         self.app_language = Helpers.get_user_app_language(self.current_user)
-        Helpers.switch_user_busy_status(self.current_user)
         self.random_talkers = random_talkers
         self.user2 = 0
         self.user2_base = None
@@ -27,6 +26,9 @@ class RandomTalker:
         self.rh = None
 
         self.random_talkers = random_talkers
+
+        self.basic_info = Helpers.get_user_basic_info(self.current_user)
+        self.limitations = self.basic_info["limitations"]
 
         self.YNmarkup = ReplyKeyboardMarkup(resize_keyboard=True, row_width=3, one_time_keyboard=True).add(KeyboardButton("yes")).add(KeyboardButton("no"))
         self.exit_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(KeyboardButton("/exit"))
@@ -39,6 +41,15 @@ class RandomTalker:
             self.enter()
 
     def enter(self):
+        if self.basic_info["isBanned"]:
+            self.bot.send_message(self.current_user, "Your reputation is to low. Please contact the administration to resolve that")
+            return
+
+        if self.limitations["actualRtViews"] >= self.limitations["maxRtViews"]:
+            self.bot.send_message(self.current_user, "Sorry, you have run out of RT searches for today.\nYou can still use Card Deck Mini or Card Deck Premium to replenish your views, buy premium and thus double your view count, or wait until tomorrow :)")
+            self.destruct()
+            return
+
         self.bot.send_message(self.current_user, "Waiting for another user to join", reply_markup=self.exit_markup)
         self.ah = self.bot.register_message_handler(self.awaiting_handler, commands=["exit"], user_id=self.current_user)
         self.random_talkers.append(self)
@@ -129,7 +140,6 @@ class RandomTalker:
         requests.get(f"https://localhost:44381/SetUserRtLanguagePrefs/{self.current_user}/{shouldBeConsidered}", verify=False)
 
     def destruct(self):
-        self.random_talkers.remove(self)
         if self.user2_base:
             if self.user2_base.user2_base:
                 self.user2_base.user2_base = None
@@ -138,6 +148,5 @@ class RandomTalker:
             self.bot.message_handlers.remove(self.ah)
         if self.rh in self.bot.message_handlers:
             self.bot.message_handlers.remove(self.rh)
-        Helpers.switch_user_busy_status(self.current_user)
         go_back_to_main_menu(self.bot, self.current_user, self.message)
         del self

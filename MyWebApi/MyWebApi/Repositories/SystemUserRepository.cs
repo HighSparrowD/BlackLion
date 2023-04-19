@@ -1,4 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Microsoft.Extensions.Options;
 using MyWebApi.Data;
 using MyWebApi.Entities.AchievementEntities;
 using MyWebApi.Entities.AdminEntities;
@@ -15,10 +17,14 @@ using MyWebApi.Entities.UserActionEntities;
 using MyWebApi.Entities.UserInfoEntities;
 using MyWebApi.Enums;
 using MyWebApi.Interfaces;
+using MyWebApi.Utilities;
 using QRCoder;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using static MyWebApi.Enums.SystemEnums;
 
@@ -48,8 +54,8 @@ namespace MyWebApi.Repositories
                 if (location != null)
                 {
                     await _contx.USER_LOCATIONS.AddAsync(location);
-                    country = (await _contx.COUNTRIES.Where(c => c.Id == location.CountryId && c.ClassLocalisationId == location.CountryClassLocalisationId).Select(c => c.CountryName).SingleOrDefaultAsync());
-                    city = (await _contx.CITIES.Where(c => c.Id == location.CountryId && c.CountryClassLocalisationId == location.CityCountryClassLocalisationId).Select(c => c.CityName).SingleOrDefaultAsync());
+                    country = (await _contx.countries.Where(c => c.Id == location.CountryId && c.ClassLocalisationId == location.CountryClassLocalisationId).Select(c => c.CountryName).SingleOrDefaultAsync());
+                    city = (await _contx.cities.Where(c => c.Id == location.CountryId && c.CountryClassLocalisationId == location.CityCountryClassLocalisationId).Select(c => c.CityName).SingleOrDefaultAsync());
                 }
 
                 baseModel.UserRawDescription = baseModel.UserDescription;
@@ -135,9 +141,9 @@ namespace MyWebApi.Repositories
                     _contx.SYSTEM_USERS.Update(model);
                     await _contx.SaveChangesAsync();
 
-                    //User is instantly liked by an invitor if he is allowing it
+                    //User is instantly liked by an invitor if he approves it
                     if (invitor.IncreasedFamiliarity)
-                        await RegisterUserRequest(new UserNotification { UserId = invitor.UserId, UserId1 = model.UserId, IsLikedBack = false });
+                        await RegisterUserRequestAsync(new UserNotification { UserId = invitor.UserId, UserId1 = model.UserId, IsLikedBack = false });
                     //Invitor is notified about referential registration
                     await NotifyUserAboutReferentialRegistrationAsync(invitor.UserId, model.UserId);
                 }
@@ -203,12 +209,12 @@ namespace MyWebApi.Repositories
                 //Actualize premium information
                 await CheckUserHasPremiumAsync(id);
 
-                return await _contx.SYSTEM_USERS.Where(u => u.UserId == id).Include(s => s.UserBaseInfo)
-                    .Include(s => s.UserBaseInfo)
-                    .Include(s => s.UserDataInfo).ThenInclude(s => s.Location)
-                    .Include(s => s.UserDataInfo).ThenInclude(s => s.Reason)
-                    .Include(s => s.UserPreferences)
-                    .Include(s => s.UserBlackList)
+                return await _contx.SYSTEM_USERS.Where(u => u.UserId == id)
+                    .Include(u => u.UserBaseInfo)
+                    .Include(u => u.UserDataInfo).ThenInclude(s => s.Location)
+                    .Include(u => u.UserDataInfo).ThenInclude(s => s.Reason)
+                    .Include(u => u.UserPreferences)
+                    .Include(u => u.UserBlackList)
                     .SingleOrDefaultAsync();
             }
             catch (Exception ex)
@@ -218,7 +224,7 @@ namespace MyWebApi.Repositories
             }
         }
 
-        public async Task<List<GetUserData>> GetUsersAsync(long userId, bool turnOffPersonalityFunc = false, bool isRepeated=false, bool isFreeSearch = false)
+        public async Task<List<GetUserData>> GetUsersAsync(long userId, bool isRepeated=false, bool isFreeSearch = false)
         {
             try
             {
@@ -230,11 +236,7 @@ namespace MyWebApi.Repositories
                 //Check if user STILL has premium
                 await CheckUserHasPremiumAsync(currentUser.UserId);
 
-                var currentUserEncounters = await GetUserEncounters(userId, (int)SystemEnums.Sections.Familiator); //I am not sure if it is 2 or 3 section
-
-                //If user has elected to temporarily dissable PERSONALITY functionality (Change shold NOT be changed in th DB) 
-                if (turnOffPersonalityFunc)
-                    currentUser.UserPreferences.ShouldUsePersonalityFunc = false;
+                var currentUserEncounters = await GetUserEncounters(userId, (int)Sections.Familiator); //I am not sure if it is 2 or 3 section
 
                 var data = await _contx.SYSTEM_USERS
                     .Where(u => u.UserId != currentUser.UserId)
@@ -256,15 +258,16 @@ namespace MyWebApi.Repositories
 
                 if (currentUser.UserPreferences.ShouldFilterUsersWithoutRealPhoto && currentUser.HasPremium)
                 {
-                    data.Where(u => u.UserBaseInfo.IsPhotoReal)
+                    data = data.Where(u => u.UserBaseInfo.IsPhotoReal)
                         .ToList();
                 }    
                 
                 if (currentUser.UserDataInfo.Location.CountryId != null)
                 {
-                    data.Where(u => u.UserDataInfo.Location.CountryId != null)
+                    data = data.Where(u => u.UserDataInfo.Location.CountryId != null)
                             .Where(u => u.UserPreferences.UserLocationPreferences.Contains((int)currentUser.UserDataInfo.Location.CountryId))
-                            .Where(u => currentUser.UserPreferences.UserLocationPreferences.Contains((int)u.UserDataInfo.Location.CountryId));
+                            .Where(u => currentUser.UserPreferences.UserLocationPreferences.Contains((int)u.UserDataInfo.Location.CountryId))
+                            .ToList();
                 }
 
                 //Check if users had encountered one another
@@ -280,7 +283,7 @@ namespace MyWebApi.Repositories
                 //Check if current user had already recieved request from user
                 data = data.Where(u => !CheckRequestExists(u.UserId, userId)).ToList();
 
-                //If user does NOT have gender prederences
+                //Don't check genders user does NOT have gender prederences
                 if (currentUser.UserPreferences.UserGenderPrefs != 3)
                 {
                     data = data.Where(u => u.UserDataInfo.UserGender == currentUser.UserPreferences.UserGenderPrefs)
@@ -293,373 +296,38 @@ namespace MyWebApi.Repositories
                     data = data.Where(u => u.IsFree != null && (bool)u.IsFree).ToList();
 
 
-                //If user uses PERSONALITY functionality and free search is disabled
-                if (currentUser.UserPreferences.ShouldUsePersonalityFunc && !isFreeSearch)
+                //If user uses PERSONALITY functionality
+                if (currentUser.UserPreferences.ShouldUsePersonalityFunc)
                 {
-                    var userActiveEffects = await GetUserActiveEffects(userId);
-
-                    var deviation = 0.15;
-                    var minDeviation = 0.05;
-
-                    var currentValueMax = 0d;
-                    var currentValueMin = 0d;
-
-                    var valentineBonus = 1d;
-
-                    var hasActiveValentine = await CheckEffectIsActiveAsync(userId, (int)Currencies.TheValentine);
-
-                    var userHasDetectorOn = await CheckEffectIsActiveAsync(userId, (int)Currencies.TheDetector);
-
-                    if (hasActiveValentine)
-                        valentineBonus = 2;
-
-                    if (isRepeated)
-                    {
-                        deviation *= 1.5;
-                        minDeviation *= 3.2;
-                    }
-
-                    var userPoints = await _contx.USER_PERSONALITY_POINTS.Where(p => p.UserId == currentUser.UserId)
-                    .SingleOrDefaultAsync();
-
-                    var userStats = await _contx.USER_PERSONALITY_STATS.Where(s => s.UserId == currentUser.UserId)
-                    .SingleOrDefaultAsync();
-
-                    var important = await userPoints.GetImportantParams();
 
                     for (int i = 0; i < data.Count; i++)
                     {
-                        var importantMatches = 0;
-                        var secondaryMatches = 0;
-                        var matchedBy = "";
-
-                        var u = data[i];
-
-                        //Check if user uses personality functionality and remove him from the list if he does not
-                        if (!u.UserPreferences.ShouldUsePersonalityFunc)
-                        {
-                            data.Remove(u);
-                            continue;
-                        }
-
-                        var user2Points = await _contx.USER_PERSONALITY_POINTS.Where(p => p.UserId == u.UserId)
-                        .SingleOrDefaultAsync();
-
-                        var user2Stats = await _contx.USER_PERSONALITY_STATS.Where(s => s.UserId == u.UserId)
-                        .SingleOrDefaultAsync();
-
-
-                        //Turns off the parameter if it is 0
-                        if (userPoints.Personality > 0 && userStats.Personality > 0 && user2Points.Personality > 0 && user2Stats.Personality > 0)
-                        {
-                            //TODO: create its own deviation variable depending on the number of personalities (It is likely to be grater than the nornal one)
-                            var personalitySim = await CalculateSimilarityAsync(userStats.Personality * valentineBonus, user2Stats.Personality);
-
-                            currentValueMax = ApplyMaxDeviation(userPoints.PersonalityPercentage, deviation);
-                            currentValueMin = ApplyMinDeviation(userPoints.PersonalityPercentage, minDeviation);
-
-                            //Negative conditions are applied, cuz this is an exclussive condition
-                            if (personalitySim <= currentValueMax && personalitySim >= currentValueMin)
-                            {
-                                currentValueMax = ApplyMaxDeviation(user2Points.PersonalityPercentage, deviation);
-                                currentValueMin = ApplyMinDeviation(user2Points.PersonalityPercentage, minDeviation);
-
-                                if (personalitySim <= currentValueMax && personalitySim >= currentValueMin)
-                                {
-                                    matchedBy += "P. ";
-                                    if (important.Contains(PersonalityStats.PersonalityType))
-                                    {
-                                        importantMatches++;
-                                    }
-                                    else
-                                        secondaryMatches++;
-                                }
-                            }
-                        }
-
-
-                        if (userPoints.EmotionalIntellect > 0 && userStats.EmotionalIntellect > 0 && user2Points.EmotionalIntellect > 0 && user2Stats.EmotionalIntellect > 0)
-                        {
-                            var emIntellectSim = await CalculateSimilarityAsync(userStats.EmotionalIntellect * valentineBonus, user2Stats.EmotionalIntellect);
-
-                            currentValueMax = ApplyMaxDeviation(userPoints.EmotionalIntellectPercentage, deviation);
-                            currentValueMin = ApplyMinDeviation(userPoints.EmotionalIntellectPercentage, minDeviation);
-
-                            if (emIntellectSim <= currentValueMax && emIntellectSim >= currentValueMin)
-                            {                            
-                                currentValueMax = ApplyMaxDeviation(user2Points.EmotionalIntellectPercentage, deviation);
-                                currentValueMin = ApplyMinDeviation(user2Points.EmotionalIntellectPercentage, minDeviation);
-
-                                if (emIntellectSim <= currentValueMax && emIntellectSim >= currentValueMin)
-                                {
-                                    matchedBy += "E. ";
-                                    if (important.Contains(PersonalityStats.EmotionalIntellect))
-                                    {
-                                        importantMatches++;
-                                    }
-                                    else
-                                        secondaryMatches++;
-                                }
-                            }
-                        }
-
-
-                        if (userPoints.Reliability > 0 && userStats.Reliability > 0 && user2Points.Reliability > 0 && user2Stats.Reliability > 0)
-                        {
-                            var reliabilitySim = await CalculateSimilarityAsync(userStats.Reliability * valentineBonus, user2Stats.Reliability);
-
-                            currentValueMax = ApplyMaxDeviation(userPoints.ReliabilityPercentage, deviation);
-                            currentValueMin = ApplyMinDeviation(userPoints.ReliabilityPercentage, minDeviation);
-
-                            if (reliabilitySim <= currentValueMax && reliabilitySim >= currentValueMin)
-                            {
-                                currentValueMax = ApplyMaxDeviation(user2Points.ReliabilityPercentage, deviation);
-                                currentValueMin = ApplyMinDeviation(user2Points.ReliabilityPercentage, minDeviation);
-
-                                if (reliabilitySim <= currentValueMax && reliabilitySim >= currentValueMin)
-                                {
-                                    matchedBy += "R. ";
-                                    if (important.Contains(PersonalityStats.Reliability))
-                                    {
-                                        importantMatches++;
-                                    }
-                                    else
-                                        secondaryMatches++;
-                                }
-                            }
-                        }
-
-
-                        if (userPoints.Compassion > 0 && userStats.Compassion > 0 && user2Points.Compassion > 0 && user2Stats.Compassion > 0)
-                        {
-                            var compassionSim = await CalculateSimilarityAsync(userStats.Compassion * valentineBonus, user2Stats.Compassion);
-
-                            currentValueMax = ApplyMaxDeviation(userPoints.CompassionPercentage, deviation);
-                            currentValueMin = ApplyMinDeviation(userPoints.CompassionPercentage, minDeviation);
-
-                            if (compassionSim <= currentValueMax && compassionSim >= currentValueMin)
-                            {
-                                currentValueMax = ApplyMaxDeviation(user2Points.CompassionPercentage, deviation);
-                                currentValueMin = ApplyMinDeviation(user2Points.CompassionPercentage, minDeviation);
-
-                                if (compassionSim <= currentValueMax && compassionSim >= currentValueMin)
-                                {
-                                    matchedBy += "S. ";
-                                    if (important.Contains(PersonalityStats.Compassion))
-                                    {
-                                        importantMatches++;
-                                    }
-                                    else
-                                        secondaryMatches++;
-                                }
-                            }
-                        }
-
-
-                        if (userPoints.OpenMindedness > 0 && userStats.OpenMindedness > 0 && user2Points.OpenMindedness > 0 && user2Stats.OpenMindedness > 0)
-                        {
-                            var openMindSim = await CalculateSimilarityAsync(userStats.OpenMindedness * valentineBonus, user2Stats.OpenMindedness);
-
-                            currentValueMax = ApplyMaxDeviation(userPoints.OpenMindednessPercentage, deviation);
-                            currentValueMin = ApplyMinDeviation(userPoints.OpenMindednessPercentage, minDeviation);
-
-                            if (openMindSim <= currentValueMax && openMindSim >= currentValueMin)
-                            {
-                                currentValueMax = ApplyMaxDeviation(user2Points.OpenMindednessPercentage, deviation);
-                                currentValueMin = ApplyMinDeviation(user2Points.OpenMindednessPercentage, minDeviation);
-
-                                if (openMindSim <= currentValueMax && openMindSim >= currentValueMin)
-                                {
-                                    matchedBy += "O. ";
-                                    if (important.Contains(PersonalityStats.OpenMindedness))
-                                    {
-                                        importantMatches++;
-                                    }
-                                    else
-                                        secondaryMatches++;
-                                }
-                            }
-                        }
-
-
-                        if (userPoints.Agreeableness > 0 && userStats.Agreeableness > 0 && user2Points.Agreeableness > 0 && user2Stats.Agreeableness > 0)
-                        {
-                            var agreeablenessSim = await CalculateSimilarityAsync(userStats.Agreeableness * valentineBonus, user2Stats.Agreeableness);
-
-                            currentValueMax = ApplyMaxDeviation(userPoints.AgreeablenessPercentage, deviation);
-                            currentValueMin = ApplyMinDeviation(userPoints.AgreeablenessPercentage, minDeviation);
-
-                            if (agreeablenessSim <= currentValueMax && agreeablenessSim >= currentValueMin)
-                            {
-                                currentValueMax = ApplyMaxDeviation(user2Points.AgreeablenessPercentage, deviation);
-                                currentValueMin = ApplyMinDeviation(user2Points.AgreeablenessPercentage, minDeviation);
-
-                                if (agreeablenessSim <= currentValueMax && agreeablenessSim >= currentValueMin)
-                                {
-                                    matchedBy += "N. ";
-                                    if (important.Contains(PersonalityStats.Agreeableness))
-                                    {
-                                        importantMatches++;
-                                    }
-                                    else
-                                        secondaryMatches++;
-                                }
-                            }
-                        }
-
-
-                        if (userPoints.SelfAwareness > 0 && userStats.SelfAwareness > 0 && user2Points.SelfAwareness > 0 && user2Stats.SelfAwareness > 0)
-                        {
-                            var selfAwerenessSim = await CalculateSimilarityAsync(userStats.SelfAwareness * valentineBonus, user2Stats.SelfAwareness);
-
-                            currentValueMax = ApplyMaxDeviation(userPoints.SelfAwarenessPercentage, deviation);
-                            currentValueMin = ApplyMinDeviation(userPoints.SelfAwarenessPercentage, minDeviation);
-
-                            if (selfAwerenessSim <= currentValueMax && selfAwerenessSim >= currentValueMin)
-                            {
-                                currentValueMax = ApplyMaxDeviation(user2Points.SelfAwarenessPercentage, deviation);
-                                currentValueMin = ApplyMinDeviation(user2Points.SelfAwarenessPercentage, minDeviation);
-
-                                if (selfAwerenessSim <= currentValueMax && selfAwerenessSim >= currentValueMin)
-                                {
-                                    matchedBy += "A. ";
-                                    if (important.Contains(PersonalityStats.SelfAwareness))
-                                    {
-                                        importantMatches++;
-                                    }
-                                    else
-                                        secondaryMatches++;
-                                }
-                            }
-                        }
-
-
-                        if (userPoints.LevelOfSense > 0 && userStats.LevelOfSense > 0 && user2Points.LevelOfSense > 0 && user2Stats.LevelOfSense > 0)
-                        {
-                            var levelOfSense = await CalculateSimilarityAsync(userStats.LevelOfSense * valentineBonus, user2Stats.LevelOfSense);
-
-                            currentValueMax = ApplyMaxDeviation(userPoints.LevelOfSensePercentage, deviation);
-                            currentValueMin = ApplyMinDeviation(userPoints.LevelOfSensePercentage, minDeviation);
-
-                            if (levelOfSense <= currentValueMax && levelOfSense >= currentValueMin)
-                            {
-                                currentValueMax = ApplyMaxDeviation(user2Points.LevelOfSensePercentage, deviation);
-                                currentValueMin = ApplyMinDeviation(user2Points.LevelOfSensePercentage, minDeviation);
-
-                                if (levelOfSense <= currentValueMax && levelOfSense >= currentValueMin)
-                                {
-                                    matchedBy += "L. ";
-                                    if (important.Contains(PersonalityStats.LevelsOfSense))
-                                    {
-                                        importantMatches++;
-                                    }
-                                    else
-                                        secondaryMatches++;
-                                }
-                            }
-                        }
-
-
-                        if (userPoints.Intellect > 0 && userStats.Intellect > 0 && user2Points.Intellect > 0 && user2Stats.Intellect > 0)
-                        {
-                            var intellectSim = await CalculateSimilarityAsync(userStats.Intellect * valentineBonus, user2Points.Intellect);
-
-                            currentValueMax = ApplyMaxDeviation(userPoints.IntellectPercentage, deviation);
-                            currentValueMin = ApplyMinDeviation(userPoints.IntellectPercentage, minDeviation);
-
-                            if (intellectSim <= currentValueMax && intellectSim >= currentValueMin)
-                            {
-                                currentValueMax = ApplyMaxDeviation(user2Points.IntellectPercentage, deviation);
-                                currentValueMin = ApplyMinDeviation(user2Points.IntellectPercentage, minDeviation);
-
-                                if (intellectSim <= currentValueMax && intellectSim >= currentValueMin)
-                                {
-                                    matchedBy += "I. ";
-                                    if (important.Contains(PersonalityStats.Intellect))
-                                    {
-                                        importantMatches++;
-                                    }
-                                    else
-                                        secondaryMatches++;
-                                }
-                            }
-                        }
-
-                        if (userPoints.Nature > 0 && userStats.Nature > 0 && user2Points.Nature > 0 && user2Stats.Nature > 0)
-                        {
-                            var natureSim = await CalculateSimilarityAsync(userStats.Nature * valentineBonus, user2Stats.Nature);
-
-                            currentValueMax = ApplyMaxDeviation(userPoints.NaturePercentage, deviation);
-                            currentValueMin = ApplyMinDeviation(userPoints.NaturePercentage, minDeviation);
-
-                            if (natureSim <= currentValueMax && natureSim >= currentValueMin)
-                            {
-                                currentValueMax = ApplyMaxDeviation(user2Points.NaturePercentage, deviation);
-                                currentValueMin = ApplyMinDeviation(user2Points.NaturePercentage, minDeviation);
-
-                                if (natureSim <= currentValueMax && natureSim >= currentValueMin)
-                                {
-                                    matchedBy += "T. ";
-                                    if (important.Contains(PersonalityStats.Nature))
-                                    {
-                                        importantMatches++;
-                                    }
-                                    else
-                                        secondaryMatches++;
-                                }
-                            }
-                        }
-
-
-                        if (userPoints.Creativity > 0 && userStats.Creativity > 0 && user2Points.Creativity > 0 && user2Stats.Creativity > 0)
-                        {
-                            var creativitySim = await CalculateSimilarityAsync(userStats.Creativity * valentineBonus, user2Stats.Creativity);
-
-                            currentValueMax = ApplyMaxDeviation(userPoints.CreativityPercentage, deviation);
-                            currentValueMin = ApplyMinDeviation(userPoints.CreativityPercentage, minDeviation);
-
-                            if (creativitySim <= currentValueMax && creativitySim >= currentValueMin)
-                            {
-                                currentValueMax = ApplyMaxDeviation(user2Points.CreativityPercentage, deviation);
-                                currentValueMin = ApplyMinDeviation(user2Points.CreativityPercentage, minDeviation);
-
-                                if (creativitySim <= currentValueMax && creativitySim >= currentValueMin)
-                                {
-                                    matchedBy += "Y. ";
-                                    if (important.Contains(PersonalityStats.Creativity))
-                                    {
-                                        importantMatches++;
-                                    }
-                                    else
-                                        secondaryMatches++;
-                                }
-                            }
-                        }
-
-                        if (importantMatches < 1 && secondaryMatches < 3)
-                        {
-                            data.Remove(u);
-                            continue;
-                        };
-
-                        var returnUser = new GetUserData(u, $"{u.UserBaseInfo.UserDescription}");
-
-                        if (userHasDetectorOn)
-                            returnUser.AddDescriptionBonus("<b>{matchedBy}</b>");
-
-                        returnData.Add(returnUser);
+                        returnData.Add(await GetPersonalityMatchResult(userId, currentUser, data[i], isRepeated));
                     }
                 }
                 else
                 {
-                    if(!isFreeSearch)
+                    for (int i = 0; i < data.Count; i++)
                     {
-                        //Remove users, who is using PERSONALITY fucntionality
-                        data.AsParallel().ForAll(u =>
-                        {
-                            if (u.UserPreferences.ShouldUsePersonalityFunc)
-                                data.Remove(u);
-                        });
+                        var u = data[i];
+                        var user = new GetUserData(u);
+                        var bonus = "";
+
+                        //Add comment if user wants it
+                        if (currentUser.ShouldComment)
+                            user.Comment = await GetRandomHintAsync(currentUser.UserDataInfo.LanguageId, HintType.Search);
+
+                        if (u.HasPremium && u.Nickname != "")
+                            bonus += $"<b>{u.Nickname}</b>\n";
+
+                        if (u.IdentityType == IdentityConfirmationType.Partial)
+                             bonus += $"☑️☑️☑️\n\n";
+                        else if (u.IdentityType == IdentityConfirmationType.Full)
+                             bonus += $"✅✅✅\n\n";
+
+
+                        user.AddDescriptionBonus(bonus);
+                        returnData.Add(user);
                     }
                 }
 
@@ -667,42 +335,13 @@ namespace MyWebApi.Repositories
                 if (!isRepeated)
                 {
                     //Check if users count is less than the limit
-                    if (data.Count <= miminalProfileCount)
+                    if (returnData.Count <= miminalProfileCount)
                     {
-                        returnData = await GetUsersAsync(userId, turnOffPersonalityFunc:turnOffPersonalityFunc, isRepeated: true, isFreeSearch:isFreeSearch);
+                        returnData = await GetUsersAsync(userId, isRepeated: true, isFreeSearch:isFreeSearch);
                     }
 
                     //Add user trust exp only if method was not repeated
                     await AddUserTrustProgressAsync(userId, 0.000003);
-
-                    //Return users PERSONALITY usage property to normal (In case it was temporarily turned off)
-                    if (turnOffPersonalityFunc)
-                    {
-                        currentUser.UserPreferences.ShouldUsePersonalityFunc = true;
-                        await _contx.SaveChangesAsync();
-                    }
-
-                    //Fill-up return data if it wasnt filled in PERSONALITY check
-                    if (!currentUser.UserPreferences.ShouldUsePersonalityFunc)
-                    {
-                        await Task.Run(async () =>
-                        {
-                            for (int i = 0; i < data.Count; i++)
-                            {
-                                var u = data[i];
-                                string bonus = "";
-
-                                //Register user encounter
-                                await RegisterUserEncounter(new Encounter { UserId = userId, EncounteredUserId = u.UserId, SectionId = (int)Sections.Familiator });
-
-                                if (u.IsIdentityConfirmed)
-                                    bonus += $"✔️\n\n";
-                                if (u.HasPremium && u.Nickname != "")
-                                    bonus += $"<b>{u.Nickname}</b>\n";
-                                returnData.Add(new GetUserData(u, bonus));
-                            }
-                        });
-                    }
 
                     //Order user list randomly 
                     returnData = returnData.OrderBy(u => new Random().Next())
@@ -722,11 +361,384 @@ namespace MyWebApi.Repositories
             }
         }
 
+        private async Task<GetUserData> GetPersonalityMatchResult(long userId, User currentUser, User managedUser, bool isRepeated)
+        {
+            var returnUser = new GetUserData(managedUser);
+
+            var userActiveEffects = await GetUserActiveEffects(userId);
+            var deviation = 0.15;
+            var minDeviation = 0.05;
+
+            var currentValueMax = 0d;
+            var currentValueMin = 0d;
+
+            var valentineBonus = 1d;
+
+            var importantMatches = 0;
+            var secondaryMatches = 0;
+            var matchedBy = "";
+
+            var hasActiveValentine = userActiveEffects.Where(e => e.EffectId == (int)Currencies.TheValentine).SingleOrDefault() != null;
+
+            var userHasDetectorOn = userActiveEffects.Where(e => e.EffectId == (int)Currencies.TheDetector).SingleOrDefault() != null;
+
+            if (hasActiveValentine)
+                valentineBonus = 2;
+
+            if (isRepeated)
+            {
+                deviation *= 1.5;
+                minDeviation *= 3.2;
+            }
+
+            var userPoints = await _contx.USER_PERSONALITY_POINTS.Where(p => p.UserId == currentUser.UserId)
+                .AsNoTracking()
+                .SingleOrDefaultAsync();
+
+            var userStats = await _contx.USER_PERSONALITY_STATS.Where(s => s.UserId == currentUser.UserId)
+                .AsNoTracking()
+                .SingleOrDefaultAsync();
+
+            //Enhanse users PP if condition is met
+            if(currentUser.ShouldEnhance)
+            {
+                userPoints.PersonalityPercentage = 0.1;
+                userPoints.EmotionalIntellectPercentage = 0.1;
+                userPoints.ReliabilityPercentage = 0.1;
+                userPoints.CompassionPercentage = 0.1;
+                userPoints.OpenMindednessPercentage = 0.1;
+                userPoints.SelfAwarenessPercentage = 0.1;
+                userPoints.AgreeablenessPercentage = 0.1;
+                userPoints.LevelOfSensePercentage = 0.1;
+                userPoints.IntellectPercentage = 0.1;
+                userPoints.NaturePercentage = 0.1;
+                userPoints.CreativityPercentage = 0.1;
+            }
+
+            var important = await userPoints.GetImportantParams();
+
+            //Pass if user does not uses personality
+            if (!managedUser.UserPreferences.ShouldUsePersonalityFunc)
+                return returnUser;
+
+            var user2Points = await _contx.USER_PERSONALITY_POINTS.Where(p => p.UserId == managedUser.UserId)
+                .AsNoTracking()
+                .SingleOrDefaultAsync();
+
+            var user2Stats = await _contx.USER_PERSONALITY_STATS.Where(s => s.UserId == managedUser.UserId)
+                .AsNoTracking()
+                .SingleOrDefaultAsync();
+
+
+            //Turns off the parameter if it is 0
+            if (userPoints.Personality > 0 && userStats.Personality > 0 && user2Points.Personality > 0 && user2Stats.Personality > 0)
+            {
+                //TODO: create its own deviation variable depending on the number of personalities (It is likely to be grater than the normal one)
+                var personalitySim = await CalculateSimilarityAsync(userStats.Personality * valentineBonus, user2Stats.Personality);
+
+                currentValueMax = ApplyMaxDeviation(userPoints.PersonalityPercentage, deviation);
+                currentValueMin = ApplyMinDeviation(userPoints.PersonalityPercentage, minDeviation);
+
+                //Negative conditions are applied, cuz this is an exclussive condition
+                if (personalitySim <= currentValueMax && personalitySim >= currentValueMin)
+                {
+                    currentValueMax = ApplyMaxDeviation(user2Points.PersonalityPercentage, deviation);
+                    currentValueMin = ApplyMinDeviation(user2Points.PersonalityPercentage, minDeviation);
+
+                    if (personalitySim <= currentValueMax && personalitySim >= currentValueMin)
+                    {
+                        matchedBy += "[P] ";
+                        if (important.Contains(PersonalityStats.PersonalityType))
+                        {
+                            importantMatches++;
+                        }
+                        else
+                            secondaryMatches++;
+                    }
+                }
+            }
+
+
+            if (userPoints.EmotionalIntellect > 0 && userStats.EmotionalIntellect > 0 && user2Points.EmotionalIntellect > 0 && user2Stats.EmotionalIntellect > 0)
+            {
+                var emIntellectSim = await CalculateSimilarityAsync(userStats.EmotionalIntellect * valentineBonus, user2Stats.EmotionalIntellect);
+
+                currentValueMax = ApplyMaxDeviation(userPoints.EmotionalIntellectPercentage, deviation);
+                currentValueMin = ApplyMinDeviation(userPoints.EmotionalIntellectPercentage, minDeviation);
+
+                if (emIntellectSim <= currentValueMax && emIntellectSim >= currentValueMin)
+                {
+                    currentValueMax = ApplyMaxDeviation(user2Points.EmotionalIntellectPercentage, deviation);
+                    currentValueMin = ApplyMinDeviation(user2Points.EmotionalIntellectPercentage, minDeviation);
+
+                    if (emIntellectSim <= currentValueMax && emIntellectSim >= currentValueMin)
+                    {
+                        matchedBy += "[E] ";
+                        if (important.Contains(PersonalityStats.EmotionalIntellect))
+                        {
+                            importantMatches++;
+                        }
+                        else
+                            secondaryMatches++;
+                    }
+                }
+            }
+
+
+            if (userPoints.Reliability > 0 && userStats.Reliability > 0 && user2Points.Reliability > 0 && user2Stats.Reliability > 0)
+            {
+                var reliabilitySim = await CalculateSimilarityAsync(userStats.Reliability * valentineBonus, user2Stats.Reliability);
+
+                currentValueMax = ApplyMaxDeviation(userPoints.ReliabilityPercentage, deviation);
+                currentValueMin = ApplyMinDeviation(userPoints.ReliabilityPercentage, minDeviation);
+
+                if (reliabilitySim <= currentValueMax && reliabilitySim >= currentValueMin)
+                {
+                    currentValueMax = ApplyMaxDeviation(user2Points.ReliabilityPercentage, deviation);
+                    currentValueMin = ApplyMinDeviation(user2Points.ReliabilityPercentage, minDeviation);
+
+                    if (reliabilitySim <= currentValueMax && reliabilitySim >= currentValueMin)
+                    {
+                        matchedBy += "[R] ";
+                        if (important.Contains(PersonalityStats.Reliability))
+                        {
+                            importantMatches++;
+                        }
+                        else
+                            secondaryMatches++;
+                    }
+                }
+            }
+
+
+            if (userPoints.Compassion > 0 && userStats.Compassion > 0 && user2Points.Compassion > 0 && user2Stats.Compassion > 0)
+            {
+                var compassionSim = await CalculateSimilarityAsync(userStats.Compassion * valentineBonus, user2Stats.Compassion);
+
+                currentValueMax = ApplyMaxDeviation(userPoints.CompassionPercentage, deviation);
+                currentValueMin = ApplyMinDeviation(userPoints.CompassionPercentage, minDeviation);
+
+                if (compassionSim <= currentValueMax && compassionSim >= currentValueMin)
+                {
+                    currentValueMax = ApplyMaxDeviation(user2Points.CompassionPercentage, deviation);
+                    currentValueMin = ApplyMinDeviation(user2Points.CompassionPercentage, minDeviation);
+
+                    if (compassionSim <= currentValueMax && compassionSim >= currentValueMin)
+                    {
+                        matchedBy += "[S] ";
+                        if (important.Contains(PersonalityStats.Compassion))
+                        {
+                            importantMatches++;
+                        }
+                        else
+                            secondaryMatches++;
+                    }
+                }
+            }
+
+
+            if (userPoints.OpenMindedness > 0 && userStats.OpenMindedness > 0 && user2Points.OpenMindedness > 0 && user2Stats.OpenMindedness > 0)
+            {
+                var openMindSim = await CalculateSimilarityAsync(userStats.OpenMindedness * valentineBonus, user2Stats.OpenMindedness);
+
+                currentValueMax = ApplyMaxDeviation(userPoints.OpenMindednessPercentage, deviation);
+                currentValueMin = ApplyMinDeviation(userPoints.OpenMindednessPercentage, minDeviation);
+
+                if (openMindSim <= currentValueMax && openMindSim >= currentValueMin)
+                {
+                    currentValueMax = ApplyMaxDeviation(user2Points.OpenMindednessPercentage, deviation);
+                    currentValueMin = ApplyMinDeviation(user2Points.OpenMindednessPercentage, minDeviation);
+
+                    if (openMindSim <= currentValueMax && openMindSim >= currentValueMin)
+                    {
+                        matchedBy += "[O] ";
+                        if (important.Contains(PersonalityStats.OpenMindedness))
+                        {
+                            importantMatches++;
+                        }
+                        else
+                            secondaryMatches++;
+                    }
+                }
+            }
+
+
+            if (userPoints.Agreeableness > 0 && userStats.Agreeableness > 0 && user2Points.Agreeableness > 0 && user2Stats.Agreeableness > 0)
+            {
+                var agreeablenessSim = await CalculateSimilarityAsync(userStats.Agreeableness * valentineBonus, user2Stats.Agreeableness);
+
+                currentValueMax = ApplyMaxDeviation(userPoints.AgreeablenessPercentage, deviation);
+                currentValueMin = ApplyMinDeviation(userPoints.AgreeablenessPercentage, minDeviation);
+
+                if (agreeablenessSim <= currentValueMax && agreeablenessSim >= currentValueMin)
+                {
+                    currentValueMax = ApplyMaxDeviation(user2Points.AgreeablenessPercentage, deviation);
+                    currentValueMin = ApplyMinDeviation(user2Points.AgreeablenessPercentage, minDeviation);
+
+                    if (agreeablenessSim <= currentValueMax && agreeablenessSim >= currentValueMin)
+                    {
+                        matchedBy += "[N] ";
+                        if (important.Contains(PersonalityStats.Agreeableness))
+                        {
+                            importantMatches++;
+                        }
+                        else
+                            secondaryMatches++;
+                    }
+                }
+            }
+
+
+            if (userPoints.SelfAwareness > 0 && userStats.SelfAwareness > 0 && user2Points.SelfAwareness > 0 && user2Stats.SelfAwareness > 0)
+            {
+                var selfAwerenessSim = await CalculateSimilarityAsync(userStats.SelfAwareness * valentineBonus, user2Stats.SelfAwareness);
+
+                currentValueMax = ApplyMaxDeviation(userPoints.SelfAwarenessPercentage, deviation);
+                currentValueMin = ApplyMinDeviation(userPoints.SelfAwarenessPercentage, minDeviation);
+
+                if (selfAwerenessSim <= currentValueMax && selfAwerenessSim >= currentValueMin)
+                {
+                    currentValueMax = ApplyMaxDeviation(user2Points.SelfAwarenessPercentage, deviation);
+                    currentValueMin = ApplyMinDeviation(user2Points.SelfAwarenessPercentage, minDeviation);
+
+                    if (selfAwerenessSim <= currentValueMax && selfAwerenessSim >= currentValueMin)
+                    {
+                        matchedBy += "[A] ";
+                        if (important.Contains(PersonalityStats.SelfAwareness))
+                        {
+                            importantMatches++;
+                        }
+                        else
+                            secondaryMatches++;
+                    }
+                }
+            }
+
+
+            if (userPoints.LevelOfSense > 0 && userStats.LevelOfSense > 0 && user2Points.LevelOfSense > 0 && user2Stats.LevelOfSense > 0)
+            {
+                var levelOfSense = await CalculateSimilarityAsync(userStats.LevelOfSense * valentineBonus, user2Stats.LevelOfSense);
+
+                currentValueMax = ApplyMaxDeviation(userPoints.LevelOfSensePercentage, deviation);
+                currentValueMin = ApplyMinDeviation(userPoints.LevelOfSensePercentage, minDeviation);
+
+                if (levelOfSense <= currentValueMax && levelOfSense >= currentValueMin)
+                {
+                    currentValueMax = ApplyMaxDeviation(user2Points.LevelOfSensePercentage, deviation);
+                    currentValueMin = ApplyMinDeviation(user2Points.LevelOfSensePercentage, minDeviation);
+
+                    if (levelOfSense <= currentValueMax && levelOfSense >= currentValueMin)
+                    {
+                        matchedBy += "[L] ";
+                        if (important.Contains(PersonalityStats.LevelsOfSense))
+                        {
+                            importantMatches++;
+                        }
+                        else
+                            secondaryMatches++;
+                    }
+                }
+            }
+
+
+            if (userPoints.Intellect > 0 && userStats.Intellect > 0 && user2Points.Intellect > 0 && user2Stats.Intellect > 0)
+            {
+                var intellectSim = await CalculateSimilarityAsync(userStats.Intellect * valentineBonus, user2Points.Intellect);
+
+                currentValueMax = ApplyMaxDeviation(userPoints.IntellectPercentage, deviation);
+                currentValueMin = ApplyMinDeviation(userPoints.IntellectPercentage, minDeviation);
+
+                if (intellectSim <= currentValueMax && intellectSim >= currentValueMin)
+                {
+                    currentValueMax = ApplyMaxDeviation(user2Points.IntellectPercentage, deviation);
+                    currentValueMin = ApplyMinDeviation(user2Points.IntellectPercentage, minDeviation);
+
+                    if (intellectSim <= currentValueMax && intellectSim >= currentValueMin)
+                    {
+                        matchedBy += "[I] ";
+                        if (important.Contains(PersonalityStats.Intellect))
+                        {
+                            importantMatches++;
+                        }
+                        else
+                            secondaryMatches++;
+                    }
+                }
+            }
+
+            if (userPoints.Nature > 0 && userStats.Nature > 0 && user2Points.Nature > 0 && user2Stats.Nature > 0)
+            {
+                var natureSim = await CalculateSimilarityAsync(userStats.Nature * valentineBonus, user2Stats.Nature);
+
+                currentValueMax = ApplyMaxDeviation(userPoints.NaturePercentage, deviation);
+                currentValueMin = ApplyMinDeviation(userPoints.NaturePercentage, minDeviation);
+
+                if (natureSim <= currentValueMax && natureSim >= currentValueMin)
+                {
+                    currentValueMax = ApplyMaxDeviation(user2Points.NaturePercentage, deviation);
+                    currentValueMin = ApplyMinDeviation(user2Points.NaturePercentage, minDeviation);
+
+                    if (natureSim <= currentValueMax && natureSim >= currentValueMin)
+                    {
+                        matchedBy += "[T] ";
+                        if (important.Contains(PersonalityStats.Nature))
+                        {
+                            importantMatches++;
+                        }
+                        else
+                            secondaryMatches++;
+                    }
+                }
+            }
+
+
+            if (userPoints.Creativity > 0 && userStats.Creativity > 0 && user2Points.Creativity > 0 && user2Stats.Creativity > 0)
+            {
+                var creativitySim = await CalculateSimilarityAsync(userStats.Creativity * valentineBonus, user2Stats.Creativity);
+
+                currentValueMax = ApplyMaxDeviation(userPoints.CreativityPercentage, deviation);
+                currentValueMin = ApplyMinDeviation(userPoints.CreativityPercentage, minDeviation);
+
+                if (creativitySim <= currentValueMax && creativitySim >= currentValueMin)
+                {
+                    currentValueMax = ApplyMaxDeviation(user2Points.CreativityPercentage, deviation);
+                    currentValueMin = ApplyMinDeviation(user2Points.CreativityPercentage, minDeviation);
+
+                    if (creativitySim <= currentValueMax && creativitySim >= currentValueMin)
+                    {
+                        matchedBy += "[Y] ";
+                        if (important.Contains(PersonalityStats.Creativity))
+                        {
+                            importantMatches++;
+                        }
+                        else
+                            secondaryMatches++;
+                    }
+                }
+            }
+
+            if (importantMatches < 1 && secondaryMatches < 3)
+            {
+                return returnUser;
+            };
+
+            var bonus = "";
+
+            if (userHasDetectorOn)
+                bonus += $"<b>PERSONALITY match!</b>\n<b>{matchedBy}</b>";
+            else
+                bonus += "<b>PERSONALITY match!</b>";
+
+            returnUser.AddDescriptionBonus(bonus);
+
+            return returnUser;
+        }
+
         public async Task<Country> GetCountryAsync(long id)
         {
             try
             {
-                var c = await _contx.COUNTRIES.Include(c => c.Cities).SingleAsync(c => c.Id == id);
+                var c = await _contx.countries.Include(c => c.Cities).SingleAsync(c => c.Id == id);
                 return c;
             }
             catch (Exception ex)
@@ -949,26 +961,39 @@ namespace MyWebApi.Repositories
             }
         }
 
-        public async Task<long> AddUserReportAsync(Report report)
+        public async Task<Guid> AddUserReportAsync(SendUserReport request)
         {
             try
             {
-                report.Id = await _contx.USER_REPORTS.CountAsync() +1;
-                await _contx.USER_REPORTS.AddAsync(report);
-                await _contx.SaveChangesAsync();
+                var reportedUser = await _contx.SYSTEM_USERS.Where(u => u.UserId == request.ReportedUser)
+                    .FirstOrDefaultAsync();
 
-                if (await CheckUserHasTasksInSectionAsync(report.UserBaseInfoId, (int)Sections.Reporter))
+                reportedUser.ReportCount++;
+
+                //Ban user if dailly report count is too high
+                if (reportedUser.ReportCount >= 5)
                 {
-                    //TODO find and topup user's task progress
+                    reportedUser.IsBanned = true;
+                    reportedUser.BanDate = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
                 }
+
+                var report = new Report
+                {
+                    Id = Guid.NewGuid(),
+                    UserBaseInfoId = request.Sender,
+                    UserBaseInfoId1 = request.ReportedUser,
+                    Text = request.Text,
+                    Reason = request.Reason,
+                    InsertedUtc = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc)
+                };
+
+                await _contx.USER_REPORTS.AddAsync(report);
+
+                await _contx.SaveChangesAsync();
 
                 return report.Id;
             }
-            catch (Exception ex)
-            {
-                await LogAdminErrorAsync(report.UserBaseInfoId, ex.Message, (int)Sections.Reporter);
-                return 0;
-            }
+            catch {return Guid.Empty;}
         }
 
         public async Task<List<Report>> GetMostRecentReports()
@@ -985,14 +1010,13 @@ namespace MyWebApi.Repositories
             }
         }
 
-        public async Task<Report> GetSingleUserReportByIdAsync(long id)
+        public async Task<Report> GetSingleUserReportByIdAsync(Guid id)
         {
             try
             {
                 return await _contx.USER_REPORTS.Where(r => r.Id == id)
                     .Include(r => r.User)
                     .Include(r => r.Sender)
-                    .Include(r => r.Reason)
                     .SingleOrDefaultAsync();
             }
             catch (Exception ex)
@@ -1015,17 +1039,20 @@ namespace MyWebApi.Repositories
             }
         }
 
-        public async Task<List<ReportReason>> GetReportReasonsAsync(int localisationId)
+        public List<GetReportReason> GetReportReasonsAsync()
         {
-            try
+            var reasons = new List<GetReportReason>();
+
+            foreach (var reason in Enum.GetValues(typeof(ReportReason)))
             {
-                return await _contx.REPORT_REASONS.Where(r => r.ClassLocalisationId == localisationId).ToListAsync();
+                reasons.Add(new GetReportReason
+                {
+                    Id = (short)reason,
+                    Name = EnumLocalizer.GetLocalizedValue((ReportReason)reason)
+                });
             }
-            catch (Exception ex)
-            {
-                await LogAdminErrorAsync(null, ex.Message, (int)Sections.Neutral);
-                return null;
-            }
+
+            return reasons;
         }
 
         public async Task<bool> AddUserToBlackListAsync(long userId, long bannedUserId)
@@ -1130,6 +1157,8 @@ namespace MyWebApi.Repositories
                 if (user.IsBanned)
                 {
                     user.IsBanned = false;
+                    user.BanDate = null;
+
                     _contx.SYSTEM_USERS.Update(user);
                     await _contx.SaveChangesAsync();
                     return 1;
@@ -1215,8 +1244,8 @@ namespace MyWebApi.Repositories
                 {
                     UserId1 = userId,
                     IsLikedBack = false,
-                    SectionId = achievement.Achievement.SectionId,
-                    Severity = (byte)Severities.Minor,
+                    Section = (Sections)achievement.Achievement.SectionId,
+                    Severity = Severities.Minor,
                     Description = achievement.AcquireMessage
                 });
 
@@ -1369,6 +1398,8 @@ namespace MyWebApi.Repositories
                     startingUser.IsBusy = false;
                     startingUser.IsBanned = false;
                     startingUser.IsDeleted = false;
+                    startingUser.IsUpdated = false;
+                    startingUser.ShouldEnhance = false;
 
                     await RegisterUserAsync(startingUser, startingUserBase, startingUserData, startingUserPrefs, userLocation, wasRegistered:true);
                 }
@@ -1725,6 +1756,7 @@ namespace MyWebApi.Repositories
                     if ((user.HasPremium && user.PremiumExpirationDate < timeNow) || (user.HasPremium && user.PremiumExpirationDate == null))
                     {
                         user.HasPremium = false;
+                        user.PremiumDuration = null;
                         user.PremiumExpirationDate = null;
                         //TODO: Notify user that his premium access has expired
                     }
@@ -1753,9 +1785,9 @@ namespace MyWebApi.Repositories
 
                 if (user != null)
                 { 
-                    if (user.PremiumExpirationDate != null)
-                        return user.PremiumExpirationDate.Value;
-                    return (DateTime)user.PremiumExpirationDate;
+                    //if (user.PremiumExpirationDate != null)
+                    //    return user.PremiumExpirationDate.Value;
+                    return user.PremiumExpirationDate.Value;
                 }
                 else
                     return DateTime.MinValue;
@@ -1781,6 +1813,15 @@ namespace MyWebApi.Repositories
                 user.HasPremium = true;
                 user.BonusIndex = 2;
 
+                if (user.PremiumDuration != null)
+                {
+                    user.PremiumDuration += (short)dayDuration;
+                }
+                else
+                {
+                    user.PremiumDuration = (short)dayDuration;
+                }
+
                 //If transaction was made for points
                 if (currency == (short)Currencies.Points)
                     await TopUpUserWalletPointsBalance(userId, -cost, $"Purchase premium for {dayDuration} days");
@@ -1804,7 +1845,7 @@ namespace MyWebApi.Repositories
                 _contx.Update(user);
                 await _contx.SaveChangesAsync();
 
-                await AddUserNotificationAsync(new UserNotification { UserId1 = user.UserId, IsLikedBack = false, Severity = (short)Severities.Moderate, SectionId = (int)Sections.Neutral, Description = $"You have been granted premium access. Enjoy your benefits :)\nPremium expiration {user.PremiumExpirationDate.Value.ToString("dd.MM.yyyy")}" });
+                await AddUserNotificationAsync(new UserNotification { UserId1 = user.UserId, IsLikedBack = false, Severity = Severities.Moderate, Section = Sections.Neutral, Description = $"You have been granted premium access. Enjoy your benefits :)\nPremium expiration {user.PremiumExpirationDate.Value.ToString("dd.MM.yyyy")}" });
 
                 return user.PremiumExpirationDate.Value;
             }
@@ -1905,18 +1946,18 @@ namespace MyWebApi.Repositories
 
                 if (location.CountryId != null)
                 {
-                    country = await _contx.COUNTRIES
+                    country = await _contx.countries
                         .Where(c => c.Id == location.CountryId && c.ClassLocalisationId == location.CountryClassLocalisationId)
                         .Select(c => c.CountryName)
                         .SingleOrDefaultAsync();
-                    city = await _contx.CITIES
+                    city = await _contx.cities
                         .Where(c => c.Id == location.CityId && c.CountryClassLocalisationId == location.CityCountryClassLocalisationId)
                         .Select(c => c.CityName)
                         .SingleOrDefaultAsync(); ;
                 }
 
                 model.UserRawDescription = user.UserRawDescription;
-                model.UserDescription = user.GenerateUserDescription(user.UserName, data.UserAge, country, city, user.UserRawDescription);
+                model.UserDescription = user.GenerateUserDescription(user.UserRealName, data.UserAge, country, city, user.UserRawDescription);
 
                 //Reactivate user tick request if user photo was changed
                 if (model.UserMedia != user.UserMedia)
@@ -2026,50 +2067,64 @@ namespace MyWebApi.Repositories
             }
         }
 
-        public async Task<bool> SwhitchUserBusyStatus(long userId)
+        public async Task<SwitchBusyStatusResponse> SwhitchUserBusyStatus(long userId, int sectionId)
         {
-            try
+            var user = await _contx.SYSTEM_USERS.Where(u => u.UserId == userId)
+                .Include(u => u.UserDataInfo)
+                .SingleOrDefaultAsync();
+
+            if  (user != null)
             {
-                var user = await _contx.SYSTEM_USERS.Where(u => u.UserId == userId).SingleOrDefaultAsync();
-                if  (user != null)
+                var hint = "";
+
+                user.IsBusy = !user.IsBusy;
+                user.IsUpdated = false;
+
+                _contx.Update(user);
+                await _contx.SaveChangesAsync();
+
+                if (!user.IsBusy) // Negation <= Was busy before update
                 {
-                    user.IsBusy = !user.IsBusy;
-
-                    _contx.Update(user);
-                    await _contx.SaveChangesAsync();
-
-
-                    //Possible task -> visit any section x times
-                    if (await CheckUserHasTasksInSectionAsync(userId, (int)Sections.Neutral))
+                    return new SwitchBusyStatusResponse
                     {
-                        //TODO find and topup user's task progress
-                    }
-
-                    return (bool)user.IsBusy;
+                        Status = SwitchBusyStatusResult.IsBusy
+                    };
                 }
-                return false;
+
+                if (user.IsDeleted)
+                {
+                    return new SwitchBusyStatusResponse
+                    {
+                        Status = SwitchBusyStatusResult.IsDeleted,
+                    };
+                }
+
+                if (user.ShouldSendHints)
+                    hint = await GetRandomHintAsync(user.UserDataInfo.LanguageId, null);
+
+
+                return new SwitchBusyStatusResponse
+                {
+                    Status = SwitchBusyStatusResult.Success,
+                    Comment = hint,
+                    HasVisited = await CheckUserHasVisitedSection(userId, sectionId)
+                };
             }
-            catch (Exception ex)
+            return new SwitchBusyStatusResponse
             {
-                await LogAdminErrorAsync(userId, ex.Message, (int)Sections.Neutral);
-                return false;
-            }
+                Status = SwitchBusyStatusResult.DoesNotExist,
+                HasVisited = false
+            };
         }
 
         public async Task<List<UserNotification>> GetUserRequests(long userId)
         {
-            try
-            {
-                return await _contx.USER_NOTIFICATIONS
-                    .Where(r => r.UserId1 == userId)
-                    .Where(r => r.SectionId == (int)SystemEnums.Sections.Familiator || r.SectionId == (int)SystemEnums.Sections.Requester)
-                    .ToListAsync();
-            }
-            catch (Exception ex)
-            {
-                await LogAdminErrorAsync(userId, ex.Message, (int)Sections.Requester);
-                return null;
-            }
+
+            return await _contx.USER_NOTIFICATIONS
+                .Where(r => r.UserId1 == userId && r.UserId != null)
+                .Where(r => r.Section == Sections.Familiator || r.Section == Sections.Requester)
+                .ToListAsync();
+
         }
 
         public async Task<UserNotification> GetUserRequest(Guid requestId)
@@ -2078,7 +2133,7 @@ namespace MyWebApi.Repositories
             {
                 return await _contx.USER_NOTIFICATIONS
                     .Where(r => r.Id == requestId)
-                    .Where(r => r.SectionId == (int)SystemEnums.Sections.Familiator || r.SectionId == (int)SystemEnums.Sections.Requester)
+                    .Where(r => r.Section == Sections.Familiator || r.Section == Sections.Requester)
                     .SingleOrDefaultAsync();
             }
             catch (Exception ex)
@@ -2088,56 +2143,78 @@ namespace MyWebApi.Repositories
             }
         }
 
-        public async Task<string> RegisterUserRequest(UserNotification request)
+        public async Task<string> RegisterUserRequestAsync(UserNotification request)
         {
-            try
+            request.Severity = Severities.Moderate;
+            var returnMessage = "";
+
+            if (request.IsLikedBack)
             {
-                request.Severity = (short)Severities.Moderate;
-                var returnMessage = "";
+                request.Section = Sections.Requester;
 
-                if (request.IsLikedBack)
+                if ((byte)new Random().Next(0, 2) == 0)
                 {
-                    request.SectionId = (short)Sections.Requester;
+                    var senderUserName = await _contx.SYSTEM_USERS_BASES.Where(d => d.Id == request.UserId).Select(d => d.UserName).SingleOrDefaultAsync();
 
-                    if ((byte)new Random().Next(0, 2) == 0)
-                    {
-                        var senderUserName = await _contx.SYSTEM_USERS_BASES.Where(d => d.Id == request.UserId).Select(d => d.UserName).SingleOrDefaultAsync();
+                    //Delete request, user had just answered
+                    var requestId = await _contx.USER_NOTIFICATIONS.Where(n => n.UserId == request.UserId1 && n.UserId1 == request.UserId).Select(n => n.Id).SingleOrDefaultAsync();
+                    await DeleteUserRequest(requestId);
 
-                        //Delete request, user had just answered
-                        var requestId = await _contx.USER_NOTIFICATIONS.Where(n => n.UserId == request.UserId1 && n.UserId1 == request.UserId).Select(n => n.Id).SingleOrDefaultAsync();
-                        await DeleteUserRequest(requestId);
-
-                        //TODO: Get message from localizer based on users`s localization 
-                        request.Description = $"Hey! I have got a match for you. This person was notified about it, but he did not receive your username, thus he cannot write you first everything is in your hands, do not miss your chance!\n\n@{senderUserName}";
-                        returnMessage = "Hey! I have a match for you. Right now this person is deciding whether or not to write you Just wait for it!\n\n";
-                    }
-                    else
-                    {
-                        var receiverUserName = await _contx.SYSTEM_USERS_BASES.Where(d => d.Id == request.UserId1).Select(d => d.UserName).SingleOrDefaultAsync();
-
-                        //Delete request, user had just answered
-                        var requestId = await _contx.USER_NOTIFICATIONS.Where(n => n.UserId == request.UserId1 && n.UserId1 == request.UserId).Select(n => n.Id).SingleOrDefaultAsync();
-                        await DeleteUserRequest(requestId);
-
-                        //TODO: Get message from localizer based on users`s localization 
-                        request.Description = "Hey! I have a match for you. Right now this person is deciding whether or not to write you Just wait for it!\n\n";
-                        returnMessage = $"Hey! I have got a match for you. This person was notified about it, but he did not receive your username, thus he cannot write you first everything is in your hands, do not miss your chance!\n\n@{receiverUserName}";
-                    }
+                    //TODO: Get message from localizer based on users`s localization 
+                    request.Description = $"Hey! I have got a match for you. This person was notified about it, but he did not receive your username, thus he cannot write you first everything is in your hands, do not miss your chance!\n\n@{senderUserName}";
+                    returnMessage = "Hey! I have a match for you. Right now this person is deciding whether or not to write you Just wait for it!\n\n";
                 }
                 else
-                    request.SectionId = (short)Sections.Familiator;
+                {
+                    var receiverUserName = await _contx.SYSTEM_USERS_BASES.Where(d => d.Id == request.UserId1).Select(d => d.UserName).SingleOrDefaultAsync();
 
-                await RegisterUserEncounter(new Encounter { UserId = (long)request.UserId, EncounteredUserId = request.UserId1, SectionId = (int)Sections.Requester });
+                    //Delete request, user had just answered
+                    var requestId = await _contx.USER_NOTIFICATIONS.Where(n => n.UserId == request.UserId1 && n.UserId1 == request.UserId).Select(n => n.Id).SingleOrDefaultAsync();
+                    await DeleteUserRequest(requestId);
 
-                var id = await AddUserNotificationAsync(request);
-
-                return returnMessage;
+                    //TODO: Get message from localizer based on users`s localization 
+                    request.Description = "Hey! I have a match for you. Right now this person is deciding whether or not to write you Just wait for it!\n\n";
+                    returnMessage = $"Hey! I have got a match for you. This person was notified about it, but he did not receive your username, thus he cannot write you first everything is in your hands, do not miss your chance!\n\n@{receiverUserName}";
+                }
             }
-            catch (Exception ex)
+            else
+                request.Section = Sections.Familiator;
+
+            await RegisterUserEncounter(new Encounter { UserId = (long)request.UserId, EncounteredUserId = request.UserId1, SectionId = (int)Sections.Requester });
+
+            var id = await AddUserNotificationAsync(request);
+
+            return returnMessage;
+            
+        }
+
+        //TODO: Make more informative and interesting
+        public async Task<string> DeclineRequestAsync(long user1, long user2)
+        {
+            var sim = await GetSimilarityBetweenUsersAsync(user1, user2);
+
+            //Encounter is not registered anywhere but here in that case
+            await RegisterUserEncounter(new Encounter
             {
-                await LogAdminErrorAsync(request.UserId, ex.Message, (int)Sections.Requester);
-                return null;
+                UserId = user1,
+                EncounteredUserId = user2,
+                SectionId = (short)Sections.Familiator,
+                EncounterDate = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc),
+            });
+
+            switch (sim.SimilarBy.Count)
+            {
+                case 3:
+                    return "It is such a shame, you were a perfect match!";
+                case 2:
+                    return "Oh... You two were so alike :(";
+                case 1:
+                    return "It's a shame";
+                default:
+                    return null;
             }
+
+
         }
 
         public async Task<byte> DeleteUserRequests(long userId)
@@ -2146,7 +2223,7 @@ namespace MyWebApi.Repositories
             {
                 var requests = await _contx.USER_NOTIFICATIONS
                     .Where(r => r.UserId1 == userId)
-                    .Where(r => r.SectionId == (int)SystemEnums.Sections.Familiator || r.SectionId == (int)SystemEnums.Sections.Requester)
+                    .Where(r => r.Section == Sections.Familiator || r.Section == Sections.Requester)
                     .ToListAsync();
 
                 _contx.RemoveRange(requests);
@@ -2167,7 +2244,7 @@ namespace MyWebApi.Repositories
             {
                 var request = await _contx.USER_NOTIFICATIONS
                     .Where(r => r.Id == requestId)
-                    .Where(r => r.SectionId == (int)SystemEnums.Sections.Familiator || r.SectionId == (int)SystemEnums.Sections.Requester)
+                    .Where(r => r.Section == Sections.Familiator || r.Section == Sections.Requester)
                     .SingleOrDefaultAsync();
 
                 _contx.Remove(request);
@@ -2188,7 +2265,7 @@ namespace MyWebApi.Repositories
             {
                 var requests = await _contx.USER_NOTIFICATIONS
                     .Where(r => r.UserId1 == userId)
-                    .Where(r => r.SectionId == (int)SystemEnums.Sections.Familiator || r.SectionId == (int)SystemEnums.Sections.Requester)
+                    .Where(r => r.Section == Sections.Familiator || r.Section == Sections.Requester)
                     .ToListAsync();
                 
                 return requests.Count > 0;
@@ -2205,11 +2282,14 @@ namespace MyWebApi.Repositories
             try
             {
                 var encounters = await _contx.USER_ENCOUNTERS.ToListAsync();
+
                 _contx.USER_ENCOUNTERS.RemoveRange(encounters);
-                await _contx.SaveChangesAsync();
+
                 var users = await _contx.SYSTEM_USERS.ToListAsync();
+
                 users.ForEach(u => u.IsBusy = false);
                 _contx.SYSTEM_USERS.UpdateRange(users);
+
                 await _contx.SaveChangesAsync();
                 return true;
             }
@@ -2227,9 +2307,10 @@ namespace MyWebApi.Repositories
                 model.Id = Guid.NewGuid();
                 model.EncounterDate = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
 
+                var user = await _contx.SYSTEM_USERS.FindAsync(model.UserId);
+
                 if (model.SectionId == (int)Sections.Familiator || model.SectionId == (int)Sections.Requester)
                 {
-                    var user = await _contx.SYSTEM_USERS.FindAsync(model.UserId);
                     user.ProfileViewsCount++;
 
                     if (user.ProfileViewsCount == 15)
@@ -2239,6 +2320,8 @@ namespace MyWebApi.Repositories
                     else if (user.ProfileViewsCount == 50)
                         await TopUpUserWalletPointsBalance(user.UserId, 22, "User has viewed 50 profiles");
                 }
+                else if (model.SectionId == (int)Sections.RT)
+                    user.MaxRTViewsCount++;
 
                 await _contx.USER_ENCOUNTERS.AddAsync(model);
                 await _contx.SaveChangesAsync();
@@ -2288,7 +2371,7 @@ namespace MyWebApi.Repositories
         {
             return _contx.USER_NOTIFICATIONS
                 .Where(r => r.UserId == senderId && r.UserId1 == recieverId)
-                .Where(r => r.SectionId == (int)SystemEnums.Sections.Requester || r.SectionId == (int)SystemEnums.Sections.Familiator)
+                .Where(r => r.Section == Sections.Requester || r.Section == Sections.Familiator)
                 .FirstOrDefault() != null;
         }
 
@@ -2611,8 +2694,8 @@ namespace MyWebApi.Repositories
                     UserId1 = userId,
                     IsLikedBack = false,
                     Description = $"Hey! new user had been registered via your link. Thanks for helping us grow!\nSo far, you have invited: {invitedUsersCount} people. \nYou receive 1p for every action they are maiking ;-)",
-                    SectionId = (int)Sections.Registration,
-                    Severity = (short)Severities.Moderate
+                    Section = Sections.Registration,
+                    Severity = Severities.Moderate
                 });
 
                 return true;
@@ -2626,7 +2709,7 @@ namespace MyWebApi.Repositories
         {
             try
             {
-                await AddUserNotificationAsync(new UserNotification {UserId1=userId, Severity=(short)Severities.Urgent, SectionId=(int)Sections.Neutral, Description="Your premium access has expired"});
+                await AddUserNotificationAsync(new UserNotification {UserId1=userId, Severity=Severities.Urgent, Section=Sections.Neutral, Description="Your premium access has expired"});
                 return true;
             }
             catch
@@ -2661,7 +2744,7 @@ namespace MyWebApi.Repositories
         public async Task<bool> CheckUserHasNotificationsAsync(long userId)
         {
             return await _contx.USER_NOTIFICATIONS
-                .Where(n => n.UserId1 == userId && n.SectionId != (int)SystemEnums.Sections.Familiator && n.SectionId != (int)SystemEnums.Sections.Requester)
+                .Where(n => n.UserId1 == userId && n.Section != Sections.Familiator && n.Section != Sections.Requester)
                 .CountAsync() > 0;
         }
 
@@ -2703,16 +2786,16 @@ namespace MyWebApi.Repositories
             catch { return false; }
         }
 
-        public async Task<List<UserAchievement>> GetRandomAchievements(long userId)
+        public async Task<List<string>> GetRandomAchievements(long userId)
         {
             var achievents = await _contx.USER_ACHIEVEMENTS
                 .Where(a => a.UserBaseInfoId == userId)
                 .Where(a => !a.IsAcquired)
-                .Include(a => a.Achievement)
+                .Select(a => $"{a.Achievement.Name}\n{a.Achievement.Description}\n\n{a.Achievement.ConditionValue} / {a.Achievement.Value}")
                 .ToListAsync();
 
-            //Shuffle the achievement list
-            achievents = achievents.OrderBy(a => new Random().Next()).ToList();
+            //Shuffle achievement list
+            achievents = achievents.OrderBy(a => Guid.NewGuid()).ToList();
 
             //Normal scenario. User still has more than 3 achievements to claim
             if (achievents.Count > 3)
@@ -2817,9 +2900,9 @@ namespace MyWebApi.Repositories
             {
                 UserId1 = userId,
                 IsLikedBack = false,
-                Severity = (short)Severities.Moderate,
+                Severity = Severities.Moderate,
                 Description = task.AcquireMessage,
-                SectionId = task.DailyTask.SectionId
+                Section = (Sections)task.DailyTask.SectionId
             });
 
             if (task.DailyTask.RewardCurrency == (byte)Currencies.Points)
@@ -3381,16 +3464,13 @@ namespace MyWebApi.Repositories
             { return null; }
         }
 
-        public async Task<User> GetUserListByTagsAsync(GetUserByTags model)
+        public async Task<GetUserData> GetUserListByTagsAsync(GetUserByTags model)
         {
             var currentUser = await GetUserInfoAsync(model.UserId);
             var hasActiveDetector = await CheckEffectIsActiveAsync(currentUser.UserId, (int)Currencies.TheDetector);
 
-            //Throw exception if user has reached his tag search limit
-            if (!currentUser.HasPremium && currentUser.TagSearchesCount >= 3)
-                return null;
-            //throw new ApplicationException($"User {model.UserId} has already reached his tag-search limit");
-            else if (currentUser.HasPremium && currentUser.TagSearchesCount >= 50)
+            //User has already reached his limit;
+            if (currentUser.TagSearchesCount > currentUser.MaxTagSearchCount)
                 return null;
 
             var currentUserEncounters = await GetUserEncounters(model.UserId, (int)Sections.Familiator); //I am not sure if it is 2 or 3 section
@@ -3450,15 +3530,28 @@ namespace MyWebApi.Repositories
             var user = users.OrderBy(u => Guid.NewGuid())
                 .FirstOrDefault();
 
-            if(user.HasPremium && user.Nickname != null)
-                user.UserBaseInfo.UserDescription = $"<b>{user.Nickname}</b>\n\n{user.UserBaseInfo.UserDescription}";
-            if(user.IsIdentityConfirmed)
-                user.UserBaseInfo.UserDescription = $"✔️{user.UserBaseInfo.UserDescription}";
+            var returnUser = new GetUserData(user);
+
+            if (currentUser.UserPreferences.ShouldUsePersonalityFunc)
+                returnUser = await GetPersonalityMatchResult(model.UserId, currentUser, user, false);
+
+            if (currentUser.ShouldComment)
+                returnUser.Comment = await GetRandomHintAsync(currentUser.UserDataInfo.LanguageId, HintType.Search);
+
+            if (user.HasPremium && user.Nickname != null)
+                returnUser.UserBaseInfo.UserDescription = $"<b>{user.Nickname}</b>\n\n{user.UserBaseInfo.UserDescription}";
+
+            if (user.IdentityType == IdentityConfirmationType.Partial)
+                returnUser.AddDescriptionBonus($"☑️☑️☑️\n\n");
+
+            else if (user.IdentityType == IdentityConfirmationType.Full)
+                returnUser.AddDescriptionBonus($"✅✅✅\n\n");
+
             //Show tags if user has detector activated
             if (hasActiveDetector)
                 user.UserBaseInfo.UserDescription += String.Join(" ", usersTags[user.UserId]);
 
-            return user;
+            return returnUser;
         }
 
         public async Task<bool?> CheckUserUsesPersonality(long userId)
@@ -3716,14 +3809,14 @@ namespace MyWebApi.Repositories
                         if (userBalance.SecondChances > 0)
                         {
                             userBalance.SecondChances--;
-                            await RegisterUserRequest(new UserNotification
+                            await RegisterUserRequestAsync(new UserNotification
                             {
                                 UserId = userId,
                                 UserId1 = (long)user2Id,
                                 IsLikedBack = false,
                                 Description = description,
-                                SectionId = (int)Sections.Familiator,
-                                Severity = (short)Severities.Moderate
+                                Section = Sections.Familiator,
+                                Severity = Severities.Moderate
                             });
                             _contx.Update(userBalance);
                             await _contx.SaveChangesAsync();
@@ -3743,7 +3836,8 @@ namespace MyWebApi.Repositories
                         if (userBalance.CardDecksMini > 0)
                         {
                             userBalance.CardDecksMini--;
-                            await AddMaxUserProfileViewCount(userId, 20);
+                            await AddMaxUserProfileViewCountAsync(userId, 20);
+                            await AddMaxRTProfileViewCountAsync(userId, 20);
                             _contx.Update(userBalance);
                             await _contx.SaveChangesAsync();
                             return true;
@@ -3753,7 +3847,8 @@ namespace MyWebApi.Repositories
                         if (userBalance.CardDecksPlatinum > 0)
                         {
                             userBalance.CardDecksPlatinum--;
-                            await AddMaxUserProfileViewCount(userId, 50);
+                            await AddMaxUserProfileViewCountAsync(userId, 50);
+                            await AddMaxRTProfileViewCountAsync(userId, 50);
                             _contx.Update(userBalance);
                             await _contx.SaveChangesAsync();
                             return true;
@@ -3825,10 +3920,19 @@ namespace MyWebApi.Repositories
             catch { return false; }
         }
 
-        public async Task<int> AddMaxUserProfileViewCount(long userId, int profileCount)
+        private async Task<int> AddMaxUserProfileViewCountAsync(long userId, int profileCount)
         {
             var userInfo = await _contx.SYSTEM_USERS.FindAsync(userId);
-            userInfo.MaxProfileViewsCount += profileCount;
+            userInfo.ProfileViewsCount -= profileCount;
+            await _contx.SaveChangesAsync();
+
+            return userInfo.MaxProfileViewsCount;
+        }
+
+        private async Task<int> AddMaxRTProfileViewCountAsync(long userId, int increment)
+        {
+            var userInfo = await _contx.SYSTEM_USERS.FindAsync(userId);
+            userInfo.RTViewsCount -= increment;
             await _contx.SaveChangesAsync();
 
             return userInfo.MaxProfileViewsCount;
@@ -3858,9 +3962,12 @@ namespace MyWebApi.Repositories
                 //Update existing request if one already exists
                 if (existingRequest != null)
                 {
+                    existingRequest.Photo = request.Photo;
                     existingRequest.Video = request.Video;
                     existingRequest.Circle = request.Circle;
-                    existingRequest.State = (short)TickRequestStatus.Changed;
+                    existingRequest.Gesture = request.Gesture;
+                    existingRequest.Type = request.Type;
+                    existingRequest.State = TickRequestStatus.Changed;
 
                     _contx.tick_requests.Update(existingRequest);
                     await _contx.SaveChangesAsync();
@@ -3873,8 +3980,11 @@ namespace MyWebApi.Repositories
                     UserId = request.UserId,
                     AdminId = null,
                     State = null,
+                    Photo = request.Photo,
+                    Video = request.Video,
                     Circle = request.Circle,
-                    Video = request.Video
+                    Gesture = request.Gesture,
+                    Type = request.Type
                 };
 
                 await _contx.tick_requests.AddAsync(model);
@@ -4021,15 +4131,15 @@ namespace MyWebApi.Repositories
             //TODO: Get status from localizer !
             switch (request.State)
             {
-                case 1:
+                case TickRequestStatus.Added:
                     return "Added";
-                case 2:
+                case TickRequestStatus.Changed:
                     return "Changed";
-                case 3:
+                case TickRequestStatus.InProcess:
                     return "In Process";
-                case 4:
+                case TickRequestStatus.Declined:
                     return "Declined";
-                case 5:
+                case TickRequestStatus.Accepted:
                     return "1";
                 default:
                     return "Added";
@@ -4213,8 +4323,11 @@ namespace MyWebApi.Repositories
 
             var bonus = "";
 
-            if (sender.IsIdentityConfirmed)
-                bonus += $"✔️\n\n";
+            if (sender.IdentityType == IdentityConfirmationType.Partial)
+                bonus += $"☑️☑️☑️\n\n";
+            else if (sender.IdentityType == IdentityConfirmationType.Full)
+                bonus += $"✅✅✅\n\n";
+
             if (sender.HasPremium && sender.Nickname != "")
                 bonus += $"<b>{sender.Nickname}</b>\n";
 
@@ -4348,228 +4461,169 @@ namespace MyWebApi.Repositories
             return (bool)user.IsFree;
         }
 
-        public async Task<Guid> RegisterAdventureAsync(Adventure model)
+        public async Task<string> RegisterAdventureAsync(ManageAdventure model)
         {
-            //Adventures created by user
-            var userAdventures = await _contx.adventures.Where(a => a.UserId == model.UserId)
-                .ToListAsync();
-
-            var adventureIds = await _contx.adventure_attendees
-                .Select(a => a.AdventureId)
-                .ToListAsync();
-
-            //Adventures user is subscribed on
-            var subscribedAdventures = await _contx.adventures.Where(a => adventureIds.Contains(a.Id))
-                .ToListAsync();
-
-            foreach (var userAdventure in userAdventures)
+            var adventure = new Adventure
             {
-                //Throw if new adventure overlaps with the other ones
-                if (userAdventure.IsOverlapping(model))
-                    throw new ArgumentException($"Overlapping detected between {userAdventure.Id} (created by user) and just created adventure");
-            }
+                Id = Guid.NewGuid(),
+                UserId = model.UserId,
+                Name = model.Name,
+                Address = model.Address,
+                Application = model.Application,
+                AttendeesDescription = model.AttendeesDescription,
+                CityId = model.CityId,
+                CountryId = model.CountryId,
+                Date = model.Date,
+                Time = model.Time,
+                Description = model.Description,
+                Duration = model.Duration,
+                Experience = model.Experience,
+                UnwantedAttendeesDescription = model.UnwantedAttendeesDescription,
+                Gratitude = model.Gratitude,
+                IsMediaPhoto = model.IsMediaPhoto,
+                Media = model.Media,
+                IsAutoReplyText = model.IsAutoReplyText,
+                AutoReply = model.AutoReply,
+                IsOffline = model.IsOffline,
+                UniqueLink = Guid.NewGuid().ToString("N").Substring(0, 7).ToUpper(),
+                Status = AdventureStatus.New
+            };
 
-            foreach (var sAdventure in subscribedAdventures)
-            {
-                //Throw if new adventure overlaps with the other ones
-                if (sAdventure.IsOverlapping(model))
-                    throw new ArgumentException($"Overlapping detected between {sAdventure.Id} and just created adventure");
-            }
-
-            model.Id = Guid.NewGuid();
-            model.EndDateTime = DateTime.SpecifyKind(model.EndDateTime, DateTimeKind.Utc);
-            model.StartDateTime = DateTime.SpecifyKind(model.StartDateTime, DateTimeKind.Utc);
-
-            await _contx.AddAsync(model);
+            await _contx.adventures.AddAsync(adventure);
             await _contx.SaveChangesAsync();
 
-            return model.Id;
+            return adventure.UniqueLink;
         }
 
-        public async Task<bool> ChangeAdventureAsync(ChangeAdventure model)
+        public async Task ChangeAdventureAsync(ManageAdventure model)
         {
-            var existingAdventure = await _contx.adventures.Where(a => a.Id == model.Id)
-                .SingleOrDefaultAsync();
+            var adventure = await _contx.adventures.Where(a => a.Id == model.Id)
+                .FirstOrDefaultAsync();
 
-            //Check overlapping only if datetime was changed
-            if (model.StartDateTime !=null || model.EndDateTime != null)
-            {
-                var hasPremium = await CheckUserHasPremiumAsync(model.UserId);
+            if (adventure == null)
+                throw new InvalidOperationException($"Adventure with id #{model.Id} does not exist");
 
-                //Adventures created by user without currently managed one
-                var userAdventures = await _contx.adventures.Where(a => a.UserId == model.UserId && a.Id != model.Id)
-                    .ToListAsync();
+            adventure.Duration = model.Duration;
+            adventure.Name = model.Name;
+            adventure.Address = model.Address;
+            adventure.Application = model.Application;
+            adventure.Gratitude = model.Gratitude;
+            adventure.AttendeesDescription = model.AttendeesDescription;
+            adventure.UnwantedAttendeesDescription = model.UnwantedAttendeesDescription;
+            adventure.Media = model.Media;
+            adventure.IsMediaPhoto = model.IsMediaPhoto;
+            adventure.CityId = model.CityId;
+            adventure.CountryId = model.CountryId;
+            adventure.Description = model.Description;
+            adventure.Experience = model.Experience;
+            adventure.Date = model.Date;
+            adventure.Time = model.Time;
+            adventure.IsAutoReplyText = model.IsAutoReplyText;
+            adventure.AutoReply = model.AutoReply;
+            adventure.Status = AdventureStatus.Changed;
 
-                var adventureIds = await _contx.adventure_attendees
-                    .Select(a => a.AdventureId)
-                    .ToListAsync();
-
-                //Adventures user is subscribed on
-                var subscribedAdventures = await _contx.adventures.Where(a => adventureIds.Contains(a.Id))
-                    .ToListAsync();
-
-                foreach (var userAdventure in userAdventures)
-                {
-                    //Throw if new adventure overlaps with the other ones
-                    if (userAdventure.IsOverlapping(model))
-                        throw new ArgumentException($"Overlapping detected between changed adventure and {userAdventure.Id} adventure while attempting to subscribe on the last one");
-                }
-
-                foreach (var sAdventure in subscribedAdventures)
-                {
-                    //Throw if new adventure overlaps with the other ones
-                    if (sAdventure.IsOverlapping(model))
-                        throw new ArgumentException($"Overlapping detected between changed adventure and already subscribed andventure {sAdventure.Id}");
-                }
-
-                existingAdventure.StartDateTime = DateTime.SpecifyKind((DateTime)model.StartDateTime, DateTimeKind.Utc);
-                existingAdventure.EndDateTime = DateTime.SpecifyKind((DateTime)model.EndDateTime, DateTimeKind.Utc);
-            }
-
-            if (model.Languages != null)
-                existingAdventure.Languages = model.Languages;
-
-            else if (model.Capacity != null)
-                existingAdventure.Capacity = (short)model.Capacity;
-
-            else if (model.IsOnline != null)
-                existingAdventure.IsOnline = (bool)model.IsOnline;
-
-            //In those two cases 0 is replaces null
-            else if (model.CountryId != 0)
-                existingAdventure.CountryId = model.CountryId;
-
-            //In those two cases 0 is replaces null
-            else if (model.CityId != 0)
-                existingAdventure.CityId = (short)model.CityId;
-
-            else if (model.Capacity != null)
-                existingAdventure.Capacity = (short)model.Capacity;
-
-            else if (model.MinAge != null)
-                existingAdventure.MinAge = (short)model.MinAge;
-
-            else if (model.MaxAge != null)
-                existingAdventure.MaxAge = (short)model.MaxAge;
-
-            else if (model.Description != null)
-                existingAdventure.Description = model.Description;
-
-            else if (model.Adress != null)
-                existingAdventure.Adress = model.Adress;
-
-            _contx.adventures.Update(existingAdventure);
             await _contx.SaveChangesAsync();
-            return true;
+        }
+
+        public async Task<ParticipationRequestStatus> SendAdventureRequestByCodeAsync(ParticipationRequest request)
+        {
+            var adventure = await _contx.adventures.Where(a => a.UniqueLink == request.InvitationCode)
+                .FirstOrDefaultAsync();
+
+            if (adventure == null)
+                return ParticipationRequestStatus.AdventureNotFound;
+
+            return await SendAdventureRequestAsync(adventure.Id, request.UserId);
+        }
+        public async Task<ParticipationRequestStatus> SendAdventureRequestAsync(Guid adventureId, long userId)
+        {
+            var adventure = await _contx.adventures.Where(a => a.Id == adventureId)
+                .FirstOrDefaultAsync();
+
+            if (adventure == null)
+                return ParticipationRequestStatus.AdventureNotFound;
+
+            if (adventure.UserId == userId)
+                return ParticipationRequestStatus.AdventuresOwner;
+
+            var existingAttendee = await _contx.adventure_attendees
+                .Where(a => a.AdventureId == adventure.Id && a.UserId == userId)
+                .FirstOrDefaultAsync();
+
+            if (existingAttendee != null)
+                return ParticipationRequestStatus.AlreadyParticipating;
+
+            var userName = await _contx.SYSTEM_USERS_BASES.Where(u => u.Id == userId)
+                .Select(u => u.UserName)
+                .FirstOrDefaultAsync();
+
+            await AddUserNotificationAsync(new UserNotification
+            {
+                Section = Sections.Adventurer,
+                Severity = Severities.Urgent,
+                Description = "Someone had requested participation in your adventure", //TODO: Perhaps clarify if actions had been done with use of unique code
+                UserId = userId,
+                UserId1 = adventure.UserId
+            });
+
+            var newAttendee = new AdventureAttendee
+            {
+                Status = AdventureAttendeeStatus.New,
+                AdventureId = adventure.Id,
+                UserId = userId,
+                Username = userName
+            };
+
+            await _contx.adventure_attendees.AddAsync(newAttendee);
+            await _contx.SaveChangesAsync();
+
+            return ParticipationRequestStatus.Ok;
         }
 
         public async Task<bool> DeleteAdventureAsync(Guid adventureId, long userId)
         {
-            var adventure = await _contx.adventures.Where(a => a.Id == adventureId && a.UserId == userId)
-                .SingleOrDefaultAsync();
-
-            if (adventure == null)
-                throw new NullReferenceException($"Adventure {adventureId} does not exist or it does not belong to user {userId}");
-
-            var attendees = await _contx.adventure_attendees.Where(a => a.UserId == userId && a.AdventureId == adventureId)
-                .ToListAsync();
-
-            //Notify all attendees about adventure cancelation
-            foreach (var attendee in attendees)
-            {
-                await AddUserNotificationAsync(new UserNotification
-                {
-                    UserId1 = attendee.UserId,
-                    IsLikedBack = false,
-                    Severity = (short)Severities.Urgent,
-                    SectionId = (int)Sections.Adventurer,
-                    Description = $"Hey! We are very sorry, but adventure <b><i>'{adventure.Name}'</i></b> was canceled by its creator"
-                });
-            }
-
-            _contx.adventure_attendees.RemoveRange(attendees);
-            _contx.adventures.Remove(adventure);
-            await _contx.SaveChangesAsync();
-
             return true;
         }
 
-        public async Task<bool> SubscribeOnAdventureAsync(Guid adventureId, long userId)
-        {
-            var adventure = await _contx.adventures.Where(a => a.Id == adventureId)
-                .AsNoTracking()
-                .SingleOrDefaultAsync(); 
 
-            if (adventure == null)
-                throw new NullReferenceException($"Adventure {adventureId} does not exist");
-
-
-            //Adventures created by user
-            var userAdventures = await _contx.adventures.Where(a => a.UserId == userId)
-                .ToListAsync();
-
-            var adventureIds = await _contx.adventure_attendees
-                .Select(a => a.AdventureId)
-                .ToListAsync();
-
-            //Adventures user is subscribed on
-            var subscribedAdventures = await _contx.adventures.Where(a => adventureIds.Contains(a.Id))
-                .ToListAsync();
-
-            foreach (var userAdventure in userAdventures)
-            {
-                //Throw if new adventure overlaps with the other ones
-                if (adventure.IsOverlapping(userAdventure))
-                    throw new ArgumentException($"Overlapping detected between {userAdventure.Id} (created by user) and {adventure.Id} adventure while attempting to subscribe on the last one");
-            }
-
-            foreach (var sAdventure in subscribedAdventures)
-            {
-                //Throw if new adventure overlaps with the other ones
-                if (adventure.IsOverlapping(sAdventure))
-                    throw new ArgumentException($"Overlapping detected between {sAdventure.Id} and newly subscribed adventure {adventure.Id}");
-            }
-            
-
-            var userName = await _contx.SYSTEM_USERS_BASES.Where(u => u.Id == userId)
-                .Select(a => a.UserRealName)
-                .SingleOrDefaultAsync();
-
-            await _contx.adventure_attendees.AddAsync(new AdventureAttendee
-            {
-                AdventureId = adventureId,
-                UserId = userId,
-                Username = userName,
-                Status = AdventureRequestStatus.New
-            });
-            await _contx.SaveChangesAsync();
-
-            return true;
-        }
-
-        public async Task<bool> ProcessSubscriptionRequestAsync(Guid adventureId, long userId, AdventureRequestStatus status)
+        public async Task<bool> ProcessSubscriptionRequestAsync(Guid adventureId, long userId, AdventureAttendeeStatus status)
         {
             var attendee = await _contx.adventure_attendees.Where(a => a.UserId == userId && a.AdventureId == adventureId)
                 .SingleOrDefaultAsync();
 
+
             if (attendee == null)
-                throw new NullReferenceException($"No attendee with id {userId} was subscribed on adventure {adventureId}");
+                throw new NullReferenceException($"No attendee with id #{userId} had been subscribed to adventure {adventureId}");
+
+            var adventure = await _contx.adventures.Where(a => a.Id == adventureId)
+                .Include(a => a.Creator).ThenInclude(u => u.UserBaseInfo)
+                .FirstOrDefaultAsync();
 
             attendee.Status = status;
 
-            _contx.adventure_attendees.Update(attendee);
-            await _contx.SaveChangesAsync();
+            if (status == AdventureAttendeeStatus.Accepted)
+            {
+                await AddUserNotificationAsync(new UserNotification
+                {
+                    UserId1 = userId,
+                    Section = Sections.Adventurer,
+                    Severity = Severities.Moderate,
+                    Description = $"Your request to join adventure {adventure.Name} had been accepted.\nYou may contact its creator @{adventure.Creator.UserBaseInfo.UserName} and discuss details"
+                });
+            }
 
+            await _contx.SaveChangesAsync();
             return true;
         }
 
         public async Task<List<AttendeeInfo>> GetAdventureAttendeesAsync(Guid adventureId)
         {
-            return await _contx.adventure_attendees.Where(a => a.AdventureId == adventureId && a.Status == AdventureRequestStatus.Accepted)
+            return await _contx.adventure_attendees.Where(a => a.AdventureId == adventureId && (a.Status == AdventureAttendeeStatus.New || a.Status == AdventureAttendeeStatus.Accepted))
             .Select(a => new AttendeeInfo
             {
                 UserId = a.UserId,
                 Username = a.Username,
+                Status = a.Status
             }).ToListAsync();
         }
 
@@ -4583,9 +4637,15 @@ namespace MyWebApi.Repositories
                 .ToListAsync();
         }
 
-        public async Task<List<Adventure>> GetUsersAdventuresAsync(long userId)
+        public async Task<List<GetAdventure>> GetUserAdventuresAsync(long userId)
         {
             return await _contx.adventures.Where(a => a.UserId == userId)
+                .Select(a => new GetAdventure
+                {
+                    Id = a.Id,
+                    Name = a.Name,
+                    Status = a.Status
+                })
                 .ToListAsync();
         }
 
@@ -4620,8 +4680,8 @@ namespace MyWebApi.Repositories
             if (user == null)
                 throw new NullReferenceException($"User {userId} does not exist");
 
-            tickRequest.State = (short)TickRequestStatus.Changed;
-            user.IsIdentityConfirmed = false;
+            tickRequest.State = TickRequestStatus.Changed;
+            user.IdentityType = IdentityConfirmationType.None;
 
             await _contx.SaveChangesAsync();
         }
@@ -4676,6 +4736,235 @@ namespace MyWebApi.Repositories
                 .ToListAsync();
 
             return list.GroupBy(t => t.UserId).ToDictionary(t => t.FirstOrDefault().UserId, t => t.ToList());
+        }
+
+        public async Task<GetLimitations> GetUserSearchLimitations(long userId)
+        {
+            //Refresh data regarding user premium status
+            var hasPremium = await CheckUserHasPremiumAsync(userId);
+
+            var limitations = await _contx.SYSTEM_USERS.Where(u => u.UserId == userId).Select(u => new GetLimitations
+            {
+                MaxTagViews = u.MaxTagSearchCount,
+                MaxProfileViews = u.MaxProfileViewsCount,
+                MaxRtViews = u.MaxRTViewsCount,
+                MaxTagsPerSearch = hasPremium ? 50 : 25,
+                ActualTagViews = u.TagSearchesCount,
+                ActualProfileViews = u.ProfileViewsCount,
+                ActualRtViews = u.RTViewsCount
+            }).SingleOrDefaultAsync();
+
+            if (limitations != null)
+                return limitations;
+
+            return new GetLimitations
+            {
+                MaxTagViews = 25,
+                MaxProfileViews = 50,
+                MaxRtViews = 25,
+                MaxTagsPerSearch = 25,
+                ActualTagViews = 25,
+                ActualProfileViews = 25,
+                ActualRtViews = 25
+            };
+        }
+
+        public async Task<string> GetRandomHintAsync(int localisation, HintType? type)
+        {
+            if (type == null)
+            {
+                return await _contx.hints.Where(h => h.ClassLocalisationId == localisation && h.Type != HintType.Search)
+                    .OrderBy(r => EF.Functions.Random()).Take(1)
+                    .Select(h => h.Text)
+                    .FirstOrDefaultAsync();
+            }
+
+            //25% chance to send a hint
+            if (new Random().Next(1, 4) != 1)
+                return null;
+
+            return await _contx.hints.Where(h => h.ClassLocalisationId == localisation && h.Type == type)
+                    .OrderBy(r => EF.Functions.Random())
+                    .Select(h => h.Text)
+                    .FirstOrDefaultAsync();
+        }
+
+        public async Task<BasicUserInfo> GetUserBasicInfo(long userId)
+        {
+            var limitations = await GetUserSearchLimitations(userId);
+
+            return await _contx.SYSTEM_USERS.Where(u => u.UserId == userId).Select(u => new BasicUserInfo
+            {
+                Id = u.UserId,
+                Username = u.UserBaseInfo.UserName,
+                UserRealName = u.UserBaseInfo.UserRealName,
+                HasPremium = u.HasPremium,
+                IsBanned = u.IsBanned,
+                IsBusy = u.IsBusy,
+                Limitations = limitations
+            }).FirstOrDefaultAsync();
+        }
+
+        public async Task SwitchHintsVisibilityAsync(long userId)
+        {
+            var user = await  _contx.SYSTEM_USERS.Where(u => u.UserId == userId)
+                .FirstOrDefaultAsync();
+
+            if (user == null)
+                return;
+
+            user.ShouldSendHints = !user.ShouldSendHints;
+            await _contx.SaveChangesAsync();
+        }
+
+        public async Task SwitchSearchCommentsVisibilityAsync(long userId)
+        {
+            var user = await _contx.SYSTEM_USERS.Where(u => u.UserId == userId)
+                .FirstOrDefaultAsync();
+
+            if (user == null)
+                return;
+
+            user.ShouldComment = !user.ShouldComment;
+            await _contx.SaveChangesAsync();
+        }
+
+        public async Task<GetUserMedia> GetUserMediaAsync(long userId)
+        {
+            return await _contx.SYSTEM_USERS_BASES.Where(u => u.Id == userId).Select(u => new GetUserMedia
+            {
+                Media = u.UserMedia,
+                IsPhoto = u.IsMediaPhoto
+            }).FirstOrDefaultAsync();
+        }
+
+        public async Task<UserPartialData> GetUserPartialData(long userId)
+        {
+            return await _contx.SYSTEM_USERS.Where(u => u.UserId == userId).Select(u => new UserPartialData
+            {
+                Id = u.UserId,
+                AppLanguage = u.UserDataInfo.LanguageId,
+                Media = u.UserBaseInfo.UserMedia,
+                IsPhoto = u.UserBaseInfo.IsMediaPhoto
+            }).FirstOrDefaultAsync();
+        }
+
+        public async Task<Adventure> GetAdventureAsync(Guid id)
+        {
+            return await _contx.adventures.Where(a => a.Id == id)
+                .FirstOrDefaultAsync();
+        }
+
+        public async Task<bool> SaveAdventureTemplateAsync(ManageTemplate model)
+        {
+            var existingTemplate = await _contx.adventure_templates.Where(t => t.Id == model.Id)
+                .FirstOrDefaultAsync();
+
+            //Update template instead of creating it, if exists
+            if (existingTemplate != null)
+            {
+                existingTemplate.Name = model.Name;
+                existingTemplate.UserId = model.UserId;
+                existingTemplate.Address = model.Address;
+                existingTemplate.Application = model.Application;
+                existingTemplate.AttendeesDescription = model.AttendeesDescription;
+                existingTemplate.UnwantedAttendeesDescription = model.UnwantedAttendeesDescription;
+                existingTemplate.CountryId = model.CountryId;
+                existingTemplate.CityId = model.CityId;
+                existingTemplate.Description = model.Description;
+                existingTemplate.Duration = model.Duration;
+                existingTemplate.Date = model.Date;
+                existingTemplate.Time = model.Time;
+                existingTemplate.Experience = model.Experience;
+                existingTemplate.Gratitude = model.Gratitude;
+                existingTemplate.Media = model.Media;
+                existingTemplate.IsMediaPhoto = model.IsMediaPhoto;
+                existingTemplate.AutoReply = model.AutoReply;
+                existingTemplate.IsAutoReplyText = model.IsAutoReplyText;
+
+                await _contx.SaveChangesAsync();
+                return true;
+            }
+
+            //Create template
+            var template = new AdventureTemplate
+            {
+                Id = Guid.NewGuid(),
+                Name = model.Name,
+                UserId = model.UserId,
+                IsOffline = model.IsOffline,
+                Address = model.Address,
+                Application = model.Application,
+                AttendeesDescription = model.AttendeesDescription,
+                UnwantedAttendeesDescription = model.UnwantedAttendeesDescription,
+                CountryId = model.CountryId,
+                CityId = model.CityId,
+                Description = model.Description,
+                Duration = model.Duration,
+                Date = model.Date,
+                Time = model.Time,
+                Experience = model.Experience,
+                Gratitude = model.Gratitude,
+                Media = model.Media,
+                IsMediaPhoto = model.IsMediaPhoto,
+                AutoReply = model.AutoReply,
+                IsAutoReplyText = model.IsAutoReplyText
+            };
+
+            await _contx.AddAsync(template);
+            await _contx.SaveChangesAsync();
+
+            return true;
+        }
+
+        public async Task<List<GetTemplateShort>> GetAdventureTemplatesAsync(long userId)
+        {
+            return await _contx.adventure_templates.Where(t => t.UserId == userId).Select(t => new GetTemplateShort
+            {
+                Id = t.Id,
+                Name = t.Name
+            }).ToListAsync();
+        }
+
+        public async Task<ManageTemplate> GetAdventureTemplateAsync(Guid id)
+        {
+            return await _contx.adventure_templates.Where(t => t.Id == id).Select(t => new ManageTemplate
+            {
+                Id = t.Id,
+                Date = t.Date,
+                Time = t.Time,
+                Description = t.Description,
+                Duration = t.Duration,
+                Address = t.Address,
+                AttendeesDescription = t.AttendeesDescription,
+                Application = t.Application,
+                AutoReply = t.AutoReply,
+                IsAutoReplyText = t.IsAutoReplyText,
+                Media = t.Media,
+                IsMediaPhoto = t.IsMediaPhoto,
+                CityId = t.CityId,
+                CountryId = t.CountryId,
+                Experience = t.Experience,
+                Gratitude = t.Gratitude,
+                UnwantedAttendeesDescription = t.UnwantedAttendeesDescription,
+                IsOffline = t.IsOffline,
+                Name = t.Name,
+                UserId = t.UserId
+            }).FirstOrDefaultAsync();
+        }
+
+        public async Task<DeleteTemplateResult> DeleteAdventureTemplateAsync(Guid templateId)
+        {
+            var template = await _contx.adventure_templates.Where(t => t.Id == templateId)
+                .FirstOrDefaultAsync();
+
+            if (template == null)
+                return DeleteTemplateResult.DoesNotExist;
+
+            _contx.adventure_templates.Remove(template);
+            await _contx.SaveChangesAsync();
+
+            return DeleteTemplateResult.Success;
         }
     }
 }
