@@ -11,7 +11,7 @@ namespace MyWebApi.Entities.AdventureEntities
         [Key]
         public Guid AdventureId { get; set; }
         public string Username { get; set; }
-        public AdventureRequestStatus Status { get; set; }
+        public AdventureAttendeeStatus Status { get; set; }
         public virtual Adventure Adventure { get; set; }
     }
 }

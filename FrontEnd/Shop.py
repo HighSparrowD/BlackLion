@@ -19,7 +19,6 @@ class Shop:
         self.activatedElsewhere = True
 
         if returnMethod is None:
-            Helpers.switch_user_busy_status(self.current_user)
             self.activatedElsewhere = False
 
         self.active_first_option_price = 0

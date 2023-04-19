@@ -19,7 +19,6 @@ class Registrator:
         self.previous_item = '' #Is used to remove a tick from single-type items (country, city, etc..)
         self.current_inline_message_id = 0 #Represents current message with inline markup
         self.current_user = msg.from_user.id
-        Helpers.switch_user_busy_status(self.current_user)
         self.hasVisited = hasVisited
         self.okMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(KeyboardButton("Ok"))
         self.YNmarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Yes", "No")
@@ -507,8 +506,7 @@ class Registrator:
             self.bot.register_next_step_handler(msg, self.name_step, acceptMode=True, editMode=editMode, chat_id=self.current_user)
         else:
             if msg.text:
-                if "userRealName" not in self.data:
-                    self.data["userRealName"] = msg.text
+                self.data["userRealName"] = msg.text
 
                 if len(msg.text) > 50:
                     self.bot.send_message(self.current_user, "Name cannot be longer than 50 characters")
@@ -1290,7 +1288,7 @@ class Registrator:
     def destruct(self):
         self.bot.callback_query_handlers.remove(self.chCode)
         if self.hasVisited:
-            Helpers.switch_user_busy_status(self.current_user)
+            Helpers.switch_user_busy_status(self.current_user, 12)
         if self.return_method:
             self.return_method()
         else:

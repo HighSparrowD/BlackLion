@@ -21,8 +21,6 @@ class Requester:
 
         self.active_user_id = "0"
 
-        Helpers.switch_user_busy_status(self.current_user)
-
         self.bYes = "😏"
         self.bNo = "👽"
 
@@ -180,7 +178,7 @@ class Requester:
 
         self.bot.callback_query_handlers.remove(self.ch)
 
-        Helpers.switch_user_busy_status(self.current_user)
+        Helpers.switch_user_busy_status(self.current_user, 12)
 
         if self.returnMethod:
             self.returnMethod(self.message)

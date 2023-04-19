@@ -174,11 +174,12 @@ namespace MyWebApi.Interfaces
         Task<bool> AddUserCommercialVector(long userId, string tagString);
         Task<SimilarityBetweenUsers> GetSimilarityBetweenUsersAsync(long user1, long user2);
         Task<GetUserMedia> GetUserMediaAsync(long userId);
+        Task<GetLimitations> GetUserSearchLimitations(long userId);
 
         //Toggle Settings 
         Task SwitchHintsVisibilityAsync(long userId);
         Task<bool> SwitchPersonalityUsage(long userId);
-        Task<string> SwhitchUserBusyStatus(long userId);
+        Task<SwitchBusyStatusResponse> SwhitchUserBusyStatus(long userId, int sectionId);
         Task SwitchSearchCommentsVisibilityAsync(long userId);
         Task<bool> SwitchUserFreeSearchParamAsync(long userId);
         Task<bool> SwitchUserRTLanguageConsiderationAsync(long userId);
@@ -191,12 +192,11 @@ namespace MyWebApi.Interfaces
         Task<ParticipationRequestStatus> SendAdventureRequestByCodeAsync(ParticipationRequest request);
         Task<List<GetTemplateShort>> GetAdventureTemplatesAsync(long userId);
         Task<ManageTemplate> GetAdventureTemplateAsync(Guid id);
-        Task<bool> ProcessSubscriptionRequestAsync(Guid adventureId, long userId, AdventureRequestStatus status);
+        Task<bool> ProcessSubscriptionRequestAsync(Guid adventureId, long userId, AdventureAttendeeStatus status);
         Task<List<AttendeeInfo>> GetAdventureAttendeesAsync(Guid adventureId);
         Task<List<Adventure>> GetUsersSubscribedAdventuresAsync(long userId);
         Task<List<GetAdventure>> GetUserAdventuresAsync(long userId);
         Task<Adventure> GetAdventureAsync(Guid id);
-        Task<GetLimitations> GetUserSearchLimitations(long userId);
         Task<bool> SaveAdventureTemplateAsync(ManageTemplate model);
         Task<DeleteTemplateResult> DeleteAdventureTemplateAsync(Guid templateId);
     }

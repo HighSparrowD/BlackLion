@@ -18,7 +18,6 @@ class RandomTalker:
         self.exit_message = ""
         self.current_user = message.chat.id
         self.app_language = Helpers.get_user_app_language(self.current_user)
-        Helpers.switch_user_busy_status(self.current_user)
         self.random_talkers = random_talkers
         self.user2 = 0
         self.user2_base = None

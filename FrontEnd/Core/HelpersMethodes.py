@@ -74,9 +74,9 @@ def check_user_is_busy(userId):
         return None
 
 
-def switch_user_busy_status(userId):
+def switch_user_busy_status(userId, sectionId):
     try:
-        return requests.get(f"https://localhost:44381/SwhitchUserBusyStatus/{userId}", verify=False).text
+        return json.loads(requests.get(f"https://localhost:44381/SwhitchUserBusyStatus/{userId}/{sectionId}", verify=False).text)
     except:
         return None
 
@@ -523,6 +523,15 @@ def send_adventure_request_by_code(userId, code):
         d = json.dumps(data)
         return int(requests.post(f"https://localhost:44381/SendAdventureRequestByCode", d,
                                  headers={"Content-Type": "application/json"},
+                                 verify=False).text)
+    except:
+        return None
+
+
+def process_participation_request(adventureId, userId, status):
+    try:
+        #TODO: perhaps change return type to enum
+        return bool(requests.get(f"https://localhost:44381/process-adventure-request/{adventureId}/{userId}/{status}",
                                  verify=False).text)
     except:
         return None

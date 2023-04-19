@@ -16,7 +16,6 @@ class Familiator:
         self.bot = bot
         self.msg = msg
         self.current_user = cr_user
-        Helpers.switch_user_busy_status(self.current_user)
         self.active_user = None
         self.active_user_id = 0
         self.markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add(self.btnYes, self.btnNo, self.btnLeave)

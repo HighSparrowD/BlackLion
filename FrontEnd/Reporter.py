@@ -12,7 +12,6 @@ class Reporter:
         self.bot = bot
         self.message = msg
         self.current_user = msg.from_user.id
-        Helpers.switch_user_busy_status(self.current_user)
         self.reporters = reporters
         self.reporters.append(self)
 

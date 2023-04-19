@@ -89,8 +89,10 @@ namespace MyWebApi.Controllers
             if (model.WasChanged)
             {
                 var langCount = await GetUserMaximumLanguageCount(model.Id);
-                if (model.UserLanguages.Count > langCount)
-                    throw new Exception($"This user cannot have more than {langCount} languages !");
+
+                //TODO: Uncoment when premium functionality is fully implemented
+                //if (model.UserLanguages.Count > langCount)
+                //    throw new Exception($"This user cannot have more than {langCount} languages !");
 
                 Location location = new Location { Id = model.Id};
 
@@ -482,10 +484,10 @@ namespace MyWebApi.Controllers
             return await _repository.SetDebugProperties();
         }
 
-        [HttpGet("/SwhitchUserBusyStatus/{userId}")]
-        public async Task<string> SwhitchUserBusyStatus(long userId)
+        [HttpGet("/SwhitchUserBusyStatus/{userId}/{sectionId}")]
+        public async Task<SwitchBusyStatusResponse> SwhitchUserBusyStatus([FromRoute] long userId, [FromRoute]int sectionId)
         {
-            return await _repository.SwhitchUserBusyStatus(userId);
+            return await _repository.SwhitchUserBusyStatus(userId, sectionId);
         }
 
         [HttpGet("/GetUserRequest/{requestId}")]
@@ -1048,8 +1050,8 @@ namespace MyWebApi.Controllers
             return await _repository.GetAdventureTemplateAsync(id);
         }
 
-        [HttpGet("/SendAdventureRequestByCode")]
-        public async Task<ParticipationRequestStatus> SendAdventureRequestByCode(ParticipationRequest model)
+        [HttpPost("/SendAdventureRequestByCode")]
+        public async Task<ParticipationRequestStatus> SendAdventureRequestByCode([FromBody] ParticipationRequest model)
         {
             return await _repository.SendAdventureRequestByCodeAsync(model);
         }
@@ -1066,13 +1068,14 @@ namespace MyWebApi.Controllers
             return await _repository.SendAdventureRequestAsync(id, userId);
         }
 
-        [HttpGet("/ProcessSubscriptionRequest/{id}/{userId}/{status}")]
-        public async Task<bool> ProcessSubscriptionRequest(Guid id, long userId, AdventureRequestStatus status)
+        //TODO: perhaps change return type to enum
+        [HttpGet("/process-adventure-request/{id}/{userId}/{status}")]
+        public async Task<bool> ProcessSubscriptionRequest(Guid id, long userId, AdventureAttendeeStatus status)
         {
             return await _repository.ProcessSubscriptionRequestAsync(id, userId, status);
         }
 
-        [HttpGet("/GetAdventureAttendees/{id}")]
+        [HttpGet("/adventure-attendees/{id}")]
         public async Task<List<AttendeeInfo>> GetAdventureAttendees(Guid id)
         {
             return await _repository.GetAdventureAttendeesAsync(id);

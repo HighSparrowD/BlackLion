@@ -22,8 +22,6 @@ class Adventurer:
         #Indicates whether if user is managing his own adventures (1), subscribed adventures (2), a template (3), create from template (4)
         self.manageMode = 1
 
-        Helpers.switch_user_busy_status(self.current_user)
-
         self.previous_item = ''
 
         self.current_markup_elements = []
@@ -52,6 +50,13 @@ class Adventurer:
         #Used for template management
         self.current_template = 0
         self.isTemplate = False # Defines checkout's functionality
+
+        #Used for adventure management
+        self.current_adventure = 0
+        self.current_attendee = 0
+        self.current_attendee_data = None
+        self.isNewAttendee = True
+        self.current_attendees_statuses = {}
 
         self.countries = {}
         self.cities = {}
@@ -86,6 +91,24 @@ class Adventurer:
             .add(InlineKeyboardButton("Delete", callback_data="8")) \
             .add(InlineKeyboardButton("Go Back", callback_data="-20"))
 
+        self.manage_adventure_markup = InlineKeyboardMarkup() \
+            .add(InlineKeyboardButton("Status", callback_data="-1"), InlineKeyboardButton("", callback_data="1")) \
+            .add(InlineKeyboardButton("Attendees", callback_data="2")) \
+            .add(InlineKeyboardButton("Change", callback_data="3")) \
+            .add(InlineKeyboardButton("Delete", callback_data="4")) \
+            .add(InlineKeyboardButton("Go Back", callback_data="-20"))
+
+        self.manage_adventure_attendee_markup = InlineKeyboardMarkup() \
+            .add(InlineKeyboardButton("Status", callback_data="-5"), InlineKeyboardButton("✅", callback_data="-5")) \
+            .add(InlineKeyboardButton("Contact", callback_data="6")) \
+            .add(InlineKeyboardButton("Remove", callback_data="7")) \
+            .add(InlineKeyboardButton("Go Back", callback_data="-20"))
+
+        self.set_attendee_status_markup = InlineKeyboardMarkup() \
+            .add(InlineKeyboardButton("Accept", callback_data="10")) \
+            .add(InlineKeyboardButton("Decline", callback_data="11")) \
+            .add(InlineKeyboardButton("Go Back", callback_data="-20"))
+
         self.okMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Ok")
         self.YNMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Yes", "No")
         self.goBackMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Go Back")
@@ -98,6 +121,7 @@ class Adventurer:
         self.registerTemplateCheckoutMarkup_E = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14").add("15").add("16")
 
         self.my_adventuresMarkup = InlineKeyboardMarkup()
+        self.my_adventures_attendeesMarkup = InlineKeyboardMarkup()
         self.my_templatesMarkup = InlineKeyboardMarkup()
         self.subscribed_adventuresMarkup = InlineKeyboardMarkup()
 
@@ -110,6 +134,11 @@ class Adventurer:
             2: "❓", # Changed
             3: "✅", # Accepted
             4: "❌", # Declined
+        }
+
+        self.attendee_statusDict = {
+            1: "❓", # New
+            2: "✅" # Accepted
         }
 
         self.active_location_markup = None
@@ -854,7 +883,7 @@ class Adventurer:
             elif message.text == "16":
                 if self.doesExist:
                     Helpers.change_adventure(self.data)
-                    self.send_secondary_message("Changes are saved successfully.\nThey will come into force after approval by the administration")
+                    self.send_secondary_message("Changes were saved successfully.\nThey will come into force after approval by the administration")
                     self.subscribe_callback_handler(self.start_callback_handler)
                     self.previous_section()
                     return
@@ -931,7 +960,7 @@ class Adventurer:
 
                 if self.doesExist:
                     Helpers.save_template(self.data)
-                    self.send_secondary_message("Changes are saved successfully")
+                    self.send_secondary_message("Changes were saved successfully")
                     self.previous_section()
                     return
 
@@ -1000,10 +1029,60 @@ class Adventurer:
                 self.current_registration_step(message)
 
     def my_adventures_manager(self):
+        self.subscribe_callback_handler(self.start_callback_handler)
+
         self.previous_section = self.start
         self.assemble_my_adventures_markup()
         self.manageMode = 1
         self.send_active_message("<b><i>Here are adventures created by you</i></b>", markup=self.my_adventuresMarkup)
+
+    def manage_adventure(self):
+        self.previous_section = self.my_adventures_manager
+        self.subscribe_callback_handler(self.manage_adventure_callback_handler)
+        self.send_active_message("Please, choose an option", markup=self.manage_adventure_markup)
+
+    #TODO: Add paging
+    def manage_adventure_attendees(self):
+        self.previous_section = self.manage_adventure
+        self.assemble_my_adventure_attendees_markup()
+
+        if len(self.my_adventures_attendeesMarkup.keyboard) == 1:
+            self.send_secondary_message("No attendees yet!")
+            self.delete_active_message()
+            self.previous_section()
+            return
+
+        self.send_active_message("Please, select an attendee", markup=self.my_adventures_attendeesMarkup)
+
+    def manage_adventure_attendee(self):
+        self.previous_section = self.manage_adventure_attendees
+
+        #TODO: Use another method / Remake it to be more suitable -> THUS shown description will look better
+        self.current_attendee_data = Helpers.get_user_info(self.current_attendee)
+
+        #If is new attendee
+        if self.current_attendees_statuses[self.current_attendee] == 1:
+            self.display_current_attendee_data()
+            self.send_secondary_message("<i><b>🔝You have new participation request🔝</b></i>", markup=self.set_attendee_status_markup)
+            return
+        self.display_current_attendee_data()
+        self.send_secondary_message("Please, select an option", markup=self.manage_adventure_attendee_markup)
+
+    def resolve_participation_request(self, status):
+        Helpers.process_participation_request(self.current_adventure, self.current_attendee, status)
+        self.delete_secondary_message()
+        self.previous_section()
+
+    def delete_adventure(self):
+        pass
+
+    def change_adventure(self):
+        self.previous_section = self.manage_adventure
+
+        self.isTemplate = False
+        self.subscribe_callback_handler(self.registration_callback_handler)
+        self.load_adventure_data(self.current_adventure)
+        self.register_checkout(self.message)
 
     def subscribed_adventures_manager(self):
         self.previous_section = self.start
@@ -1015,6 +1094,7 @@ class Adventurer:
         self.send_active_message("<b><i>You are not subscribed on any adventures!\nTry finding them :)</b></i>", markup=self.search_markup)
 
     def search_choice(self):
+        self.previous_section = self.start
         self.send_active_message("<b><i>Please, chose an option</i></b>", markup=self.search_markup)
 
     def recurring_adventure_search(self):
@@ -1040,7 +1120,7 @@ class Adventurer:
                 self.send_secondary_message("Invalid invitation code", markup=self.goBackMarkup)
                 self.bot.register_next_step_handler(message, self.join_by_code, acceptMode=acceptMode, chat_id=self.current_user)
             elif response == 3:
-                self.send_secondary_message("You are already participation in this adventure", markup=self.goBackMarkup)
+                self.send_secondary_message("You are already participating in this adventure", markup=self.goBackMarkup)
                 self.bot.register_next_step_handler(message, self.join_by_code, acceptMode=acceptMode, chat_id=self.current_user)
             elif response == 4:
                 self.send_secondary_message("Unable to join the adventure. You are its owner", markup=self.goBackMarkup)
@@ -1116,10 +1196,8 @@ class Adventurer:
         #Adventure and Template selection
         else:
             if self.manageMode == 1:
-                self.isTemplate = False
-                self.subscribe_callback_handler(self.registration_callback_handler)
-                self.load_adventure_data(call.data)
-                self.register_checkout(call.message)
+                self.current_adventure = call.data
+                self.manage_adventure()
             elif self.manageMode == 2:
                 pass
             elif self.manageMode == 3:
@@ -1177,6 +1255,34 @@ class Adventurer:
                     self.previous_item = call.data
                 else:
                     self.bot.answer_callback_query(call.id, "Incorrect city code")
+
+    def manage_adventure_callback_handler(self, call):
+        if call.data == "1":
+            pass
+        elif call.data == "2":
+            self.manage_adventure_attendees()
+        elif call.data == "3":
+            pass
+        elif call.data == "4":
+            pass
+        elif call.data == "10":
+            self.resolve_participation_request(2)
+        elif call.data == "11":
+            self.resolve_participation_request(3)
+        elif call.data == "-20":
+            self.delete_secondary_message() #TODO: reconsider usefulness
+            self.previous_section()
+        else:
+            self.current_attendee = call.data
+            self.manage_adventure_attendee()
+
+    def display_current_attendee_data(self):
+        base = self.current_attendee_data["userBaseInfo"]
+
+        if base["isMediaPhoto"]:
+            self.send_active_message_with_photo(base["userDescription"], base["userMedia"])
+        else:
+            self.send_active_message_with_video(base["userDescription"], base["userMedia"])
 
     def send_active_message(self, text, markup=None):
         try:
@@ -1242,6 +1348,18 @@ class Adventurer:
             self.my_adventuresMarkup.add(InlineKeyboardButton("➕ Add ➕", callback_data="150"))
 
         self.my_adventuresMarkup.add(InlineKeyboardButton("Go Back", callback_data="-20"))
+
+    def assemble_my_adventure_attendees_markup(self):
+        attendees = json.loads(requests.get(f"https://localhost:44381/adventure-attendees/{self.current_adventure}", verify=False).text)
+        self.my_adventures_attendeesMarkup.clear()
+        self.current_attendees_statuses.clear()
+
+        for attendee in attendees:
+            status = self.attendee_statusDict[attendee["status"]]
+            self.current_attendees_statuses[str(attendee["userId"])] = attendee["status"]
+            self.my_adventures_attendeesMarkup.add(InlineKeyboardButton(f"{status} {attendee['username']} {status}", callback_data=attendee["userId"]))
+
+        self.my_adventures_attendeesMarkup.add(InlineKeyboardButton("Go Back", callback_data="-20"))
 
     def assemble_subscribed_adventures_markup(self):
         adventures = json.loads(requests.get(f"https://localhost:44381/GetUsersSubscribedAdventures/{self.current_user}", verify=False).text)

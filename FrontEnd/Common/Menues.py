@@ -23,10 +23,10 @@ register_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=Tr
 
 
 def go_back_to_main_menu(bot, user, message, shouldSwitch=True):
-    phrase = ""
+    response = None
 
     if shouldSwitch:
-        phrase = Helpers.switch_user_busy_status(user)
+        response = Helpers.switch_user_busy_status(user, 12)
 
         request_list = Helpers.get_user_requests(user)
 
@@ -41,8 +41,8 @@ def go_back_to_main_menu(bot, user, message, shouldSwitch=True):
             bot.send_message(notif["userId1"], notif["description"])
             Helpers.delete_user_notification(notif["id"])
     else:
-        if phrase:
-            bot.send_message(user, phrase)
+        if response and response["comment"]:
+            bot.send_message(user, response["comment"])
     bot.send_message(user, "What are we doing next? 😊", reply_markup=menu_markup)
 
 

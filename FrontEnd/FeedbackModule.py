@@ -9,14 +9,16 @@ from Helper import Helper
 
 
 class FeedbackModule:
-    def __init__(self, bot, msg, language, hasVisited=True):
+    def __init__(self, bot, msg, hasVisited=True):
         self.bot = bot
         self.message = msg
         self.current_user = msg.from_user.id
-        Helpers.switch_user_busy_status(self.current_user)
         self.active_section = None
 
         self.data = {}
+
+        #TODO: REMOVE
+        language = int(requests.get(f"https://localhost:44381/GetUserAppLanguage/{msg.from_user.id}", verify=False).text)
 
         self.reasons = json.loads(requests.get(f"https://localhost:44381/GetFeedbackReasons/{language}", verify=False).text)
         self.reas = []

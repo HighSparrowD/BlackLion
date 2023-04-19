@@ -2067,7 +2067,7 @@ namespace MyWebApi.Repositories
             }
         }
 
-        public async Task<string> SwhitchUserBusyStatus(long userId)
+        public async Task<SwitchBusyStatusResponse> SwhitchUserBusyStatus(long userId, int sectionId)
         {
             var user = await _contx.SYSTEM_USERS.Where(u => u.UserId == userId)
                 .Include(u => u.UserDataInfo)
@@ -2075,6 +2075,7 @@ namespace MyWebApi.Repositories
 
             if  (user != null)
             {
+                var hint = "";
 
                 user.IsBusy = !user.IsBusy;
                 user.IsUpdated = false;
@@ -2082,14 +2083,38 @@ namespace MyWebApi.Repositories
                 _contx.Update(user);
                 await _contx.SaveChangesAsync();
 
-                //Possible task -> visit any section x times
+                if (!user.IsBusy) // Negation <= Was busy before update
+                {
+                    return new SwitchBusyStatusResponse
+                    {
+                        Status = SwitchBusyStatusResult.IsBusy
+                    };
+                }
 
-                if (!user.ShouldSendHints)
-                    return null;
+                if (user.IsDeleted)
+                {
+                    return new SwitchBusyStatusResponse
+                    {
+                        Status = SwitchBusyStatusResult.IsDeleted,
+                    };
+                }
 
-                return await GetRandomHintAsync(user.UserDataInfo.LanguageId, null);
+                if (user.ShouldSendHints)
+                    hint = await GetRandomHintAsync(user.UserDataInfo.LanguageId, null);
+
+
+                return new SwitchBusyStatusResponse
+                {
+                    Status = SwitchBusyStatusResult.Success,
+                    Comment = hint,
+                    HasVisited = await CheckUserHasVisitedSection(userId, sectionId)
+                };
             }
-            return null;
+            return new SwitchBusyStatusResponse
+            {
+                Status = SwitchBusyStatusResult.DoesNotExist,
+                HasVisited = false
+            };
         }
 
         public async Task<List<UserNotification>> GetUserRequests(long userId)
@@ -4543,7 +4568,7 @@ namespace MyWebApi.Repositories
 
             var newAttendee = new AdventureAttendee
             {
-                Status = AdventureRequestStatus.New,
+                Status = AdventureAttendeeStatus.New,
                 AdventureId = adventure.Id,
                 UserId = userId,
                 Username = userName
@@ -4561,7 +4586,7 @@ namespace MyWebApi.Repositories
         }
 
 
-        public async Task<bool> ProcessSubscriptionRequestAsync(Guid adventureId, long userId, AdventureRequestStatus status)
+        public async Task<bool> ProcessSubscriptionRequestAsync(Guid adventureId, long userId, AdventureAttendeeStatus status)
         {
             var attendee = await _contx.adventure_attendees.Where(a => a.UserId == userId && a.AdventureId == adventureId)
                 .SingleOrDefaultAsync();
@@ -4576,7 +4601,7 @@ namespace MyWebApi.Repositories
 
             attendee.Status = status;
 
-            if (status == AdventureRequestStatus.Accepted)
+            if (status == AdventureAttendeeStatus.Accepted)
             {
                 await AddUserNotificationAsync(new UserNotification
                 {
@@ -4593,11 +4618,12 @@ namespace MyWebApi.Repositories
 
         public async Task<List<AttendeeInfo>> GetAdventureAttendeesAsync(Guid adventureId)
         {
-            return await _contx.adventure_attendees.Where(a => a.AdventureId == adventureId && a.Status == AdventureRequestStatus.Accepted)
+            return await _contx.adventure_attendees.Where(a => a.AdventureId == adventureId && (a.Status == AdventureAttendeeStatus.New || a.Status == AdventureAttendeeStatus.Accepted))
             .Select(a => new AttendeeInfo
             {
                 UserId = a.UserId,
                 Username = a.Username,
+                Status = a.Status
             }).ToListAsync();
         }
 

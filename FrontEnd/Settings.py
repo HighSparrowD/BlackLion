@@ -66,7 +66,6 @@ class Settings:
         self.increased_familiarity_status = self.current_user_data["increasedFamiliarity"]
         self.user_language = self.current_user_data["userDataInfo"]["languageId"]
 
-        Helpers.switch_user_busy_status(self.current_user)
         self.userBalance = json.loads(requests.get(f"https://localhost:44381/GetActiveUserWalletBalance/{self.current_user}", verify=False).text)
         self.requestStatus = requests.get(f"https://localhost:44381/CheckTickRequestStatus/{self.current_user}", verify=False).text
 
