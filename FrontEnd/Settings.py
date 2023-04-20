@@ -234,7 +234,7 @@ class Settings:
 
         self.okMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Ok")
 
-        self.helpHandler = self.bot.register_message_handler(self.help_handler, commands=["help"], user_id=self.current_user)
+        self.helpHandler = self.bot.register_message_handler(self.help_handler, commands=["help"], user_id=self.current_user, is_multihandler=True)
 
         self.nextHandler = None
 

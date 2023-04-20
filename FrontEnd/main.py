@@ -98,7 +98,7 @@ def settings(message):
 def adventurer(message):
     create_adventurer(message, message.from_user.id)
 
-
+n = InlineKeyboardMarkup()
 @bot.message_handler(commands=["help"], is_multihandler=True)
 def help(message):
     Helper(bot, message)
