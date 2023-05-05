@@ -1,12 +1,13 @@
 import json
 import requests
 
-#Used to for translating Accept-Language header
+# Used to for translating Accept-Language header
 languages = {
     0: "en-US",
     1: "ru-RU",
     2: "uk-UA"
 }
+
 
 def check_user_exists(userId):
     return bool(json.loads(requests.get(f"https://localhost:44381/CheckUserExists/{userId}", verify=False).text))
@@ -76,7 +77,8 @@ def check_user_is_busy(userId):
 
 def switch_user_busy_status(userId, sectionId):
     try:
-        return json.loads(requests.get(f"https://localhost:44381/SwhitchUserBusyStatus/{userId}/{sectionId}", verify=False).text)
+        return json.loads(
+            requests.get(f"https://localhost:44381/SwhitchUserBusyStatus/{userId}/{sectionId}", verify=False).text)
     except:
         return None
 
@@ -495,13 +497,12 @@ def set_user_currency(userId, currency):
 
 
 def register_adventure(adventureData):
-    try:
+
         d = json.dumps(adventureData)
         return requests.post(f"https://localhost:44381/RegisterAdventure", d,
                              headers={"Content-Type": "application/json"},
                              verify=False).text
-    except:
-        return None
+
 
 
 def change_adventure(adventureData):
@@ -510,6 +511,23 @@ def change_adventure(adventureData):
         return requests.post(f"https://localhost:44381/ChangeAdventure", d,
                              headers={"Content-Type": "application/json"},
                              verify=False).status_code
+    except:
+        return None
+
+
+def set_adventure_group_link(request):
+    try:
+        d = json.dumps(request)
+        return int(requests.post(f"https://localhost:44381/adventure-group-id", d,
+                                 headers={"Content-Type": "application/json"},
+                                 verify=False).text)
+    except:
+        return None
+
+
+def get_adventure(adventureId):
+    try:
+        return json.loads(requests.get(f"https://localhost:44381/adventure-template/{adventureId}", verify=False).text)
     except:
         return None
 
@@ -530,7 +548,7 @@ def send_adventure_request_by_code(userId, code):
 
 def process_participation_request(adventureId, userId, status):
     try:
-        #TODO: perhaps change return type to enum
+        # TODO: perhaps change return type to enum
         return bool(requests.get(f"https://localhost:44381/process-adventure-request/{adventureId}/{userId}/{status}",
                                  verify=False).text)
     except:
@@ -568,10 +586,19 @@ def delete_template(templateId):
         return None
 
 
+def delete_attendee(adventureId, attendeeId):
+    try:
+        return int(
+            requests.delete(f"https://localhost:44381/delete-attendee/{adventureId}/{attendeeId}", verify=False).text)
+    except:
+        return None
+
+
 def get_report_reasons(language):
     try:
         langHeader = languages[language]
-        return json.loads(requests.get(f"https://localhost:44381/report-reasons", headers={"Accept-Language": langHeader},
-                                       verify=False).text)
+        return json.loads(
+            requests.get(f"https://localhost:44381/report-reasons", headers={"Accept-Language": langHeader},
+                         verify=False).text)
     except:
         return None

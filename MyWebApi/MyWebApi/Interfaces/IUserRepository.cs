@@ -196,8 +196,10 @@ namespace MyWebApi.Interfaces
         Task<List<AttendeeInfo>> GetAdventureAttendeesAsync(Guid adventureId);
         Task<List<Adventure>> GetUsersSubscribedAdventuresAsync(long userId);
         Task<List<GetAdventure>> GetUserAdventuresAsync(long userId);
-        Task<Adventure> GetAdventureAsync(Guid id);
+        Task<ManageAdventure> GetAdventureAsync(Guid id);
         Task<bool> SaveAdventureTemplateAsync(ManageTemplate model);
-        Task<DeleteTemplateResult> DeleteAdventureTemplateAsync(Guid templateId);
+        Task<DeleteResult> DeleteAdventureTemplateAsync(Guid templateId);
+        Task<DeleteResult> DeleteAdventureAttendeeAsync(Guid adventureId, long attendeeId);
+        Task<SetGroupIdResult> SetAdventureGroupIdAsync(SetGroupIdRequest request);
     }
 }

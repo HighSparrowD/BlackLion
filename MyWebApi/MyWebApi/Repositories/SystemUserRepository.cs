@@ -4485,6 +4485,7 @@ namespace MyWebApi.Repositories
                 IsAutoReplyText = model.IsAutoReplyText,
                 AutoReply = model.AutoReply,
                 IsOffline = model.IsOffline,
+                IsAwaiting = model.IsAwaiting,
                 UniqueLink = Guid.NewGuid().ToString("N").Substring(0, 7).ToUpper(),
                 Status = AdventureStatus.New
             };
@@ -4521,6 +4522,7 @@ namespace MyWebApi.Repositories
             adventure.IsAutoReplyText = model.IsAutoReplyText;
             adventure.AutoReply = model.AutoReply;
             adventure.Status = AdventureStatus.Changed;
+            adventure.IsAwaiting = model.IsAwaiting;
 
             await _contx.SaveChangesAsync();
         }
@@ -4585,7 +4587,6 @@ namespace MyWebApi.Repositories
             return true;
         }
 
-
         public async Task<bool> ProcessSubscriptionRequestAsync(Guid adventureId, long userId, AdventureAttendeeStatus status)
         {
             var attendee = await _contx.adventure_attendees.Where(a => a.UserId == userId && a.AdventureId == adventureId)
@@ -4603,12 +4604,16 @@ namespace MyWebApi.Repositories
 
             if (status == AdventureAttendeeStatus.Accepted)
             {
+                var contact = string.IsNullOrEmpty(adventure.GroupLink) ? 
+                    $"You may contact its creator @{adventure.Creator.UserBaseInfo.UserName} and discuss details" : 
+                    $"You may join creator's group via this link\n{adventure.GroupLink}" ;
+
                 await AddUserNotificationAsync(new UserNotification
                 {
                     UserId1 = userId,
                     Section = Sections.Adventurer,
                     Severity = Severities.Moderate,
-                    Description = $"Your request to join adventure {adventure.Name} had been accepted.\nYou may contact its creator @{adventure.Creator.UserBaseInfo.UserName} and discuss details"
+                    Description = $"Your request to join adventure {adventure.Name} had been accepted.\n{contact}"
                 });
             }
 
@@ -4849,9 +4854,10 @@ namespace MyWebApi.Repositories
             }).FirstOrDefaultAsync();
         }
 
-        public async Task<Adventure> GetAdventureAsync(Guid id)
+        public async Task<ManageAdventure> GetAdventureAsync(Guid id)
         {
             return await _contx.adventures.Where(a => a.Id == id)
+                .Select(a => new ManageAdventure(a))
                 .FirstOrDefaultAsync();
         }
 
@@ -4953,18 +4959,56 @@ namespace MyWebApi.Repositories
             }).FirstOrDefaultAsync();
         }
 
-        public async Task<DeleteTemplateResult> DeleteAdventureTemplateAsync(Guid templateId)
+        public async Task<DeleteResult> DeleteAdventureTemplateAsync(Guid templateId)
         {
             var template = await _contx.adventure_templates.Where(t => t.Id == templateId)
                 .FirstOrDefaultAsync();
 
             if (template == null)
-                return DeleteTemplateResult.DoesNotExist;
+                return DeleteResult.DoesNotExist;
 
             _contx.adventure_templates.Remove(template);
             await _contx.SaveChangesAsync();
 
-            return DeleteTemplateResult.Success;
+            return DeleteResult.Success;
+        }
+
+        public async Task<DeleteResult> DeleteAdventureAttendeeAsync(Guid adventureId, long attendeeId)
+        {
+            var attendee = await _contx.adventure_attendees.Where(a => a.AdventureId == adventureId && a.UserId == attendeeId)
+                .FirstOrDefaultAsync();
+
+            if (attendee == null)
+                return DeleteResult.DoesNotExist;
+
+            _contx.adventure_attendees.Remove(attendee);
+            await _contx.SaveChangesAsync();
+
+            await AddUserNotificationAsync(new UserNotification
+            {
+                UserId1 = attendee.UserId,
+                Section = Sections.Adventurer,
+                Severity = Severities.Urgent,
+                Description = "You have been removed from one of the adventures" // TODO: More precise ?
+            });
+
+            return DeleteResult.Success;
+        }
+
+        public async Task<SetGroupIdResult> SetAdventureGroupIdAsync(SetGroupIdRequest request)
+        {
+            var hasName = !string.IsNullOrEmpty(request.AdventureName);
+            var adventure = await _contx.adventures.Where(a => a.UserId == request.UserId && a.IsAwaiting && ((hasName && a.Name == request.AdventureName) || !hasName))
+                .FirstOrDefaultAsync();
+
+            if (adventure == null)
+                return SetGroupIdResult.AdventureDoesNotExist;
+
+            adventure.GroupLink = request.GroupLink;
+            adventure.GroupId = request.GroupId;
+
+            await _contx.SaveChangesAsync();
+            return SetGroupIdResult.Success;
         }
     }
 }

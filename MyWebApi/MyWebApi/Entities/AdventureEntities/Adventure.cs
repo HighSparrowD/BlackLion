@@ -29,6 +29,10 @@ namespace MyWebApi.Entities.AdventureEntities
         public bool? IsAutoReplyText { get; set; }
         public string AutoReply { get; set; }
         public string UniqueLink { get; set; }
+        //Indicates, whether if adventure awaits for the group id
+        public bool IsAwaiting { get; set; }
+        public string GroupLink { get; set; }
+        public long? GroupId { get; set; }
         public AdventureStatus Status { get; set; }
 
         public virtual User Creator { get; set; }

@@ -1,6 +1,6 @@
 ﻿namespace MyWebApi.Entities.AdventureEntities;
 
-public enum DeleteTemplateResult
+public enum DeleteResult
 {
     Success = 1,
     DoesNotExist = 2,

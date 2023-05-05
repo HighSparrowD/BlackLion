@@ -1038,6 +1038,12 @@ namespace MyWebApi.Controllers
             await _repository.ChangeAdventureAsync(model);
         }
 
+        [HttpPost("/adventure-group-id")]
+        public async Task<SetGroupIdResult> AdventureGroupId([FromBody] SetGroupIdRequest request)
+        {
+            return await _repository.SetAdventureGroupIdAsync(request);
+        }
+
         [HttpGet("/adventure-templates/{userId}")]
         public async Task<List<GetTemplateShort>> AdventureTenmplates([FromRoute]long userId)
         {
@@ -1087,8 +1093,8 @@ namespace MyWebApi.Controllers
             return await _repository.GetUserAdventuresAsync(userId);
         }
 
-        [HttpGet("/GetAdventure/{id}")]
-        public async Task<Adventure> GetAdventure(Guid id)
+        [HttpGet("/adventure/{id}")]
+        public async Task<ManageAdventure> GetAdventure(Guid id)
         {
             return await _repository.GetAdventureAsync(id);
         }
@@ -1112,9 +1118,15 @@ namespace MyWebApi.Controllers
         }
 
         [HttpDelete("/delete-template/{templateId}")]
-        public async Task<DeleteTemplateResult> DeleteTemplate([FromRoute]Guid templateId, [FromServices] IUserRepository userRepo)
+        public async Task<DeleteResult> DeleteTemplate([FromRoute]Guid templateId, [FromServices] IUserRepository userRepo)
         {
             return await userRepo.DeleteAdventureTemplateAsync(templateId);
+        }
+
+        [HttpDelete("/delete-attendee/{adventureId}/{attendeeId}")]
+        public async Task<DeleteResult> DeleteAttendee([FromRoute] Guid adventureId, [FromRoute] long attendeeId, [FromServices] IUserRepository userRepo)
+        {
+            return await userRepo.DeleteAdventureAttendeeAsync(adventureId, attendeeId);
         }
 
         [HttpGet("/get-user-media/{userId}")]
