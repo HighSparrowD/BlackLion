@@ -4,23 +4,23 @@ using WebApi.Entities.SecondaryEntities;
 using WebApi.Entities.TestEntities;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using WebApi.Entities.UserActionEntities;
+using WebApi.Enums;
 
 namespace WebApi.Interfaces
 {
     public interface ITestRepository
     {
-        Task<List<Localisation>> GetLocalisationAsync(int localisationId);
-        Task<List<ClassLocalisation>> GetClassLocalisationAsync(int localisationId);
-        Task<List<SecondaryLocalisationModel>> GetSecondaryLocalisationAsync();
-        Task<List<AppLanguage>> GetAppLanguages();
-        Task<List<Gender>> GetGenders(int localisationId);
-        Task<List<UserReason>> GetReasons(int localisationId);
-        Task<List<AgePreference>> GetAgePreferences(int localisationId);
-        Task<List<CommunicationPreference>> GetCommunicationPreferences(int localisationId);
-        Task<List<City>> GetCities(int countryId, int localisationId);
-        Task<List<Country>> GetCountries(int localisationId);
+        Task<List<Localization>> GetLocalisationAsync(int localisationId);
+        Task<List<ClassLocalization>> GetClassLocalisationAsync(int localisationId);
+        Task<List<SecondaryLocalizationModel>> GetSecondaryLocalisationAsync();
+        List<GetLocalizedEnum> GetAppLanguages();
+        List<GetLocalizedEnum> GetReasons();
+        List<GetLocalizedEnum> GetCommunicationPreferences();
+        Task<List<City>> GetCities(int countryId, AppLanguage localisationId);
+        Task<List<Country>> GetCountries(AppLanguage localisationId);
         Task<List<Language>> GetLanguagesAsync(int localisationId);
-        Task<Test> GetSingleTestAsync(long testId, int localisationId);
+        Task<Test> GetSingleTestAsync(long testId, AppLanguage localisationId);
         //Task<List<IntellectualTest>> GetIntellectualTestsAsync();
     }
 }

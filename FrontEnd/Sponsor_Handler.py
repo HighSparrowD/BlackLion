@@ -94,7 +94,7 @@ class SponsorHandler:
         self.greet_message3 = f"Welcome back dear sponsor. Reminding you my list of commands :-) \n{self.command_list_message}"
         self.greets = [self.greet_message2, self.greet_message3]
 
-        for lang in json.loads(requests.get("https://localhost:44381/GetAppLanguages", verify=False).text):
+        for lang in json.loads(requests.get("https://localhost:44381/app-languages", verify=False).text):
             self.app_langs[lang["id"]] = lang["languageNameShort"]
             self.app_langs_markup.add(KeyboardButton(lang["languageNameShort"]))
 

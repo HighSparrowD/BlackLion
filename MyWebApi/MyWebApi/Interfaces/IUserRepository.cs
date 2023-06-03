@@ -36,7 +36,7 @@ namespace WebApi.Interfaces
         Task<User> GetUserInfoByUsrnameAsync(string username);
         Task<BasicUserInfo> GetUserBasicInfo(long userId);
         Task<UserPartialData> GetUserPartialData(long userId);
-        Task<byte> UpdateUserAppLanguageAsync(long userId, int appLanguage);
+        Task<byte> UpdateUserAppLanguageAsync(long userId, AppLanguage appLanguage);
         Task UpdateUserAsync (UpdateUserProfile model);
         Task<List<GetUserData>> GetUsersAsync(long userId, bool isRepeated=false, bool isFreeSearch = false);
         Task<bool> CheckUserExists(long id);
@@ -54,6 +54,7 @@ namespace WebApi.Interfaces
         Task<List<Report>> GetAllUserReportsAsync(long userId);
         Task<List<Feedback>> GetMostRecentFeedbacks();
         Task<Feedback> GetFeedbackById(long id);
+        List<GetLocalizedEnum> GetGenders();
         Task<List<Feedback>> GetMostRecentFeedbacksByUserId(long userId);
         Task<bool> AddUserToBlackListAsync(long userId, long bannedUserId);
         Task<bool> RemoveUserFromBlackListAsync(long userId, long bannedUserId);
@@ -62,7 +63,7 @@ namespace WebApi.Interfaces
         Task<byte> ReRegisterUser(long userId);
         Task<byte> BanUserAsync(long userId);
         Task<byte> UnbanUserAsync(long userId);
-        Task<byte> GenerateUserAchievementList(long userId, int localisationId, bool wasRegistered);
+        Task<byte> GenerateUserAchievementList(long userId, AppLanguage localisationId, bool wasRegistered);
         Task<string> AddAchievementProgress(long userId, long achievementId, int progress);
         Task<string> GrantAchievementToUser(long userId, long achievementId);
         Task<List<UserAchievement>> GetUserAchievements(long userId);
@@ -83,7 +84,6 @@ namespace WebApi.Interfaces
         Task<int> AddUserTrustProgressAsync(long userId, double progress);
         Task<int> UpdateUserTrustLevelAsync(long userId, int level);
         Task<UserTrustLevel> GetUserTrustLevel(long userId);
-        Task<List<Event>> GetEventList(long userId, bool IsOnline);
         Task<bool> UpdateUserNickname(long userId, string nickname);
         Task<string> GetUserNickname(long userId);
         Task<string> ClaimDailyReward(long userId);
@@ -130,7 +130,6 @@ namespace WebApi.Interfaces
         Task<GetUserData> GetUserListByTagsAsync(GetUserByTags model);
         Task<bool> CheckEncounteredUserIsInBlackList(long userId, long encounteredUser);
         Task<string> RetreiveCommonLanguagesAsync(long user1Iq, long user2Id, int localisationId);
-        Task<bool> LogAdminErrorAsync(long? userId, string description, int sectioId);
         Task<bool> SetAutoReplyTextAsync(long userId, string text);
         Task<bool> SetAutoReplyVoiceAsync(long userId, string voice);
         Task<ActiveAutoReply> GetActiveAutoReplyAsync(long userId);
@@ -147,15 +146,15 @@ namespace WebApi.Interfaces
         Task<bool> GetUserFilteringByPhotoStatusAsync(long userId);
         Task<List<GetTestShortData>> GetTestDataByPropertyAsync(long userId, short param);
         Task<List<GetTestShortData>> GetUserTestDataByPropertyAsync(long userId, short param);
-        Task<GetFullTestData> GetTestFullDataByIdAsync(long testId, int localisation);
+        Task<GetFullTestData> GetTestFullDataByIdAsync(long testId, AppLanguage localisation);
         Task<GetUserTest> GetUserTestAsync(long userId, long testId);
         Task<int> GetPossibleTestPassRangeAsync(long userId, long testId);
-        Task<bool> PurchaseTestAsync(long userId, long testId, int localisation);
+        Task<bool> PurchaseTestAsync(long userId, long testId, AppLanguage localisation);
         Task<string> CheckTickRequestStatusÀsync(long userId);
         Task<bool> CheckUserHaveChosenFreeParamAsync(long userId);
         Task<bool> CheckShouldTurnOffPersonalityAsync(long userId);
         Task<bool> SetUserFreeSearchParamAsync(long userId, bool freeStatus);
-        List<GetReportReason> GetReportReasonsAsync();
+        List<GetLocalizedEnum> GetReportReasonsAsync();
         //Get stats user can invest points in
         Task<PersonalityCaps> GetUserPersonalityCapsAsync(long userId);
         Task<bool> GetUserRTLanguageConsiderationAsync(long userId);

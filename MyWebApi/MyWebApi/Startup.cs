@@ -86,6 +86,13 @@ namespace WebApi
 
             app.UseAuthorization();
 
+            //Actualize Database
+            using (var serviceScope = app.ApplicationServices.GetService<IServiceScopeFactory>().CreateScope())
+            {
+                var context = serviceScope.ServiceProvider.GetRequiredService<UserContext>();
+                context.Database.Migrate();
+            }
+
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();

@@ -1,12 +1,13 @@
 ﻿using WebApi.Entities.AdminEntities;
 using System.Collections.Generic;
+using WebApi.Enums;
 
 namespace WebApi.Entities.TestEntities
 {
     public class UploadTest
     {
         public long Id { get; set; }
-        public int ClassLocalisationId { get; set; }
+        public AppLanguage ClassLocalisationId { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
         public short TestType { get; set; }

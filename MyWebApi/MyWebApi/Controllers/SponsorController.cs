@@ -135,70 +135,16 @@ namespace WebApi.Controllers
             return await _repository.RemoveAdAsync(adId, sponsorId);
         }
 
-        [HttpGet("/SubscribeForEvent/{userId}/{eventId}")]
-        public async Task<byte> SubscribeForEvent(long userId, long eventId)
-        {
-            return await _repository.SubscribeForEvent(userId, eventId);
-        }
-
-        [HttpGet("/UnsubscribeFromEvent/{userId}/{eventId}")]
-        public async Task<byte> UnsubscribeFromEvent(long userId, long eventId)
-        {
-            return await _repository.UnsubscribeFromEvent(userId, eventId);
-        }
-
-        [HttpGet("/GetEventAttendees/{eventId}")]
-        public async Task<List<User>> GetEventAttendees(long eventId)
-        {
-            return await _repository.GetEventAttendees(eventId);
-        }
-
-        [HttpGet("/GetEventInfo/{eventId}")]
-        public async Task<Event> GetEventInfo(long eventId)
-        {
-            return await _repository.GetEventInfo(eventId);
-        }
-
         [HttpGet("/GetSponsorInfo/{sponsorId}")]
         public async Task<Sponsor> GetSponsorInfo(long sponsorId)
         {
             return await _repository.GetSponsorInfo(sponsorId);
         }
 
-        [HttpGet("/GetEventOwnerInfo/{eventId}")]
-        public async Task<Sponsor> GetEventOwnerInfo(long eventId)
-        {
-            return await _repository.GetEventOwnerInfo(eventId);
-        }
-
         [HttpPost("/UpdateContactInfoAsync")]
         public async Task<long> UpdateContactInfoAsync(SponsorContactInfo model)
         {
             return await _repository.UpdateContactInfoAsync(model);
-        }
-
-        [HttpPost("/CancelEventAsync")]
-        public async Task<long> CancelEventAsync(CancelEvent model)
-        {
-            return await _repository.CancelEventAsync(model);
-        }
-
-        [HttpPost("/AddEventAsync")]
-        public async Task<long> AddEventAsync(Event model)
-        {
-            return await _repository.AddEventAsync(model);
-        }
-
-        [HttpPost("/PostponeEventAsync")]
-        public async Task<long> PostponeEventAsync(PostponeEvent model)
-        {
-            return await _repository.PostponeEventAsync(model);
-        }
-
-        [HttpPost("/UpdateEventAsync")]
-        public async Task<long> UpdateEventAsync(Event model)
-        {
-            return await _repository.UpdateEventAsync(model);
         }
 
         [HttpPost("/AddSponsorRating")]
@@ -241,36 +187,6 @@ namespace WebApi.Controllers
         public async Task<long> AddSponsorLanguage(SponsorLanguage model)
         {
             return await _repository.AddSponsorLanguage(model);
-        }
-
-        [HttpPost("/AddEventTemplate")]
-        public async Task<long> AddEventTemplate(EventTemplate model)
-        {
-            return await _repository.AddEventTemplate(model);
-        }
-
-        [HttpGet("/GetEventTemplateById/{templateId}")]
-        public async Task<EventTemplate> GetEventTemplateById(long templateId)
-        {
-            return await _repository.GetEventTemplateById(templateId);
-        }
-
-        [HttpGet("/GetEventTemplateByName/{templateName}")]
-        public async Task<EventTemplate> GetEventTemplateByName(string templateName)
-        {
-            return await _repository.GetEventTemplateByName(templateName);
-        }
-
-        [HttpGet("/GetSponsorEventTemplates/{sponsorId}")]
-        public async Task<List<EventTemplate>> GetSponsorEventTemplates(long sponsorId)
-        {
-            return await _repository.GetSponsorEventTemplates(sponsorId);
-        }
-
-        [HttpDelete("/DeleteEventTemplate/{templateId}")]
-        public async Task<bool> DeleteEventTemplate(long templateId)
-        {
-            return await _repository.DeleteEventTemplate(templateId);
         }
 
         [HttpGet("/GetSponsorLanguages/{sponsorId}")]

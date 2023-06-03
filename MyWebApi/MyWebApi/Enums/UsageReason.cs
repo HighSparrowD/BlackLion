@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 namespace WebApi.Enums;
 
-public enum UsageReason
+public enum UsageReason : byte
 {
     [Display(Name = "UsageReason_Relationship")]
     Relationship = 0,

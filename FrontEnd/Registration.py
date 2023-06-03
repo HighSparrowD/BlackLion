@@ -66,7 +66,6 @@ class Registrator:
         self.cities = {}
 
         self.reasons = {}
-        self.age_pref = {}
         self.communication_pref = {}
         self.app_langs = {}
 
@@ -139,7 +138,7 @@ class Registrator:
         if not acceptMode:
             self.question_index = 1
 
-            for lang in json.loads(requests.get("https://localhost:44381/GetAppLanguages", verify=False).text):
+            for lang in json.loads(requests.get("https://localhost:44381/app-languages", verify=False).text):
                 self.app_langs[lang["id"]] = lang["languageNameShort"]
 
             self.app_languages_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
@@ -1124,12 +1123,6 @@ class Registrator:
                 return g
         return None
 
-    def age_prefs_converter(self, pref):
-        for p in self.age_pref:
-            if pref == self.age_pref[p]:
-                return p
-        return None
-
     def callback_handler(self, call):
         if call.message.id not in self.old_queries:
             self.current_query = call.message.id
@@ -1260,13 +1253,14 @@ class Registrator:
 
         return f"{min_value} - {max_value}"
 
+    #TODO: Send Accept-Language header !
     def get_localisations(self):
         for language in json.loads(
                 requests.get(f"https://localhost:44381/GetLanguages/{self.app_language}", verify=False).text):
             self.languages[language["id"]] = language["languageName"].lower().strip()
 
         for gender in json.loads(
-                requests.get(f"https://localhost:44381/GetGenders/{self.app_language}", verify=False).text):
+                requests.get(f"https://localhost:44381/genders", verify=False).text):
             self.genders[gender["id"]] = gender["genderName"].strip()
 
         for country in json.loads(
@@ -1274,14 +1268,10 @@ class Registrator:
             self.countries[country["id"]] = country["countryName"].lower().strip()
 
         for reason in json.loads(
-                requests.get(f"https://localhost:44381/GetReasons/{self.app_language}", verify=False).text):
+                requests.get(f"https://localhost:44381/usage-reasons", verify=False).text):
             self.reasons[reason["id"]] = reason["reasonName"].strip()
 
-        for pref in json.loads(
-                requests.get(f"https://localhost:44381/GetAgePreferences/{self.app_language}", verify=False).text):
-            self.age_pref[pref["id"]] = pref["agePrefName"].strip()
-
-        for pref in json.loads(requests.get(f"https://localhost:44381/GetCommunicationPreferences/{self.app_language}",
+        for pref in json.loads(requests.get(f"https://localhost:44381/communication-preferences",
                                             verify=False).text):
             self.communication_pref[pref["id"]] = pref["communicationPrefName"].strip()
 

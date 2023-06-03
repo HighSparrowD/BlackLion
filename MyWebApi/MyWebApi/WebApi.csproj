@@ -48,6 +48,7 @@
     <EmbeddedResource Update="App_GlobalResources\Resources.ru.resx">
       <LastGenOutput>Resources.ru.Designer.cs</LastGenOutput>
       <Generator>PublicResXFileCodeGenerator</Generator>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Update="App_GlobalResources\Resources.resx">
       <Generator>PublicResXFileCodeGenerator</Generator>

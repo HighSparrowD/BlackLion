@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using WebApi.Enums;
 
 namespace WebApi.Entities.LocationEntities
 {
@@ -7,7 +8,7 @@ namespace WebApi.Entities.LocationEntities
         [Key]
         public int Id { get; set; }
         [Key]
-        public int CountryClassLocalisationId { get; set; }
+        public AppLanguage CountryClassLocalisationId { get; set; }
         public string CityName { get; set; }
         public int CountryId { get; set; }
     }

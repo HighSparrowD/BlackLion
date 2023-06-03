@@ -117,6 +117,36 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="AppLanguage_Eng" xml:space="preserve">
+    <value>English</value>
+  </data>
+  <data name="AppLanguage_Rus" xml:space="preserve">
+    <value>Russian</value>
+  </data>
+  <data name="AppLanguage_Ukr" xml:space="preserve">
+    <value>Ukrainian</value>
+  </data>
+  <data name="CommunicationPreference_NoMatter" xml:space="preserve">
+    <value>No matter</value>
+  </data>
+  <data name="CommunicationPreference_Offline" xml:space="preserve">
+    <value>Offline</value>
+  </data>
+  <data name="CommunicationPreference_Online" xml:space="preserve">
+    <value>Online</value>
+  </data>
+  <data name="Gender_Female" xml:space="preserve">
+    <value>Female</value>
+  </data>
+  <data name="Gender_Male" xml:space="preserve">
+    <value>Male</value>
+  </data>
+  <data name="Gender_NonBinary" xml:space="preserve">
+    <value>Non-binary</value>
+  </data>
+  <data name="Gender_RatherNotSay" xml:space="preserve">
+    <value>No matter</value>
+  </data>
   <data name="ReportReason_Spam" xml:space="preserve">
     <value>Spam</value>
   </data>
@@ -124,15 +154,15 @@
     <value>Just testing out</value>
   </data>
   <data name="UsageReason_Friendship" xml:space="preserve">
-    <value />
+    <value>Friendship</value>
   </data>
   <data name="UsageReason_NoMatter" xml:space="preserve">
-    <value />
+    <value>No matter</value>
   </data>
   <data name="UsageReason_Relationship" xml:space="preserve">
-    <value />
+    <value>Relationships</value>
   </data>
   <data name="UsageReason_Sex" xml:space="preserve">
-    <value />
+    <value>Just sex</value>
   </data>
 </root>

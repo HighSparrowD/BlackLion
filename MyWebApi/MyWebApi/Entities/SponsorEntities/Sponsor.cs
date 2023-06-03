@@ -29,6 +29,5 @@ namespace WebApi.Entities.SponsorEntities
         [ForeignKey("StatsId")]
         public virtual Stats? Stats { get; set; }
         public virtual List<Ad>? SponsorAds { get; set; }
-        public virtual List<Event>? SponsorEvents { get; set; }
     }
 }

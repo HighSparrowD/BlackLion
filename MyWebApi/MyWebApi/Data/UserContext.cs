@@ -20,120 +20,162 @@ namespace WebApi.Data
 {
     public class UserContext : DbContext
     {
-        public DbSet<User> users { get; set; }
-        public DbSet<UserData> users_data { get; set; }
-        public DbSet<UserSettings> users_settings { get; set; }
-        public DbSet<Location> USER_LOCATIONS { get; set; }
-        public DbSet<UserReason> USER_REASONS { get; set; }
-        public DbSet<Visit> USER_VISITS { get; set; }
-        public DbSet<Country> countries { get; set; }
-        public DbSet<City> cities { get; set; }
-        public DbSet<Language> LANGUAGES { get; set; }
-        public DbSet<BlackList> USER_BLACKLISTS { get; set; }
-        public DbSet<Feedback> SYSTEM_FEEDBACKS { get; set; }
-        public DbSet<FeedbackReason> FEEDBACK_REASONS { get; set; }
-        public DbSet<Report> USER_REPORTS { get; set; }
-        public DbSet<Achievement> SYSTEM_ACHIEVEMENTS { get; set; }
-        public DbSet<UserAchievement> USER_ACHIEVEMENTS { get; set; }
-        public DbSet<Balance> USER_WALLET_BALANCES { get; set; }
-        public DbSet<Purchase> USER_WALLET_PURCHASES { get; set; }
-        public DbSet<UserNotification> USER_NOTIFICATIONS { get; set; }
-        public DbSet<Encounter> USER_ENCOUNTERS { get; set; }
-        public DbSet<Admin> SYSTEM_ADMINS { get; set; }
-        public DbSet<Localisation> LOCALISATIONS { get; set; }
-        public DbSet<SecondaryLocalisationModel> SECONDARY_LOCALISATIONS { get; set; }
-        public DbSet<ClassLocalisation> CLASS_LOCALISATIONS { get; set; }
-        public DbSet<AppLanguage> APP_LANGUAGES { get; set; }
-        public DbSet<Gender> SYSTEM_GENDERS { get; set; }
-        public DbSet<AgePreference> AGE_PREFERENCES { get; set; }
-        public DbSet<CommunicationPreference> COMMUNICATION_PREFERENCES { get; set; }
-        public DbSet<Test> tests { get; set; }
-        public DbSet<TestQuestion> tests_questions { get; set; }
-        public DbSet<TestAnswer> tests_answers { get; set; }
-        public DbSet<TestResult> tests_results { get; set; }
-        public DbSet<UserTest> user_tests { get; set; }
-        public DbSet<UserTag> user_tags { get; set; }
-        public DbSet<Ad> SPONSOR_ADS { get; set; }
-        public DbSet<Sponsor> SYSTEM_SPONSORS { get; set; }
-        public DbSet<SponsorLanguage> SPONSOR_LANGUAGES { get; set; }
-        public DbSet<SponsorContactInfo> SPONSOR_CONTACT_INFO { get; set; }
-        public DbSet<Event> SPONSOR_EVENTS { get; set; }
-        public DbSet<EventTemplate> SPONSOR_EVENT_TEMPLATES { get; set; }
-        public DbSet<UserEvent> USER_EVENTS { get; set; }
-        public DbSet<SponsorNotification> SPONSOR_NOTIFICATIONS { get; set; }
-        public DbSet<SponsorRating> SPONSOR_RATINGS { get; set; }
-        public DbSet<Stats> SPONSOR_STATS { get; set; }
-        public DbSet<UserTrustLevel> USER_TRUST_LEVELS { get; set; }
-        public DbSet<DailyReward> DAILY_REWARDS { get; set; }
-        public DbSet<InvitationCredentials> USER_INVITATION_CREDENTIALS { get; set; }
-        public DbSet<Invitation> USER_INVITATIONS { get; set; }
-        public DbSet<DailyTask> DAILY_TASKS { get; set; }
-        public DbSet<UserDailyTask> USER_DAILY_TASKS { get; set; }
-        public DbSet<UserPersonalityStats> USER_PERSONALITY_STATS { get; set; }
-        public DbSet<UserPersonalityPoints> USER_PERSONALITY_POINTS { get; set; }
-        public DbSet<AdminErrorLog> ADMIN_ERROR_LOGS { get; set; }
-        public DbSet<ActiveEffect> USER_ACTIVE_EFFECTS { get; set; }
-        public DbSet<TickRequest> tick_requests { get; set; }
+        public DbSet<User> Users => Set<User>();
+        public DbSet<UserData> UsersData => Set<UserData>();
+        public DbSet<UserSettings> UsersSettings => Set<UserSettings>();
+        public DbSet<Location> UserLocations => Set<Location>();
+        public DbSet<Visit> UserVisits => Set<Visit>();
+        public DbSet<Country> Countries => Set<Country>();
+        public DbSet<City> Cities => Set<City>();
+        public DbSet<Language> Languages => Set<Language>();
+        public DbSet<BlackList> UserBlacklists => Set<BlackList>();
+        public DbSet<Feedback> Feedbacks => Set<Feedback>();
+        public DbSet<FeedbackReason> FeedbackReasons => Set<FeedbackReason>();
+        public DbSet<Report> UserReports => Set<Report>();
+        public DbSet<Achievement> Achievements => Set<Achievement>();
+        public DbSet<UserAchievement> UserAchievements => Set<UserAchievement>();
+        public DbSet<Balance> Balances => Set<Balance>();
+        public DbSet<Transaction> Transaction => Set<Transaction>();
+        public DbSet<UserNotification> Notifications => Set<UserNotification>();
+        public DbSet<Encounter> Encounters => Set<Encounter>();
+        public DbSet<Admin> Admins => Set<Admin>();
+        public DbSet<Localization> Localizations => Set<Localization>();
+        public DbSet<SecondaryLocalizationModel> SecondaryLocalizations => Set<SecondaryLocalizationModel>();
+        public DbSet<ClassLocalization> ClassLocalizations => Set<ClassLocalization>();
+        public DbSet<Test> Tests => Set<Test>();
+        public DbSet<TestQuestion> TestsQuestions => Set<TestQuestion>();
+        public DbSet<TestAnswer> TestsAnswers => Set<TestAnswer>();
+        public DbSet<TestResult> TestsResults => Set<TestResult>();
+        public DbSet<UserTest> UserTests => Set<UserTest>();
+        public DbSet<UserTag> UserTags => Set<UserTag>();
+        public DbSet<Ad> Ads => Set<Ad>();
+        public DbSet<Sponsor> Sponsors => Set<Sponsor>();
+        public DbSet<SponsorLanguage> SponsorLanguages => Set<SponsorLanguage>();
+        public DbSet<SponsorContactInfo> SponsorContactInfo => Set<SponsorContactInfo>();
+        public DbSet<SponsorNotification> SponsorNotifications => Set<SponsorNotification>();
+        public DbSet<SponsorRating> SponsorRatings => Set<SponsorRating>();
+        public DbSet<Stats> SponsorStats => Set<Stats>();
+        public DbSet<UserTrustLevel> TrustLevels => Set<UserTrustLevel>();
+        public DbSet<DailyReward> DailyRewards => Set<DailyReward>();
+        public DbSet<InvitationCredentials> InvitationCredentials => Set<InvitationCredentials>();
+        public DbSet<Invitation> Invitations => Set<Invitation>();
+        public DbSet<DailyTask> DailyTasks => Set<DailyTask>();
+        public DbSet<UserDailyTask> UserDailyTasks => Set<UserDailyTask>();
+        public DbSet<UserPersonalityStats> PersonalityStats => Set<UserPersonalityStats>();
+        public DbSet<UserPersonalityPoints> PersonalityPoints => Set<UserPersonalityPoints>();
+        public DbSet<ActiveEffect> ActiveEffects => Set<ActiveEffect>();
+        public DbSet<TickRequest> TickRequests => Set<TickRequest>();
 
         //Adventures
-        public DbSet<Adventure> adventures { get; set; }
-        public DbSet<AdventureTemplate> adventure_templates { get; set; }
-        public DbSet<AdventureAttendee> adventure_attendees { get; set; }
-        public DbSet<PromoCode> promo_codes { get; set; }
-        public DbSet<Hint> hints { get; set; }
+        public DbSet<Adventure> Adventures => Set<Adventure>();
+        public DbSet<AdventureTemplate> AdventureTemplates => Set<AdventureTemplate>();
+        public DbSet<AdventureAttendee> AdventureAttendees => Set<AdventureAttendee>();
+        public DbSet<PromoCode> PromoCodes => Set<PromoCode>();
+        public DbSet<Hint> Hints => Set<Hint>();
 
 
 
         public UserContext(DbContextOptions<UserContext> options) : base(options)
-        {
-
-        }
+        {}
 
         protected override void OnModelCreating(ModelBuilder builder)
+        {
+            ConfigureRelations(builder);
+            ConfigureMapping(builder);
+        }
+
+        private void ConfigureRelations(ModelBuilder builder)
         {
             builder.Entity<User>().HasOne(u => u.Data);
             builder.Entity<User>().HasOne(u => u.UserSettings);
             builder.Entity<User>().HasOne(u => u.Location);
             builder.Entity<User>().HasMany(u => u.UserBlackList);
             builder.Entity<User>().HasMany(u => u.Tags);
-            //builder.Entity<UserDataInfo>().HasOne(u => u.Language);
             builder.Entity<Location>().HasOne(u => u.Country);
             builder.Entity<Location>().HasOne(u => u.City);
 
-            builder.Entity<Localisation>().HasMany(l => l.Loc);
+            builder.Entity<Localization>().HasMany(l => l.Loc);
             builder.Entity<Country>().HasMany(c => c.Cities);
             builder.Entity<Sponsor>().HasMany(s => s.SponsorAds);
             builder.Entity<Test>().HasMany(t => t.Questions);
             builder.Entity<Test>().HasMany(t => t.Results);
-            builder.Entity<Test>().HasKey(t => new {t.Id, t.ClassLocalisationId});
-            builder.Entity<UserTest>().HasKey(t => new {t.TestId, t.UserId});
+            builder.Entity<Test>().HasKey(t => new { t.Id, t.Language });
+            builder.Entity<UserTest>().HasKey(t => new { t.TestId, t.UserId });
             builder.Entity<TestQuestion>().HasMany(q => q.Answers);
 
-            builder.Entity<Country>().HasKey(c => new {c.Id, c.ClassLocalisationId});
-            builder.Entity<Language>().HasKey(l => new {l.Id, l.ClassLocalisationId});
-            builder.Entity<City>().HasKey(c => new {c.Id, c.CountryClassLocalisationId});
-            builder.Entity<UserReason>().HasKey(g => new { g.Id, g.ClassLocalisationId });
+            builder.Entity<Country>().HasKey(c => new { c.Id, c.ClassLocalisationId });
+            builder.Entity<Language>().HasKey(l => new { l.Id, l.ClassLocalisationId });
+            builder.Entity<City>().HasKey(c => new { c.Id, c.CountryClassLocalisationId });
             builder.Entity<FeedbackReason>().HasKey(g => new { g.Id, g.ClassLocalisationId });
             builder.Entity<Visit>().HasKey(g => new { g.UserId, g.SectionId });
-            builder.Entity<Achievement>().HasKey(g => new { g.Id, g.ClassLocalisationId });
+            builder.Entity<Achievement>().HasKey(g => new { g.Id, g.Language });
             builder.Entity<UserAchievement>().HasKey(g => new { g.UserBaseInfoId, g.AchievementId });
             builder.Entity<BlackList>().HasKey(g => new { g.Id, g.UserId });
             builder.Entity<UpdateCountry>().HasKey(g => new { g.Id, g.ClassLocalisationId });
-            builder.Entity<UserEvent>().HasKey(e => new { e.UserId, e.EventId });
-            builder.Entity<Localisation>().HasKey(m => new { m.Id, m.SectionId });
-            builder.Entity<Gender>().HasKey(g => new { g.Id, g.ClassLocalisationId });
-            builder.Entity<AgePreference>().HasKey(g => new { g.Id, g.ClassLocalisationId });
-            builder.Entity<CommunicationPreference>().HasKey(g => new { g.Id, g.ClassLocalisationId });
+            builder.Entity<Localization>().HasKey(m => new { m.Id, m.SectionId });
             builder.Entity<DailyTask>().HasKey(t => new { t.Id, t.ClassLocalisationId });
             builder.Entity<UserDailyTask>().HasKey(t => new { t.UserId, t.DailyTaskId });
             builder.Entity<AdventureAttendee>().HasKey(t => new { t.UserId, t.AdventureId });
             builder.Entity<UserTag>().HasKey(t => new { t.UserId, t.Tag });
-            builder.Entity<Hint>().HasKey(t => new { t.Id, t.ClassLocalisationId });
-
-            builder.Entity<Ad>();
+            builder.Entity<Hint>().HasKey(t => new { t.Id, t.Localization });
 
             builder.Entity<Sponsor>().HasMany(s => s.SponsorLanguages);
             builder.Entity<SponsorLanguage>().HasOne(s => s.Language);
+        }
+
+        private void ConfigureMapping(ModelBuilder builder)
+        {
+            builder.Entity<User>().ToTable("users");
+            builder.Entity<UserData>().ToTable("users_data");
+            builder.Entity<UserSettings>().ToTable("user_settings");
+            builder.Entity<Location>().ToTable("user_locations");
+            builder.Entity<Visit>().ToTable("user_visits");
+            builder.Entity<Country>().ToTable("countries");
+            builder.Entity<City>().ToTable("cities");
+            builder.Entity<Language>().ToTable("languages");
+            builder.Entity<BlackList>().ToTable("black_lists");
+            builder.Entity<Feedback>().ToTable("feedbacks");
+            builder.Entity<FeedbackReason>().ToTable("feedback_reasons");
+            builder.Entity<Report>().ToTable("user_reports");
+            builder.Entity<Achievement>().ToTable("achievements");
+            builder.Entity<UserAchievement>().ToTable("user_achievements");
+            builder.Entity<Balance>().ToTable("balances");
+            builder.Entity<Transaction>().ToTable("transactions");
+            builder.Entity<UserNotification>().ToTable("notifications");
+            builder.Entity<Encounter>().ToTable("encounters");
+            builder.Entity<Admin>().ToTable("admins");
+            builder.Entity<Localization>().ToTable("localizations"); //TODO: Remove
+            builder.Entity<SecondaryLocalizationModel>().ToTable("secondary_localizations"); //TODO: Remove
+            builder.Entity<ClassLocalization>().ToTable("class_localizations"); //TODO: Remove
+            //builder.Entity<AppLanguage>().ToTable("app_languages"); //TODO: Remove
+            builder.Entity<Test>().ToTable("tests");
+            builder.Entity<TestQuestion>().ToTable("tests_questions");
+            builder.Entity<TestAnswer>().ToTable("tests_answers");
+            builder.Entity<TestResult>().ToTable("tests_results");
+            builder.Entity<UserTest>().ToTable("user_tests");
+            builder.Entity<UserTag>().ToTable("user_tags");
+            builder.Entity<Ad>().ToTable("ads");
+            builder.Entity<Sponsor>().ToTable("sponsors");
+            builder.Entity<SponsorLanguage>().ToTable("sponsor_languages");
+            builder.Entity<SponsorContactInfo>().ToTable("sponsor_contact_info");
+            builder.Entity<SponsorNotification>().ToTable("sponsor_notifications");
+            builder.Entity<SponsorRating>().ToTable("sponsor_ratings");
+            builder.Entity<Stats>().ToTable("sponsor_stats");
+            builder.Entity<UserTrustLevel>().ToTable("trust_levels");
+            builder.Entity<DailyReward>().ToTable("daily_rewards");
+            builder.Entity<InvitationCredentials>().ToTable("invitation_credentials");
+            builder.Entity<Invitation>().ToTable("invitation");
+            //builder.Entity<DailyTask>().ToTable("daily_tasks");
+            builder.Entity<UserPersonalityStats>().ToTable("personality_stats");
+            builder.Entity<UserPersonalityPoints>().ToTable("personality_points");
+            builder.Entity<ActiveEffect>().ToTable("active_effects");
+            builder.Entity<TickRequest>().ToTable("tick_requests");
+            builder.Entity<Adventure>().ToTable("adventures");
+            builder.Entity<AdventureTemplate>().ToTable("adventure_templates");
+            builder.Entity<AdventureAttendee>().ToTable("adventure_attendees");
+            builder.Entity<PromoCode>().ToTable("promocodes");
+            builder.Entity<Hint>().ToTable("hints");
+
         }
     }
 }

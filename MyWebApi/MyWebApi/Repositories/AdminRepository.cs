@@ -33,7 +33,7 @@ namespace WebApi.Repositories
 
         public async Task<long> UploadCities(List<City> cities)
         {
-            cities.ForEach(async c => await _contx.cities.AddAsync(c));
+            cities.ForEach(async c => await _contx.Cities.AddAsync(c));
             await _contx.SaveChangesAsync();
             return cities.Count;
         }
@@ -42,10 +42,10 @@ namespace WebApi.Repositories
         {
             countries.ForEach(async c => 
             {
-                if (!_contx.countries.Contains(c))
-                    await _contx.countries.AddAsync(c);
+                if (!_contx.Countries.Contains(c))
+                    await _contx.Countries.AddAsync(c);
                 else
-                    _contx.countries.Update(c);
+                    _contx.Countries.Update(c);
             });
             await _contx.SaveChangesAsync();
 
@@ -56,10 +56,10 @@ namespace WebApi.Repositories
         {
             langs.ForEach(async l => 
             {
-                if (!_contx.LANGUAGES.Contains(l))
-                    await _contx.LANGUAGES.AddAsync(l);
+                if (!_contx.Languages.Contains(l))
+                    await _contx.Languages.AddAsync(l);
                 else
-                    _contx.LANGUAGES.Update(l);
+                    _contx.Languages.Update(l);
             });
             await _contx.SaveChangesAsync();
 
@@ -70,10 +70,10 @@ namespace WebApi.Repositories
         {
             reasons.ForEach(async r => 
             {
-                if (!_contx.FEEDBACK_REASONS.Contains(r))
-                    await _contx.FEEDBACK_REASONS.AddAsync(r);
+                if (!_contx.FeedbackReasons.Contains(r))
+                    await _contx.FeedbackReasons.AddAsync(r);
                 else
-                    _contx.FEEDBACK_REASONS.Update(r);
+                    _contx.FeedbackReasons.Update(r);
             });
             await _contx.SaveChangesAsync();
             return reasons.Count;
@@ -81,7 +81,7 @@ namespace WebApi.Repositories
 
         public async Task<List<Feedback>> GetFeedbacks()
         {
-            var reports = await _contx.SYSTEM_FEEDBACKS.Include(r => r.User)
+            var reports = await _contx.Feedbacks.Include(r => r.User)
                 .Include(r => r.Reason).ToListAsync();
 
             return reports;
@@ -89,7 +89,7 @@ namespace WebApi.Repositories
 
         public async Task<bool> CheckUserIsAdmin(long userId)
         {
-            var admin = await _contx.SYSTEM_ADMINS.FindAsync(userId);
+            var admin = await _contx.Admins.FindAsync(userId);
             if (admin == null) { return false; }
 
             return admin.IsEnabled;
@@ -97,7 +97,7 @@ namespace WebApi.Repositories
 
         public async Task<byte> SwitchAdminStatus(long userId)
         {
-            var admin = await _contx.SYSTEM_ADMINS.Where(a => a.Id == userId).SingleOrDefaultAsync();
+            var admin = await _contx.Admins.Where(a => a.Id == userId).SingleOrDefaultAsync();
             if (admin == null) { return 0; }
 
             admin.IsEnabled = admin.IsEnabled ? false : true;
@@ -108,7 +108,7 @@ namespace WebApi.Repositories
 
         public async Task<bool?> GetAdminStatus(long userId)
         {
-            var admin = await _contx.SYSTEM_ADMINS.Where(a => a.Id == userId).SingleOrDefaultAsync();
+            var admin = await _contx.Admins.Where(a => a.Id == userId).SingleOrDefaultAsync();
             if (admin == null){ return null; }
 
             return admin.IsEnabled;
@@ -118,78 +118,78 @@ namespace WebApi.Repositories
         {
             try
             {
-                var user = await _contx.users.Where(u => u.Id == userId).SingleOrDefaultAsync();
-                var userData = await _contx.users_settings.Where(u => u.Id == userId).SingleOrDefaultAsync();
-                var userLocation = await _contx.USER_LOCATIONS.Where(u => u.Id == userId).SingleOrDefaultAsync();
-                var userAchievements = await _contx.USER_ACHIEVEMENTS.Where(u => u.UserBaseInfoId == userId).ToListAsync();
-                var userPurchases = await _contx.USER_WALLET_PURCHASES.Where(u => u.UserId == userId).ToListAsync();
-                var userBalances = await _contx.USER_WALLET_BALANCES.Where(u => u.UserId == userId).ToListAsync();
-                var userNotifications = await _contx.USER_NOTIFICATIONS.Where(u => u.UserId == userId).ToListAsync();
-                var userNotifications1 = await _contx.USER_NOTIFICATIONS.Where(u => u.UserId1 == userId).ToListAsync();
-                var sponsorRatings = await _contx.SPONSOR_RATINGS.Where(u => u.UserId == userId).ToListAsync();
-                var userTrustLevel = await _contx.USER_TRUST_LEVELS.Where(u => u.Id == userId).SingleOrDefaultAsync();
-                var userInvitations = await _contx.USER_INVITATIONS.Where(u => u.InvitorCredentials.UserId == userId).ToListAsync();
-                var userInvitationCreds = await _contx.USER_INVITATION_CREDENTIALS.Where(u => u.UserId == userId).SingleOrDefaultAsync();
+                var user = await _contx.Users.Where(u => u.Id == userId).SingleOrDefaultAsync();
+                var userData = await _contx.UsersSettings.Where(u => u.Id == userId).SingleOrDefaultAsync();
+                var userLocation = await _contx.UserLocations.Where(u => u.Id == userId).SingleOrDefaultAsync();
+                var userAchievements = await _contx.UserAchievements.Where(u => u.UserBaseInfoId == userId).ToListAsync();
+                var userPurchases = await _contx.Transaction.Where(u => u.UserId == userId).ToListAsync();
+                var userBalances = await _contx.Balances.Where(u => u.UserId == userId).ToListAsync();
+                var userNotifications = await _contx.Notifications.Where(u => u.UserId == userId).ToListAsync();
+                var userNotifications1 = await _contx.Notifications.Where(u => u.UserId1 == userId).ToListAsync();
+                var sponsorRatings = await _contx.SponsorRatings.Where(u => u.UserId == userId).ToListAsync();
+                var userTrustLevel = await _contx.TrustLevels.Where(u => u.Id == userId).SingleOrDefaultAsync();
+                var userInvitations = await _contx.Invitations.Where(u => u.InvitorCredentials.UserId == userId).ToListAsync();
+                var userInvitationCreds = await _contx.InvitationCredentials.Where(u => u.UserId == userId).SingleOrDefaultAsync();
 
                 if (userInvitations.Count > 0)
                 {
-                    _contx.USER_INVITATIONS.RemoveRange(userInvitations);
+                    _contx.Invitations.RemoveRange(userInvitations);
                     await _contx.SaveChangesAsync();
                 }
 
                 if (userInvitationCreds != null)
                 {
-                    _contx.USER_INVITATION_CREDENTIALS.Remove(userInvitationCreds);
+                    _contx.InvitationCredentials.Remove(userInvitationCreds);
                     await _contx.SaveChangesAsync();
                 }
                 if (userAchievements.Count > 0)
                 {
-                    _contx.USER_ACHIEVEMENTS.RemoveRange(userAchievements);
+                    _contx.UserAchievements.RemoveRange(userAchievements);
                     await _contx.SaveChangesAsync();
                 }
                 if (userBalances.Count > 0)
                 {
-                    _contx.USER_WALLET_BALANCES.RemoveRange(userBalances);
+                    _contx.Balances.RemoveRange(userBalances);
                     await _contx.SaveChangesAsync();
                 }
                 if (userPurchases.Count > 0)
                 {
-                    _contx.USER_WALLET_PURCHASES.RemoveRange(userPurchases);
+                    _contx.Transaction.RemoveRange(userPurchases);
                     await _contx.SaveChangesAsync();
                 }
                 if (userNotifications.Count > 0)
                 {
-                    _contx.USER_NOTIFICATIONS.RemoveRange(userNotifications);
+                    _contx.Notifications.RemoveRange(userNotifications);
                     await _contx.SaveChangesAsync();
                 }
                 if (userNotifications1.Count > 0)
                 {
-                    _contx.USER_NOTIFICATIONS.RemoveRange(userNotifications1);
+                    _contx.Notifications.RemoveRange(userNotifications1);
                     await _contx.SaveChangesAsync();
                 }
                 if (userLocation != null)
                 {
-                    _contx.USER_LOCATIONS.Remove(userLocation);
+                    _contx.UserLocations.Remove(userLocation);
                     await _contx.SaveChangesAsync();
                 }
                 if (sponsorRatings.Count > 0)
                 {
-                    _contx.SPONSOR_RATINGS.RemoveRange(sponsorRatings);
+                    _contx.SponsorRatings.RemoveRange(sponsorRatings);
                     await _contx.SaveChangesAsync();
                 }
                 if (userTrustLevel != null)
                 {
-                    _contx.USER_TRUST_LEVELS.Remove(userTrustLevel);
+                    _contx.TrustLevels.Remove(userTrustLevel);
                     await _contx.SaveChangesAsync();
                 }
                 if (userData != null)
                 {
-                    _contx.users_settings.Remove(userData);
+                    _contx.UsersSettings.Remove(userData);
                     await _contx.SaveChangesAsync();
                 }
                 if (user != null)
                 {
-                    _contx.users.Remove(user);
+                    _contx.Users.Remove(user);
                     await _contx.SaveChangesAsync();
                 }
 
@@ -204,27 +204,27 @@ namespace WebApi.Repositories
         {
             try
             {
-                var usersCount = await _contx.users.CountAsync();
+                var usersCount = await _contx.Users.CountAsync();
 
-                var user = await _contx.users.ToListAsync();
-                var userData = await _contx.users_settings.ToListAsync();
-                var userLocation = await _contx.USER_LOCATIONS.ToListAsync();
-                var userAchievements = await _contx.USER_ACHIEVEMENTS.ToListAsync();
-                var userPurchases = await _contx.USER_WALLET_PURCHASES.ToListAsync();
-                var userBalances = await _contx.USER_WALLET_BALANCES.ToListAsync();
-                var userNotifications = await _contx.USER_NOTIFICATIONS.ToListAsync();
-                var userNotifications1 = await _contx.USER_NOTIFICATIONS.ToListAsync();
-                var sponsorRatings = await _contx.SPONSOR_RATINGS.ToListAsync();
+                var user = await _contx.Users.ToListAsync();
+                var userData = await _contx.UsersSettings.ToListAsync();
+                var userLocation = await _contx.UserLocations.ToListAsync();
+                var userAchievements = await _contx.UserAchievements.ToListAsync();
+                var userPurchases = await _contx.Transaction.ToListAsync();
+                var userBalances = await _contx.Balances.ToListAsync();
+                var userNotifications = await _contx.Notifications.ToListAsync();
+                var userNotifications1 = await _contx.Notifications.ToListAsync();
+                var sponsorRatings = await _contx.SponsorRatings.ToListAsync();
 
-                _contx.USER_LOCATIONS.RemoveRange(userLocation);
-                _contx.USER_ACHIEVEMENTS.RemoveRange(userAchievements);
-                _contx.USER_WALLET_BALANCES.RemoveRange(userBalances);
-                _contx.USER_WALLET_PURCHASES.RemoveRange(userPurchases);
-                _contx.USER_NOTIFICATIONS.RemoveRange(userNotifications);
-                _contx.USER_NOTIFICATIONS.RemoveRange(userNotifications1);
-                _contx.SPONSOR_RATINGS.RemoveRange(sponsorRatings);
-                _contx.users_settings.RemoveRange(userData);
-                _contx.users.RemoveRange(user);
+                _contx.UserLocations.RemoveRange(userLocation);
+                _contx.UserAchievements.RemoveRange(userAchievements);
+                _contx.Balances.RemoveRange(userBalances);
+                _contx.Transaction.RemoveRange(userPurchases);
+                _contx.Notifications.RemoveRange(userNotifications);
+                _contx.Notifications.RemoveRange(userNotifications1);
+                _contx.SponsorRatings.RemoveRange(sponsorRatings);
+                _contx.UsersSettings.RemoveRange(userData);
+                _contx.Users.RemoveRange(user);
 
                 await _contx.SaveChangesAsync();
 
@@ -238,12 +238,12 @@ namespace WebApi.Repositories
         {
             try
             {
-                var ach = await _contx.SYSTEM_ACHIEVEMENTS.ToListAsync();
+                var ach = await _contx.Achievements.ToListAsync();
 
                 if (ach != null)
-                    _contx.SYSTEM_ACHIEVEMENTS.RemoveRange(ach);
+                    _contx.Achievements.RemoveRange(ach);
 
-                await _contx.SYSTEM_ACHIEVEMENTS.AddRangeAsync(achievements);
+                await _contx.Achievements.AddRangeAsync(achievements);
                 await _contx.SaveChangesAsync();
 
                 if (await UpdateUsersAchievements(achievements, shouldDeleteAll:true))
@@ -258,7 +258,7 @@ namespace WebApi.Repositories
         {
             try
             {
-                await _contx.SYSTEM_ACHIEVEMENTS.AddRangeAsync(achievements);
+                await _contx.Achievements.AddRangeAsync(achievements);
                 await _contx.SaveChangesAsync();
 
                 if (await UpdateUsersAchievements(achievements))
@@ -276,20 +276,20 @@ namespace WebApi.Repositories
             {
                 if (shouldDeleteAll)
                 {
-                    _contx.USER_ACHIEVEMENTS.RemoveRange(await _contx.USER_ACHIEVEMENTS.ToListAsync());
+                    _contx.UserAchievements.RemoveRange(await _contx.UserAchievements.ToListAsync());
                     await _contx.SaveChangesAsync();
                 }
 
                 await Task.Run(async() => {             
                     foreach (var achievement in achievements)
                     {
-                        var users = await _contx.users_data.ToListAsync();
+                        var users = await _contx.UsersData.ToListAsync();
                         foreach (var user in users)
                         {
-                            if (achievement.ClassLocalisationId == user.LanguageId)
+                            if (achievement.Language == user.Language)
                             {
-                                var a = new UserAchievement(achievement.Id, user.Id, achievement.ClassLocalisationId, achievement.Name, achievement.Description, achievement.Value, achievement.ClassLocalisationId);
-                                _contx.USER_ACHIEVEMENTS.Add(a);
+                                var a = new UserAchievement(achievement.Id, user.Id, achievement.Language, achievement.Name, achievement.Description, achievement.Value, achievement.Language);
+                                _contx.UserAchievements.Add(a);
                                 await _contx.SaveChangesAsync();
                             }
                         }
@@ -305,8 +305,8 @@ namespace WebApi.Repositories
         {
             try
             {
-                model.Id = (await _contx.DAILY_TASKS.CountAsync()) + 1;
-                await _contx.DAILY_TASKS.AddAsync(model);
+                model.Id = (await _contx.DailyTasks.CountAsync()) + 1;
+                await _contx.DailyTasks.AddAsync(model);
                 await _contx.SaveChangesAsync();
 
                 return 1;
@@ -316,7 +316,7 @@ namespace WebApi.Repositories
 
         public async Task<List<TickRequest>> GetTickRequestsAsync()
         {
-            return await _contx.tick_requests.Take(15)
+            return await _contx.TickRequests.Take(15)
                 .ToListAsync();
         }
 
@@ -325,7 +325,7 @@ namespace WebApi.Repositories
             if (requestId != null)
             {
                 //Returns only new, aborted, failed or changed requests
-                return await _contx.tick_requests.Where(r => r.Id == requestId && (r.State == TickRequestStatus.Added 
+                return await _contx.TickRequests.Where(r => r.Id == requestId && (r.State == TickRequestStatus.Added 
                 || r.State == TickRequestStatus.Changed 
                 || r.State == TickRequestStatus.Aborted 
                 || r.State == TickRequestStatus.Failed))
@@ -334,7 +334,7 @@ namespace WebApi.Repositories
             }
 
             //Return any request if id wasnt supplied. (Method is used on the frontend)
-            var request = await _contx.tick_requests.Where(r => r.State == TickRequestStatus.Added || r.State == TickRequestStatus.Changed || r.State == TickRequestStatus.Aborted)
+            var request = await _contx.TickRequests.Where(r => r.State == TickRequestStatus.Added || r.State == TickRequestStatus.Changed || r.State == TickRequestStatus.Aborted)
                 .Include(r => r.User)
                 .FirstOrDefaultAsync();
 
@@ -349,7 +349,7 @@ namespace WebApi.Repositories
 
         public async Task<bool> ResolveTickRequestAsync(ResolveTickRequest model)
         {
-            var request = await _contx.tick_requests.Where(r => r.Id == model.Id && (r.State == TickRequestStatus.InProcess))
+            var request = await _contx.TickRequests.Where(r => r.Id == model.Id && (r.State == TickRequestStatus.InProcess))
                 .Include(r => r.User)
                 .SingleOrDefaultAsync();
 
@@ -397,12 +397,12 @@ namespace WebApi.Repositories
                     var model = tests[i];
 
                     //Check if a version of test already exists
-                    var existingTest = await _contx.tests.Where(t => t.Id == model.Id)
+                    var existingTest = await _contx.Tests.Where(t => t.Id == model.Id)
                         .SingleOrDefaultAsync();
 
                     if (existingTest != null)
                     {
-                        if (existingTest.ClassLocalisationId == model.ClassLocalisationId)
+                        if (existingTest.Language == model.ClassLocalisationId)
                             //Continue if test version already exists.
                             //It allows to avoid constantly changing source file in tools
                             continue;
@@ -410,11 +410,11 @@ namespace WebApi.Repositories
                         testId = model.Id;
                     }
                     else
-                        testId = await _contx.tests.CountAsync() + 1;
+                        testId = await _contx.Tests.CountAsync() + 1;
 
-                    var lastQuestionId = await _contx.tests_questions.CountAsync();
-                    var lastAnswerId = await _contx.tests_answers.CountAsync();
-                    var lastResultId = await _contx.tests_results.CountAsync();
+                    var lastQuestionId = await _contx.TestsQuestions.CountAsync();
+                    var lastAnswerId = await _contx.TestsAnswers.CountAsync();
+                    var lastResultId = await _contx.TestsResults.CountAsync();
 
                     var results = new List<TestResult>();
                     var questions = new List<TestQuestion>();
@@ -422,7 +422,7 @@ namespace WebApi.Repositories
                     var test = new Test
                     {
                         Id = testId,
-                        ClassLocalisationId = model.ClassLocalisationId,
+                        Language = model.ClassLocalisationId,
                         Name = model.Name,
                         Description = model.Description,
                         TestType = model.TestType,
@@ -437,7 +437,7 @@ namespace WebApi.Repositories
                         questions.Add(new TestQuestion
                         {
                             Id = lastQuestionId,
-                            TestClassLocalisationId = test.ClassLocalisationId,
+                            Language = test.Language,
                             TestId = testId,
                             Text = question.Text
                         });
@@ -468,15 +468,15 @@ namespace WebApi.Repositories
                             Result = result.Result,
                             Score = result.Score,
                             TestId = test.Id,
-                            TestClassLocalisationId = test.ClassLocalisationId,
+                            Language = test.Language,
                             Tags = result.Tags
                         });
                     }
 
-                    await _contx.tests.AddAsync(test);
-                    await _contx.tests_questions.AddRangeAsync(questions);
-                    await _contx.tests_answers.AddRangeAsync(answers);
-                    await _contx.tests_results.AddRangeAsync(results);
+                    await _contx.Tests.AddAsync(test);
+                    await _contx.TestsQuestions.AddRangeAsync(questions);
+                    await _contx.TestsAnswers.AddRangeAsync(answers);
+                    await _contx.TestsResults.AddRangeAsync(results);
                     await _contx.SaveChangesAsync();
                 }
 
@@ -490,7 +490,7 @@ namespace WebApi.Repositories
             string returnData = "";
 
             var recentFeedbacks = await _userRep.GetMostRecentFeedbacks();
-            var tickRequests = await _contx.tick_requests
+            var tickRequests = await _contx.TickRequests
                 .Where(r => (r.State == TickRequestStatus.Added || 
                 r.State == TickRequestStatus.Changed || 
                 r.State == TickRequestStatus.Aborted || 
@@ -511,7 +511,7 @@ namespace WebApi.Repositories
             try
             {
                 //Get request if it was marked as processed
-                var request = await _contx.tick_requests.Where(r => r.Id == requestId && (r.State == TickRequestStatus.InProcess))
+                var request = await _contx.TickRequests.Where(r => r.Id == requestId && (r.State == TickRequestStatus.InProcess))
                         .SingleOrDefaultAsync(); ;
 
                 if (request == null)
@@ -529,7 +529,7 @@ namespace WebApi.Repositories
         {
             try
             {
-                var request = await _contx.tick_requests.Where(r => r.Id == requestId)
+                var request = await _contx.TickRequests.Where(r => r.Id == requestId)
                         .SingleOrDefaultAsync(); ;
 
                 if (request == null)
@@ -547,7 +547,7 @@ namespace WebApi.Repositories
 
         public async Task<List<long>> GetRecentlyBannedUsersAsync()
         {
-            return await _contx.users.Where(u => u.IsBanned && u.BanDate != null)
+            return await _contx.Users.Where(u => u.IsBanned && u.BanDate != null)
                 .Select(u => u.Id)
                 .ToListAsync();
         }

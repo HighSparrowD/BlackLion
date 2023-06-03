@@ -18,6 +18,7 @@ using WebApi.Entities.AdminEntities;
 using WebApi.Entities.EffectEntities;
 using WebApi.Entities.AdventureEntities;
 using WebApi.Enums;
+using WebApi.Entities.SecondaryEntities;
 
 namespace WebApi.Controllers
 {
@@ -91,7 +92,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/UpdateUserAppLanguage/{userId}/{appLanguage}")]
-        public async Task<ActionResult<byte>> UpdateUserAppLanguage(long userId, int appLanguage)
+        public async Task<ActionResult<byte>> UpdateUserAppLanguage(long userId, AppLanguage appLanguage)
         {
             return await _repository.UpdateUserAppLanguageAsync(userId, appLanguage);
         }
@@ -437,18 +438,6 @@ namespace WebApi.Controllers
             return await _repository.UpdateUserTrustLevelAsync(userId, level);
         }
 
-        [HttpGet("/GetOnlineEventList/{userId}")]
-        public async Task<List<Event>> GetOnlineEventList(long userId)
-        {
-            return await _repository.GetEventList(userId, true);
-        }
-
-        [HttpGet("/GetOfflineEventList/{userId}")]
-        public async Task<List<Event>> GetOfflineEventList(long userId)
-        {
-            return await _repository.GetEventList(userId, false);
-        }
-
         [HttpGet("/UpdateUserNickname/{userId}/{nickname}")]
         public async Task<bool> UpdateUserNickname(long userId, string nickname)
         {
@@ -726,7 +715,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/GetTestFullDataById/{testId}/{localisation}")]
-        public async Task<GetFullTestData> GetTestFullDataById(long testId, int localisation)
+        public async Task<GetFullTestData> GetTestFullDataById(long testId, AppLanguage localisation)
         {
             return await _repository.GetTestFullDataByIdAsync(testId, localisation);
         }
@@ -744,7 +733,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/PurchaseTest/{userId}/{testId}/{localisation}")]
-        public async Task<bool> PurchaseTest(long userId, long testId, int localisation)
+        public async Task<bool> PurchaseTest(long userId, long testId, AppLanguage localisation)
         {
             return await _repository.PurchaseTestAsync(userId, testId, localisation);
         }
@@ -1020,9 +1009,15 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/report-reasons")]
-        public List<GetReportReason> ReportReasons([FromServices] IUserRepository userRepo)
+        public List<GetLocalizedEnum> ReportReasons([FromServices] IUserRepository userRepo)
         {
             return userRepo.GetReportReasonsAsync();
+        }
+
+        [HttpGet("/genders")]
+        public List<GetLocalizedEnum> GetGenders()
+        {
+            return _repository.GetGenders();
         }
     }
 }

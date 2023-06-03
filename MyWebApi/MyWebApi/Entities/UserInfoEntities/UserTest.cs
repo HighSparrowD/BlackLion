@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
+using WebApi.Enums;
 
 namespace WebApi.Entities.UserInfoEntities
 {
@@ -15,7 +16,7 @@ namespace WebApi.Entities.UserInfoEntities
         [NotNull]
         public long TestId { get; set; }
         [NotNull]
-        public int TestClassLocalisationId { get; set; }
+        public AppLanguage Language { get; set; }
         [NotNull]
         public short TestType { get; set; }
         public double Result { get; set; }

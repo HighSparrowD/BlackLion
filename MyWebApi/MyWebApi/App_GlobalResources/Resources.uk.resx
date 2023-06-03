@@ -117,10 +117,52 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="AppLanguage_Eng" xml:space="preserve">
+    <value>Англійська</value>
+  </data>
+  <data name="AppLanguage_Rus" xml:space="preserve">
+    <value>Російська</value>
+  </data>
+  <data name="AppLanguage_Ukr" xml:space="preserve">
+    <value>Українська</value>
+  </data>
+  <data name="CommunicationPreference_NoMatter" xml:space="preserve">
+    <value>Неважливо</value>
+  </data>
+  <data name="CommunicationPreference_Offline" xml:space="preserve">
+    <value>Офлайн</value>
+  </data>
+  <data name="CommunicationPreference_Online" xml:space="preserve">
+    <value>Онлайн</value>
+  </data>
+  <data name="Gender_Female" xml:space="preserve">
+    <value>Жінка</value>
+  </data>
+  <data name="Gender_Male" xml:space="preserve">
+    <value>Чоловік</value>
+  </data>
+  <data name="Gender_NonBinary" xml:space="preserve">
+    <value>Небінарний</value>
+  </data>
+  <data name="Gender_RatherNotSays" xml:space="preserve">
+    <value>Неважливо</value>
+  </data>
   <data name="ReportReason_Spam" xml:space="preserve">
     <value>Спам</value>
   </data>
   <data name="ReportReason_TestReason" xml:space="preserve">
     <value>Просто випробовую</value>
+  </data>
+  <data name="UsageReason_Friendship" xml:space="preserve">
+    <value>Дружба</value>
+  </data>
+  <data name="UsageReason_NoMatter" xml:space="preserve">
+    <value>Неважливо</value>
+  </data>
+  <data name="UsageReason_Relationship" xml:space="preserve">
+    <value>Відносини</value>
+  </data>
+  <data name="UsageReason_Sex" xml:space="preserve">
+    <value>Просто секс</value>
   </data>
 </root>

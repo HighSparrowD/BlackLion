@@ -25,7 +25,7 @@ namespace WebApi.Repositories
 
         public async Task<bool> CheckUserIsSponsorAsync(long userId)
         { 
-            var user = await _contx.SYSTEM_SPONSORS.Where(u => u.Id == userId).SingleOrDefaultAsync();
+            var user = await _contx.Sponsors.Where(u => u.Id == userId).SingleOrDefaultAsync();
             if (user != null && !user.IsAwaiting) {
                 return true;
             }
@@ -35,12 +35,12 @@ namespace WebApi.Repositories
 
         public async Task<List<Ad>> GetSponsorAdsAsync(long sponsorId)
         {
-            return await _contx.SPONSOR_ADS.Where(a => a.SponsorId == sponsorId).ToListAsync();
+            return await _contx.Ads.Where(a => a.SponsorId == sponsorId).ToListAsync();
         }
 
         public async Task<Ad> GetSingleAdAsync(long sponsorId, long adId)
         {
-            return await _contx.SPONSOR_ADS.Where(a => a.SponsorId == sponsorId && a.Id == adId).SingleAsync();
+            return await _contx.Ads.Where(a => a.SponsorId == sponsorId && a.Id == adId).SingleAsync();
         }
 
         public async Task<long> RegisterSponsorAsync(RegisterSponsor model)
@@ -50,7 +50,7 @@ namespace WebApi.Repositories
                 await RemoveSponsorByCodeWordAsync(model.CodeWord);
                 var contactInfoId = await AddContactInfoAsync(new SponsorContactInfo {Id = model.Id, SponsorId = model.Id, Email = model.Email, Facebook = model.Facebook, Instagram = model.Instagram, Tel = model.Tel });
                 var statsId = await CreateSponorStats(model.Id);
-                var hasBaseAccount = await _contx.users.FindAsync(model.Id) != null;
+                var hasBaseAccount = await _contx.Users.FindAsync(model.Id) != null;
 
                 var user = new Sponsor
                 {
@@ -70,7 +70,7 @@ namespace WebApi.Repositories
                 };
 
                 user.IsAwaiting = false;
-                await _contx.SYSTEM_SPONSORS.AddAsync(user);
+                await _contx.Sponsors.AddAsync(user);
                 await _contx.SaveChangesAsync();
 
                 for (int i = 0; i <= model.Languages.Count - 1; i++)
@@ -85,18 +85,18 @@ namespace WebApi.Repositories
 
         public async Task<long> AddAdAsync(Ad model)
         {
-            model.Id = await _contx.SPONSOR_ADS.CountAsync() + 1;
+            model.Id = await _contx.Ads.CountAsync() + 1;
             model.Description = Ad.TrancateDescription(model.Text, 15);
-            await _contx.SPONSOR_ADS.AddAsync(model);
+            await _contx.Ads.AddAsync(model);
             await _contx.SaveChangesAsync();
             return model.Id;
         }
 
         public async Task<bool> CheckUserIsPostponed(long userId)
         {
-            if (await _contx.SYSTEM_SPONSORS.SingleOrDefaultAsync(u => u.Id == userId) is null)
+            if (await _contx.Sponsors.SingleOrDefaultAsync(u => u.Id == userId) is null)
             { return false; }
-            var sponsor = await _contx.SYSTEM_SPONSORS.SingleOrDefaultAsync(u => u.Id == userId);
+            var sponsor = await _contx.Sponsors.SingleOrDefaultAsync(u => u.Id == userId);
             return sponsor.IsPostponed;
         }
 
@@ -105,9 +105,9 @@ namespace WebApi.Repositories
             try
             {
                 //Delete all related sponsors ads
-                _contx.RemoveRange(await _contx.SPONSOR_ADS.Where(a => a.SponsorId == id).ToListAsync()); //Consider achieving this in the other way
+                _contx.RemoveRange(await _contx.Ads.Where(a => a.SponsorId == id).ToListAsync()); //Consider achieving this in the other way
 
-                var user = _contx.SYSTEM_SPONSORS.Where(u => u.Id == id).SingleOrDefault();
+                var user = _contx.Sponsors.Where(u => u.Id == id).SingleOrDefault();
                 _contx.Remove(user);
                 await _contx.SaveChangesAsync();
                 return 1;
@@ -119,7 +119,7 @@ namespace WebApi.Repositories
         {
             try
             {
-                var user = await _contx.SYSTEM_SPONSORS.Where(u => u.CodeWord == codeWord).FirstOrDefaultAsync();
+                var user = await _contx.Sponsors.Where(u => u.CodeWord == codeWord).FirstOrDefaultAsync();
                 _contx.Remove(user);
                 await _contx.SaveChangesAsync();
                 return 1;
@@ -129,7 +129,7 @@ namespace WebApi.Repositories
 
         public async Task<Sponsor> GetSingleSponsorAsync(long userId)
         {
-            return await _contx.SYSTEM_SPONSORS.SingleOrDefaultAsync(s => s.Id == userId);
+            return await _contx.Sponsors.SingleOrDefaultAsync(s => s.Id == userId);
         }
 
         public async Task<long> UpdateAdAsync(Ad model)
@@ -145,7 +145,7 @@ namespace WebApi.Repositories
 
         public async Task<List<Sponsor>> GetSponsorsAsync()
         {
-            return await _contx.SYSTEM_SPONSORS.ToListAsync();
+            return await _contx.Sponsors.ToListAsync();
         }
 
         public async Task<long> UpdateSponsorAsync(Sponsor model)
@@ -157,7 +157,7 @@ namespace WebApi.Repositories
 
         public async Task<bool> CheckUserIsAwaitingAsync(long userId)
         {
-            var user = await _contx.SYSTEM_SPONSORS.Where(s => s.Id == userId).SingleOrDefaultAsync();
+            var user = await _contx.Sponsors.Where(s => s.Id == userId).SingleOrDefaultAsync();
 
             if (user != null)
             {
@@ -169,7 +169,7 @@ namespace WebApi.Repositories
 
         public async Task<Sponsor> GetAwaitingUserAsync(string username)
         {
-            return (await _contx.SYSTEM_SPONSORS.Where(u => u.Username == username && u.IsAwaiting).SingleOrDefaultAsync());
+            return (await _contx.Sponsors.Where(u => u.Username == username && u.IsAwaiting).SingleOrDefaultAsync());
         }
 
         public async Task<byte> RegisterAwaitingUserAsync(AwaitingUserRegistration user)
@@ -177,7 +177,7 @@ namespace WebApi.Repositories
             try
             {
                 var sponsor = new Sponsor{
-                    Id = await _contx.SYSTEM_SPONSORS.CountAsync() +1, 
+                    Id = await _contx.Sponsors.CountAsync() +1, 
                     Username = user.Username,
                     CodeWord = user.CodeWord,
                     UserMaxAdCount = user.UserMaxAdCount, 
@@ -186,7 +186,7 @@ namespace WebApi.Repositories
                     IsAwaiting = true, 
                     IsPostponed = false
                 };
-                _contx.SYSTEM_SPONSORS.Add(sponsor);
+                _contx.Sponsors.Add(sponsor);
                 await _contx.SaveChangesAsync();
                 return 1;
             }
@@ -197,7 +197,7 @@ namespace WebApi.Repositories
         {
             try
             {
-                var ad =await _contx.SPONSOR_ADS.Where(a => a.Id == adId && a.SponsorId == sponsorId).SingleOrDefaultAsync();
+                var ad =await _contx.Ads.Where(a => a.Id == adId && a.SponsorId == sponsorId).SingleOrDefaultAsync();
                 _contx.Remove(ad);
                 await _contx.SaveChangesAsync();
                 return 1;
@@ -207,7 +207,7 @@ namespace WebApi.Repositories
 
         public async Task<bool> CheckUserIsAwaitingAsync(string username)
         {
-            var user = await _contx.SYSTEM_SPONSORS.Where(s => s.Username == username).SingleOrDefaultAsync();
+            var user = await _contx.Sponsors.Where(s => s.Username == username).SingleOrDefaultAsync();
 
             if (user == null)
             {
@@ -219,8 +219,8 @@ namespace WebApi.Repositories
 
         public async Task<bool> CheckSponsorIsMaxedAsync(long userId)
         {
-            var user = await _contx.SYSTEM_SPONSORS.Where(s => s.Id == userId).SingleOrDefaultAsync();
-            var userAdsCount = await _contx.SPONSOR_ADS.Where(a => a.SponsorId == userId).CountAsync() +1;
+            var user = await _contx.Sponsors.Where(s => s.Id == userId).SingleOrDefaultAsync();
+            var userAdsCount = await _contx.Ads.Where(a => a.SponsorId == userId).CountAsync() +1;
 
             if (user == null)
                 return false;
@@ -233,66 +233,12 @@ namespace WebApi.Repositories
 
         public async Task<bool> CheckSponsorHasViewsLeftAsync(long userId)
         {
-            var user = await _contx.SYSTEM_SPONSORS.Where(s => s.Id == userId).SingleOrDefaultAsync();
+            var user = await _contx.Sponsors.Where(s => s.Id == userId).SingleOrDefaultAsync();
 
             if (user == null)
                 return false;
 
             return user.UserMaxAdViewCount > 0;
-        }
-
-        public async Task<long> AddEventAsync(Event model)
-        {
-            var owner = await GetSponsorInfo(model.SponsorId);
-
-            model.Id = (await _contx.SPONSOR_EVENTS.CountAsync()) + 1;
-            model.Status = (short)EventStatuses.Created;
-            model.StartDateTime = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
-
-            model.Description = $"{model.Name}\n\n{model.Description}\n\n@{owner.Username}";
-            await _contx.SPONSOR_EVENTS.AddAsync(model);
-            await _contx.SaveChangesAsync();
-
-            return model.Id;
-        }
-
-        public async Task<long> UpdateEventAsync(Event model)
-        {
-            model.Status = (short)EventStatuses.Updated;
-            _contx.Update(model);
-            await _contx.SaveChangesAsync();
-
-            await NotifyAttendees(model.Id, model.Comment);
-
-            return model.Id;
-        }
-
-        public async Task<long> PostponeEventAsync(PostponeEvent model)
-        {
-            var currentEvent = await GetEventInfo(model.EventId);
-
-            currentEvent.StartDateTime = DateTime.SpecifyKind(model.PostponeUntil, DateTimeKind.Utc);
-            model.Comment = model.Comment;
-
-            _contx.SPONSOR_EVENTS.Update(currentEvent);
-            await _contx.SaveChangesAsync();
-
-            await NotifyAttendees(model.EventId, model.Comment);
-
-            return currentEvent.Id;
-        }
-
-        public async Task<long> CancelEventAsync(CancelEvent cancelModel)
-        {
-            var model = await GetEventInfo(cancelModel.EventId);
-
-            model.Status = (short)EventStatuses.Canceled;
-            _contx.Update(model);
-            await _contx.SaveChangesAsync();
-
-            await NotifyAttendees(model.Id, cancelModel.Comment);
-
-            return model.Id;
         }
 
         public async Task<long> AddContactInfoAsync(SponsorContactInfo model)
@@ -305,21 +251,15 @@ namespace WebApi.Repositories
 
         public async Task<long> UpdateContactInfoAsync(SponsorContactInfo model)
         {
-            _contx.SPONSOR_CONTACT_INFO.Update(model);
+            _contx.SponsorContactInfo.Update(model);
             await _contx.SaveChangesAsync();
 
             return model.SponsorId;
         }
 
-        public async Task<Sponsor> GetEventOwnerInfo(long eventId)
-        {
-            var ownerId = (await GetEventInfo(eventId)).SponsorId;
-            return await GetSponsorInfo(ownerId);
-        }
-
         public async Task<Sponsor> GetSponsorInfo(long userId)
         {
-            return await _contx.SYSTEM_SPONSORS
+            return await _contx.Sponsors
                 .Where(s => s.Id == userId)
                 .Include(s => s.SponsorContactInfo)
                 .Include(s => s.Stats)
@@ -327,114 +267,29 @@ namespace WebApi.Repositories
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<Event> GetEventInfo(long eventId)
-        {
-            return await _contx.SPONSOR_EVENTS
-                .Where(e => e.Id == eventId)
-                .FirstOrDefaultAsync();
-        }
-
         public async Task<Guid> RegisterUserEventNotification(UserNotification model)
         {
             model.Id = Guid.NewGuid();
-            await _contx.USER_NOTIFICATIONS.AddAsync(model);
+            await _contx.Notifications.AddAsync(model);
             await _contx.SaveChangesAsync();
 
             return model.Id;
         }
-
-        public async Task<List<User>> GetEventAttendees(long eventId)
-        {
-            return await _contx.USER_EVENTS
-                .Where(e => e.EventId == eventId)
-                .Include(e => e.Attendee)
-                .Select(e => e.Attendee)
-                .ToListAsync();
-        }
-
-        public async Task<byte> SubscribeForEvent(long userId, long eventId)
-        {
-            try
-            {
-                await _contx.USER_EVENTS.AddAsync(new UserEvent { UserId = userId, EventId = eventId });
-                await _contx.SaveChangesAsync();
-
-                var evnt = await _contx.SPONSOR_EVENTS
-                    .Where(e => e.Id == eventId)
-                    .FirstOrDefaultAsync();
-
-                var notification = new SponsorNotification
-                {
-                    SponsorId = evnt.SponsorId,
-                    NotificationReason = (int)NotificationReasons.Subscription,
-                    Description = $"User {userId} has subscribed from your event {evnt.Id}/{evnt.Name}"
-                };
-
-                await RegisterSponsorEventNotification(notification);
-
-                return 1;
-            }
-            catch { return 0; }
-        }
-
-        public async Task<byte> UnsubscribeFromEvent(long userId, long eventId)
-        {
-            try
-            {
-                var evnt = await _contx.USER_EVENTS
-                    .Where(e => e.UserId == userId && e.EventId == eventId)
-                    .Include(e => e.Event)
-                    .FirstOrDefaultAsync();
-
-                _contx.USER_EVENTS.Remove(evnt);
-                await _contx.SaveChangesAsync();
-
-                var notification = new SponsorNotification
-                {
-                    SponsorId = evnt.Event.SponsorId,
-                    NotificationReason = (int)NotificationReasons.Unsubscription,
-                    Description = $"User {userId} has unsubscribed from your event {evnt.EventId}/{evnt.Event.Name}"
-                };
-
-                await RegisterSponsorEventNotification(notification);
-
-                return 1;
-            }
-            catch { return 0; }
-        }
-
         public async Task<long> RegisterSponsorEventNotification(SponsorNotification model)
         {
-            model.Id = (await _contx.SPONSOR_NOTIFICATIONS.CountAsync()) + 1;
-            await _contx.SPONSOR_NOTIFICATIONS.AddAsync(model);
+            model.Id = (await _contx.SponsorNotifications.CountAsync()) + 1;
+            await _contx.SponsorNotifications.AddAsync(model);
             await _contx.SaveChangesAsync();
 
             return model.Id;
-        }
-
-        private async Task NotifyAttendees(long eventId, string comment)
-        {
-            try
-            {
-                var attendees = await GetEventAttendees(eventId);
-                var notification = new UserNotification { Severity = Severities.Urgent, Section = Sections.Eventer, IsLikedBack = false, Description = comment };
-
-                foreach (var attendee in attendees)
-                {
-                    notification.UserId = null;
-                    notification.UserId1 = attendee.Id;
-                    await RegisterUserEventNotification(notification);
-                }
-            }
-            catch {  }
         }
 
         public async Task<long> AddSponsorRating(SponsorRating model)
         {
-            model.Id = (await _contx.SPONSOR_RATINGS.CountAsync()) + 1;
+            model.Id = (await _contx.SponsorRatings.CountAsync()) + 1;
             model.Comment = $"{model.UserId}\n⭐️{model.Rating} / 5⭐️\n{model.CommentTime.ToShortDateString()}\n\n{model.Comment}";
 
-            await _contx.SPONSOR_RATINGS.AddAsync(model);
+            await _contx.SponsorRatings.AddAsync(model);
             await RegisterSponsorEventNotification(new SponsorNotification { Description = $"You have a new event comment !\n{model.Comment}", SponsorId = model.SponsorId, NotificationReason = (short)NotificationReasons.Comment});
 
             await UpdateSponsorAverageRating(model.SponsorId);
@@ -443,7 +298,7 @@ namespace WebApi.Repositories
 
         public async Task<long> UpdateSponsorAverageRating(long sponsorId)
         {
-            var sponsor = await _contx.SYSTEM_SPONSORS
+            var sponsor = await _contx.Sponsors
                 .Where(s => s.Id == sponsorId)
                 //.Include(s => s.Stats)
                 .FirstOrDefaultAsync();
@@ -451,7 +306,7 @@ namespace WebApi.Repositories
             var newAwerageRating = 0d;
             var ratingsCount = 0;
 
-            await _contx.SPONSOR_RATINGS
+            await _contx.SponsorRatings
                 .Where(s => s.SponsorId == sponsorId)
                 .ForEachAsync(r => 
                 {
@@ -461,7 +316,7 @@ namespace WebApi.Repositories
 
             sponsor.Stats.AverageRating = (double)Math.Round(newAwerageRating / ratingsCount, 2);
 
-            _contx.SYSTEM_SPONSORS.Update(sponsor);
+            _contx.Sponsors.Update(sponsor);
             await _contx.SaveChangesAsync();
 
             return sponsor.Id;
@@ -469,7 +324,7 @@ namespace WebApi.Repositories
 
         public async Task<List<string>> GetSponsorComments(long sponsorId)
         {
-            return await _contx.SPONSOR_RATINGS
+            return await _contx.SponsorRatings
                 .Where(r => r.SponsorId == sponsorId)
                 .Select(r => r.Comment)
                 .ToListAsync();
@@ -477,7 +332,7 @@ namespace WebApi.Repositories
 
         public async Task<int> AddSponorProgress(long sponsorId, double progress)
         {
-            var model = await _contx.SPONSOR_STATS  
+            var model = await _contx.SponsorStats  
                 .Where(l => l.SponsorId == sponsorId)
                 .FirstOrDefaultAsync();
 
@@ -494,7 +349,7 @@ namespace WebApi.Repositories
                     model.LevelProgress += progress;
                 }
 
-                _contx.SPONSOR_STATS.Update(model);
+                _contx.SponsorStats.Update(model);
                 await _contx.SaveChangesAsync();
 
                 return model.Level;
@@ -504,13 +359,13 @@ namespace WebApi.Repositories
 
         public async Task<int> UpdateSponsorLevel(long sponsorId, int level)
         {
-            var model = await _contx.SPONSOR_STATS
+            var model = await _contx.SponsorStats
                 .Where(l => l.SponsorId == sponsorId)
                 .FirstOrDefaultAsync();
 
             model.Level = level;
 
-            _contx.SPONSOR_STATS.Update(model);
+            _contx.SponsorStats.Update(model);
             await _contx.SaveChangesAsync();
 
             return model.Level;
@@ -518,12 +373,12 @@ namespace WebApi.Repositories
 
         public async Task<int> GetSponsorLevel(long sponsorId)
         {
-            return (await _contx.SPONSOR_STATS.FindAsync(sponsorId)).Level;
+            return (await _contx.SponsorStats.FindAsync(sponsorId)).Level;
         }
 
         public async Task<Stats> GetSponsorStats(long sponsorId)
         {
-            return await _contx.SPONSOR_STATS.FindAsync(sponsorId);
+            return await _contx.SponsorStats.FindAsync(sponsorId);
         }
 
         public async Task<long> CreateSponorStats(long sponsorId)
@@ -545,78 +400,22 @@ namespace WebApi.Repositories
         {
             try
             {
-                return await _contx.SYSTEM_SPONSORS.Where(u => u.Id == userId && u.CodeWord == keyword).FirstOrDefaultAsync() != null;
+                return await _contx.Sponsors.Where(u => u.Id == userId && u.CodeWord == keyword).FirstOrDefaultAsync() != null;
             }
             catch { throw new NullReferenceException($"User {userId} does not exists!"); }
         }
 
         public async Task<long> AddSponsorLanguage(SponsorLanguage model)
         {
-                model.Id = (await _contx.SPONSOR_LANGUAGES.CountAsync()) +1;
-                await _contx.SPONSOR_LANGUAGES.AddAsync(model);
+                model.Id = (await _contx.SponsorLanguages.CountAsync()) +1;
+                await _contx.SponsorLanguages.AddAsync(model);
                 await _contx.SaveChangesAsync();
             return model.Id;
-        }
-
-        public async Task<long> AddEventTemplate(EventTemplate model)
-        {
-            model.Id = (await _contx.SPONSOR_EVENT_TEMPLATES.CountAsync()) +1;
-            await _contx.SPONSOR_EVENT_TEMPLATES.AddAsync(model);
-            await _contx.SaveChangesAsync();
-
-            return model.Id;
-        }
-
-        public async Task<EventTemplate> GetEventTemplateById(long templateId)
-        {
-            var template = await _contx.SPONSOR_EVENT_TEMPLATES.FindAsync(templateId);
-
-            if (template != null)
-                return template;
-            return null;
-
-        }
-
-        public async Task<EventTemplate> GetEventTemplateByName(string templateName)
-        {
-            var template = await _contx.SPONSOR_EVENT_TEMPLATES
-                .Where(e => e.TemplateName == templateName)
-                .FirstOrDefaultAsync();
-
-            if (template != null)
-                return template;
-            return null;
-        }
-
-        public async Task<List<EventTemplate>> GetSponsorEventTemplates(long sponsorId)
-        {
-            var templates = await _contx.SPONSOR_EVENT_TEMPLATES
-                .Where(t => t.SponsorId == sponsorId)
-                .ToListAsync();
-
-            if (templates.Count > 0)
-                return templates;
-            return null;
-        }
-
-        public async Task<bool> DeleteEventTemplate(long templateId)
-        {
-            var template = await _contx.SPONSOR_EVENT_TEMPLATES.FindAsync(templateId);
-
-            if (template != null)
-            {
-                _contx.SPONSOR_EVENT_TEMPLATES.Remove(template);
-                await _contx.SaveChangesAsync();
-
-                return true;
-            }
-
-            return false;
         }
 
         public async Task<List<int>> GetSponsorLanguagesAsync(long sponsorId)
         {
-            return await _contx.SPONSOR_LANGUAGES
+            return await _contx.SponsorLanguages
                 .Where(l => l.SponsorId == sponsorId)
                 .Select(l => l.LanguageId)
                 .ToListAsync();
