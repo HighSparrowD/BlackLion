@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using WebApi.Enums;
 
 namespace WebApi.Entities.AchievementEntities
 {
@@ -9,7 +10,7 @@ namespace WebApi.Entities.AchievementEntities
         public string Name { get; set; }
         public string Description { get; set; }
         [Key]
-        public int ClassLocalisationId { get; set; }
+        public AppLanguage Language { get; set; }
         public int SectionId { get; set; }
         public int ConditionValue { get; set; }
         public int Value { get; set; }

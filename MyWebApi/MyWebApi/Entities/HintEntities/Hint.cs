@@ -8,7 +8,7 @@ namespace WebApi.Entities.HintEntities
         [Key]
         public int Id { get; set; }
         [Key]
-        public int ClassLocalisationId { get; set; }
+        public AppLanguage Localization { get; set; }
         public Sections? Section { get; set; }
         public HintType Type { get; set; }
         public string Text { get; set; }

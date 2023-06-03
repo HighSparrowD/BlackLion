@@ -7,6 +7,8 @@ using WebApi.Entities.LocalisationEntities;
 using WebApi.Entities.TestEntities;
 using WebApi.Entities.SecondaryEntities;
 using WebApi.Entities.LocationEntities;
+using WebApi.Entities.UserActionEntities;
+using WebApi.Enums;
 
 namespace WebApi.Controllers
 {
@@ -23,63 +25,51 @@ namespace WebApi.Controllers
             _logger = logger;
         }
 
-
+            
         [HttpGet("/GetLocalisation/{localisationId}")]
-        public async Task<List<Localisation>> GetLocalisations(int localisationId)
+        public async Task<List<Localization>> GetLocalisations(int localisationId)
         {
             return await _repository.GetLocalisationAsync(localisationId);
         }
 
         [HttpGet("/GetSecondaryLocalisations")]
-        public async Task<List<SecondaryLocalisationModel>> GetSecondaryLocalisations()
+        public async Task<List<SecondaryLocalizationModel>> GetSecondaryLocalisations()
         {
             return await _repository.GetSecondaryLocalisationAsync();
         }
 
         [HttpGet("/GetClassLocalisations/{localisationId}")]
-        public async Task<List<ClassLocalisation>> GetClassLocalisations(int localisationId)
+        public async Task<List<ClassLocalization>> GetClassLocalisations(int localisationId)
         {
             return await _repository.GetClassLocalisationAsync(localisationId);
         }
 
-        [HttpGet("/GetAppLanguages")]
-        public async Task<List<AppLanguage>> GetAppLanguages()
+        [HttpGet("/app-languages")]
+        public List<GetLocalizedEnum> GetAppLanguages()
         {
-            return await _repository.GetAppLanguages();
+            return _repository.GetAppLanguages();
         }
 
-        [HttpGet("/GetGenders/{localisationId}")]
-        public async Task<List<Gender>> GetGenders(int localisationId)
+        [HttpGet("/usage-reasons")]
+        public List<GetLocalizedEnum> GetReasons()
         {
-            return await _repository.GetGenders(localisationId);
+            return _repository.GetReasons();
         }
 
-        [HttpGet("/GetReasons/{localisationId}")]
-        public async Task<List<UserReason>> GetReasons(int localisationId)
+        [HttpGet("/communication-preferences")]
+        public List<GetLocalizedEnum> GetCommunicationPreferences()
         {
-            return await _repository.GetReasons(localisationId);
-        }
-
-        [HttpGet("/GetAgePreferences/{localisationId}")]
-        public async Task<List<AgePreference>> GetAgePreferences(int localisationId)
-        {
-            return await _repository.GetAgePreferences(localisationId);
-        }
-
-        [HttpGet("/GetCommunicationPreferences/{localisationId}")]
-        public async Task<List<CommunicationPreference>> GetCommunicationPreferences(int localisationId)
-        {
-            return await _repository.GetCommunicationPreferences(localisationId);
+            return _repository.GetCommunicationPreferences();
         }
 
         [HttpGet("/GetCountries/{localisationId}")]
-        public async Task<List<Country>> GetCountries(int localisationId)
+        public async Task<List<Country>> GetCountries(AppLanguage localisationId)
         {
             return await _repository.GetCountries(localisationId);
         }
 
         [HttpGet("/GetCities/{countryId}/{localisationId}")]
-        public async Task<List<City>> GetCities(int countryId, int localisationId)
+        public async Task<List<City>> GetCities(int countryId, AppLanguage localisationId)
         {
             return await _repository.GetCities(countryId, localisationId);
         }
@@ -91,7 +81,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/GetSingleTest/{id}/{locId}")]
-        public async Task<Test> GetSingleTest(long id, int locId)
+        public async Task<Test> GetSingleTest(long id, AppLanguage locId)
         {
             var tests = await _repository.GetSingleTestAsync(id, locId);
             return tests;

@@ -16,7 +16,7 @@ namespace WebApi.Entities.UserActionEntities
         [JsonPropertyName("userDescription")]
         public string? Description { get; set; }
         [JsonPropertyName("userAppLanguageId")]
-        public int AppLanguageId { get; set; }
+        public AppLanguage AppLanguageId { get; set; }
         [JsonPropertyName("userMedia")]
         public string? Media { get; set; }
         [JsonPropertyName("isMediaPhoto")]
@@ -32,7 +32,7 @@ namespace WebApi.Entities.UserActionEntities
         [JsonPropertyName("userAge")]
         public int Age { get; set; }
         [JsonPropertyName("userGender")]
-        public short Gender { get; set; }
+        public Gender Gender { get; set; }
         [JsonPropertyName("userLanguagePreferences")]
         public List<int>? LanguagePreferences { get; set; }
         [JsonPropertyName("locationPreferences")]
@@ -40,9 +40,9 @@ namespace WebApi.Entities.UserActionEntities
         [JsonPropertyName("agePrefs")]
         public List<int>? AgePrefs { get; set; }
         [JsonPropertyName("communicationPrefs")]
-        public int CommunicationPrefs { get; set; }
+        public CommunicationPreference CommunicationPrefs { get; set; }
         [JsonPropertyName("userGenderPrefs")]
-        public short GenderPrefs { get; set; }
+        public Gender GenderPrefs { get; set; }
         [JsonPropertyName("wasChanged")]
         public bool WasChanged { get; set; }
     }

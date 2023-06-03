@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
+using WebApi.Enums;
 
 namespace WebApi.Entities.TestEntities
 {
@@ -11,7 +12,7 @@ namespace WebApi.Entities.TestEntities
         [NotNull]
         public long TestId { get; set; }
         [NotNull]
-        public int TestClassLocalisationId { get; set; }
+        public AppLanguage Language { get; set; }
         [NotNull]
         public int Score { get; set; }
         [NotNull]

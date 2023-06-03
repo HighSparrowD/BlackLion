@@ -1,11 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using WebApi.Entities.LocalisationEntities;
-using WebApi.Entities.UserInfoEntities;
+﻿using WebApi.Entities.UserInfoEntities;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Threading.Tasks;
-using static System.Net.Mime.MediaTypeNames;
+using WebApi.Enums;
 
 namespace WebApi.Entities.AchievementEntities
 {
@@ -19,7 +15,7 @@ namespace WebApi.Entities.AchievementEntities
         public string AcquireMessage { get; set; }
         public string ShortDescription { get; set; }
         public bool IsAcquired{ get; set; }
-        public int AchievementClassLocalisationId{ get; set; }
+        public AppLanguage Language{ get; set; }
         //[ForeignKey("AchievementId")]
         public virtual Achievement Achievement { get; set; }
         //[ForeignKey("UserBaseInfoId")]
@@ -29,17 +25,17 @@ namespace WebApi.Entities.AchievementEntities
         {
         }
 
-        public UserAchievement(long achievementId, long userBaseInfoId, int achievementClassLocalisationId, string sysAchievementName, string sysAchievementDescription, int sysAchievementValue, int localisation)
+        public UserAchievement(long achievementId, long userBaseInfoId, AppLanguage language, string sysAchievementName, string sysAchievementDescription, int sysAchievementValue, AppLanguage localisation)
         {
             AchievementId = achievementId;
             UserBaseInfoId = userBaseInfoId;
-            AchievementClassLocalisationId = achievementClassLocalisationId;
+            Language = language;
             Progress = 0;
             IsAcquired = false;
             AcquireMessage = GenerateAcquireMessage(sysAchievementName, sysAchievementDescription, sysAchievementValue, localisation);
             ShortDescription = sysAchievementName; //GenerateShortDescription(sysAchievementDescription); //TODO: remember what purpose short description was entended to serve
         }
-        public UserAchievement(long achievementId, long userBaseInfoId, int progress, string acquireMessage, string shortDescription, bool isAcquired, int achievementClassLocalisationId)
+        public UserAchievement(long achievementId, long userBaseInfoId, int progress, string acquireMessage, string shortDescription, bool isAcquired, AppLanguage language)
         {
             AchievementId = achievementId;
             UserBaseInfoId = userBaseInfoId;
@@ -47,42 +43,27 @@ namespace WebApi.Entities.AchievementEntities
             AcquireMessage = acquireMessage;
             ShortDescription = shortDescription;
             IsAcquired = isAcquired;
-            AchievementClassLocalisationId = achievementClassLocalisationId;
+            Language = language;
         }
 
-        public void RetranslateAquireMessage(Achievement achievement, int localisation)
+        public void RetranslateAquireMessage(Achievement achievement, AppLanguage localisation)
         {
             var locs = new Dictionary<int, string>();
             locs.Add(0, "✨✨Congrats! You have unlocked a new achievement!✨✨");
             locs.Add(1, "✨✨Поздравляем! Вы разблокировали новое достижение!✨✨");
             locs.Add(2, "✨✨Вітаємо! Ви розблокували нове досягнення!✨✨"); //TODO: relocate to localisation table
 
-            AcquireMessage = $"{locs[localisation]}\n{achievement.Name}\n\n{achievement.Description}\n\n{achievement.Value}";
+            AcquireMessage = $"{locs[(byte)localisation]}\n{achievement.Name}\n\n{achievement.Description}\n\n{achievement.Value}";
         }
 
-        public string GenerateAcquireMessage(string name, string description, int value, int localisation)
+        public string GenerateAcquireMessage(string name, string description, int value, AppLanguage localisation)
         {
             var locs = new Dictionary<int, string>();
             locs.Add(0, "✨✨Congrats! You have unlocked a new achievement!✨✨");
             locs.Add(1, "✨✨Поздравляем! Вы разблокировали новое достижение!✨✨");
             locs.Add(2, "✨✨Вітаємо! Ви розблокували нове досягнення!✨✨"); //TODO: relocate to localisation table
 
-            return $"{locs[localisation]}\n{name}\n\n{description}\n\n{value}";
-        }
-
-        private string GenerateShortDescription(string text, int length)
-        {
-            string description = "";
-
-            foreach (char c in text)
-            {
-                if (description.Length + 1 <= length)
-                {
-                    description += c;
-                }
-            }
-
-            return description;
+            return $"{locs[(byte)localisation]}\n{name}\n\n{description}\n\n{value}";
         }
     }
 }

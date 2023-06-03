@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using WebApi.Enums;
 
 namespace WebApi.Entities.LocationEntities
 {
@@ -9,7 +10,7 @@ namespace WebApi.Entities.LocationEntities
         [Key]
         public int Id { get; set; }
         [Key]
-        public int ClassLocalisationId { get; set; }
+        public AppLanguage ClassLocalisationId { get; set; }
         public string CountryName { get; set; }
         [AllowNull]
         public short? Priority { get; set; }

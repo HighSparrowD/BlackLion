@@ -61,6 +61,96 @@ namespace WebApi.App_GlobalResources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to English.
+        /// </summary>
+        public static string AppLanguage_Eng {
+            get {
+                return ResourceManager.GetString("AppLanguage_Eng", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Russian.
+        /// </summary>
+        public static string AppLanguage_Rus {
+            get {
+                return ResourceManager.GetString("AppLanguage_Rus", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Ukrainian.
+        /// </summary>
+        public static string AppLanguage_Ukr {
+            get {
+                return ResourceManager.GetString("AppLanguage_Ukr", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No matter.
+        /// </summary>
+        public static string CommunicationPreference_NoMatter {
+            get {
+                return ResourceManager.GetString("CommunicationPreference_NoMatter", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Offline.
+        /// </summary>
+        public static string CommunicationPreference_Offline {
+            get {
+                return ResourceManager.GetString("CommunicationPreference_Offline", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Online.
+        /// </summary>
+        public static string CommunicationPreference_Online {
+            get {
+                return ResourceManager.GetString("CommunicationPreference_Online", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Female.
+        /// </summary>
+        public static string Gender_Female {
+            get {
+                return ResourceManager.GetString("Gender_Female", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Male.
+        /// </summary>
+        public static string Gender_Male {
+            get {
+                return ResourceManager.GetString("Gender_Male", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Non-binary.
+        /// </summary>
+        public static string Gender_NonBinary {
+            get {
+                return ResourceManager.GetString("Gender_NonBinary", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No matter.
+        /// </summary>
+        public static string Gender_RatherNotSay {
+            get {
+                return ResourceManager.GetString("Gender_RatherNotSay", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Spam.
         /// </summary>
         public static string ReportReason_Spam {
@@ -79,7 +169,7 @@ namespace WebApi.App_GlobalResources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to .
+        ///   Looks up a localized string similar to Friendship.
         /// </summary>
         public static string UsageReason_Friendship {
             get {
@@ -88,7 +178,7 @@ namespace WebApi.App_GlobalResources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to .
+        ///   Looks up a localized string similar to No matter.
         /// </summary>
         public static string UsageReason_NoMatter {
             get {
@@ -97,7 +187,7 @@ namespace WebApi.App_GlobalResources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to .
+        ///   Looks up a localized string similar to Relationships.
         /// </summary>
         public static string UsageReason_Relationship {
             get {
@@ -106,7 +196,7 @@ namespace WebApi.App_GlobalResources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to .
+        ///   Looks up a localized string similar to Just sex.
         /// </summary>
         public static string UsageReason_Sex {
             get {

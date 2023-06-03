@@ -19,7 +19,7 @@ namespace WebApi.Repositories
 
         public async Task<List<User>> GetBatchToUpdate(int batchSize)
         {
-            return await _context.users.Where(u => !u.IsUpdated).Take(batchSize)
+            return await _context.Users.Where(u => !u.IsUpdated).Take(batchSize)
                 .ToListAsync(); ;
         }
 
