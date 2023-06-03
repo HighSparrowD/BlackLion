@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace MyWebApi.Entities.TestEntities
+namespace WebApi.Entities.TestEntities
 {
     public class UploadTestQuestion
     {

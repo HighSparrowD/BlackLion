@@ -1,8 +1,8 @@
-﻿using MyWebApi.Entities.UserInfoEntities;
+﻿using WebApi.Entities.UserInfoEntities;
 using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace MyWebApi.Entities.SponsorEntities
+namespace WebApi.Entities.SponsorEntities
 {
 	public class SponsorRating
 	{

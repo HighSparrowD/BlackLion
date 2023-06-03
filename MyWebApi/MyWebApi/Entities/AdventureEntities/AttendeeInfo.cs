@@ -1,7 +1,7 @@
-﻿using MyWebApi.Enums;
+﻿using WebApi.Enums;
 using System.Text.Json.Serialization;
 
-namespace MyWebApi.Entities.AdventureEntities
+namespace WebApi.Entities.AdventureEntities
 {
     public class AttendeeInfo
     {

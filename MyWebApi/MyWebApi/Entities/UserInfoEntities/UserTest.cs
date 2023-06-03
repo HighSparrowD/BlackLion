@@ -1,10 +1,10 @@
-﻿using MyWebApi.Entities.TestEntities;
+﻿using WebApi.Entities.TestEntities;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 
-namespace MyWebApi.Entities.UserInfoEntities
+namespace WebApi.Entities.UserInfoEntities
 {
     public class UserTest
     {

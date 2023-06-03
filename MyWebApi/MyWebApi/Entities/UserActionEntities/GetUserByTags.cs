@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace MyWebApi.Entities.UserActionEntities
+namespace WebApi.Entities.UserActionEntities
 {
     public class GetUserByTags
     {

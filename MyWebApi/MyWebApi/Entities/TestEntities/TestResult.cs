@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 
-namespace MyWebApi.Entities.TestEntities
+namespace WebApi.Entities.TestEntities
 {
     public class TestResult
     {

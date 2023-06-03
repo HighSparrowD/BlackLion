@@ -1,9 +1,9 @@
-﻿using MyWebApi.Entities.UserInfoEntities;
-using MyWebApi.Enums;
+﻿using WebApi.Entities.UserInfoEntities;
+using WebApi.Enums;
 using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace MyWebApi.Entities.AdminEntities
+namespace WebApi.Entities.AdminEntities
 {
     #nullable enable
     public class TickRequest

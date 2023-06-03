@@ -1,7 +1,7 @@
-﻿using MyWebApi.Entities.SponsorEntities;
+﻿using WebApi.Entities.SponsorEntities;
 using System.ComponentModel.DataAnnotations;
 
-namespace MyWebApi.Entities.UserInfoEntities
+namespace WebApi.Entities.UserInfoEntities
 {
     public class UserEvent
     {

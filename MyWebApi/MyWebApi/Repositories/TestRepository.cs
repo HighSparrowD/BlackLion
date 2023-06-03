@@ -1,15 +1,15 @@
-﻿using MyWebApi.Data;
-using MyWebApi.Interfaces;
+﻿using WebApi.Data;
+using WebApi.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using MyWebApi.Entities.LocalisationEntities;
-using MyWebApi.Entities.TestEntities;
-using MyWebApi.Entities.SecondaryEntities;
+using WebApi.Entities.LocalisationEntities;
+using WebApi.Entities.TestEntities;
+using WebApi.Entities.SecondaryEntities;
 using System.Linq;
-using MyWebApi.Entities.LocationEntities;
+using WebApi.Entities.LocationEntities;
 
-namespace MyWebApi.Repositories
+namespace WebApi.Repositories
 {
     public class TestRepository : ITestRepository
     {

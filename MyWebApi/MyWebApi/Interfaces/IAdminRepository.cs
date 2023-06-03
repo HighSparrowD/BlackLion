@@ -1,17 +1,17 @@
 ﻿using System.Threading.Tasks;
 using System.Collections.Generic;
-using MyWebApi.Entities.SecondaryEntities;
-using MyWebApi.Entities.ReportEntities;
-using MyWebApi.Entities.ReasonEntities;
-using MyWebApi.Entities.LocationEntities;
-using MyWebApi.Entities.AchievementEntities;
-using MyWebApi.Entities.DailyTaskEntities;
-using MyWebApi.Entities.AdminEntities;
+using WebApi.Entities.SecondaryEntities;
+using WebApi.Entities.ReportEntities;
+using WebApi.Entities.ReasonEntities;
+using WebApi.Entities.LocationEntities;
+using WebApi.Entities.AchievementEntities;
+using WebApi.Entities.DailyTaskEntities;
+using WebApi.Entities.AdminEntities;
 using System;
-using MyWebApi.Entities.TestEntities;
-using MyWebApi.Entities.UserInfoEntities;
+using WebApi.Entities.TestEntities;
+using WebApi.Entities.UserActionEntities;
 
-namespace MyWebApi.Interfaces
+namespace WebApi.Interfaces
 {
     public interface IAdminRepository
     {
@@ -33,11 +33,9 @@ namespace MyWebApi.Interfaces
         Task<List<TickRequest>> GetTickRequestsAsync();
         Task<TickRequest> GetTickRequestAsync(Guid? requestId = null);
         Task<string> GetNewNotificationsCountAsync(long adminId);
-        Task<string> GetUserPhotoAsync(long userId);
         Task<bool> ResolveTickRequestAsync(ResolveTickRequest request);
         Task<bool> AbortTickRequestAsync(Guid requestId);
         Task<bool> NotifyFailierTickRequestAsync(Guid requestId, long adminId);
-        Task<bool> CreateDecoyAsync(long? copyUserId=null, UserRegistrationModel model=null);
         Task<List<long>> GetRecentlyBannedUsersAsync();
     }
 }

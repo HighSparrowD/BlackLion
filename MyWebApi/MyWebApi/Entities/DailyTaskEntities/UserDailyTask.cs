@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace MyWebApi.Entities.DailyTaskEntities
+namespace WebApi.Entities.DailyTaskEntities
 {
     public class UserDailyTask
     {

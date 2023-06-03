@@ -43,6 +43,7 @@ class Adventurer:
         self.isOffline = False
         self.doesExist = False
         self.editMode = False
+        self.isCreatedFromTemplate = False
         #User's location
         self.country = self.user_info["userDataInfo"]["location"]["countryId"]
         self.city = self.user_info["userDataInfo"]["location"]["cityId"]
@@ -61,7 +62,7 @@ class Adventurer:
         self.countries = {}
         self.cities = {}
 
-        self.register_checkout_message = "1.Change name\n2.Change country\n3.Change city\n4.Change media\n5.Change description\n6.Change experience description\n7.Change attendees description \n8.Describe unwanted people\n9.Describe reward\n10.Change Date\n11.Change Time\n12.Change duration\n13.{commOption}\n14.Change Auto Reply\n15. ⭐Change Keywords (tags)⭐\n16.{action}\n17. Abort"
+        self.register_checkout_message = "1.Change name\n2.Change country\n3.Change city\n4.Change media\n5.Change description\n6.Change experience description\n7.Change attendees description \n8.Describe unwanted people\n9.Describe reward\n10.Change Date\n11.Change Time\n12.Change duration\n13.{commOption}\n14.Change Auto Reply\n15. ⭐Change Keywords (tags)⭐\n16. Use group management\n17.{action}\n18. Abort"
         self.register_template_checkout_message = "1.Change name\n2.Change country\n3.Change city\n4.Change media\n5.Change description\n6.Change experience description\n7.Change attendees description \n8.Describe unwanted people\n9.Describe reward\n10.Change Date\n11.Change Time\n12.Change duration\n13.{commOption}\n14.Change Auto Reply\n15.{action}\n16. Abort"
 
         self.start_markup = InlineKeyboardMarkup() \
@@ -116,7 +117,7 @@ class Adventurer:
         self.verificationMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Now", "Later")
         self.locationOfflineMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Use location from my profile", "Select manually")
         self.locationOnlineMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Use location from my profile").add("Select manually", "No matter")
-        self.registerCheckoutMarkup_E = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17")
+        self.registerCheckoutMarkup_E = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18")
 
         self.registerTemplateCheckoutMarkup_E = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14").add("15").add("16")
 
@@ -178,6 +179,8 @@ class Adventurer:
 
         self.subscribe_callback_handler(self.registration_callback_handler)
         self.data = Helpers.get_template(self.current_template)
+        self.data["isAwaiting"] = False
+
         self.register_checkout(self.message)
 
     def register_start(self):
@@ -728,7 +731,7 @@ class Adventurer:
                 self.register_checkout(message)
                 return
 
-            self.register_auto_reply_step(message)
+            self.register_group_step(message)
 
     def register_address_step(self, message, acceptMode=False):
         self.current_registration_step = self.register_address_step
@@ -755,6 +758,25 @@ class Adventurer:
                 self.register_checkout(message)
                 return
 
+            if self.isTemplate:
+                self.register_auto_reply_step(message)
+                return
+
+            self.register_group_step(message)
+
+    def register_group_step(self, message, acceptMode=False):
+        if not acceptMode:
+            #TODO: Think how else can the bot be helpful in group chats
+            self.send_active_message("Would you like to use group management ?\n\n <b>This feature allows the me to manage your adventure's chat. When you accept new attendees, I will invite them to your group, if you decide to remove them from your adventure, I will remove them from the group</b>", markup=self.YNMarkup)
+            self.bot.register_next_step_handler(message, self.register_group_step, acceptMode=True, chat_id=self.current_user)
+        else:
+            if message.text == "Yes":
+                self.data["isAwaiting"] = True
+
+            if self.editMode:
+                self.register_checkout(message)
+                return
+
             self.register_auto_reply_step(message)
 
     def register_auto_reply_step(self, message, acceptMode=False):
@@ -767,6 +789,8 @@ class Adventurer:
         else:
             self.delete_message(message)
             if message.text == "Skip":
+                self.data["autoReply"] = None
+                self.data["isAutoReplyText"] = None
                 self.register_branch_move_next(message)
             elif message.text:
                 #TODO: check length (discuss), add to data
@@ -881,6 +905,8 @@ class Adventurer:
                     self.send_simple_message("This functionality is available for premium users only", markup=self.registerCheckoutMarkup_E)
                     self.bot.register_next_step_handler(message, self.register_checkout, acceptMode=True, chat_id=self.current_user)
             elif message.text == "16":
+                self.register_group_step(message)
+            elif message.text == "17":
                 if self.doesExist:
                     Helpers.change_adventure(self.data)
                     self.send_secondary_message("Changes were saved successfully.\nThey will come into force after approval by the administration")
@@ -892,8 +918,13 @@ class Adventurer:
 
                 #TODO: QR CODE
                 self.send_simple_message(f"Done :). Here is your invitation code: <b>{code}</b>. Other users will be able to find your adventure with it")
-                self.registration_template_step(message)
-            elif message.text == "17":
+
+                if not self.isCreatedFromTemplate:
+                    self.registration_template_step(message)
+                else:
+                    self.subscribe_callback_handler(self.start_callback_handler)
+                    self.previous_section()
+            elif message.text == "18":
                 self.registration_discard_changes(message)
             else:
                 self.delete_message(message)
@@ -1039,6 +1070,7 @@ class Adventurer:
     def manage_adventure(self):
         self.previous_section = self.my_adventures_manager
         self.subscribe_callback_handler(self.manage_adventure_callback_handler)
+        self.load_adventure_data(self.current_adventure)
         self.send_active_message("Please, choose an option", markup=self.manage_adventure_markup)
 
     #TODO: Add paging
@@ -1048,7 +1080,6 @@ class Adventurer:
 
         if len(self.my_adventures_attendeesMarkup.keyboard) == 1:
             self.send_secondary_message("No attendees yet!")
-            self.delete_active_message()
             self.previous_section()
             return
 
@@ -1065,11 +1096,13 @@ class Adventurer:
             self.display_current_attendee_data()
             self.send_secondary_message("<i><b>🔝You have new participation request🔝</b></i>", markup=self.set_attendee_status_markup)
             return
+
         self.display_current_attendee_data()
         self.send_secondary_message("Please, select an option", markup=self.manage_adventure_attendee_markup)
 
     def resolve_participation_request(self, status):
         Helpers.process_participation_request(self.current_adventure, self.current_attendee, status)
+
         self.delete_secondary_message()
         self.previous_section()
 
@@ -1081,7 +1114,6 @@ class Adventurer:
 
         self.isTemplate = False
         self.subscribe_callback_handler(self.registration_callback_handler)
-        self.load_adventure_data(self.current_adventure)
         self.register_checkout(self.message)
 
     def subscribed_adventures_manager(self):
@@ -1166,6 +1198,28 @@ class Adventurer:
             else:
                 self.manage_single_template(self.current_template)
 
+    def remove_attendee(self, message, acceptMode=False):
+        if not acceptMode:
+            self.send_secondary_message("Are you sure, you want to remove this attendee from this adventure ? It will not be possible for him to re-enter the adventure", markup=self.YNMarkup)
+            self.bot.register_next_step_handler(message, self.remove_attendee, acceptMode=True, chat_id=self.current_user)
+        else:
+            if message.text == "Yes":
+                result = Helpers.delete_attendee(self.current_adventure, self.current_attendee)
+
+                if result == 1:
+                    if self.data["groupId"]:
+                        self.bot.kick_chat_member(self.data["groupId"], self.current_attendee)
+
+                        self.send_secondary_message("Done !")
+                elif result == 2:
+                    self.send_secondary_message("Attendee does not exist !")
+                else:
+                    self.send_secondary_message("Something went wrong ! Please, contact administration")
+
+                self.manage_adventure_attendees()
+            else:
+                self.manage_adventure_attendee()
+
     def start_callback_handler(self, call):
         if call.data == "1":
             self.my_adventures_manager()
@@ -1186,8 +1240,10 @@ class Adventurer:
         elif call.data == "150":
             self.register_pre_register()
         elif call.data == "160":
+            self.isCreatedFromTemplate = False
             self.register_start()
         elif call.data == "161":
+            self.isCreatedFromTemplate = True
             self.choose_template()
         elif call.data == "151":
             self.register_template_start()
@@ -1262,9 +1318,14 @@ class Adventurer:
         elif call.data == "2":
             self.manage_adventure_attendees()
         elif call.data == "3":
-            pass
+            self.load_adventure_data(self.current_adventure)
+            self.register_checkout(call.message)
         elif call.data == "4":
             pass
+        elif call.data == "6": # Get Attendee's username
+            self.get_attendee_contact()
+        elif call.data == "7": # Remove attendee
+            self.remove_attendee(call.message)
         elif call.data == "10":
             self.resolve_participation_request(2)
         elif call.data == "11":
@@ -1275,6 +1336,14 @@ class Adventurer:
         else:
             self.current_attendee = call.data
             self.manage_adventure_attendee()
+
+    def get_attendee_contact(self):
+        username = self.current_attendee_data["userBaseInfo"]["userName"]
+
+        if username:
+            self.send_secondary_message("User does not have a username :(")
+
+        self.send_secondary_message(f"{username}")
 
     def display_current_attendee_data(self):
         base = self.current_attendee_data["userBaseInfo"]
@@ -1409,7 +1478,7 @@ class Adventurer:
         return None
 
     def load_adventure_data(self, adventureId):
-        self.data = json.loads(requests.get(f"https://localhost:44381/GetAdventure/{adventureId}", verify=False).text)
+        self.data = json.loads(requests.get(f"https://localhost:44381/adventure/{adventureId}", verify=False).text)
 
         self.doesExist = True
         self.isOffline = self.data["isOffline"]
@@ -1429,7 +1498,7 @@ class Adventurer:
             cities = json.loads(requests.get(f"https://localhost:44381/GetCities/{country}/{self.user_localization}",
                                              verify=False).text)
 
-            # For edit purposes. If left as they are -> can result bugs
+            # For edit purposes. If left as they are -> can cause bugs
             self.cities.clear()
 
             for city in cities:

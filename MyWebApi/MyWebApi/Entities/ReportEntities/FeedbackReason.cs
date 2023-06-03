@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace MyWebApi.Entities.ReasonEntities
+namespace WebApi.Entities.ReasonEntities
 {
     public class FeedbackReason
     {

@@ -1,6 +1,6 @@
-﻿using MyWebApi.Entities.UserInfoEntities;
+﻿using WebApi.Entities.UserInfoEntities;
 
-namespace MyWebApi.Entities.UserActionEntities
+namespace WebApi.Entities.UserActionEntities
 {
     public class RecalculationResult
     {

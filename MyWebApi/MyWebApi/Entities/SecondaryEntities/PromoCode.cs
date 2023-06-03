@@ -1,9 +1,9 @@
-﻿namespace MyWebApi.Entities.SecondaryEntities
+﻿namespace WebApi.Entities.SecondaryEntities
 {
     public class PromoCode
     {
         public int Id { get; set; }
-        public bool UserdOnlyInRegistration { get; set; }
+        public bool UsedOnlyInRegistration { get; set; }
         public string Promo { get; set; }
         public int Points { get; set; }
         public int PersonalityPoints { get; set; }

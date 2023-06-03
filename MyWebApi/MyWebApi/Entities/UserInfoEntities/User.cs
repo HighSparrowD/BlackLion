@@ -3,34 +3,29 @@ using System.Linq;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Data;
-using MyWebApi.Enums;
-using MyWebApi.Entities.LocationEntities;
+using WebApi.Enums;
+using WebApi.Entities.LocationEntities;
 #nullable enable
 
-namespace MyWebApi.Entities.UserInfoEntities
+namespace WebApi.Entities.UserInfoEntities
 {
     public class User
     {
         [Key]
-        public long UserId { get; set; }
-        public long UserBaseInfoId { get; set; }
-        public long UserDataInfoId { get; set; }
-        public long UserPreferencesId { get; set; }
-        public bool ShouldConsiderLanguages { get; set; }
+        public long Id { get; set; }
+        public long DataId { get; set; }
+        public long SettingsId { get; set; }
+        public long LocationId { get; set; }
         public bool IsBusy { get; set; }
         public bool IsBanned { get; set; }
         public DateTime? BanDate { get; set; }
         public bool IsDeleted { get; set; }
         public bool HasPremium { get; set; }
         public bool HadReceivedReward { get; set; }
-        public bool? IsFree { get; set; }
-        public bool ShouldEnhance { get; set; }
-        public bool ShouldComment { get; set; }
-        public bool ShouldSendHints { get; set; }
-        public IdentityConfirmationType IdentityType { get; set; }
-        public bool IncreasedFamiliarity { get; set; }
         public short? PremiumDuration { get; set; }
-        public short ReportCount { get; set; }
+        public IdentityConfirmationType IdentityType { get; set; }
+        public bool ShouldEnhance { get; set; }
+        public short ReportCount { get; set; } //Daily report count
         public short DailyRewardPoint { get; set; } 
         public double BonusIndex { get; set; }
         public int InvitedUsersCount { get; set; }
@@ -47,22 +42,57 @@ namespace MyWebApi.Entities.UserInfoEntities
         public DateTime? PremiumExpirationDate{ get; set; }
         public string? EnteredPromoCodes { get; set; }
         public bool IsUpdated { get; set; }
-        public virtual UserBaseInfo? UserBaseInfo { get; set; }
-        public virtual UserDataInfo? UserDataInfo  { get; set; }
-        public virtual UserPreferences? UserPreferences { get; set; }
+        public bool IsDecoy { get; set; }
+
+        public virtual UserData? Data  { get; set; }
+        public virtual UserSettings? UserSettings  { get; set; }
+        public virtual Location? Location  { get; set; }
         public virtual List<BlackList>? UserBlackList { get; set; }
+        public virtual List<UserTag>? Tags { get; set; }
         //public virtual UserTrustLevel? TrustLevel { get; set; }
         //public virtual List<Encounter>? UserEncounters { get; set; }
 
-        public User(long userId)
+        public User()
+        {}
+
+        public User(long userId, bool isDecoy=false)
         {
-            UserId = userId;
-            UserBaseInfoId = userId;
-            UserDataInfoId = userId;
-            UserPreferencesId = userId;
+            Id = userId;
+            DataId = userId;
+            SettingsId = userId;
+            LocationId = userId;
+
+            IsBusy = false;
+            IsBanned = false;
+            IsDeleted = false;
+            HasPremium = false;
+            HadReceivedReward = false;
+            IdentityType = IdentityConfirmationType.None;
+            ShouldEnhance = false;
+            ReportCount = 0;
+            DailyRewardPoint = 1;
+            BonusIndex = 0;
+
+            InvitedUsersCount = 0;
+            InvitedUsersBonus = 0;
+
+            ProfileViewsCount = 0;
+            RTViewsCount = 0;
+            TagSearchesCount = 0;
+
+            MaxProfileViewsCount = 50;
+            MaxRTViewsCount = 25;
+            MaxTagSearchCount = 3;
+
+            IsUpdated = true;
+
+            IsDecoy = isDecoy;
         }
 
-        //public List<BaseTestModel>? UserSertificates { get; set; }
+        public string GenerateUserDescription(string? name, int age, string? country, string? city, string? description)
+        {
+            return $"{name}, {age},\n({country} - {city})\n\n{description}";
+        }
 
         public bool CheckIfHasEncountered(List<Encounter> encounters, long userId)
         {
@@ -94,11 +124,6 @@ namespace MyWebApi.Entities.UserInfoEntities
                 default:
                     return null;
             }
-        }
-
-        public static User? CreateDummyUser()
-        {
-            return null; //new UserInfoModel { UserId = rn.Next(m, x), UserName = "NewUser"};
         }
     }
 }

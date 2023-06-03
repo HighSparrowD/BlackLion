@@ -1,9 +1,9 @@
-﻿using MyWebApi.Entities.LocationEntities;
-using MyWebApi.Entities.SecondaryEntities;
+﻿using WebApi.Entities.LocationEntities;
+using WebApi.Entities.SecondaryEntities;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace MyWebApi.Entities.LocalisationEntities
+namespace WebApi.Entities.LocalisationEntities
 {
     public class ClassLocalisation
     {

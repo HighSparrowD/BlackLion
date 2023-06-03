@@ -2,7 +2,7 @@
 using System;
 using System.Text.Json.Serialization;
 
-namespace MyWebApi.Entities.AdventureEntities
+namespace WebApi.Entities.AdventureEntities
 {
     public class ManageAdventure
     {
@@ -47,5 +47,37 @@ namespace MyWebApi.Entities.AdventureEntities
         public bool? IsAutoReplyText { get; set; }
         [JsonPropertyName("autoReply")]
         public string AutoReply { get; set; }
+        [JsonPropertyName("isAwaiting")]
+        public bool IsAwaiting { get; set; }
+        [JsonPropertyName("groupId")]
+        public long? GroupId { get; set; }
+
+        public ManageAdventure()
+        {}
+
+        public ManageAdventure(Adventure adventure)
+        {
+            UserId = adventure.UserId;
+            Name = adventure.Name;
+            IsOffline = adventure.IsOffline;
+            CountryId = adventure.CountryId;
+            CityId = adventure.CityId;
+            Media = adventure.Media;
+            IsMediaPhoto = adventure.IsMediaPhoto;
+            Description = adventure.Description;
+            Experience = adventure.Experience;
+            AttendeesDescription = adventure.AttendeesDescription;
+            UnwantedAttendeesDescription = adventure.UnwantedAttendeesDescription;
+            Gratitude = adventure.Gratitude;
+            Date = adventure.Date;
+            Time = adventure.Time;
+            Duration = adventure.Duration;
+            Application = adventure.Application;
+            Address = adventure.Address;
+            IsAutoReplyText = adventure.IsAutoReplyText;
+            AutoReply = adventure.AutoReply;
+            IsAwaiting = adventure.IsAwaiting;
+            GroupId = adventure.GroupId;
+        }
     }
 }

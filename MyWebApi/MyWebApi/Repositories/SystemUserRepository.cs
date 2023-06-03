@@ -1,23 +1,23 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Microsoft.Extensions.Options;
-using MyWebApi.Data;
-using MyWebApi.Entities.AchievementEntities;
-using MyWebApi.Entities.AdminEntities;
-using MyWebApi.Entities.AdventureEntities;
-using MyWebApi.Entities.DailyTaskEntities;
-using MyWebApi.Entities.EffectEntities;
-using MyWebApi.Entities.LocationEntities;
-using MyWebApi.Entities.ReasonEntities;
-using MyWebApi.Entities.ReportEntities;
-using MyWebApi.Entities.SecondaryEntities;
-using MyWebApi.Entities.SponsorEntities;
-using MyWebApi.Entities.TestEntities;
-using MyWebApi.Entities.UserActionEntities;
-using MyWebApi.Entities.UserInfoEntities;
-using MyWebApi.Enums;
-using MyWebApi.Interfaces;
-using MyWebApi.Utilities;
+using WebApi.Data;
+using WebApi.Entities.AchievementEntities;
+using WebApi.Entities.AdminEntities;
+using WebApi.Entities.AdventureEntities;
+using WebApi.Entities.DailyTaskEntities;
+using WebApi.Entities.EffectEntities;
+using WebApi.Entities.LocationEntities;
+using WebApi.Entities.ReasonEntities;
+using WebApi.Entities.ReportEntities;
+using WebApi.Entities.SecondaryEntities;
+using WebApi.Entities.SponsorEntities;
+using WebApi.Entities.TestEntities;
+using WebApi.Entities.UserActionEntities;
+using WebApi.Entities.UserInfoEntities;
+using WebApi.Enums;
+using WebApi.Interfaces;
+using WebApi.Utilities;
 using QRCoder;
 using System;
 using System.Collections.Generic;
@@ -26,9 +26,9 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
-using static MyWebApi.Enums.SystemEnums;
+using static WebApi.Enums.SystemEnums;
 
-namespace MyWebApi.Repositories
+namespace WebApi.Repositories
 {
     public class SystemUserRepository : IUserRepository
     {
@@ -39,137 +39,150 @@ namespace MyWebApi.Repositories
             _contx = context;
         }
 
-        public Task<long> AddFriendUserAsync(long id)
+        public async Task<long> RegisterUserAsync(UserRegistrationModel model, bool wasRegistered = false)
         {
-            throw new System.NotImplementedException();
-        }
+            var country = "---";
+            var city = "---";
 
-        public async Task<long> RegisterUserAsync(User model, UserBaseInfo baseModel, UserDataInfo dataModel, UserPreferences prefsModel, Location location, bool wasRegistered = false)
-        {
-            try
+            Location location = null;
+            var user = new User(model.Id);
+            user.EnteredPromoCodes = model.Promo;
+
+            if (model.CityCode != null && model.CountryCode != null)
             {
-                var country = "---";
-                var city = "---";
+                location = new Location { Id = model.Id, CityId = (int)model.CityCode, CountryId = (int)model.CountryCode, CityCountryClassLocalisationId = model.AppLanguageId, CountryClassLocalisationId = model.AppLanguageId };
 
-                if (location != null)
+                country = await _contx.countries.Where(c => c.Id == model.CountryCode && c.ClassLocalisationId == model.AppLanguageId)
+                    .Select(c => c.CountryName)
+                    .FirstOrDefaultAsync();
+
+                city = await _contx.cities.Where(c => c.Id == model.CityCode && c.CountryClassLocalisationId == model.AppLanguageId)
+                    .Select(c => c.CityName)
+                    .FirstOrDefaultAsync();
+            }
+            else
+            {
+                location = new Location { Id = model.Id };
+            }
+
+            var uData = new UserData
+            {
+                Id = model.Id,
+                UserLanguages = model.Languages,
+                Reason = model.Reason,
+                UserAge = model.Age,
+                UserGender = model.Gender,
+                LanguageId = model.AppLanguageId,
+                AgePrefs = model.AgePrefs,
+                UserDescription = user.GenerateUserDescription(model.RealName, model.Age, country, city, model.Description),
+                UserGenderPrefs = model.GenderPrefs,
+                UserMedia = model.Media,
+                IsMediaPhoto = model.IsMediaPhoto,
+                CommunicationPrefs = model.CommunicationPrefs,
+                LanguagePreferences = model.LanguagePreferences,
+                LocationPreferences = model.LocationPreferences,
+                UserName = model.UserName,
+                UserRawDescription = model.Description,
+                UserRealName = model.RealName,
+            };
+
+            var uSettings = new UserSettings(model.Id, model.ShouldUserPersonalityFunc);
+
+            user.LocationId = location.Id;
+
+            await _contx.users.AddAsync(user);
+            await _contx.users_data.AddAsync(uData);
+            await _contx.users_settings.AddAsync(uSettings);
+            await _contx.USER_LOCATIONS.AddAsync(location);
+            await _contx.SaveChangesAsync();
+
+            await GenerateUserAchievementList(user.Id, uData.LanguageId, wasRegistered);
+            await TopUpUserWalletPointsBalance(model.Id, 180, "Starting Pack"); //180 is a starting user point pack
+            await AddUserTrustLevel(model.Id);
+            await AddUserTrustProgressAsync(model.Id, 0.000012);
+
+            if (model.ShouldUserPersonalityFunc)
+            {
+                var personalityStats = new UserPersonalityStats(model.Id);
+                var personalityPoints = new UserPersonalityPoints(model.Id);
+            }
+
+            var invitation = await GetInvitationAsync(model.Id);
+
+            if(invitation != null)
+            {
+                var invitor = invitation.InvitorCredentials.Invitor;
+                invitor.InvitedUsersCount++;
+
+                var bonus = invitor.HasPremium ? 0.05 : 0;
+                var multiplier = 1;
+
+                if (invitor.InvitedUsersCount > 10)
+                    multiplier = 2;
+
+                if (invitor.InvitedUsersCount == 1)
                 {
-                    await _contx.USER_LOCATIONS.AddAsync(location);
-                    country = (await _contx.countries.Where(c => c.Id == location.CountryId && c.ClassLocalisationId == location.CountryClassLocalisationId).Select(c => c.CountryName).SingleOrDefaultAsync());
-                    city = (await _contx.cities.Where(c => c.Id == location.CountryId && c.CountryClassLocalisationId == location.CityCountryClassLocalisationId).Select(c => c.CityName).SingleOrDefaultAsync());
+                    await TopUpUserWalletPointsBalance(invitor.Id, 250 * multiplier, $"User {invitor.Id} has invited his firs user");
+                    await GrantPremiumToUser(invitor.Id, 0, 1, (short)Currencies.Points);
                 }
-
-                baseModel.UserRawDescription = baseModel.UserDescription;
-                baseModel.UserDescription = baseModel.GenerateUserDescription(baseModel.UserRealName, dataModel.UserAge, country, city, baseModel.UserDescription);
-
-                model.HadReceivedReward = false;
-                model.DailyRewardPoint = 1;
-                model.BonusIndex = 1;
-
-                await _contx.SYSTEM_USERS_BASES.AddAsync(baseModel);
-                await _contx.SaveChangesAsync();
-                await _contx.SYSTEM_USERS_DATA.AddAsync(dataModel);
-                await _contx.SaveChangesAsync();
-                await _contx.SYSTEM_USERS_PREFERENCES.AddAsync(prefsModel);
-                await _contx.SaveChangesAsync();
-                await _contx.SYSTEM_USERS.AddAsync(model);
-                await _contx.SaveChangesAsync();
-
-                await GenerateUserAchievementList(baseModel.Id, dataModel.LanguageId, wasRegistered);
-                await TopUpUserWalletPointsBalance(model.UserId, 180, "Starting Pack"); //180 is a starting user point pack
-                await AddUserTrustLevel(model.UserId);
-                await AddUserTrustProgressAsync(model.UserId, 0.000012);
-
-                if (prefsModel.ShouldUsePersonalityFunc)
+                else if (invitor.InvitedUsersCount == 3 || invitor.InvitedUsersCount % 3 == 0)
                 {
-                    var personalityStats = new UserPersonalityStats(model.UserId);
-                    var personalityPoints = new UserPersonalityPoints(model.UserId);
+                    if (multiplier == 1)
+                        invitor.InvitedUsersBonus = 0.15 + bonus;
+                    await TopUpUserWalletPointsBalance(invitor.Id, 1199 * multiplier, $"User {invitor.Id} has invited 3 users");
                 }
-
-                var invitation = await GetInvitationAsync(model.UserId);
-
-                if(invitation != null)
+                else if (invitor.InvitedUsersCount == 7 || invitor.InvitedUsersCount % 7 == 0)
                 {
-                    var invitor = invitation.InvitorCredentials.Invitor;
-                    invitor.InvitedUsersCount++;
-
-                    var bonus = invitor.HasPremium ? 0.05 : 0;
-                    var multiplier = 1;
-
-                    if (invitor.InvitedUsersCount > 10)
-                        multiplier = 2;
-
-                    if (invitor.InvitedUsersCount == 1)
+                    if (multiplier == 1)
+                        invitor.InvitedUsersBonus = 0.35 + bonus;
+                    await TopUpUserWalletPointsBalance(invitor.Id, 1499 * multiplier, $"User {invitor.Id} has invited 7 users");
+                }
+                else if (invitor.InvitedUsersCount == 10 || invitor.InvitedUsersCount % 10 == 0)
+                {
+                    if (multiplier == 1)
                     {
-                        await TopUpUserWalletPointsBalance(invitor.UserId, 250 * multiplier, $"User {invitor.UserId} has invited his firs user");
-                        await GrantPremiumToUser(invitor.UserId, 0, 1, (short)Currencies.Points);
-                    }
-                    else if (invitor.InvitedUsersCount == 3 || invitor.InvitedUsersCount % 3 == 0)
-                    {
-                        if (multiplier == 1)
-                            invitor.InvitedUsersBonus = 0.15 + bonus;
-                        await TopUpUserWalletPointsBalance(invitor.UserId, 1199 * multiplier, $"User {invitor.UserId} has invited 3 users");
-                    }
-                    else if (invitor.InvitedUsersCount == 7 || invitor.InvitedUsersCount % 7 == 0)
-                    {
-                        if (multiplier == 1)
-                            invitor.InvitedUsersBonus = 0.35 + bonus;
-                        await TopUpUserWalletPointsBalance(invitor.UserId, 1499 * multiplier, $"User {invitor.UserId} has invited 7 users");
-                    }
-                    else if (invitor.InvitedUsersCount == 10 || invitor.InvitedUsersCount % 10 == 0)
-                    {
-                        if (multiplier == 1)
-                        {
-                            invitor.InvitedUsersBonus = 0.5 + bonus;
-                            // 1499 will then turn into 1999 due to premium purchase reward
-                            await TopUpUserWalletPointsBalance(invitor.UserId, 1499, $"User {invitor.UserId} has invited 10 users");
-                            //Adds + 10 random effects to users inventory
-                            var effecId = new Random().Next(5, 10);
-                            await PurchaseEffectAsync(invitor.UserId, effecId, 0, (int)Currencies.Points, 10);
-                            await GrantPremiumToUser(invitor.UserId, 0, 30, (short)Currencies.Points);
-                        }
-                        else
-                            await TopUpUserWalletPointsBalance(invitor.UserId, 1999 * multiplier, $"User {invitor.UserId} has invited more than 10 users");
+                        invitor.InvitedUsersBonus = 0.5 + bonus;
+                        // 1499 will then turn into 1999 due to premium purchase reward
+                        await TopUpUserWalletPointsBalance(invitor.Id, 1499, $"User {invitor.Id} has invited 10 users");
+                        //Adds + 10 random effects to users inventory
+                        var effecId = new Random().Next(5, 10);
+                        await PurchaseEffectAsync(invitor.Id, effecId, 0, (int)Currencies.Points, 10);
+                        await GrantPremiumToUser(invitor.Id, 0, 30, (short)Currencies.Points);
                     }
                     else
-                    {
-                        await TopUpUserWalletPointsBalance(invitor.UserId, (int)(200 + (200 * bonus) * multiplier), $"User {model.UserId} was invited by user {invitor.UserId}");
-                    }
-
-                    model.BonusIndex = 1.5;
-                    model.ParentId = invitor.UserId;
-
-                    _contx.SYSTEM_USERS.Update(model);
-                    await _contx.SaveChangesAsync();
-
-                    //User is instantly liked by an invitor if he approves it
-                    if (invitor.IncreasedFamiliarity)
-                        await RegisterUserRequestAsync(new UserNotification { UserId = invitor.UserId, UserId1 = model.UserId, IsLikedBack = false });
-                    //Invitor is notified about referential registration
-                    await NotifyUserAboutReferentialRegistrationAsync(invitor.UserId, model.UserId);
+                        await TopUpUserWalletPointsBalance(invitor.Id, 1999 * multiplier, $"User {invitor.Id} has invited more than 10 users");
                 }
-
-                if (await CheckUserHasTasksInSectionAsync(model.UserId, (int)Sections.Registration))
-                {
-                    //TODO find and topup user's task progress
-                }
-
-                //Enter promo if it was supplied
-                if (model.EnteredPromoCodes != null)
-                    await CheckPromoIsCorrectAsync(model.UserId, model.EnteredPromoCodes, false);
                 else
-                    model.EnteredPromoCodes = "";
+                {
+                    await TopUpUserWalletPointsBalance(invitor.Id, (int)(200 + (200 * bonus) * multiplier), $"User {model.Id} was invited by user {invitor.Id}");
+                }
 
-                //Add Starting test pack
-                //TODO: Add more tests here
-                await PurchaseTestAsync(model.UserId, 1, dataModel.LanguageId);
-                //await PurchaseTestAsync(model.UserId, 3, dataModel.LanguageId);
+                user.BonusIndex = 1.5;
+                user.ParentId = invitor.Id;
 
-                return model.UserId;
+                _contx.users.Update(user);
+                await _contx.SaveChangesAsync();
+
+                //User instantly receives a like by an invitor if he approves it
+                if (invitor.UserSettings.IncreasedFamiliarity)
+                    await RegisterUserRequestAsync(new UserNotification { UserId = invitor.Id, UserId1 = model.Id, IsLikedBack = false });
+
+                //Invitor is notified about referential registration
+                await NotifyUserAboutReferentialRegistrationAsync(invitor.Id, model.Id);
             }
-            catch(Exception ex) {
-                await LogAdminErrorAsync(model.UserId, ex.Message, (int)Sections.Registration);
-                return 0;
-            }
+
+            //Enter promo if it was supplied
+            if (user.EnteredPromoCodes != null)
+                await CheckPromoIsCorrectAsync(model.Id, user.EnteredPromoCodes, false);
+            else
+                user.EnteredPromoCodes = "";
+
+            //Add Starting test pack
+            //TODO: Add more tests here
+            await PurchaseTestAsync(model.Id, 1, uData.LanguageId);
+            //await PurchaseTestAsync(model.UserId, 3, dataModel.LanguageId);
+
+            return model.Id;
         }
 
         public async Task<List<long>> GetAllUsersAsync()
@@ -192,178 +205,143 @@ namespace MyWebApi.Repositories
             }
         }
 
-        public Task<User> GetFriendInfoAsync(long id)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public Task<List<FriendModel>> GetFriendsAsync()
-        {
-            throw new System.NotImplementedException();
-        }
-
         public async Task<User> GetUserInfoAsync(long id)
         {
-            try
-            {
-                //Actualize premium information
-                await CheckUserHasPremiumAsync(id);
+            //Actualize premium information
+            await CheckUserHasPremiumAsync(id);
 
-                return await _contx.SYSTEM_USERS.Where(u => u.UserId == id)
-                    .Include(u => u.UserBaseInfo)
-                    .Include(u => u.UserDataInfo).ThenInclude(s => s.Location)
-                    .Include(u => u.UserDataInfo).ThenInclude(s => s.Reason)
-                    .Include(u => u.UserPreferences)
-                    .Include(u => u.UserBlackList)
-                    .SingleOrDefaultAsync();
-            }
-            catch (Exception ex)
-            {
-                await LogAdminErrorAsync(null, ex.Message, (int)Sections.Neutral);
-                return null;
-            }
+            return await _contx.users.Where(u => u.Id == id)
+                .Include(u => u.Data)
+                .Include(u => u.Location)
+                .Include(u => u.UserSettings)
+                .FirstOrDefaultAsync();
         }
 
         public async Task<List<GetUserData>> GetUsersAsync(long userId, bool isRepeated=false, bool isFreeSearch = false)
         {
-            try
-            {
-                const byte miminalProfileCount = 5;
-                var returnData = new List<GetUserData>();
+            const byte minProfilesCount = 5;
+            var returnData = new List<GetUserData>();
 
-                var currentUser = await GetUserInfoAsync(userId);
+            var currentUser = await GetUserInfoAsync(userId);
 
-                //Check if user STILL has premium
-                await CheckUserHasPremiumAsync(currentUser.UserId);
+            //Check if user STILL has premium
+            await CheckUserHasPremiumAsync(currentUser.Id);
 
-                var currentUserEncounters = await GetUserEncounters(userId, (int)Sections.Familiator); //I am not sure if it is 2 or 3 section
+            var currentUserEncounters = await GetUserEncounters(userId, (int)Sections.Familiator); //I am not sure if it is 2 or 3 section
 
-                var data = await _contx.SYSTEM_USERS
-                    .Where(u => u.UserId != currentUser.UserId)
-                    .Where(u => u.UserDataInfo.ReasonId == currentUser.UserDataInfo.ReasonId)
-                    .Where(u => u.UserPreferences.CommunicationPrefs == currentUser.UserPreferences.CommunicationPrefs)
-                    .Where(u => u.UserPreferences.AgePrefs.Contains(currentUser.UserDataInfo.UserAge))
-                    //Check if users gender preferences correspond to current user gender prefs or are equal to 'Does not matter'
-                    .Where(u => u.UserPreferences.UserGenderPrefs == currentUser.UserDataInfo.UserGender || u.UserPreferences.UserGenderPrefs == 3)
-                    .Where(u => u.UserDataInfo.UserLanguages.Any(l => currentUser.UserPreferences.UserLanguagePreferences.Contains(l)))
-                    .Where(u => currentUser.UserPreferences.AgePrefs.Contains(u.UserDataInfo.UserAge))
-                    .Where(u => currentUser.UserDataInfo.UserLanguages.Any(l => u.UserPreferences.UserLanguagePreferences.Contains(l)))
-                    .Include(u => u.UserBaseInfo)
-                    .Include(u => u.UserDataInfo)
-                    .ThenInclude(u => u.Location)
-                    .Include(u => u.UserPreferences)
-                    .Include(u => u.UserBlackList)
-                    .AsNoTracking()
-                    .ToListAsync();
-
-                if (currentUser.UserPreferences.ShouldFilterUsersWithoutRealPhoto && currentUser.HasPremium)
-                {
-                    data = data.Where(u => u.UserBaseInfo.IsPhotoReal)
-                        .ToList();
-                }    
-                
-                if (currentUser.UserDataInfo.Location.CountryId != null)
-                {
-                    data = data.Where(u => u.UserDataInfo.Location.CountryId != null)
-                            .Where(u => u.UserPreferences.UserLocationPreferences.Contains((int)currentUser.UserDataInfo.Location.CountryId))
-                            .Where(u => currentUser.UserPreferences.UserLocationPreferences.Contains((int)u.UserDataInfo.Location.CountryId))
-                            .ToList();
-                }
-
+            var query = _contx.users
+                .Where(u => u.Id != currentUser.Id)
+                .Where(u => u.Data.Reason == currentUser.Data.Reason)
+                .Where(u => u.Data.CommunicationPrefs == currentUser.Data.CommunicationPrefs)
+                .Where(u => u.Data.AgePrefs.Contains(currentUser.Data.UserAge))
+                //Check if users gender preferences correspond to current user gender prefs or are equal to 'Does not matter'
+                .Where(u => u.Data.UserGenderPrefs == currentUser.Data.UserGender || u.Data.UserGenderPrefs == 3)
+                .Where(u => u.Data.UserLanguages.Any(l => currentUser.Data.LanguagePreferences.Contains(l)))
+                .Where(u => currentUser.Data.AgePrefs.Contains(u.Data.UserAge))
+                .Where(u => currentUser.Data.UserLanguages.Any(l => u.Data.LanguagePreferences.Contains(l)))
                 //Check if users had encountered one another
-                data = data.Where(u => !currentUser.CheckIfHasEncountered(currentUserEncounters, u.UserId)).ToList();
-
-                //Check if users are in each others black lists
-                data = data.Where(u => u.UserBlackList.Where(u => u.BannedUserId == userId).SingleOrDefault() == null).ToList();
-                data = data.Where(u => currentUser.UserBlackList.Where(l => l.BannedUserId == u.UserId).SingleOrDefault() == null).ToList();
-
+                .Where(u => !currentUser.CheckIfHasEncountered(currentUserEncounters, u.Id)) //May casuse errors
                 //Check if request already exists
-                data = data.Where(u => !CheckRequestExists(userId, u.UserId)).ToList();
+                .Where(u => !CheckRequestExists(userId, u.Id) && !CheckRequestExists(u.Id, userId)) //May casuse errors
+                .Include(u => u.Data)
+                .Include(u => u.Location)
+                .Include(u => u.UserSettings)
+                .AsNoTracking();
 
-                //Check if current user had already recieved request from user
-                data = data.Where(u => !CheckRequestExists(u.UserId, userId)).ToList();
+            //Identity check
+            if (currentUser.UserSettings.ShouldFilterUsersWithoutRealPhoto && currentUser.HasPremium)
+                query = query.Where(u => u.IdentityType != IdentityConfirmationType.None);
 
-                //Don't check genders user does NOT have gender prederences
-                if (currentUser.UserPreferences.UserGenderPrefs != 3)
-                {
-                    data = data.Where(u => u.UserDataInfo.UserGender == currentUser.UserPreferences.UserGenderPrefs)
-                    .Where(u => currentUser.UserPreferences.UserGenderPrefs == u.UserDataInfo.UserGender)
-                    .ToList();
-                }
-
-                //If user wants to find only people who are free today
-                if (isFreeSearch)
-                    data = data.Where(u => u.IsFree != null && (bool)u.IsFree).ToList();
-
-
-                //If user uses PERSONALITY functionality
-                if (currentUser.UserPreferences.ShouldUsePersonalityFunc)
-                {
-
-                    for (int i = 0; i < data.Count; i++)
-                    {
-                        returnData.Add(await GetPersonalityMatchResult(userId, currentUser, data[i], isRepeated));
-                    }
-                }
-                else
-                {
-                    for (int i = 0; i < data.Count; i++)
-                    {
-                        var u = data[i];
-                        var user = new GetUserData(u);
-                        var bonus = "";
-
-                        //Add comment if user wants it
-                        if (currentUser.ShouldComment)
-                            user.Comment = await GetRandomHintAsync(currentUser.UserDataInfo.LanguageId, HintType.Search);
-
-                        if (u.HasPremium && u.Nickname != "")
-                            bonus += $"<b>{u.Nickname}</b>\n";
-
-                        if (u.IdentityType == IdentityConfirmationType.Partial)
-                             bonus += $"☑️☑️☑️\n\n";
-                        else if (u.IdentityType == IdentityConfirmationType.Full)
-                             bonus += $"✅✅✅\n\n";
-
-
-                        user.AddDescriptionBonus(bonus);
-                        returnData.Add(user);
-                    }
-                }
-
-                //Check if method wasnt already repeated
-                if (!isRepeated)
-                {
-                    //Check if users count is less than the limit
-                    if (returnData.Count <= miminalProfileCount)
-                    {
-                        returnData = await GetUsersAsync(userId, isRepeated: true, isFreeSearch:isFreeSearch);
-                    }
-
-                    //Add user trust exp only if method was not repeated
-                    await AddUserTrustProgressAsync(userId, 0.000003);
-
-                    //Order user list randomly 
-                    returnData = returnData.OrderBy(u => new Random().Next())
-                        .ToList();
-
-                    returnData.OrderByDescending(u => u.UserDataInfo.Location.CityId == currentUser.UserDataInfo.Location.CityId)
-                        .ToList();
-                }
-
-                //await _contx.SaveChangesAsync();
-                return returnData;
-            }
-            catch (Exception ex)
+            //Don't check genders if user does NOT have gender preferences
+            if (currentUser.Data.UserGenderPrefs != 3)
             {
-                await LogAdminErrorAsync(userId, ex.Message, (int)Sections.Familiator);
-                return null;
+                query = query.Where(u => u.Data.UserGender == currentUser.Data.UserGenderPrefs)
+                    .Where(u => currentUser.Data.UserGenderPrefs == u.Data.UserGender);
             }
+
+            if (currentUser.Location.CountryId != null)
+            {
+                query = query.Where(u => u.Location.CountryId != null)
+                        .Where(u => u.Data.LocationPreferences.Contains((int)currentUser.Location.CountryId))
+                        .Where(u => currentUser.Data.LocationPreferences.Contains((int)u.Location.CountryId));
+            }
+
+            //Check if users are in each others black lists
+            query = query.Where(u => u.UserBlackList.Where(u => u.BannedUserId == userId).FirstOrDefault() == null);
+            query = query.Where(u => currentUser.UserBlackList.Where(l => l.BannedUserId == u.Id).FirstOrDefault() == null);
+
+            var data = await query.ToListAsync();
+
+            //If user uses PERSONALITY functionality
+            if (currentUser.UserSettings.ShouldUsePersonalityFunc)
+            {
+
+                for (int i = 0; i < data.Count; i++)
+                {
+                    returnData.Add(await GetPersonalityMatchResult(userId, currentUser, data[i], isRepeated));
+                }
+            }
+            else
+            {
+                for (int i = 0; i < data.Count; i++)
+                {
+                    var u = data[i];
+
+                    var outputUser = await AssembleProfileAsync(currentUser, u);
+
+                    returnData.Add(outputUser);
+                }
+            }
+
+            //TODO: Reconsider usefulness
+            //Check if method wasnt already repeated
+            if (!isRepeated)
+            {
+                //Check if users count is less than the limit
+                if (returnData.Count <= minProfilesCount)
+                {
+                    returnData = await GetUsersAsync(userId, isRepeated: true, isFreeSearch: isFreeSearch);
+                }
+
+                //Add user trust exp only if method was not repeated
+                await AddUserTrustProgressAsync(userId, 0.000003);
+
+                //Order user list randomly 
+                returnData = returnData.OrderBy(u => new Random().Next())
+                    .ToList();
+
+                returnData.OrderByDescending(u => u.CityId == currentUser.Location.CityId)
+                    .ToList();
+            }
+
+            //await _contx.SaveChangesAsync();
+            return returnData;
+        }
+
+        private async Task<GetUserData> AssembleProfileAsync(User currentUser, User foundUser)
+        {
+            var outputUser = new GetUserData(foundUser);
+            var bonus = "";
+
+            //Add comment if user wants to see them
+            if (currentUser.UserSettings.ShouldComment)
+                outputUser.Comment = await GetRandomHintAsync(currentUser.Data.LanguageId, HintType.Search);
+
+            if (foundUser.HasPremium && foundUser.Nickname != "")
+                bonus += $"<b>{foundUser.Nickname}</b>\n";
+
+            if (foundUser.IdentityType == IdentityConfirmationType.Partial)
+                bonus += $"☑️☑️☑️\n\n";
+            else if (foundUser.IdentityType == IdentityConfirmationType.Full)
+                bonus += $"✅✅✅\n\n";
+
+            outputUser.AddDescriptionBonus(bonus);
+            return outputUser;
         }
 
         private async Task<GetUserData> GetPersonalityMatchResult(long userId, User currentUser, User managedUser, bool isRepeated)
         {
-            var returnUser = new GetUserData(managedUser);
+            var returnUser = await AssembleProfileAsync(currentUser, managedUser);
 
             var userActiveEffects = await GetUserActiveEffects(userId);
             var deviation = 0.15;
@@ -391,11 +369,11 @@ namespace MyWebApi.Repositories
                 minDeviation *= 3.2;
             }
 
-            var userPoints = await _contx.USER_PERSONALITY_POINTS.Where(p => p.UserId == currentUser.UserId)
+            var userPoints = await _contx.USER_PERSONALITY_POINTS.Where(p => p.UserId == currentUser.Id)
                 .AsNoTracking()
                 .SingleOrDefaultAsync();
 
-            var userStats = await _contx.USER_PERSONALITY_STATS.Where(s => s.UserId == currentUser.UserId)
+            var userStats = await _contx.USER_PERSONALITY_STATS.Where(s => s.UserId == currentUser.Id)
                 .AsNoTracking()
                 .SingleOrDefaultAsync();
 
@@ -417,17 +395,17 @@ namespace MyWebApi.Repositories
 
             var important = await userPoints.GetImportantParams();
 
-            //Pass if user does not uses personality
-            if (!managedUser.UserPreferences.ShouldUsePersonalityFunc)
+            //Pass if user does not use personality
+            if (!managedUser.UserSettings.ShouldUsePersonalityFunc)
                 return returnUser;
 
-            var user2Points = await _contx.USER_PERSONALITY_POINTS.Where(p => p.UserId == managedUser.UserId)
+            var user2Points = await _contx.USER_PERSONALITY_POINTS.Where(p => p.UserId == managedUser.Id)
                 .AsNoTracking()
-                .SingleOrDefaultAsync();
+                .FirstOrDefaultAsync();
 
-            var user2Stats = await _contx.USER_PERSONALITY_STATS.Where(s => s.UserId == managedUser.UserId)
+            var user2Stats = await _contx.USER_PERSONALITY_STATS.Where(s => s.UserId == managedUser.Id)
                 .AsNoTracking()
-                .SingleOrDefaultAsync();
+                .FirstOrDefaultAsync();
 
 
             //Turns off the parameter if it is 0
@@ -756,17 +734,12 @@ namespace MyWebApi.Repositories
                 await _contx.SYSTEM_FEEDBACKS.AddAsync(report);
                 await _contx.SaveChangesAsync();
 
-                if (await CheckUserHasTasksInSectionAsync(report.UserBaseInfoId, (int)Sections.Reporter))
-                {
-                    //TODO find and topup user's task progress
-                }
-
                 return report.Id;
             }
             catch (Exception ex)
             {
                 _contx.SYSTEM_FEEDBACKS.Remove(report);
-                await LogAdminErrorAsync(report.UserBaseInfoId, ex.Message, (int)Sections.Reporter);
+                await LogAdminErrorAsync(report.UserId, ex.Message, (int)Sections.Reporter);
                 return 0;
             }
         }
@@ -795,7 +768,7 @@ namespace MyWebApi.Repositories
         {
             try
             {
-                if (await _contx.SYSTEM_USERS.FindAsync(id) == null)
+                if (await _contx.users.FindAsync(id) == null)
                 { return false; }
                 return true;
             }
@@ -808,16 +781,10 @@ namespace MyWebApi.Repositories
 
         public async Task<int> GetUserAppLanguage(long id)
         {
-            try
-            {
-                var data = await _contx.SYSTEM_USERS_DATA.Where(u => u.Id == id).SingleAsync();
-                return data.LanguageId;
-            }
-            catch (Exception ex)
-            {
-                await LogAdminErrorAsync(id, ex.Message, (int)Sections.Registration);
-                return 0;
-            }
+            var data = await _contx.users_data.Where(u => u.Id == id)
+                .FirstOrDefaultAsync();
+
+            return data.LanguageId;
         }
 
         public async Task<List<FeedbackReason>> GetFeedbackReasonsAsync(int localisationId)
@@ -837,25 +804,12 @@ namespace MyWebApi.Repositories
         {
             try
             {
-                return await _contx.SYSTEM_USERS.FindAsync(userId) != null;
+                return await _contx.users.FindAsync(userId) != null;
             }
             catch (Exception ex)
             {
                 await LogAdminErrorAsync(userId, ex.Message, (int)Sections.Neutral);
                 return false;
-            }
-        }
-
-        public async Task<UserBaseInfo> GetUserBaseInfoAsync(long id)
-        {
-            try
-            {
-                return await _contx.SYSTEM_USERS_BASES.FindAsync(id);
-            }
-            catch (Exception ex)
-            {
-                await LogAdminErrorAsync(id, ex.Message, (int)Sections.Neutral);
-                return null;
             }
         }
 
@@ -892,21 +846,11 @@ namespace MyWebApi.Repositories
 
         public async Task<User> GetUserInfoByUsrnameAsync(string username)
         {
-            try
-            {
-                return await _contx.SYSTEM_USERS
-                    .Where(u => u.UserBaseInfo.UserName == username)
-                    .Include(s => s.UserBaseInfo)
-                    .Include(s => s.UserDataInfo).ThenInclude(s => s.Location)
-                    .Include(s => s.UserDataInfo).ThenInclude(s => s.Reason)
-                    .Include(s => s.UserPreferences)
-                    .SingleOrDefaultAsync();
-            }
-            catch (Exception ex)
-            {
-                await LogAdminErrorAsync(null, ex.Message, (int)Sections.Neutral);
-                return null;
-            }
+            return await _contx.users
+                .Where(u => u.Data.UserName == username)
+                .Include(s => s.Data)
+                .Include(s => s.Location)
+                .FirstOrDefaultAsync();
         }
 
         public async Task<List<Feedback>> GetMostRecentFeedbacks()
@@ -932,7 +876,7 @@ namespace MyWebApi.Repositories
             {
                 var pointInTime = DateTime.SpecifyKind(DateTime.Now.AddDays(-2), DateTimeKind.Utc);
                 return await _contx.SYSTEM_FEEDBACKS
-                    .Where(f => f.InsertedUtc >= pointInTime && f.UserBaseInfoId == userId)
+                    .Where(f => f.InsertedUtc >= pointInTime && f.UserId == userId)
                     .Include(f => f.User)
                     .Include(f => f.Reason)
                     .ToListAsync();
@@ -965,7 +909,7 @@ namespace MyWebApi.Repositories
         {
             try
             {
-                var reportedUser = await _contx.SYSTEM_USERS.Where(u => u.UserId == request.ReportedUser)
+                var reportedUser = await _contx.users.Where(u => u.Id == request.ReportedUser)
                     .FirstOrDefaultAsync();
 
                 reportedUser.ReportCount++;
@@ -980,8 +924,8 @@ namespace MyWebApi.Repositories
                 var report = new Report
                 {
                     Id = Guid.NewGuid(),
-                    UserBaseInfoId = request.Sender,
-                    UserBaseInfoId1 = request.ReportedUser,
+                    UserId = request.Sender,
+                    UserId1 = request.ReportedUser,
                     Text = request.Text,
                     Reason = request.Reason,
                     InsertedUtc = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc)
@@ -1030,7 +974,7 @@ namespace MyWebApi.Repositories
         {
             try
             {
-                return await _contx.USER_REPORTS.Where(r => r.UserBaseInfoId1 == userId).ToListAsync();
+                return await _contx.USER_REPORTS.Where(r => r.UserId1 == userId).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -1099,9 +1043,9 @@ namespace MyWebApi.Repositories
         {
             try
             {
-                var user = await _contx.SYSTEM_USERS.Where(u => u.UserId == userId).SingleOrDefaultAsync();
+                var user = await _contx.users.Where(u => u.Id == userId).SingleOrDefaultAsync();
                 user.IsDeleted = true;
-                _contx.SYSTEM_USERS.Update(user);
+                _contx.users.Update(user);
                 await _contx.SaveChangesAsync();
                 return 1;
             }
@@ -1116,7 +1060,7 @@ namespace MyWebApi.Repositories
         {
             try
             {
-                return await _contx.USER_REPORTS.Where(u => u.UserBaseInfoId == userId)
+                return await _contx.USER_REPORTS.Where(u => u.UserId == userId)
                     .Include(r => r.User)
                     .ToListAsync();
             }
@@ -1129,68 +1073,50 @@ namespace MyWebApi.Repositories
 
         public async Task<byte> BanUserAsync(long userId)
         {
-            try
-            {
-                var user = await _contx.SYSTEM_USERS.Where(u => u.UserBaseInfoId == userId).SingleOrDefaultAsync();
-                if (!user.IsBanned)
-                {
-                    user.IsBanned = true;
-                    _contx.SYSTEM_USERS.Update(user);
-                    await _contx.SaveChangesAsync();
-                    return 1;
-                }
+            var user = await _contx.users.Where(u => u.Id == userId)
+                .FirstOrDefaultAsync();
 
-                return 0;
-            }
-            catch (Exception ex)
+            if (!user.IsBanned)
             {
-                await LogAdminErrorAsync(userId, ex.Message, (int)Sections.Neutral);
-                return 0;
+                user.IsBanned = true;
+                _contx.users.Update(user);
+                await _contx.SaveChangesAsync();
+                return 1;
             }
+
+            return 0;
         }
 
         public async Task<byte> UnbanUserAsync(long userId)
         {
-            try
-            {
-                var user = await _contx.SYSTEM_USERS.Where(u => u.UserBaseInfoId == userId).SingleOrDefaultAsync();
-                if (user.IsBanned)
-                {
-                    user.IsBanned = false;
-                    user.BanDate = null;
+            var user = await _contx.users.Where(u => u.Id == userId)
+                .FirstOrDefaultAsync();
 
-                    _contx.SYSTEM_USERS.Update(user);
-                    await _contx.SaveChangesAsync();
-                    return 1;
-                }
-
-                return 0;
-            }
-            catch (Exception ex)
+            if (user.IsBanned)
             {
-                await LogAdminErrorAsync(userId, ex.Message, (int)Sections.Neutral);
-                return 0;
+                user.IsBanned = false;
+                user.BanDate = null;
+
+                _contx.users.Update(user);
+                await _contx.SaveChangesAsync();
+                return 1;
             }
+
+            return 0;
         }
 
         public async Task<bool> CheckUserIsBanned(long userId)
         {
-            try
-            {
-                return (await _contx.SYSTEM_USERS.Where(u => u.UserId == userId).SingleOrDefaultAsync()).IsBanned; ;
-            }
-            catch (Exception ex)
-            {
-                await LogAdminErrorAsync(null, ex.Message, (int)Sections.Neutral);
-                return false;
-            }
+            return (await _contx.users.Where(u => u.Id == userId)
+                .Select(u => u.IsBanned)
+                .FirstOrDefaultAsync());
         }
 
         public async Task<bool> CheckUserIsDeleted(long userId)
         {
             try
             {
-                return (await _contx.SYSTEM_USERS.Where(u => u.UserId == userId).SingleOrDefaultAsync()).IsDeleted;
+                return (await _contx.users.Where(u => u.Id == userId).SingleOrDefaultAsync()).IsDeleted;
             }
             catch (Exception ex)
             {
@@ -1201,65 +1127,49 @@ namespace MyWebApi.Repositories
 
         public async Task<string> AddAchievementProgress(long userId, long achievementId, int progress)
         {
-            try
-            {
-                var achievement = await _contx.USER_ACHIEVEMENTS
-                    .Where(a => a.UserBaseInfoId == userId && a.AchievementId == achievementId)
-                    .Include(a => a.Achievement)
-                    .SingleOrDefaultAsync();
+            var achievement = await _contx.USER_ACHIEVEMENTS
+                .Where(a => a.UserBaseInfoId == userId && a.AchievementId == achievementId)
+                .Include(a => a.Achievement)
+                .SingleOrDefaultAsync();
 
-                achievement.Progress += progress;
-                _contx.USER_ACHIEVEMENTS.Update(achievement);
-                await _contx.SaveChangesAsync();
+            achievement.Progress += progress;
+            _contx.USER_ACHIEVEMENTS.Update(achievement);
+            await _contx.SaveChangesAsync();
 
-                if (achievement.Progress >= achievement.Achievement.ConditionValue)
-                    return achievement.AcquireMessage;
+            if (achievement.Progress >= achievement.Achievement.ConditionValue)
+                return achievement.AcquireMessage;
 
-                return "";
-            }
-            catch (Exception ex)
-            {
-                await LogAdminErrorAsync(userId, ex.Message, (int)Sections.Neutral);
-                return null;
-            }
+            return "";
         }
 
         public async Task<string> GrantAchievementToUser(long userId, long achievementId)
         {
-            try
+            var achievement = await _contx.USER_ACHIEVEMENTS
+                .Where(a => a.UserBaseInfoId == userId && a.AchievementId == achievementId && !a.IsAcquired)
+                .Include(a => a.Achievement)
+                .SingleOrDefaultAsync();
+
+            if (achievement == null)
+                throw new Exception($"User have already acquired achievement #{achievementId} or it does not exist");
+
+            achievement.IsAcquired = true;
+
+            await TopUpUserWalletPointsBalance(userId, achievement.Achievement.Value, "Achievement acquiering");
+
+            await AddUserNotificationAsync(new UserNotification
             {
-                var achievement = await _contx.USER_ACHIEVEMENTS
-                    .Where(a => a.UserBaseInfoId == userId && a.AchievementId == achievementId && !a.IsAcquired)
-                    .Include(a => a.Achievement)
-                    .SingleOrDefaultAsync();
-
-                if (achievement == null)
-                    throw new Exception($"User have already acquired achievement #{achievementId} or it does not exist");
-
-                achievement.IsAcquired = true;
-
-                await TopUpUserWalletPointsBalance(userId, achievement.Achievement.Value, "Achievement acquiering");
-
-                await AddUserNotificationAsync(new UserNotification
-                {
-                    UserId1 = userId,
-                    IsLikedBack = false,
-                    Section = (Sections)achievement.Achievement.SectionId,
-                    Severity = Severities.Minor,
-                    Description = achievement.AcquireMessage
-                });
+                UserId1 = userId,
+                IsLikedBack = false,
+                Section = (Sections)achievement.Achievement.SectionId,
+                Severity = Severities.Minor,
+                Description = achievement.AcquireMessage
+            });
 
 
-                _contx.USER_ACHIEVEMENTS.Update(achievement);
-                await _contx.SaveChangesAsync();
+            _contx.USER_ACHIEVEMENTS.Update(achievement);
+            await _contx.SaveChangesAsync();
 
-                return achievement.AcquireMessage;
-            }
-            catch (Exception ex)
-            {
-                await LogAdminErrorAsync(userId, ex.Message, (int)Sections.Neutral);
-                return null;
-            }
+            return achievement.AcquireMessage;
         }
 
         public async Task<List<UserAchievement>> GetUserAchievements(long userId)
@@ -1296,359 +1206,330 @@ namespace MyWebApi.Repositories
 
         public async Task<byte> ReRegisterUser(long userId)
         {
-            try
+
+            var sUser = await _contx.users.Where(u => u.Id == userId)
+                .Include(u => u.Data)
+                .Include(u => u.UserSettings)
+                .Include(u => u.Location)
+                .AsNoTracking()
+                .FirstOrDefaultAsync();
+
+            var sData = sUser.Data;
+            var sSettings = sUser.UserSettings;
+
+            var userBalance = await _contx.USER_WALLET_BALANCES.Where(u => u.UserId == userId)
+                .FirstOrDefaultAsync();
+
+            if (userBalance != null)
             {
-                var startingUser = await _contx.SYSTEM_USERS.Where(u => u.UserId == userId).SingleOrDefaultAsync();
-                var startingUserBase = await _contx.SYSTEM_USERS_BASES.Where(u => u.Id == userId).SingleOrDefaultAsync();
-                var startingUserData = await _contx.SYSTEM_USERS_DATA.Where(u => u.Id == userId).SingleOrDefaultAsync();
-                var startingUserPrefs = await _contx.SYSTEM_USERS_PREFERENCES.Where(u => u.Id == userId).SingleOrDefaultAsync();
-
-                var userBalances = await _contx.USER_WALLET_BALANCES.Where(u => u.UserId == userId).ToListAsync();
-                if (userBalances.Count > 0 && userBalances != null)
-                {
-                    _contx.USER_WALLET_BALANCES.RemoveRange(userBalances);
-                    await _contx.SaveChangesAsync();
-                }
-
-                var userLocation = await _contx.USER_LOCATIONS.Where(u => u.Id == userId).SingleOrDefaultAsync();
-                if (userLocation != null)
-                {
-                    _contx.USER_LOCATIONS.Remove(userLocation);
-                    await _contx.SaveChangesAsync();
-                }
-
-                var userAchievements = await _contx.USER_ACHIEVEMENTS.Where(u => u.UserBaseInfoId == userId).ToListAsync();
-                if (userAchievements.Count > 0 && userAchievements != null)
-                {
-                    _contx.USER_ACHIEVEMENTS.RemoveRange(userAchievements);
-                    await _contx.SaveChangesAsync();
-                }
-
-
-                var userPurchases = await _contx.USER_WALLET_PURCHASES.Where(u => u.UserId == userId).ToListAsync();
-                if (userPurchases.Count > 0 && userPurchases != null )
-                {
-                    _contx.USER_WALLET_PURCHASES.RemoveRange(userPurchases);
-                    await _contx.SaveChangesAsync();
-                }
-
-                var userVisits = await _contx.USER_VISITS.Where(u => u.UserId == userId).ToListAsync();
-                if (userVisits.Count > 0 && userVisits != null)
-                {
-                    _contx.USER_VISITS.RemoveRange(userVisits);
-                    await _contx.SaveChangesAsync();
-                }
-
-                var userNotifications = await _contx.USER_NOTIFICATIONS.Where(u => u.UserId == userId).ToListAsync();
-                if (userNotifications.Count > 0 && userNotifications != null)
-                {
-                    _contx.USER_NOTIFICATIONS.RemoveRange(userNotifications);
-                    await _contx.SaveChangesAsync();
-                }
-
-                var userNotifications1 = await _contx.USER_NOTIFICATIONS.Where(u => u.UserId1 == userId).ToListAsync();
-                if (userNotifications1.Count > 0 && userNotifications1 != null)
-                {
-                    _contx.USER_NOTIFICATIONS.RemoveRange(userNotifications1);
-                    await _contx.SaveChangesAsync();
-                }
-
-                var sponsorRatings = await _contx.SPONSOR_RATINGS.Where(u => u.UserId == userId).ToListAsync();
-                if (sponsorRatings.Count > 0 && sponsorRatings != null)
-                {
-                    _contx.SPONSOR_RATINGS.RemoveRange(sponsorRatings);
-                    await _contx.SaveChangesAsync();
-                }
-
-                var userTrustLevel = await _contx.USER_TRUST_LEVELS.Where(u => u.Id == userId).SingleOrDefaultAsync();
-                if (userTrustLevel != null)
-                {
-                    _contx.USER_TRUST_LEVELS.Remove(userTrustLevel);
-                    await _contx.SaveChangesAsync();
-                }
-
-                var userBase = await _contx.SYSTEM_USERS_BASES.Where(u => u.Id == userId).SingleOrDefaultAsync();
-                if (userBase != null)
-                {
-                    _contx.SYSTEM_USERS_BASES.Remove(userBase);
-                }
-
-                var userPrefs = await _contx.SYSTEM_USERS_PREFERENCES.Where(u => u.Id == userId).SingleOrDefaultAsync();
-                if (userPrefs != null)
-                {
-                    _contx.SYSTEM_USERS_PREFERENCES.Remove(userPrefs);
-                }
-
-                var userData = await _contx.SYSTEM_USERS_DATA.Where(u => u.Id == userId).SingleOrDefaultAsync();
-                if (userData != null)
-                {
-                    _contx.SYSTEM_USERS_DATA.Remove(userData);
-                }
-
-                var user = await _contx.SYSTEM_USERS.Where(u => u.UserId == userId).SingleOrDefaultAsync();
-                if (user != null)
-                {
-                    _contx.SYSTEM_USERS.Remove(user);
-                }
-
+                _contx.USER_WALLET_BALANCES.Remove(userBalance);
                 await _contx.SaveChangesAsync();
-
-                if (startingUser != null)
-                {
-                    startingUser.IsBusy = false;
-                    startingUser.IsBanned = false;
-                    startingUser.IsDeleted = false;
-                    startingUser.IsUpdated = false;
-                    startingUser.ShouldEnhance = false;
-
-                    await RegisterUserAsync(startingUser, startingUserBase, startingUserData, startingUserPrefs, userLocation, wasRegistered:true);
-                }
-
-                return 1;
             }
-            catch (Exception ex)
+
+            var userAchievements = await _contx.USER_ACHIEVEMENTS.Where(u => u.UserBaseInfoId == userId)
+                .ToListAsync();
+
+            if (userAchievements.Count > 0 && userAchievements != null)
             {
-                await LogAdminErrorAsync(userId, ex.Message, (int)Sections.Registration);
-                return 0;
+                _contx.USER_ACHIEVEMENTS.RemoveRange(userAchievements);
+                await _contx.SaveChangesAsync();
             }
+
+            var userPurchases = await _contx.USER_WALLET_PURCHASES.Where(u => u.UserId == userId)
+                .ToListAsync();
+
+            if (userPurchases.Count > 0 && userPurchases != null)
+            {
+                _contx.USER_WALLET_PURCHASES.RemoveRange(userPurchases);
+                await _contx.SaveChangesAsync();
+            }
+
+            var userVisits = await _contx.USER_VISITS.Where(u => u.UserId == userId)
+                .ToListAsync();
+
+            if (userVisits.Count > 0 && userVisits != null)
+            {
+                _contx.USER_VISITS.RemoveRange(userVisits);
+                await _contx.SaveChangesAsync();
+            }
+
+            var userNotifications = await _contx.USER_NOTIFICATIONS.Where(u => u.UserId == userId)
+                .ToListAsync();
+
+            if (userNotifications.Count > 0 && userNotifications != null)
+            {
+                _contx.USER_NOTIFICATIONS.RemoveRange(userNotifications);
+                await _contx.SaveChangesAsync();
+            }
+
+            var userNotifications1 = await _contx.USER_NOTIFICATIONS.Where(u => u.UserId1 == userId)
+                .ToListAsync();
+
+            if (userNotifications1.Count > 0 && userNotifications1 != null)
+            {
+                _contx.USER_NOTIFICATIONS.RemoveRange(userNotifications1);
+                await _contx.SaveChangesAsync();
+            }
+
+            var sponsorRatings = await _contx.SPONSOR_RATINGS.Where(u => u.UserId == userId)
+                .ToListAsync();
+
+            if (sponsorRatings.Count > 0 && sponsorRatings != null)
+            {
+                _contx.SPONSOR_RATINGS.RemoveRange(sponsorRatings);
+                await _contx.SaveChangesAsync();
+            }
+
+            var userTrustLevel = await _contx.USER_TRUST_LEVELS.Where(u => u.Id == userId)
+                .FirstOrDefaultAsync();
+
+            if (userTrustLevel != null)
+            {
+                _contx.USER_TRUST_LEVELS.Remove(userTrustLevel);
+                await _contx.SaveChangesAsync();
+            }
+
+            if (userTrustLevel != null)
+            {
+                _contx.USER_TRUST_LEVELS.Remove(userTrustLevel);
+                await _contx.SaveChangesAsync();
+            }
+
+            var user = await _contx.users.Where(u => u.Id == userId)
+                .Include(u => u.Data)
+                .Include(u => u.UserSettings)
+                .Include(u => u.Location)
+                .FirstOrDefaultAsync();
+
+            if (user != null)
+            {
+                _contx.USER_LOCATIONS.Remove(user.Location);
+                _contx.users_data.Remove(user.Data);
+                _contx.users_settings.Remove(user.UserSettings);
+                _contx.users.Remove(user);
+            }
+
+            await _contx.SaveChangesAsync();
+
+            if (sUser != null)
+            {
+
+                await RegisterUserAsync(new UserRegistrationModel{
+                    UserName = sData.UserName,
+                    RealName = sData.UserRealName,
+                    Age = sData.UserAge,
+                    AgePrefs = sData.AgePrefs,
+                    AppLanguageId = sData.LanguageId,
+                    CityCode = sUser.Location.CityId,
+                    CountryCode = sUser.Location.CountryId,
+                    CommunicationPrefs = sData.CommunicationPrefs,
+                    Description = sData.UserDescription,
+                    Gender = sData.UserGender,
+                    GenderPrefs = sData.UserGenderPrefs,
+                    IsMediaPhoto = sData.IsMediaPhoto,
+                    Media = sData.UserMedia,
+                    LanguagePreferences = sData.LanguagePreferences,
+                    Languages = sData.UserLanguages,
+                    LocationPreferences = sData.LocationPreferences,
+                    Reason = sData.Reason,
+                    ShouldUserPersonalityFunc = sSettings.ShouldUsePersonalityFunc,
+                });
+            }
+
+            return 1;
         }
 
         public async Task<byte> GenerateUserAchievementList(long userId, int localisationId, bool wasRegistered=false)
         {
-            try
+
+            List<UserAchievement> userAchievements;
+
+            if (wasRegistered)
             {
-                List<UserAchievement> userAchievements;
-
-                if (wasRegistered)
-                {
-                    userAchievements = await  _contx.USER_ACHIEVEMENTS
-                        .Where(u => u.UserBaseInfoId == userId)
-                        .ToListAsync();
-                    _contx.USER_ACHIEVEMENTS.RemoveRange(userAchievements);
-                }
-
-                userAchievements = new List<UserAchievement>();
-                var sysAchievements = await _contx.SYSTEM_ACHIEVEMENTS.Where(a => a.ClassLocalisationId == localisationId).ToListAsync();
-                sysAchievements.ForEach(a => userAchievements.Add(new UserAchievement(a.Id, userId, a.ClassLocalisationId, a.Name, a.Description, a.Value, a.ClassLocalisationId)));
-
-                await _contx.USER_ACHIEVEMENTS.AddRangeAsync(userAchievements);
-                await _contx.SaveChangesAsync();
-
-                return 1;
+                userAchievements = await  _contx.USER_ACHIEVEMENTS
+                    .Where(u => u.UserBaseInfoId == userId)
+                    .ToListAsync();
+                _contx.USER_ACHIEVEMENTS.RemoveRange(userAchievements);
             }
-            catch (Exception ex)
-            {
-                await LogAdminErrorAsync(userId, ex.Message, (int)Sections.Neutral);
-                return 0;
-            }
+
+            userAchievements = new List<UserAchievement>();
+            var sysAchievements = await _contx.SYSTEM_ACHIEVEMENTS.Where(a => a.ClassLocalisationId == localisationId).ToListAsync();
+            sysAchievements.ForEach(a => userAchievements.Add(new UserAchievement(a.Id, userId, a.ClassLocalisationId, a.Name, a.Description, a.Value, a.ClassLocalisationId)));
+
+            await _contx.USER_ACHIEVEMENTS.AddRangeAsync(userAchievements);
+            await _contx.SaveChangesAsync();
+
+            return 1;
         }
 
         public async Task<List<UserAchievement>> GetUserAchievementsAsAdmin(long userId)
         {
-            try
-            {
-                return await _contx.USER_ACHIEVEMENTS
-                    .Where(a => a.UserBaseInfoId == userId && !a.IsAcquired)
-                    .ToListAsync();
-            }
-            catch (Exception ex)
-            {
-                await LogAdminErrorAsync(userId, ex.Message, (int)Sections.Neutral);
-                return null;
-            }
+            return await _contx.USER_ACHIEVEMENTS
+                .Where(a => a.UserBaseInfoId == userId && !a.IsAcquired)
+                .ToListAsync();
         }
 
         public async Task<bool> SetUserRtLanguagePrefs(long userId, bool shouldBeConcidered)
         {
-            try
-            {                
-                var user = await _contx.SYSTEM_USERS.Where(u => u.UserId == userId).SingleOrDefaultAsync();
-                user.ShouldConsiderLanguages = shouldBeConcidered;
+            var user = await _contx.users_settings.Where(u => u.Id == userId)
+                .FirstOrDefaultAsync();
 
-                _contx.SYSTEM_USERS.Update(user);
-                await _contx.SaveChangesAsync();
+            user.ShouldConsiderLanguages = shouldBeConcidered;
 
-                return true;
-            }
-            catch (Exception ex)
-            {
-                await LogAdminErrorAsync(userId, ex.Message, (int)Sections.Neutral);
-                return false;
-            }
+            _contx.users_settings.Update(user);
+            await _contx.SaveChangesAsync();
+
+            return true;
         }
 
         public async Task<bool> CheckUsersAreCombinableRT(long user1, long user2)
         {
-            try
+            var userInfo1 = await GetUserInfoAsync(user1);
+            var userInfo2 = await GetUserInfoAsync(user2);
+
+            var user1Encounters = await GetUserEncounters(user1, (int)Sections.RT);
+
+            //Check if users are not in each others blacklists
+            var usersAreNotInBlackList =
+                (await _contx.USER_BLACKLISTS.Where(l => l.UserId == user1 && l.BannedUserId == user2).FirstOrDefaultAsync()) == null
+                &&
+                (await _contx.USER_BLACKLISTS.Where(l => l.UserId == user2 && l.BannedUserId == user1).FirstOrDefaultAsync()) == null;
+
+            if (usersAreNotInBlackList)
             {
-                var userInfo1 = await GetUserInfoAsync(user1);
-                var userInfo2 = await GetUserInfoAsync(user2);
-
-                var user1Encounters = await GetUserEncounters(user1, (int)Sections.RT);
-
-                //Check if users are not in each others blacklists
-                var usersAreNotInBlackList =
-                    (await _contx.USER_BLACKLISTS.Where(l => l.UserId == user1 && l.BannedUserId == user2).FirstOrDefaultAsync()) == null
-                    &&
-                    (await _contx.USER_BLACKLISTS.Where(l => l.UserId == user2 && l.BannedUserId == user1).FirstOrDefaultAsync()) == null;
-
-                if (usersAreNotInBlackList)
-                {
-                    //Check if user1 has encountered user2
-                    //In that case, checking 1 encounter is enough
-                    if (user1Encounters.Where(e => e.EncounteredUserId == user2).SingleOrDefault() == null)
-                    {   
-                        //If both consider having the same languages
-                        if((bool)userInfo1.ShouldConsiderLanguages && (bool)userInfo2.ShouldConsiderLanguages)
-                        {
-                            await AddUserTrustProgressAsync(user1, 0.000005 * (double)userInfo1.BonusIndex);
-                            await AddUserTrustProgressAsync(user2, 0.000005 * (double)userInfo2.BonusIndex);
+                //Check if user1 has encountered user2
+                //In that case, checking 1 encounter is enough
+                if (user1Encounters.Where(e => e.EncounteredUserId == user2).SingleOrDefault() == null)
+                {   
+                    //If both consider having the same languages
+                    if(userInfo1.UserSettings.ShouldConsiderLanguages && userInfo2.UserSettings.ShouldConsiderLanguages)
+                    {
+                        await AddUserTrustProgressAsync(user1, 0.000005 * (double)userInfo1.BonusIndex);
+                        await AddUserTrustProgressAsync(user2, 0.000005 * (double)userInfo2.BonusIndex);
                         
-                            var result = (await _contx.SYSTEM_USERS
-                                .Where(u => u.UserId == user2)
-                                .Where(u => userInfo1.UserDataInfo.UserLanguages.Any(l => u.UserPreferences.UserLanguagePreferences.Contains(l)))
-                                .Where(u => u.UserDataInfo.UserLanguages.Any(l => userInfo1.UserPreferences.UserLanguagePreferences.Contains(l)))
-                                .SingleOrDefaultAsync()) != null;
+                        var result = (await _contx.users
+                            .Where(u => u.Id == user2)
+                            .Where(u => userInfo1.Data.UserLanguages.Any(l => u.Data.LanguagePreferences.Contains(l)))
+                            .Where(u => u.Data.UserLanguages.Any(l => userInfo1.Data.LanguagePreferences.Contains(l)))
+                            .SingleOrDefaultAsync()) != null;
 
-                            if (result)
-                            {
-                                await RegisterUserEncounter(new Encounter { UserId = user1, EncounteredUserId = user2 });
-                                await RegisterUserEncounter(new Encounter { UserId = user2, EncounteredUserId = user1 });
-                            }
-
-                            return result;
-                        }
-                        //If user1 considers having the same languages
-                        else if ((bool)userInfo1.ShouldConsiderLanguages)
+                        if (result)
                         {
-                            await AddUserTrustProgressAsync(user1, 0.000005 * (double)userInfo1.BonusIndex);
-                            await AddUserTrustProgressAsync(user2, 0.000005 * (double)userInfo2.BonusIndex);
-
-                            var result = (await _contx.SYSTEM_USERS
-                                .Where(u => u.UserId == user2)
-                                .Where(u => u.UserDataInfo.UserLanguages.Any(l => userInfo1.UserPreferences.UserLanguagePreferences.Contains(l)))
-                                .SingleOrDefaultAsync()) != null;
-
-                            if (result)
-                            {
-                                await RegisterUserEncounter(new Encounter { UserId = user1, EncounteredUserId = user2 });
-                                await RegisterUserEncounter(new Encounter { UserId = user2, EncounteredUserId = user1 });
-                            }
-
-                            return result;
-                        }
-                        //If user2 considers having the same languages
-                        else if ((bool)userInfo2.ShouldConsiderLanguages)
-                        {
-                            await AddUserTrustProgressAsync(user1, 0.000005 * (double)userInfo1.BonusIndex);
-                            await AddUserTrustProgressAsync(user2, 0.000005 * (double)userInfo2.BonusIndex);
-
-                            var result = (await _contx.SYSTEM_USERS
-                                .Where(u => u.UserId == user2)
-                                .Where(u => userInfo1.UserDataInfo.UserLanguages.Any(l => u.UserPreferences.UserLanguagePreferences.Contains(l)))
-                                .SingleOrDefaultAsync()) != null; ;
-
-                            if (result)
-                            {
-                                await RegisterUserEncounter(new Encounter { UserId = user1, EncounteredUserId = user2 });
-                                await RegisterUserEncounter(new Encounter { UserId = user2, EncounteredUserId = user1 });
-                            }
-
-                            return result;
+                            await RegisterUserEncounter(new Encounter { UserId = user1, EncounteredUserId = user2 });
+                            await RegisterUserEncounter(new Encounter { UserId = user2, EncounteredUserId = user1 });
                         }
 
+                        return result;
+                    }
+                    //If user1 considers having the same languages
+                    else if (userInfo1.UserSettings.ShouldConsiderLanguages)
+                    {
                         await AddUserTrustProgressAsync(user1, 0.000005 * (double)userInfo1.BonusIndex);
                         await AddUserTrustProgressAsync(user2, 0.000005 * (double)userInfo2.BonusIndex);
 
-                        if (await CheckUserHasTasksInSectionAsync(user1, (int)Sections.RT))
+                        var result = (await _contx.users
+                            .Where(u => u.Id == user2)
+                            .Where(u => u.Data.UserLanguages.Any(l => userInfo1.Data.LanguagePreferences.Contains(l)))
+                            .SingleOrDefaultAsync()) != null;
+
+                        if (result)
                         {
-                            //TODO find and topup user's task progress
+                            await RegisterUserEncounter(new Encounter { UserId = user1, EncounteredUserId = user2 });
+                            await RegisterUserEncounter(new Encounter { UserId = user2, EncounteredUserId = user1 });
                         }
 
-                        if (await CheckUserHasTasksInSectionAsync(user2, (int)Sections.RT))
-                        {
-                            //TODO find and topup user's task progress
-                        }
-
-                        await RegisterUserEncounter(new Encounter { UserId = user1, EncounteredUserId = user2 });
-                        await RegisterUserEncounter(new Encounter { UserId = user2, EncounteredUserId = user1 });
-
-                        //If neither considers having the same languages
-                        return true;
+                        return result;
                     }
-                    return false;
+                    //If user2 considers having the same languages
+                    else if (userInfo2.UserSettings.ShouldConsiderLanguages)
+                    {
+                        await AddUserTrustProgressAsync(user1, 0.000005 * (double)userInfo1.BonusIndex);
+                        await AddUserTrustProgressAsync(user2, 0.000005 * (double)userInfo2.BonusIndex);
+
+                        var result = (await _contx.users
+                            .Where(u => u.Id == user2)
+                            .Where(u => userInfo1.Data.UserLanguages.Any(l => u.Data.LanguagePreferences.Contains(l)))
+                            .SingleOrDefaultAsync()) != null; ;
+
+                        if (result)
+                        {
+                            await RegisterUserEncounter(new Encounter { UserId = user1, EncounteredUserId = user2 });
+                            await RegisterUserEncounter(new Encounter { UserId = user2, EncounteredUserId = user1 });
+                        }
+
+                        return result;
+                    }
+
+                    await AddUserTrustProgressAsync(user1, 0.000005 * (double)userInfo1.BonusIndex);
+                    await AddUserTrustProgressAsync(user2, 0.000005 * (double)userInfo2.BonusIndex);
+
+                    if (await CheckUserHasTasksInSectionAsync(user1, (int)Sections.RT))
+                    {
+                        //TODO find and topup user's task progress
+                    }
+
+                    if (await CheckUserHasTasksInSectionAsync(user2, (int)Sections.RT))
+                    {
+                        //TODO find and topup user's task progress
+                    }
+
+                    await RegisterUserEncounter(new Encounter { UserId = user1, EncounteredUserId = user2 });
+                    await RegisterUserEncounter(new Encounter { UserId = user2, EncounteredUserId = user1 });
+
+                    //If neither considers having the same languages
+                    return true;
                 }
                 return false;
             }
-            catch (Exception ex)
-            {
-                await LogAdminErrorAsync(null, ex.Message, (int)Sections.RT);
-                return false;
-            }
+            return false;
         }
 
         public async Task<Balance> GetUserWalletBalance(long userId)
         {
-            try
-            {
-                return await _contx.USER_WALLET_BALANCES
-                    .Where(b => b.UserId == userId)
-                    .FirstOrDefaultAsync();
-            }
-            catch (Exception ex)
-            {
-                await LogAdminErrorAsync(userId, ex.Message, (int)Sections.Settings);
-                return null;
-            }
+            return await _contx.USER_WALLET_BALANCES
+                .Where(b => b.UserId == userId)
+                .FirstOrDefaultAsync();
         }
 
         public async Task<int> TopUpUserWalletPointsBalance(long userId, int points, string description = "")
         {
-            try
-            {
-                var time = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
-                var userBalance = await GetUserWalletBalance(userId);
+            var time = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
+            var userBalance = await GetUserWalletBalance(userId);
 
-                if (userBalance != null)
-                {            
-                    if (userBalance.Points + points <= 0)
-                        userBalance.Points = 0;
-                    else if(userBalance.Points + points >= int.MaxValue)
-                        userBalance.Points = int.MaxValue;
-                    else
-                        userBalance.Points += points;
-
-                    userBalance.PointInTime = time;
-
-                    _contx.USER_WALLET_BALANCES.Update(userBalance);
-                    await _contx.SaveChangesAsync();
-                }
+            if (userBalance != null)
+            {            
+                if (userBalance.Points + points <= 0)
+                    userBalance.Points = 0;
+                else if(userBalance.Points + points >= int.MaxValue)
+                    userBalance.Points = int.MaxValue;
                 else
-                {
-                    await CreateUserBalance(userId, points, time);
-                    userBalance = await GetUserWalletBalance(userId);
-                }
+                    userBalance.Points += points;
 
-                var userParentId = (await _contx.SYSTEM_USERS.FindAsync(userId)).ParentId;
+                userBalance.PointInTime = time;
 
-                if (points > 0 && userParentId != null && userParentId > 0)
-                {
-                    var parent = await GetUserInfoAsync((long)userParentId);
-
-                    if (parent != null)
-                        await TopUpUserWalletPointsBalance((long)userParentId, (int)(points * parent.InvitedUsersBonus), $"Referential reward for users {userId} action");
-                }
-
+                _contx.USER_WALLET_BALANCES.Update(userBalance);
                 await _contx.SaveChangesAsync();
-                await RegisterUserWalletPurchaseInPoints(userId, points, description); //Registers info about amount of points decremented / incremented
-
-                return userBalance.Points;
             }
-            catch (Exception ex)
+            else
             {
-                await LogAdminErrorAsync(userId, ex.Message, (int)Sections.Neutral);
-                return 0;
+                await CreateUserBalance(userId, points, time);
+                userBalance = await GetUserWalletBalance(userId);
             }
+
+            var userParentId = (await _contx.users.FindAsync(userId)).ParentId;
+
+            if (points > 0 && userParentId != null && userParentId > 0)
+            {
+                var parent = await GetUserInfoAsync((long)userParentId);
+
+                if (parent != null)
+                    await TopUpUserWalletPointsBalance((long)userParentId, (int)(points + points * parent.InvitedUsersBonus), $"Referential reward for user's {userId} action");
+            }
+
+            await _contx.SaveChangesAsync();
+            await RegisterUserWalletPurchaseInPoints(userId, points, description); //Registers info regarding amount of points decremented / incremented
+
+            return userBalance.Points;
         }
 
         private async Task CreateUserBalance(long userId, int points, DateTime time)
@@ -1661,45 +1542,37 @@ namespace MyWebApi.Repositories
 
         public async Task<int> TopUpUserWalletPPBalance(long userId, int points, string description = "")
         {
-            try
+            var time = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
+            var userBalance = await GetUserWalletBalance(userId);
+
+            if (userBalance != null)
             {
-                var time = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
-                var userBalance = await GetUserWalletBalance(userId);
-
-                if (userBalance != null)
-                {
-                    if (userBalance.PersonalityPoints + points <= 0)
-                        userBalance.PersonalityPoints = 0;
-                    else if (userBalance.PersonalityPoints + points >= int.MaxValue)
-                        userBalance.PersonalityPoints = int.MaxValue;
-                    else
-                        userBalance.PersonalityPoints += points;
-
-                    userBalance.PointInTime = time;
-
-                    _contx.USER_WALLET_BALANCES.Update(userBalance);
-                    await _contx.SaveChangesAsync();
-                }
+                if (userBalance.PersonalityPoints + points <= 0)
+                    userBalance.PersonalityPoints = 0;
+                else if (userBalance.PersonalityPoints + points >= int.MaxValue)
+                    userBalance.PersonalityPoints = int.MaxValue;
                 else
-                {
-                    await CreateUserBalance(userId, points, time);
-                }
+                    userBalance.PersonalityPoints += points;
 
-                var userParentId = (await _contx.SYSTEM_USERS.FindAsync(userId)).ParentId;
+                userBalance.PointInTime = time;
 
-                if (userParentId != null && userParentId > 0)
-                    await TopUpUserWalletPointsBalance((long)userParentId, 1, $"Referential reward for user's {userParentId} action");
-
+                _contx.USER_WALLET_BALANCES.Update(userBalance);
                 await _contx.SaveChangesAsync();
-                await RegisterUserWalletPurchaseInPP(userId, points, description); //Registers info about amount of points decremented / incremented
-
-                return userBalance.PersonalityPoints;
             }
-            catch (Exception ex)
+            else
             {
-                await LogAdminErrorAsync(userId, ex.Message, (int)Sections.Neutral);
-                return 0;
+                await CreateUserBalance(userId, points, time);
             }
+
+            var userParentId = (await _contx.users.FindAsync(userId)).ParentId;
+
+            if (userParentId != null && userParentId > 0)
+                await TopUpUserWalletPointsBalance((long)userParentId, 1, $"Referential reward for user's {userParentId} action");
+
+            await _contx.SaveChangesAsync();
+            await RegisterUserWalletPurchaseInPP(userId, points, description); //Registers info about amount of points decremented / incremented
+
+            return userBalance.PersonalityPoints;
         }
 
         private async Task<bool> RegisterUserWalletPurchaseInPoints(long userId, int points, string description)
@@ -1749,7 +1622,7 @@ namespace MyWebApi.Repositories
             {
                 var timeNow = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
 
-                var user = await _contx.SYSTEM_USERS.Where(u => u.UserId == userId).SingleOrDefaultAsync();
+                var user = await _contx.users.Where(u => u.Id == userId).SingleOrDefaultAsync();
                 
                 if (user != null)
                 {
@@ -1806,8 +1679,8 @@ namespace MyWebApi.Repositories
                 var timeNow = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
                 var premiumFutureExpirationDate = DateTime.SpecifyKind(DateTime.Now.AddDays(dayDuration), DateTimeKind.Utc);
 
-                var user = await _contx.SYSTEM_USERS
-                    .Where(u => u.UserId == userId)
+                var user = await _contx.users
+                    .Where(u => u.Id == userId)
                     .SingleOrDefaultAsync();
 
                 user.HasPremium = true;
@@ -1845,7 +1718,7 @@ namespace MyWebApi.Repositories
                 _contx.Update(user);
                 await _contx.SaveChangesAsync();
 
-                await AddUserNotificationAsync(new UserNotification { UserId1 = user.UserId, IsLikedBack = false, Severity = Severities.Moderate, Section = Sections.Neutral, Description = $"You have been granted premium access. Enjoy your benefits :)\nPremium expiration {user.PremiumExpirationDate.Value.ToString("dd.MM.yyyy")}" });
+                await AddUserNotificationAsync(new UserNotification { UserId1 = user.Id, IsLikedBack = false, Severity = Severities.Moderate, Section = Sections.Neutral, Description = $"You have been granted premium access. Enjoy your benefits :)\nPremium expiration {user.PremiumExpirationDate.Value.ToString("dd.MM.yyyy")}" });
 
                 return user.PremiumExpirationDate.Value;
             }
@@ -1860,8 +1733,8 @@ namespace MyWebApi.Repositories
         {
             try
             {
-                return await _contx.SYSTEM_USERS
-                    .Where(u => u.UserId == userId && (bool)u.HasPremium && u.PremiumExpirationDate > timeNow)
+                return await _contx.users
+                    .Where(u => u.Id == userId && (bool)u.HasPremium && u.PremiumExpirationDate > timeNow)
                     .SingleOrDefaultAsync();
             }
             catch (Exception ex)
@@ -1889,11 +1762,12 @@ namespace MyWebApi.Repositories
         {
             try
             {
-                var userData = await _contx.SYSTEM_USERS_DATA.Where(u => u.Id == userId).SingleOrDefaultAsync();
+                var userData = await _contx.users_data.Where(u => u.Id == userId)
+                    .FirstOrDefaultAsync();
 
                 if (userData != null)
                 {
-                    if (userData.LanguageId != appLanguage) // Check if user changes app language to a different one
+                    if (userData.LanguageId != appLanguage) // Check if user had changed an app language to a different one
                     {
                         var userAchievements = await _contx.USER_ACHIEVEMENTS.Where(a => a.UserBaseInfoId == userId).ToListAsync();
                         userAchievements.ForEach(async a =>
@@ -1916,7 +1790,7 @@ namespace MyWebApi.Repositories
                         await _contx.SaveChangesAsync();
 
                         userData.LanguageId = appLanguage;
-                        _contx.SYSTEM_USERS_DATA.Update(userData);
+                        _contx.users_data.Update(userData);
                         await _contx.SaveChangesAsync();
                     }
                     return 1;
@@ -1930,147 +1804,80 @@ namespace MyWebApi.Repositories
             }
         }
 
-        public async Task<byte> UpdateUserBaseAsync(UserBaseInfo user)
+        public async Task UpdateUserAsync(UpdateUserProfile model)
         {
-            try
+            var countryName = "---";
+            var cityName = "---";
+
+            var user = await _contx.users.Where(u => u.Id == model.Id)
+                .Include(u => u.Data)
+                .Include(u => u.Location)
+                .FirstOrDefaultAsync();
+
+            var location = user.Location;
+
+            if (location.CountryId != null)
             {
-                var country = "---";
-                var city = "---";
-
-                var model = await _contx.SYSTEM_USERS_BASES.FindAsync(user.Id);
-                var data = await _contx.SYSTEM_USERS_DATA.FindAsync(user.Id);
-                var location = await _contx.USER_LOCATIONS.Where(l => l.Id == user.Id)
-                    .Include(l => l.Country)
-                    .Include(l => l.City)
-                    .SingleOrDefaultAsync();
-
-                if (location.CountryId != null)
-                {
-                    country = await _contx.countries
-                        .Where(c => c.Id == location.CountryId && c.ClassLocalisationId == location.CountryClassLocalisationId)
-                        .Select(c => c.CountryName)
-                        .SingleOrDefaultAsync();
-                    city = await _contx.cities
-                        .Where(c => c.Id == location.CityId && c.CountryClassLocalisationId == location.CityCountryClassLocalisationId)
-                        .Select(c => c.CityName)
-                        .SingleOrDefaultAsync(); ;
-                }
-
-                model.UserRawDescription = user.UserRawDescription;
-                model.UserDescription = user.GenerateUserDescription(user.UserRealName, data.UserAge, country, city, user.UserRawDescription);
-
-                //Reactivate user tick request if user photo was changed
-                if (model.UserMedia != user.UserMedia)
-                {
-                    model.UserMedia = user.UserMedia;
-                    model.IsMediaPhoto = user.IsMediaPhoto;
-                    await ReactivateTickRequest(user.Id);
-                }
-
-                model.UserName = user.UserName;
-                model.UserRealName = user.UserRealName;
-
-                _contx.SYSTEM_USERS_BASES.Update(model);
-                await _contx.SaveChangesAsync();
-                return 1;
+                countryName = await _contx.countries
+                    .Where(c => c.Id == location.CountryId && c.ClassLocalisationId == location.CountryClassLocalisationId)
+                    .Select(c => c.CountryName)
+                    .FirstOrDefaultAsync();
+                cityName = await _contx.cities
+                    .Where(c => c.Id == location.CityId && c.CountryClassLocalisationId == location.CityCountryClassLocalisationId)
+                    .Select(c => c.CityName)
+                    .FirstOrDefaultAsync(); ;
             }
-            catch (Exception ex)
+
+            user.Data.UserRawDescription = model.Description;
+            user.Data.UserDescription = user.GenerateUserDescription(model.RealName, model.Age, countryName, cityName, model.Description);
+
+            //Reactivate user tick request if user's media had been changed
+            if (model.Media != user.Data.UserMedia)
             {
-                await LogAdminErrorAsync(user.Id, ex.Message, (int)Sections.Registration);
-                return 0;
+                user.Data.UserMedia = model.Media;
+                user.Data.IsMediaPhoto = model.IsMediaPhoto;
+                await ReactivateTickRequest(user.Id);
             }
-        }
 
-        public async Task<byte> UpdateUserDataAsync(UserDataInfo user)
-        {
-            try
-            {
-                var data = await _contx.SYSTEM_USERS_DATA.FindAsync(user.Id);
+            user.Data.UserRealName = model.RealName;
+            user.Data.UserAge = model.Age;
+            user.Data.UserGender = model.Gender;
+            user.Data.UserLanguages = model.Languages;
+            user.Data.Reason = model.Reason;
 
-                data.UserAge = user.UserAge;
-                data.UserGender = user.UserGender;
-                data.UserLanguages = user.UserLanguages;
-                data.ReasonId = user.ReasonId;
+            user.Data.AgePrefs = model.AgePrefs;
+            user.Data.LanguagePreferences = model.LanguagePreferences;
+            user.Data.LocationPreferences = model.LocationPreferences;
+            user.Data.CommunicationPrefs = model.CommunicationPrefs;
+            user.Data.UserGenderPrefs = model.GenderPrefs;
 
-                _contx.SYSTEM_USERS_DATA.Update(data);
-                await _contx.SaveChangesAsync();
-                return 1;
-            }
-            catch (Exception ex)
-            {
-                await LogAdminErrorAsync(user.Id, ex.Message, (int)Sections.Registration);
-                return 0;
-            }
-        }
+            location.CountryId = model.CountryCode;
+            location.CountryClassLocalisationId = model.CountryCode != null? model.AppLanguageId : null;
+            location.CityId = model.CityCode;
+            location.CityCountryClassLocalisationId = model.CityCode != null? model.AppLanguageId : null;
 
-        public async Task<byte> UpdateUserPreferencesAsync(UserPreferences user)
-        {
-            try
-            {
-                var prefs = await _contx.SYSTEM_USERS_PREFERENCES.FindAsync(user.Id);
-
-                prefs.AgePrefs = user.AgePrefs;
-                prefs.UserLanguagePreferences = user.UserLanguagePreferences;
-                prefs.UserLocationPreferences = user.UserLocationPreferences;
-                prefs.CommunicationPrefs = user.CommunicationPrefs;
-                prefs.UserGenderPrefs = user.UserGenderPrefs;
-
-                _contx.SYSTEM_USERS_PREFERENCES.Update(prefs);
-                await _contx.SaveChangesAsync();
-                return 1;
-            }
-            catch (Exception ex)
-            {
-                await LogAdminErrorAsync(user.Id, ex.Message, (int)Sections.Registration);
-                return 0;
-            }
-        }
-
-        public async Task<byte> UpdateUserLocationAsync(Location location)
-        {
-            try
-            {
-                var model = await _contx.USER_LOCATIONS.FindAsync(location.Id);
-
-                model.CityId = location.CityId;
-                model.CityCountryClassLocalisationId = location.CountryId != null? location.CountryClassLocalisationId : null;
-                model.CountryId = location.CountryId;
-                model.CountryClassLocalisationId = location.CityId != null ? location.CountryClassLocalisationId : null;
-
-                _contx.USER_LOCATIONS.Update(model);
-                await _contx.SaveChangesAsync();
-                return 1;
-            }
-            catch (Exception ex)
-            {
-                await LogAdminErrorAsync(location.Id, ex.Message, (int)Sections.Registration);
-                return 0;
-            }
+            _contx.users.Update(user);
+            _contx.users_data.Update(user.Data);
+            _contx.USER_LOCATIONS.Update(location);
+            await _contx.SaveChangesAsync();
         }
 
         public async Task<bool> CheckUserIsBusy(long userId)
         {
-            try
-            {
-                var user = await _contx.SYSTEM_USERS.Where(u => u.UserId == userId)
-                    .SingleOrDefaultAsync();
+            var user = await _contx.users.Where(u => u.Id == userId)
+                .SingleOrDefaultAsync();
 
-                if (user == null)
-                    return false;
-
-                return user.IsBusy;
-            }
-            catch (Exception ex)
-            {
-                await LogAdminErrorAsync(userId, ex.Message, (int)Sections.Neutral);
+            if (user == null)
                 return false;
-            }
+
+            return user.IsBusy; 
         }
 
         public async Task<SwitchBusyStatusResponse> SwhitchUserBusyStatus(long userId, int sectionId)
         {
-            var user = await _contx.SYSTEM_USERS.Where(u => u.UserId == userId)
-                .Include(u => u.UserDataInfo)
+            var user = await _contx.users.Where(u => u.Id == userId)
+                .Include(u => u.Data)
+                .Include(u => u.UserSettings)
                 .SingleOrDefaultAsync();
 
             if  (user != null)
@@ -2099,8 +1906,8 @@ namespace MyWebApi.Repositories
                     };
                 }
 
-                if (user.ShouldSendHints)
-                    hint = await GetRandomHintAsync(user.UserDataInfo.LanguageId, null);
+                if (user.UserSettings.ShouldSendHints)
+                    hint = await GetRandomHintAsync(user.Data.LanguageId, null);
 
 
                 return new SwitchBusyStatusResponse
@@ -2154,10 +1961,15 @@ namespace MyWebApi.Repositories
 
                 if ((byte)new Random().Next(0, 2) == 0)
                 {
-                    var senderUserName = await _contx.SYSTEM_USERS_BASES.Where(d => d.Id == request.UserId).Select(d => d.UserName).SingleOrDefaultAsync();
+                    var senderUserName = await _contx.users_data.Where(d => d.Id == request.UserId)
+                        .Select(d => d.UserName)
+                        .FirstOrDefaultAsync();
 
-                    //Delete request, user had just answered
-                    var requestId = await _contx.USER_NOTIFICATIONS.Where(n => n.UserId == request.UserId1 && n.UserId1 == request.UserId).Select(n => n.Id).SingleOrDefaultAsync();
+                    //Delete request, user had just responded to
+                    var requestId = await _contx.USER_NOTIFICATIONS.Where(n => n.UserId == request.UserId1 && n.UserId1 == request.UserId)
+                        .Select(n => n.Id)
+                        .SingleOrDefaultAsync();
+
                     await DeleteUserRequest(requestId);
 
                     //TODO: Get message from localizer based on users`s localization 
@@ -2166,10 +1978,16 @@ namespace MyWebApi.Repositories
                 }
                 else
                 {
-                    var receiverUserName = await _contx.SYSTEM_USERS_BASES.Where(d => d.Id == request.UserId1).Select(d => d.UserName).SingleOrDefaultAsync();
+                    var receiverUserName = await _contx.users_data
+                        .Where(d => d.Id == request.UserId1)
+                        .Select(d => d.UserName)
+                        .FirstOrDefaultAsync();
 
                     //Delete request, user had just answered
-                    var requestId = await _contx.USER_NOTIFICATIONS.Where(n => n.UserId == request.UserId1 && n.UserId1 == request.UserId).Select(n => n.Id).SingleOrDefaultAsync();
+                    var requestId = await _contx.USER_NOTIFICATIONS.Where(n => n.UserId == request.UserId1 && n.UserId1 == request.UserId)
+                        .Select(n => n.Id)
+                        .FirstOrDefaultAsync();
+
                     await DeleteUserRequest(requestId);
 
                     //TODO: Get message from localizer based on users`s localization 
@@ -2285,10 +2103,10 @@ namespace MyWebApi.Repositories
 
                 _contx.USER_ENCOUNTERS.RemoveRange(encounters);
 
-                var users = await _contx.SYSTEM_USERS.ToListAsync();
+                var users = await _contx.users.ToListAsync();
 
                 users.ForEach(u => u.IsBusy = false);
-                _contx.SYSTEM_USERS.UpdateRange(users);
+                _contx.users.UpdateRange(users);
 
                 await _contx.SaveChangesAsync();
                 return true;
@@ -2307,18 +2125,18 @@ namespace MyWebApi.Repositories
                 model.Id = Guid.NewGuid();
                 model.EncounterDate = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
 
-                var user = await _contx.SYSTEM_USERS.FindAsync(model.UserId);
+                var user = await _contx.users.FindAsync(model.UserId);
 
                 if (model.SectionId == (int)Sections.Familiator || model.SectionId == (int)Sections.Requester)
                 {
                     user.ProfileViewsCount++;
 
                     if (user.ProfileViewsCount == 15)
-                        await TopUpUserWalletPointsBalance(user.UserId, 9, "User has viewed 15 profiles");
+                        await TopUpUserWalletPointsBalance(user.Id, 9, "User has viewed 15 profiles");
                     else if (user.ProfileViewsCount == 30)
-                        await TopUpUserWalletPointsBalance(user.UserId, 15, "User has viewed 30 profiles");
+                        await TopUpUserWalletPointsBalance(user.Id, 15, "User has viewed 30 profiles");
                     else if (user.ProfileViewsCount == 50)
-                        await TopUpUserWalletPointsBalance(user.UserId, 22, "User has viewed 50 profiles");
+                        await TopUpUserWalletPointsBalance(user.Id, 22, "User has viewed 50 profiles");
                 }
                 else if (model.SectionId == (int)Sections.RT)
                     user.MaxRTViewsCount++;
@@ -2350,21 +2168,14 @@ namespace MyWebApi.Repositories
 
         public async Task<List<Encounter>> GetUserEncounters(long userId, int sectionId)
         {
-            try
-            {
-                var encounters = await _contx.USER_ENCOUNTERS
-                    .Where(e => e.UserId == userId)
-                    .Where(e => e.SectionId == sectionId)
-                    .Include(e => e.EncounteredUser)
-                    .ToListAsync();
+            var encounters = await _contx.USER_ENCOUNTERS
+                .Where(e => e.UserId == userId)
+                .Where(e => e.SectionId == sectionId)
+                .Include(e => e.EncounteredUser)
+                .AsNoTracking()
+                .ToListAsync();
 
-                return encounters != null ? encounters : new List<Encounter>();
-            }
-            catch (Exception ex)
-            {
-                await LogAdminErrorAsync(userId, ex.Message, (int)Sections.Neutral);
-                return null;
-            }
+            return encounters != null ? encounters : new List<Encounter>();
         }
 
         public bool CheckRequestExists(long senderId, long recieverId)
@@ -2381,7 +2192,7 @@ namespace MyWebApi.Repositories
             var userBonus = await GetUserBonusIndex(userId);
 
             var model = await _contx.USER_TRUST_LEVELS
-                .FindAsync(userId);
+                .Where(l => l.Id == userId).FirstOrDefaultAsync();
 
             if (model != null)
             {
@@ -2443,20 +2254,20 @@ namespace MyWebApi.Repositories
             var events = await _contx.SPONSOR_EVENTS
                 .Where(e => e.StartDateTime > DateTime.Now.AddDays(-1)) //Check if event starts at minimum of the day before todays date
                 .Where(e => e.IsOnline == IsOnline) // Todo: Apply some more filters
-                .Where(e => e.MaxAge >= user.UserDataInfo.UserAge && user.UserDataInfo.UserAge >= e.MinAge)
-                .Where(e => e.Languages.Any(l => user.UserDataInfo.UserLanguages.Contains((int)l)))
-                .Where(e => e.CityId == user.UserDataInfo.Location.CityId)
+                .Where(e => e.MaxAge >= user.Data.UserAge && user.Data.UserAge >= e.MinAge)
+                .Where(e => e.Languages.Any(l => user.Data.UserLanguages.Contains((int)l)))
+                .Where(e => e.CityId == user.Location.CityId)
                 .ToListAsync();
 
             events.ForEach(e => //Check if event has country and city, if true -> check if applies to user 
             {
                 if (e.CountryId != null)
                 {
-                    if (e.CountryId != user.UserDataInfo.Location.CountryId)
+                    if (e.CountryId != user.Location.CountryId)
                         events.Remove(e);
 
                     if (e.CityId != null)
-                        if (e.CityId != user.UserDataInfo.Location.CityId)
+                        if (e.CityId != user.Location.CityId)
                             events.Remove(e);
                 }
             });
@@ -2466,7 +2277,7 @@ namespace MyWebApi.Repositories
 
         public async Task<bool> UpdateUserNickname(long userId, string nickname)
         {
-            var currentUser = await _contx.SYSTEM_USERS.FindAsync(userId);
+            var currentUser = await _contx.users.FindAsync(userId);
 
             if ((bool)currentUser.HasPremium)
             {
@@ -2478,7 +2289,7 @@ namespace MyWebApi.Repositories
                 }
 
                 currentUser.Nickname = nickname;
-                _contx.SYSTEM_USERS.Update(currentUser);
+                _contx.users.Update(currentUser);
                 await _contx.SaveChangesAsync();
                 return true;
             }
@@ -2488,7 +2299,7 @@ namespace MyWebApi.Repositories
 
         public async Task<string> GetUserNickname(long userId)
         {
-            var currentUser = await _contx.SYSTEM_USERS.FindAsync(userId);
+            var currentUser = await _contx.users.FindAsync(userId);
 
             if (currentUser != null)
                 return currentUser.Nickname;
@@ -2510,7 +2321,7 @@ namespace MyWebApi.Repositories
                 user.HadReceivedReward = true;
                 user.DailyRewardPoint += 1;
 
-                _contx.SYSTEM_USERS.Update(user);
+                _contx.users.Update(user);
                 await _contx.SaveChangesAsync();
 
                 return $"You have revieved {reward}p as a daily reward"; //TODO: load first part hard-coded part of a string, from localisation based on user app language
@@ -2537,8 +2348,8 @@ namespace MyWebApi.Repositories
         {
             try
             {
-                return (short)await _contx.SYSTEM_USERS
-                    .Where(u => u.UserId == userId)
+                return (short)await _contx.users
+                    .Where(u => u.Id == userId)
                     .Select(u => u.BonusIndex)
                     .FirstOrDefaultAsync();
             }
@@ -2906,7 +2717,7 @@ namespace MyWebApi.Repositories
             });
 
             if (task.DailyTask.RewardCurrency == (byte)Currencies.Points)
-                await TopUpUserWalletPointsBalance(userId, task.DailyTask.Reward, description:"Daily task acquiering");
+                await TopUpUserWalletPointsBalance(userId, task.DailyTask.Reward, description:"Daily task acquiered");
             else if (task.DailyTask.RewardCurrency == (byte)Currencies.PersonalityPoints) { }
             //TODO: Topup user Personality points wallet balace
             else if (task.DailyTask.RewardCurrency == (byte)Currencies.Premium) { }
@@ -3027,7 +2838,7 @@ namespace MyWebApi.Repositories
 
         public async Task<int> GetUserMaximumLanguageCountAsync(long userId)
         {
-            var user = await _contx.SYSTEM_USERS.FindAsync(userId);
+            var user = await _contx.users.FindAsync(userId);
 
             if (user == null)
                 return GetMaximumLanguageCount(null);
@@ -3367,8 +3178,8 @@ namespace MyWebApi.Repositories
         {
             try
             {
-                var userPrefs = await _contx.SYSTEM_USERS_PREFERENCES.Where(p => p.Id == userId)
-                    .SingleOrDefaultAsync();
+                var userPrefs = await _contx.users_settings.Where(s => s.Id == userId)
+                    .FirstOrDefaultAsync();
                 
                 if (userPrefs.ShouldUsePersonalityFunc)
                 {
@@ -3397,7 +3208,7 @@ namespace MyWebApi.Repositories
                     }
                 }
 
-                _contx.SYSTEM_USERS_PREFERENCES.Update(userPrefs);
+                _contx.users_settings.Update(userPrefs);
                 await _contx.SaveChangesAsync();
 
                 return userPrefs.ShouldUsePersonalityFunc;
@@ -3410,7 +3221,7 @@ namespace MyWebApi.Repositories
             try
             {
                 var userTest = await _contx.user_tests.Where(t => t.UserId == model.UserId && t.TestId == model.TestId)
-                    .SingleOrDefaultAsync();
+                    .FirstOrDefaultAsync();
 
                 //Give user 1 PP for passing the test for the first time
                 if (userTest.PassedOn == null)
@@ -3467,7 +3278,7 @@ namespace MyWebApi.Repositories
         public async Task<GetUserData> GetUserListByTagsAsync(GetUserByTags model)
         {
             var currentUser = await GetUserInfoAsync(model.UserId);
-            var hasActiveDetector = await CheckEffectIsActiveAsync(currentUser.UserId, (int)Currencies.TheDetector);
+            var hasActiveDetector = await CheckEffectIsActiveAsync(currentUser.Id, (int)Currencies.TheDetector);
 
             //User has already reached his limit;
             if (currentUser.TagSearchesCount > currentUser.MaxTagSearchCount)
@@ -3475,91 +3286,78 @@ namespace MyWebApi.Repositories
 
             var currentUserEncounters = await GetUserEncounters(model.UserId, (int)Sections.Familiator); //I am not sure if it is 2 or 3 section
 
-            var data = await _contx.SYSTEM_USERS
-                    .Where(u => u.UserId != currentUser.UserId)
-                    .Where(u => u.UserPreferences.AgePrefs.Contains(currentUser.UserDataInfo.UserAge))
-                    .Where(u => u.UserDataInfo.UserLanguages.Any(l => currentUser.UserPreferences.UserLanguagePreferences.Contains(l)))
-                    .Where(u => currentUser.UserPreferences.AgePrefs.Contains(u.UserDataInfo.UserAge))
-                    .Where(u => currentUser.UserDataInfo.UserLanguages.Any(l => u.UserPreferences.UserLanguagePreferences.Contains(l)))
-                    .Include(u => u.UserBaseInfo)
-                    .Include(u => u.UserDataInfo)
-                    .ThenInclude(u => u.Location)
-                    .Include(u => u.UserPreferences)
+            var query = _contx.users
+                    .Where(u => u.Id != currentUser.Id)
+                    .Where(u => u.Data.AgePrefs.Contains(currentUser.Data.UserAge))
+                    .Where(u => u.Data.UserLanguages.Any(l => currentUser.Data.LanguagePreferences.Contains(l)))
+                    .Where(u => currentUser.Data.AgePrefs.Contains(u.Data.UserAge))
+                    .Where(u => currentUser.Data.UserLanguages.Any(l => u.Data.LanguagePreferences.Contains(l)))
+                    //Check if users had encountered one another
+                    .Where(u => !currentUser.CheckIfHasEncountered(currentUserEncounters, u.Id))
+                    //Check if users are in each others black lists
+                    .Where(u => u.UserBlackList.Where(u => u.BannedUserId == model.UserId).FirstOrDefault() == null)
+                    .Where(u => currentUser.UserBlackList.Where(l => l.BannedUserId == u.Id).FirstOrDefault() == null)
+                    //Check if request already exists
+                    .Where(u => !CheckRequestExists(model.UserId, u.Id))
+                    //Check if current user had already recieved request from user
+                    .Where(u => !CheckRequestExists(u.Id, model.UserId))
+                    .Where(u => u.Tags.Intersect(u.Tags).Count() >= 1)
+                    .Include(u => u.Data)
+                    .Include(u => u.UserSettings)
+                    .Include(u => u.Location)
                     .Include(u => u.UserBlackList)
-                    .AsNoTracking()
-                    .ToListAsync();
+                    .Include(u => u.Tags)
+                    .AsNoTracking();
 
-            if (currentUser.UserPreferences.ShouldFilterUsersWithoutRealPhoto && currentUser.HasPremium)
-            {
-                data = data.Where(u => u.UserBaseInfo.IsPhotoReal)
-                    .ToList();
-            }
+            //Identity check
+            if (currentUser.UserSettings.ShouldFilterUsersWithoutRealPhoto && currentUser.HasPremium)
+                query = query.Where(u => u.IdentityType != IdentityConfirmationType.None);
 
-            //Check if users had encountered one another
-            data = data.Where(u => !currentUser.CheckIfHasEncountered(currentUserEncounters, u.UserId)).ToList();
-
-            //Check if users are in each others black lists
-            data = data.Where(u => u.UserBlackList.Where(u => u.BannedUserId == model.UserId).SingleOrDefault() == null).ToList();
-            data = data.Where(u => currentUser.UserBlackList.Where(l => l.BannedUserId == u.UserId).SingleOrDefault() == null).ToList();
-
-            //Check if request already exists
-            data = data.Where(u => !CheckRequestExists(model.UserId, u.UserId)).ToList();
-
-            //Check if current user had already recieved request from user
-            data = data.Where(u => !CheckRequestExists(u.UserId, model.UserId)).ToList();
 
             currentUser.TagSearchesCount++;
             await _contx.SaveChangesAsync();
 
-            var usersTags = await GetUsersTagsAsync(data.Select(d => d.UserId).ToList(), TagType.Tags);
+            var data = await query.ToListAsync();
 
-            var users = new List<User>();
+            //var usersTags = await GetUsersTagsAsync(data.Select(d => d.UserId).ToList(), TagType.Tags);
 
-            foreach (var tags in usersTags.Values)
-            {
-                var tagList = tags.Select(t => t.Tag).ToList();
+            //var users = new List<User>();
 
-                if (tagList.Intersect(model.Tags).Count() >= 1)
-                    users.Add(data.Where(d => d.UserId == tags.FirstOrDefault().UserId).FirstOrDefault());
-            }
+            //foreach (var tags in usersTags.Values)
+            //{
+            //    var tagList = tags.Select(t => t.Tag).ToList();
 
-            if (users.Count == 0)
+            //    if (tagList.Intersect(model.Tags).Count() >= 1)
+            //        users.Add(data.Where(d => d.UserId == tags.FirstOrDefault().UserId).FirstOrDefault());
+            //}
+
+            if (data.Count == 0)
                 return null;
 
             //Shuffle users randomly
-            var user = users.OrderBy(u => Guid.NewGuid())
+            var user = data.OrderBy(u => Guid.NewGuid())
                 .FirstOrDefault();
 
-            var returnUser = new GetUserData(user);
+            GetUserData outputUser;
 
-            if (currentUser.UserPreferences.ShouldUsePersonalityFunc)
-                returnUser = await GetPersonalityMatchResult(model.UserId, currentUser, user, false);
-
-            if (currentUser.ShouldComment)
-                returnUser.Comment = await GetRandomHintAsync(currentUser.UserDataInfo.LanguageId, HintType.Search);
-
-            if (user.HasPremium && user.Nickname != null)
-                returnUser.UserBaseInfo.UserDescription = $"<b>{user.Nickname}</b>\n\n{user.UserBaseInfo.UserDescription}";
-
-            if (user.IdentityType == IdentityConfirmationType.Partial)
-                returnUser.AddDescriptionBonus($"☑️☑️☑️\n\n");
-
-            else if (user.IdentityType == IdentityConfirmationType.Full)
-                returnUser.AddDescriptionBonus($"✅✅✅\n\n");
+            if (currentUser.UserSettings.ShouldUsePersonalityFunc)
+                outputUser = await GetPersonalityMatchResult(model.UserId, currentUser, user, false);
+            else
+                outputUser = await AssembleProfileAsync(currentUser, user);
 
             //Show tags if user has detector activated
             if (hasActiveDetector)
-                user.UserBaseInfo.UserDescription += String.Join(" ", usersTags[user.UserId]);
+                outputUser.AddDescriptionBonusDownwards(String.Join(" ", user.Tags));
 
-            return returnUser;
+            return outputUser;
         }
 
         public async Task<bool?> CheckUserUsesPersonality(long userId)
         {
-            return await _contx.SYSTEM_USERS_PREFERENCES
+            return await _contx.users_settings
                 .Where(p => p.Id == userId)
                 .Select(p => p.ShouldUsePersonalityFunc)
-                .SingleOrDefaultAsync();
+                .FirstOrDefaultAsync();
         }
 
         public async Task<List<BlackList>> GetBlackList(long userId)
@@ -3578,11 +3376,11 @@ namespace MyWebApi.Repositories
 
         public async Task<string> RetreiveCommonLanguagesAsync(long user1Id, long user2Id, int localisationId)
         {
-            var user1Langs = await _contx.SYSTEM_USERS_DATA.Where(u => u.Id == user1Id)
+            var user1Langs = await _contx.users_data.Where(u => u.Id == user1Id)
                 .Select(u => u.UserLanguages)
                 .SingleOrDefaultAsync();
 
-            var user2Langs = await _contx.SYSTEM_USERS_DATA.Where(u => u.Id == user2Id)
+            var user2Langs = await _contx.users_data.Where(u => u.Id == user2Id)
                 .Select(u => u.UserLanguages)
                 .SingleOrDefaultAsync();
 
@@ -3616,12 +3414,12 @@ namespace MyWebApi.Repositories
         {
             try
             {
-                var user = await _contx.SYSTEM_USERS_DATA.Where(u => u.Id == userId)
+                var data = await _contx.users_data.Where(u => u.Id == userId)
                     .SingleOrDefaultAsync();
 
-                user.AutoReplyText = text;
+                data.AutoReplyText = text;
 
-                _contx.SYSTEM_USERS_DATA.Update(user);
+                _contx.users_data.Update(data);
                 await _contx.SaveChangesAsync();
 
                 return true;
@@ -3635,12 +3433,12 @@ namespace MyWebApi.Repositories
             {
                 if (await CheckUserHasPremiumAsync(userId))
                 {
-                    var user = await _contx.SYSTEM_USERS_DATA.Where(u => u.Id == userId)
+                    var data = await _contx.users_data.Where(u => u.Id == userId)
                         .SingleOrDefaultAsync();
 
-                    user.AutoReplyVoice = voice;
+                    data.AutoReplyVoice = voice;
 
-                    _contx.SYSTEM_USERS_DATA.Update(user);
+                    _contx.users_data.Update(data);
                     await _contx.SaveChangesAsync();
 
                     return true;
@@ -3654,9 +3452,9 @@ namespace MyWebApi.Repositories
         public async Task<ActiveAutoReply> GetActiveAutoReplyAsync(long userId)
         {
             var reply = new ActiveAutoReply();
-            var replyData = await _contx.SYSTEM_USERS_DATA.Where(d => d.Id == userId)
+            var replyData = await _contx.users_data.Where(d => d.Id == userId)
                 .Select(d => new { d.AutoReplyText, d.AutoReplyVoice })
-                .SingleOrDefaultAsync();
+                .FirstOrDefaultAsync();
 
             if (await CheckUserHasPremiumAsync(userId))
             {
@@ -3901,8 +3699,6 @@ namespace MyWebApi.Repositories
             }
         }
 
-        
-
         public async Task<bool> DeactivateEffectAsync(long userId, Guid activeEffectId)
         {
             try
@@ -3922,7 +3718,7 @@ namespace MyWebApi.Repositories
 
         private async Task<int> AddMaxUserProfileViewCountAsync(long userId, int profileCount)
         {
-            var userInfo = await _contx.SYSTEM_USERS.FindAsync(userId);
+            var userInfo = await _contx.users.FindAsync(userId);
             userInfo.ProfileViewsCount -= profileCount;
             await _contx.SaveChangesAsync();
 
@@ -3931,7 +3727,7 @@ namespace MyWebApi.Repositories
 
         private async Task<int> AddMaxRTProfileViewCountAsync(long userId, int increment)
         {
-            var userInfo = await _contx.SYSTEM_USERS.FindAsync(userId);
+            var userInfo = await _contx.users.FindAsync(userId);
             userInfo.RTViewsCount -= increment;
             await _contx.SaveChangesAsync();
 
@@ -3997,7 +3793,7 @@ namespace MyWebApi.Repositories
 
         public async Task<bool> SwitchUserFilteringByPhotoAsync(long userId)
         {
-            var userPrefs = await _contx.SYSTEM_USERS_PREFERENCES.Where(p => p.Id == userId)
+            var userPrefs = await _contx.users_settings.Where(p => p.Id == userId)
                 .SingleOrDefaultAsync();
 
             if (userPrefs == null)
@@ -4011,8 +3807,8 @@ namespace MyWebApi.Repositories
 
         public async Task<bool> GetUserFilteringByPhotoStatusAsync(long userId)
         {
-            var userPrefs = await _contx.SYSTEM_USERS_PREFERENCES.Where(p => p.Id == userId)
-                .SingleOrDefaultAsync();
+            var userPrefs = await _contx.users_settings.Where(p => p.Id == userId)
+                .FirstOrDefaultAsync();
 
             if (userPrefs == null)
                 throw new NullReferenceException($"User {userId} was not found");
@@ -4075,7 +3871,6 @@ namespace MyWebApi.Repositories
             //Get number of days in which this test can be passed again
             var result = (test.Test.CanBePassedInDays - (DateTime.Now - test.PassedOn).Value.Days);
             return result;
-
         }
 
         public async Task<bool> PurchaseTestAsync(long userId, long testId, int localisation)
@@ -4148,7 +3943,7 @@ namespace MyWebApi.Repositories
 
         public async Task<bool> SetUserFreeSearchParamAsync(long userId, bool freeStatus)
         {
-            var user = await _contx.SYSTEM_USERS.FindAsync(userId);
+            var user = await _contx.users_settings.FindAsync(userId);
 
             if (user == null)
                 throw new NullReferenceException($"User #{userId} does not exist");
@@ -4161,7 +3956,7 @@ namespace MyWebApi.Repositories
 
         public async Task<bool> CheckUserHaveChosenFreeParamAsync(long userId)
         {
-            var user = await _contx.SYSTEM_USERS.FindAsync(userId);
+            var user = await _contx.users.FindAsync(userId);
 
             if (user == null)
                 return false;
@@ -4171,8 +3966,8 @@ namespace MyWebApi.Repositories
 
         public async Task<bool> CheckShouldTurnOffPersonalityAsync(long userId)
         {
-            var user = await _contx.SYSTEM_USERS.Where(u => u.UserId == userId)
-                .Include(u => u.UserPreferences)
+            var user = await _contx.users.Where(u => u.Id == userId)
+                .Include(u => u.UserSettings)
                 .SingleOrDefaultAsync();
 
             if (user == null)
@@ -4183,7 +3978,7 @@ namespace MyWebApi.Repositories
                 return false;
 
             //Return false if personality is not used
-            if (!user.UserPreferences.ShouldUsePersonalityFunc)
+            if (!user.UserSettings.ShouldUsePersonalityFunc)
                 return false;
 
             return true;
@@ -4216,7 +4011,7 @@ namespace MyWebApi.Repositories
 
         public async Task<bool> SwitchUserRTLanguageConsiderationAsync(long userId)
         {
-            var user = await _contx.SYSTEM_USERS.Where(u => u.UserId == userId)
+            var user = await _contx.users_settings.Where(u => u.Id == userId)
                 .SingleOrDefaultAsync();
 
             if (user == null)
@@ -4231,7 +4026,7 @@ namespace MyWebApi.Repositories
 
         public async Task<bool> GetUserRTLanguageConsiderationAsync(long userId)
         {
-            var user = await _contx.SYSTEM_USERS.FindAsync(userId);
+            var user = await _contx.users_settings.FindAsync(userId);
 
             if (user == null)
                 throw new NullReferenceException($"User #{userId} does not exist");
@@ -4241,7 +4036,7 @@ namespace MyWebApi.Repositories
 
         public async Task SetUserCurrencyAsync(long userId, short currency)
         {
-            var user = await _contx.SYSTEM_USERS.FindAsync(userId);
+            var user = await _contx.users.FindAsync(userId);
 
             if (user == null)
                 throw new NullReferenceException($"User #{userId} does not exist");
@@ -4316,8 +4111,7 @@ namespace MyWebApi.Repositories
             var senderId = await _contx.USER_NOTIFICATIONS.Where(r => r.Id == requestId).Select(r => r.UserId)
                 .SingleOrDefaultAsync();
 
-            var sender = await _contx.SYSTEM_USERS.Where(u => u.UserId == senderId)
-                .Include(u => u.UserBaseInfo)
+            var sender = await _contx.users.Where(u => u.Id == senderId)
                 .AsNoTracking()
                 .SingleOrDefaultAsync();
 
@@ -4363,7 +4157,7 @@ namespace MyWebApi.Repositories
 
         public async Task<bool> CheckPromoIsCorrectAsync(long userId, string promoText, bool isActivatedBeforeRegistration)
         {
-            var promo = await _contx.promo_codes.Where(p => p.Promo == promoText && p.UserdOnlyInRegistration == isActivatedBeforeRegistration)
+            var promo = await _contx.promo_codes.Where(p => p.Promo == promoText && p.UsedOnlyInRegistration == isActivatedBeforeRegistration)
                 .AsNoTracking()
                 .SingleOrDefaultAsync();
 
@@ -4372,7 +4166,7 @@ namespace MyWebApi.Repositories
             if (isActivatedBeforeRegistration)
                 return promo != null;
 
-            //Enter promo right await if it had not been inputed before registration
+            //Enter promo right away if it had not been input before registration
             return await EnterPromo(userId, promo);
         }
 
@@ -4399,7 +4193,7 @@ namespace MyWebApi.Repositories
 
         public async Task<bool> GetUserIncreasedFamiliarityAsync(long userId)
         {
-            var user = await _contx.SYSTEM_USERS.FindAsync(userId);
+            var user = await _contx.users_settings.FindAsync(userId);
 
             if (user == null)
                 throw new NullReferenceException($"User {userId} does not exist !");
@@ -4409,15 +4203,15 @@ namespace MyWebApi.Repositories
 
         public async Task<bool> SwitchIncreasedFamiliarityAsync(long userId)
         {
-            var user = await _contx.SYSTEM_USERS.FindAsync(userId);
+            var user = await _contx.users.FindAsync(userId);
 
             if (user == null)
                 throw new NullReferenceException($"User {userId} does not exist !");
 
-            user.IncreasedFamiliarity = !user.IncreasedFamiliarity;
+            user.UserSettings.IncreasedFamiliarity = !user.UserSettings.IncreasedFamiliarity;
             await _contx.SaveChangesAsync();
 
-            return user.IncreasedFamiliarity;
+            return user.UserSettings.IncreasedFamiliarity;
         }
 
         public async Task<bool> AddUserCommercialVector(long userId, string tagString)
@@ -4441,7 +4235,7 @@ namespace MyWebApi.Repositories
 
         public async Task<bool> SwitchUserFreeSearchParamAsync(long userId)
         {
-            var user = await _contx.SYSTEM_USERS.FindAsync(userId);
+            var user = await _contx.users_settings.FindAsync(userId);
 
             if (user == null)
                 throw new NullReferenceException($"User #{userId} does not exist");
@@ -4485,6 +4279,7 @@ namespace MyWebApi.Repositories
                 IsAutoReplyText = model.IsAutoReplyText,
                 AutoReply = model.AutoReply,
                 IsOffline = model.IsOffline,
+                IsAwaiting = model.IsAwaiting,
                 UniqueLink = Guid.NewGuid().ToString("N").Substring(0, 7).ToUpper(),
                 Status = AdventureStatus.New
             };
@@ -4521,6 +4316,7 @@ namespace MyWebApi.Repositories
             adventure.IsAutoReplyText = model.IsAutoReplyText;
             adventure.AutoReply = model.AutoReply;
             adventure.Status = AdventureStatus.Changed;
+            adventure.IsAwaiting = model.IsAwaiting;
 
             await _contx.SaveChangesAsync();
         }
@@ -4553,7 +4349,7 @@ namespace MyWebApi.Repositories
             if (existingAttendee != null)
                 return ParticipationRequestStatus.AlreadyParticipating;
 
-            var userName = await _contx.SYSTEM_USERS_BASES.Where(u => u.Id == userId)
+            var userName = await _contx.users_data.Where(u => u.Id == userId)
                 .Select(u => u.UserName)
                 .FirstOrDefaultAsync();
 
@@ -4585,7 +4381,6 @@ namespace MyWebApi.Repositories
             return true;
         }
 
-
         public async Task<bool> ProcessSubscriptionRequestAsync(Guid adventureId, long userId, AdventureAttendeeStatus status)
         {
             var attendee = await _contx.adventure_attendees.Where(a => a.UserId == userId && a.AdventureId == adventureId)
@@ -4596,19 +4391,23 @@ namespace MyWebApi.Repositories
                 throw new NullReferenceException($"No attendee with id #{userId} had been subscribed to adventure {adventureId}");
 
             var adventure = await _contx.adventures.Where(a => a.Id == adventureId)
-                .Include(a => a.Creator).ThenInclude(u => u.UserBaseInfo)
+                .Include(a => a.Creator).ThenInclude(u => u.Data)
                 .FirstOrDefaultAsync();
 
             attendee.Status = status;
 
             if (status == AdventureAttendeeStatus.Accepted)
             {
+                var contact = string.IsNullOrEmpty(adventure.GroupLink) ? 
+                    $"You may contact its creator @{adventure.Creator.Data.UserName} and discuss details" : 
+                    $"You may join creator's group via this link\n{adventure.GroupLink}" ;
+
                 await AddUserNotificationAsync(new UserNotification
                 {
                     UserId1 = userId,
                     Section = Sections.Adventurer,
                     Severity = Severities.Moderate,
-                    Description = $"Your request to join adventure {adventure.Name} had been accepted.\nYou may contact its creator @{adventure.Creator.UserBaseInfo.UserName} and discuss details"
+                    Description = $"Your request to join adventure {adventure.Name} had been accepted.\n{contact}"
                 });
             }
 
@@ -4673,7 +4472,7 @@ namespace MyWebApi.Repositories
             if (tickRequest == null)
                 return;
 
-            var user = await _contx.SYSTEM_USERS.Where(u => u.UserId == userId)
+            var user = await _contx.users.Where(u => u.Id == userId)
                 .SingleOrDefaultAsync();
 
             //Throw if user does not exist, because that method should not be called by not existing user
@@ -4743,7 +4542,7 @@ namespace MyWebApi.Repositories
             //Refresh data regarding user premium status
             var hasPremium = await CheckUserHasPremiumAsync(userId);
 
-            var limitations = await _contx.SYSTEM_USERS.Where(u => u.UserId == userId).Select(u => new GetLimitations
+            var limitations = await _contx.users.Where(u => u.Id == userId).Select(u => new GetLimitations
             {
                 MaxTagViews = u.MaxTagSearchCount,
                 MaxProfileViews = u.MaxProfileViewsCount,
@@ -4776,6 +4575,7 @@ namespace MyWebApi.Repositories
                 return await _contx.hints.Where(h => h.ClassLocalisationId == localisation && h.Type != HintType.Search)
                     .OrderBy(r => EF.Functions.Random()).Take(1)
                     .Select(h => h.Text)
+                    .AsNoTracking()
                     .FirstOrDefaultAsync();
             }
 
@@ -4786,6 +4586,7 @@ namespace MyWebApi.Repositories
             return await _contx.hints.Where(h => h.ClassLocalisationId == localisation && h.Type == type)
                     .OrderBy(r => EF.Functions.Random())
                     .Select(h => h.Text)
+                    .AsNoTracking()
                     .FirstOrDefaultAsync();
         }
 
@@ -4793,11 +4594,11 @@ namespace MyWebApi.Repositories
         {
             var limitations = await GetUserSearchLimitations(userId);
 
-            return await _contx.SYSTEM_USERS.Where(u => u.UserId == userId).Select(u => new BasicUserInfo
+            return await _contx.users.Where(u => u.Id == userId).Select(u => new BasicUserInfo
             {
-                Id = u.UserId,
-                Username = u.UserBaseInfo.UserName,
-                UserRealName = u.UserBaseInfo.UserRealName,
+                Id = u.Id,
+                Username = u.Data.UserName,
+                UserRealName = u.Data.UserRealName,
                 HasPremium = u.HasPremium,
                 IsBanned = u.IsBanned,
                 IsBusy = u.IsBusy,
@@ -4807,31 +4608,31 @@ namespace MyWebApi.Repositories
 
         public async Task SwitchHintsVisibilityAsync(long userId)
         {
-            var user = await  _contx.SYSTEM_USERS.Where(u => u.UserId == userId)
+            var user = await  _contx.users.Where(u => u.Id == userId)
                 .FirstOrDefaultAsync();
 
             if (user == null)
                 return;
 
-            user.ShouldSendHints = !user.ShouldSendHints;
+            user.UserSettings.ShouldSendHints = !user.UserSettings.ShouldSendHints;
             await _contx.SaveChangesAsync();
         }
 
         public async Task SwitchSearchCommentsVisibilityAsync(long userId)
         {
-            var user = await _contx.SYSTEM_USERS.Where(u => u.UserId == userId)
+            var user = await _contx.users.Where(u => u.Id == userId)
                 .FirstOrDefaultAsync();
 
             if (user == null)
                 return;
 
-            user.ShouldComment = !user.ShouldComment;
+            user.UserSettings.ShouldComment = !user.UserSettings.ShouldComment;
             await _contx.SaveChangesAsync();
         }
 
         public async Task<GetUserMedia> GetUserMediaAsync(long userId)
         {
-            return await _contx.SYSTEM_USERS_BASES.Where(u => u.Id == userId).Select(u => new GetUserMedia
+            return await _contx.users_data.Where(u => u.Id == userId).Select(u => new GetUserMedia
             {
                 Media = u.UserMedia,
                 IsPhoto = u.IsMediaPhoto
@@ -4840,18 +4641,19 @@ namespace MyWebApi.Repositories
 
         public async Task<UserPartialData> GetUserPartialData(long userId)
         {
-            return await _contx.SYSTEM_USERS.Where(u => u.UserId == userId).Select(u => new UserPartialData
+            return await _contx.users.Where(u => u.Id == userId).Select(u => new UserPartialData
             {
-                Id = u.UserId,
-                AppLanguage = u.UserDataInfo.LanguageId,
-                Media = u.UserBaseInfo.UserMedia,
-                IsPhoto = u.UserBaseInfo.IsMediaPhoto
+                Id = u.Id,
+                AppLanguage = u.Data.LanguageId,
+                Media = u.Data.UserMedia,
+                IsPhoto = u.Data.IsMediaPhoto
             }).FirstOrDefaultAsync();
         }
 
-        public async Task<Adventure> GetAdventureAsync(Guid id)
+        public async Task<ManageAdventure> GetAdventureAsync(Guid id)
         {
             return await _contx.adventures.Where(a => a.Id == id)
+                .Select(a => new ManageAdventure(a))
                 .FirstOrDefaultAsync();
         }
 
@@ -4953,18 +4755,56 @@ namespace MyWebApi.Repositories
             }).FirstOrDefaultAsync();
         }
 
-        public async Task<DeleteTemplateResult> DeleteAdventureTemplateAsync(Guid templateId)
+        public async Task<DeleteResult> DeleteAdventureTemplateAsync(Guid templateId)
         {
             var template = await _contx.adventure_templates.Where(t => t.Id == templateId)
                 .FirstOrDefaultAsync();
 
             if (template == null)
-                return DeleteTemplateResult.DoesNotExist;
+                return DeleteResult.DoesNotExist;
 
             _contx.adventure_templates.Remove(template);
             await _contx.SaveChangesAsync();
 
-            return DeleteTemplateResult.Success;
+            return DeleteResult.Success;
+        }
+
+        public async Task<DeleteResult> DeleteAdventureAttendeeAsync(Guid adventureId, long attendeeId)
+        {
+            var attendee = await _contx.adventure_attendees.Where(a => a.AdventureId == adventureId && a.UserId == attendeeId)
+                .FirstOrDefaultAsync();
+
+            if (attendee == null)
+                return DeleteResult.DoesNotExist;
+
+            _contx.adventure_attendees.Remove(attendee);
+            await _contx.SaveChangesAsync();
+
+            await AddUserNotificationAsync(new UserNotification
+            {
+                UserId1 = attendee.UserId,
+                Section = Sections.Adventurer,
+                Severity = Severities.Urgent,
+                Description = "You have been removed from one of the adventures" // TODO: More precise ?
+            });
+
+            return DeleteResult.Success;
+        }
+
+        public async Task<SetGroupIdResult> SetAdventureGroupIdAsync(SetGroupIdRequest request)
+        {
+            var hasName = !string.IsNullOrEmpty(request.AdventureName);
+            var adventure = await _contx.adventures.Where(a => a.UserId == request.UserId && a.IsAwaiting && ((hasName && a.Name == request.AdventureName) || !hasName))
+                .FirstOrDefaultAsync();
+
+            if (adventure == null)
+                return SetGroupIdResult.AdventureDoesNotExist;
+
+            adventure.GroupLink = request.GroupLink;
+            adventure.GroupId = request.GroupId;
+
+            await _contx.SaveChangesAsync();
+            return SetGroupIdResult.Success;
         }
     }
 }

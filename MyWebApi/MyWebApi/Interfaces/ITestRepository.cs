@@ -1,11 +1,11 @@
-﻿using MyWebApi.Entities.LocalisationEntities;
-using MyWebApi.Entities.LocationEntities;
-using MyWebApi.Entities.SecondaryEntities;
-using MyWebApi.Entities.TestEntities;
+﻿using WebApi.Entities.LocalisationEntities;
+using WebApi.Entities.LocationEntities;
+using WebApi.Entities.SecondaryEntities;
+using WebApi.Entities.TestEntities;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace MyWebApi.Interfaces
+namespace WebApi.Interfaces
 {
     public interface ITestRepository
     {

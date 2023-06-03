@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace MyWebApi.Entities.AchievementEntities
+namespace WebApi.Entities.AchievementEntities
 {
     public class Achievement
     {

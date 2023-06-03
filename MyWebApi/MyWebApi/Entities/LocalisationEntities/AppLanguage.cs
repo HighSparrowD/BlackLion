@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace MyWebApi.Entities.LocalisationEntities
+namespace WebApi.Entities.LocalisationEntities
 {
     public class AppLanguage
     {

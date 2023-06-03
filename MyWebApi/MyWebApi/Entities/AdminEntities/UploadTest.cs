@@ -1,7 +1,7 @@
-﻿using MyWebApi.Entities.AdminEntities;
+﻿using WebApi.Entities.AdminEntities;
 using System.Collections.Generic;
 
-namespace MyWebApi.Entities.TestEntities
+namespace WebApi.Entities.TestEntities
 {
     public class UploadTest
     {

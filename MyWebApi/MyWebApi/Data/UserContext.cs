@@ -1,29 +1,28 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using MyWebApi.Entities.AchievementEntities;
-using MyWebApi.Entities.AdminEntities;
-using MyWebApi.Entities.AdventureEntities;
-using MyWebApi.Entities.DailyRewardEntities;
-using MyWebApi.Entities.DailyTaskEntities;
-using MyWebApi.Entities.EffectEntities;
-using MyWebApi.Entities.HintEntities;
-using MyWebApi.Entities.LocalisationEntities;
-using MyWebApi.Entities.LocationEntities;
-using MyWebApi.Entities.ReasonEntities;
-using MyWebApi.Entities.ReportEntities;
-using MyWebApi.Entities.SecondaryEntities;
-using MyWebApi.Entities.SponsorEntities;
-using MyWebApi.Entities.TestEntities;
-using MyWebApi.Entities.UserActionEntities;
-using MyWebApi.Entities.UserInfoEntities;
+using WebApi.Entities.AchievementEntities;
+using WebApi.Entities.AdminEntities;
+using WebApi.Entities.AdventureEntities;
+using WebApi.Entities.DailyRewardEntities;
+using WebApi.Entities.DailyTaskEntities;
+using WebApi.Entities.EffectEntities;
+using WebApi.Entities.HintEntities;
+using WebApi.Entities.LocalisationEntities;
+using WebApi.Entities.LocationEntities;
+using WebApi.Entities.ReasonEntities;
+using WebApi.Entities.ReportEntities;
+using WebApi.Entities.SecondaryEntities;
+using WebApi.Entities.SponsorEntities;
+using WebApi.Entities.TestEntities;
+using WebApi.Entities.UserActionEntities;
+using WebApi.Entities.UserInfoEntities;
 
-namespace MyWebApi.Data
+namespace WebApi.Data
 {
     public class UserContext : DbContext
     {
-        public DbSet<User> SYSTEM_USERS { get; set; }
-        public DbSet<UserBaseInfo> SYSTEM_USERS_BASES { get; set; }
-        public DbSet<UserDataInfo> SYSTEM_USERS_DATA { get; set; }
-        public DbSet<UserPreferences> SYSTEM_USERS_PREFERENCES { get; set; }
+        public DbSet<User> users { get; set; }
+        public DbSet<UserData> users_data { get; set; }
+        public DbSet<UserSettings> users_settings { get; set; }
         public DbSet<Location> USER_LOCATIONS { get; set; }
         public DbSet<UserReason> USER_REASONS { get; set; }
         public DbSet<Visit> USER_VISITS { get; set; }
@@ -92,11 +91,11 @@ namespace MyWebApi.Data
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
-            builder.Entity<User>().HasOne(u => u.UserBaseInfo);
-            builder.Entity<User>().HasOne(u => u.UserDataInfo);
-            builder.Entity<User>().HasOne(u => u.UserPreferences);
-            builder.Entity<UserDataInfo>().HasOne(u => u.Location);
-            builder.Entity<UserDataInfo>().HasOne(u => u.Reason);
+            builder.Entity<User>().HasOne(u => u.Data);
+            builder.Entity<User>().HasOne(u => u.UserSettings);
+            builder.Entity<User>().HasOne(u => u.Location);
+            builder.Entity<User>().HasMany(u => u.UserBlackList);
+            builder.Entity<User>().HasMany(u => u.Tags);
             //builder.Entity<UserDataInfo>().HasOne(u => u.Language);
             builder.Entity<Location>().HasOne(u => u.Country);
             builder.Entity<Location>().HasOne(u => u.City);

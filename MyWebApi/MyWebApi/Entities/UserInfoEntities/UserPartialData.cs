@@ -1,4 +1,4 @@
-﻿namespace MyWebApi.Entities.UserInfoEntities
+﻿namespace WebApi.Entities.UserInfoEntities
 {
     public class UserPartialData
     {

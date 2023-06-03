@@ -1,8 +1,8 @@
 {
   "Version": 1,
-  "Hash": "vizQGmpeY32a2CBIDbe5eqgH5naOqhsyPaW8bJPaRzc=",
-  "Source": "MyWebApi",
-  "BasePath": "_content/MyWebApi",
+  "Hash": "lAVsf4/XP8OL4a3UKcpKodesbBfBaGYqErDYy8hI7Xs=",
+  "Source": "WebApi",
+  "BasePath": "_content/WebApi",
   "Mode": "Default",
   "ManifestType": "Build",
   "ReferencedProjectsConfiguration": [],

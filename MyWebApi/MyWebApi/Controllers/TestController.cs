@@ -1,14 +1,14 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using MyWebApi.Interfaces;
+using WebApi.Interfaces;
 using Microsoft.Extensions.Logging;
-using MyWebApi.Entities.LocalisationEntities;
-using MyWebApi.Entities.TestEntities;
-using MyWebApi.Entities.SecondaryEntities;
-using MyWebApi.Entities.LocationEntities;
+using WebApi.Entities.LocalisationEntities;
+using WebApi.Entities.TestEntities;
+using WebApi.Entities.SecondaryEntities;
+using WebApi.Entities.LocationEntities;
 
-namespace MyWebApi.Controllers
+namespace WebApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]

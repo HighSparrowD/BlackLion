@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace MyWebApi.Entities.SecondaryEntities
+namespace WebApi.Entities.SecondaryEntities
 {
     public class Gender
     {

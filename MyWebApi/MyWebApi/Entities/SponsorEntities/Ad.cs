@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
 #nullable enable
-namespace MyWebApi.Entities.SponsorEntities
+namespace WebApi.Entities.SponsorEntities
 {
     public class Ad
     {

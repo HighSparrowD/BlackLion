@@ -15,9 +15,16 @@ import Core.HelpersMethodes as Helpers
 from AdminCabinet import AdminCabinet
 from StartModule import StartModule
 
-bot = TeleBot("5488749379:AAEJ0t9RksogDD14zJLRYqSisBUpu2pS2WU") #TODO: relocate code to an .env file or db
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+key = os.getenv("KEY")
+Helpers.api_address = os.getenv("APIADDRESS")
+
+bot = TeleBot(key)
 bot.parse_mode = telegram.ParseMode.HTML
-Menus.start_program_in_debug_mode(bot) #TODO: remove in production
+Menus.start_program_in_debug_mode(bot) #TODO: remove in production?
 
 random_talkers = []
 sponsor_handlers = []
@@ -25,7 +32,7 @@ admin_sponsor_handlers = []
 admin_cabinets = []
 
 
-@bot.message_handler(commands=["start"])
+@bot.message_handler(commands=["start"], func=lambda message: message.chat.type == 'private')
 def Start(message):
     #Allow only if user is not registered
     if not Helpers.check_user_is_registered(message.from_user.id):
@@ -35,37 +42,37 @@ def Start(message):
         Menus.go_back_to_main_menu(bot, message.from_user.id, message)
 
 
-@bot.message_handler(commands=["registration"], is_multihandler=True)
+@bot.message_handler(commands=["registration"], func=lambda message: message.chat.type == 'private', is_multihandler=True)
 def Greet(message):
     create_registrator(message)
 
 
-@bot.message_handler(commands=["random"])
+@bot.message_handler(commands=["random"], func=lambda message: message.chat.type == 'private')
 def RandomTalk(message):
     create_random_talker(message, message.from_user.id)
 
 
-@bot.message_handler(commands=["search"])
+@bot.message_handler(commands=["search"], func=lambda message: message.chat.type == 'private')
 def Search(message):
     create_familiator(message, message.from_user.id)
 
 
-@bot.message_handler(commands=["feedback"], is_multihandler=True)
+@bot.message_handler(commands=["feedback"], func=lambda message: message.chat.type == 'private', is_multihandler=True)
 def Report(message):
     create_reporter(message, message.from_user.id)
 
 
-@bot.message_handler(commands=["shop"])
+@bot.message_handler(commands=["shop"], func=lambda message: message.chat.type == 'private')
 def ShopC(message):
     create_shop(message, message.from_user.id)
 
 
-@bot.message_handler(commands=["sponsoraccount"])
+@bot.message_handler(commands=["sponsoraccount"], func=lambda message: message.chat.type == 'private')
 def Sponsor_Handler(message):
     create_sponsor_handler(message)
 
-
-@bot.message_handler(commands=["switchstatus", "showstatus"], is_multihandler=True)
+#TODO: Past mistake. Remake
+@bot.message_handler(commands=["switchstatus", "showstatus"], func=lambda message: message.chat.type == 'private', is_multihandler=True)
 def SwitchAdminStatus(message):
     if message.text == "/switchstatus":
         user_was_admin = Helpers.check_user_is_admin(message.from_user.id)
@@ -83,30 +90,57 @@ def SwitchAdminStatus(message):
         bot.send_message(message.from_user.id, f"Your current admin status is: -> {msg} <-", reply_markup=Menus.admin_menu_markup)
 
 
-@bot.message_handler(commands=["enteradmincabinet"])
+@bot.message_handler(commands=["enteradmincabinet"], func=lambda message: message.chat.type == 'private')
 def EnterAdminCabinet(message):
     create_admin_cabinet(message)
 
 
 # bot.next_step_backend.handlers.popitem()
-@bot.message_handler(commands=["settings"])
+@bot.message_handler(commands=["settings"], func=lambda message: message.chat.type == 'private')
 def settings(message):
     create_settings(message, message.from_user.id)
 
 
-@bot.message_handler(commands=["adventure"])
+@bot.message_handler(commands=["adventure"], func=lambda message: message.chat.type == 'private')
 def adventurer(message):
     create_adventurer(message, message.from_user.id)
 
-n = InlineKeyboardMarkup()
-@bot.message_handler(commands=["help"], is_multihandler=True)
+
+@bot.message_handler(commands=["help"], func=lambda message: message.chat.type == 'private', is_multihandler=True)
 def help(message):
     Helper(bot, message)
 
 
-# @bot.message_handler(commands=["test"])
-# def test(message):
-#     bot.add_chat_member()
+# new_chat_member - present even upon changing permissions / adding new users to group
+@bot.my_chat_member_handler(func=lambda message: message.new_chat_member and bot.get_me().id == message.new_chat_member.user.id)
+def set_up_group_management(message):
+    me = message.new_chat_member
+
+    #TODO: Check if any adventure awaits
+    if me.status != 'left':
+        if me.status == 'administrator':
+            if me.can_invite_users and me.can_restrict_members and me.can_pin_messages:
+                #TODO: Ask for name
+                chat_id = message.chat.id
+
+                # expiration_date = datetime.datetime.now() + datetime.timedelta(days=365 * 2)
+                # link = bot.create_chat_invite_link(chat_id, expire_date=expiration_date.timestamp())
+
+                link = bot.export_chat_invite_link(chat_id)
+                responseCode = Helpers.set_adventure_group_link(
+                    {"userId": message.from_user.id, "groupLink": link, "groupId": chat_id, "adventureName": ""})
+
+                if responseCode == 1:
+                    bot.send_message(chat_id, "All set. Now I have the power I need :)")
+                    return
+
+                #TODO: Inform user that no adventures were found ?
+            else:
+                bot.send_message(message.chat.id, "Please, grant me all of those permissions: \n<b>1. Ban Users\n2. Invite users via link\n3. Pin messages</b>")
+        else:
+            bot.send_message(message.chat.id, "Hey! Please grant me administrator rights, so that I might be useful for you.\n\nPermissions I require:\n<b>1. Ban Users\n2. Invite users via link\n3. Pin messages</b>")
+
+    # link = bot.create_chat_invite_link(-1001939151711, name="Chat")
 
 # @bot.message_handler()
 # def test(message):
@@ -230,6 +264,5 @@ def create_admin_cabinet(message):
 
 def send_registration_warning(userId):
     bot.send_message(userId, "Please register before entering this section", reply_markup=Menus.register_markup)
-
 
 bot.polling()

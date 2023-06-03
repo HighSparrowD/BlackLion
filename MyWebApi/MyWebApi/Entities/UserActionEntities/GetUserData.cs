@@ -1,31 +1,39 @@
-﻿using MyWebApi.Entities.UserInfoEntities;
-using System.Collections.Generic;
-using System;
+﻿using WebApi.Entities.UserInfoEntities;
+using System.Text.Json.Serialization;
 #nullable enable
 
-namespace MyWebApi.Entities.UserActionEntities
+namespace WebApi.Entities.UserActionEntities
 {
     public class GetUserData
     {
+        [JsonPropertyName("userId")]
         public long UserId { get; set; }
-        public string Comment { get; set; }
-        public UserBaseInfo? UserBaseInfo { get; set; }
-        public UserDataInfo? UserDataInfo { get; set; }
-        public UserPreferences? UserPreferences { get; set; }
+        [JsonPropertyName("comment")]
+        public string? Comment { get; set; }
+        [JsonPropertyName("cityId")]
+        public int? CityId { get; set; }
+        [JsonPropertyName("userDataInfo")]
+        public UserData UserDataInfo { get; set; }
 
         public GetUserData(User userModel, string descriptionBonus = "")
         {
-            UserId = userModel.UserId;
-            UserBaseInfo = new UserBaseInfo(userModel.UserBaseInfo!);
-            UserDataInfo = userModel.UserDataInfo;
-            UserPreferences = userModel.UserPreferences;
+            UserId = userModel.Id;
+            UserDataInfo = userModel.Data!;
 
-            UserBaseInfo.UserDescription = $"{descriptionBonus}\n{UserBaseInfo.UserDescription}";
+            if (userModel.Location != null)
+                CityId = userModel.Location.CityId;
+
+            UserDataInfo.UserDescription = $"{descriptionBonus}\n{UserDataInfo.UserDescription}";
         }
 
         public void AddDescriptionBonus(string bonus)
         {
-            UserBaseInfo!.UserDescription = $"{bonus}\n{UserBaseInfo.UserDescription}";
+            UserDataInfo!.UserDescription = $"{bonus}\n{UserDataInfo.UserDescription}";
+        }
+
+        public void AddDescriptionBonusDownwards(string bonus)
+        {
+            UserDataInfo!.UserDescription = $"{UserDataInfo.UserDescription}\n{bonus}";
         }
     }
 }

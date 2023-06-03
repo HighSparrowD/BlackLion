@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace MyWebApi.Entities.UserInfoEntities
+namespace WebApi.Entities.UserInfoEntities
 {
     public class Encounter
     {
@@ -15,6 +15,6 @@ namespace MyWebApi.Entities.UserInfoEntities
         //[ForeignKey("UserId")]
         //public User User{ get; set; }
         //[ForeignKey("UserId1")]
-        public UserBaseInfo EncounteredUser{ get; set; }
+        public User EncounteredUser{ get; set; }
     }
 }

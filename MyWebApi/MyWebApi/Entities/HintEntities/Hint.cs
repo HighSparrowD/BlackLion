@@ -1,7 +1,7 @@
-﻿using MyWebApi.Enums;
+﻿using WebApi.Enums;
 using System.ComponentModel.DataAnnotations;
 
-namespace MyWebApi.Entities.HintEntities
+namespace WebApi.Entities.HintEntities
 {
     public class Hint
     {

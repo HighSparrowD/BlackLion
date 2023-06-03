@@ -1,8 +1,8 @@
-﻿using MyWebApi.Enums;
+﻿using WebApi.Enums;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace MyWebApi.Entities.UserInfoEntities
+namespace WebApi.Entities.UserInfoEntities
 {
     public class UserTag
     {

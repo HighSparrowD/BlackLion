@@ -1,10 +1,10 @@
-﻿using static MyWebApi.Enums.SystemEnums;
+﻿using static WebApi.Enums.SystemEnums;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
-using MyWebApi.Enums;
+using WebApi.Enums;
 
-namespace MyWebApi.Entities.UserInfoEntities
+namespace WebApi.Entities.UserInfoEntities
 {
     public class UserPersonalityPoints
     {

@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System;
 
-namespace MyWebApi.Entities.SponsorEntities
+namespace WebApi.Entities.SponsorEntities
 {
     public class EventTemplate
     {

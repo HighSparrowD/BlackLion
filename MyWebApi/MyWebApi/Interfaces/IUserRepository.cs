@@ -1,20 +1,20 @@
 ﻿using System.Threading.Tasks;
 using System.Collections.Generic;
-using MyWebApi.Entities.UserInfoEntities;
-using MyWebApi.Entities.ReportEntities;
-using MyWebApi.Entities.LocationEntities;
-using MyWebApi.Entities.ReasonEntities;
-using MyWebApi.Entities.AchievementEntities;
+using WebApi.Entities.UserInfoEntities;
+using WebApi.Entities.ReportEntities;
+using WebApi.Entities.LocationEntities;
+using WebApi.Entities.ReasonEntities;
+using WebApi.Entities.AchievementEntities;
 using System;
-using MyWebApi.Entities.UserActionEntities;
-using MyWebApi.Entities.SponsorEntities;
-using MyWebApi.Entities.DailyTaskEntities;
-using MyWebApi.Enums;
-using MyWebApi.Entities.TestEntities;
-using MyWebApi.Entities.EffectEntities;
-using MyWebApi.Entities.AdventureEntities;
+using WebApi.Entities.UserActionEntities;
+using WebApi.Entities.SponsorEntities;
+using WebApi.Entities.DailyTaskEntities;
+using WebApi.Enums;
+using WebApi.Entities.TestEntities;
+using WebApi.Entities.EffectEntities;
+using WebApi.Entities.AdventureEntities;
 
-namespace MyWebApi.Interfaces
+namespace WebApi.Interfaces
 {
     public interface IUserRepository
     {
@@ -37,18 +37,11 @@ namespace MyWebApi.Interfaces
         Task<BasicUserInfo> GetUserBasicInfo(long userId);
         Task<UserPartialData> GetUserPartialData(long userId);
         Task<byte> UpdateUserAppLanguageAsync(long userId, int appLanguage);
-        Task<byte> UpdateUserBaseAsync(UserBaseInfo user);
-        Task<byte> UpdateUserDataAsync(UserDataInfo user);
-        Task<byte> UpdateUserPreferencesAsync(UserPreferences user);
-        Task<byte> UpdateUserLocationAsync(Location location);
-        Task<UserBaseInfo> GetUserBaseInfoAsync(long id);
+        Task UpdateUserAsync (UpdateUserProfile model);
         Task<List<GetUserData>> GetUsersAsync(long userId, bool isRepeated=false, bool isFreeSearch = false);
         Task<bool> CheckUserExists(long id);
         Task<int> GetUserAppLanguage(long id);
-        Task<User> GetFriendInfoAsync(long id);
-        Task<List<FriendModel>> GetFriendsAsync();
-        Task<long> RegisterUserAsync(User model, UserBaseInfo baseModel, UserDataInfo dataModel, UserPreferences prefsModel, Location location, bool wasRegistered=false);
-        Task<long> AddFriendUserAsync(long id);
+        Task<long> RegisterUserAsync(UserRegistrationModel model, bool wasRegistered=false);
         Task<Country> GetCountryAsync(long id);
         Task<List<long>> GetAllUsersAsync();
         Task<List<FeedbackReason>> GetFeedbackReasonsAsync(int localisationId);
@@ -196,8 +189,10 @@ namespace MyWebApi.Interfaces
         Task<List<AttendeeInfo>> GetAdventureAttendeesAsync(Guid adventureId);
         Task<List<Adventure>> GetUsersSubscribedAdventuresAsync(long userId);
         Task<List<GetAdventure>> GetUserAdventuresAsync(long userId);
-        Task<Adventure> GetAdventureAsync(Guid id);
+        Task<ManageAdventure> GetAdventureAsync(Guid id);
         Task<bool> SaveAdventureTemplateAsync(ManageTemplate model);
-        Task<DeleteTemplateResult> DeleteAdventureTemplateAsync(Guid templateId);
+        Task<DeleteResult> DeleteAdventureTemplateAsync(Guid templateId);
+        Task<DeleteResult> DeleteAdventureAttendeeAsync(Guid adventureId, long attendeeId);
+        Task<SetGroupIdResult> SetAdventureGroupIdAsync(SetGroupIdRequest request);
     }
 }
