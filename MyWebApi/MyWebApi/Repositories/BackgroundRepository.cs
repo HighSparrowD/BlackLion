@@ -1,9 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
 using WebApi.Data;
 using WebApi.Entities.UserInfoEntities;
 using WebApi.Interfaces;
-using WebApi.Migrations;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
