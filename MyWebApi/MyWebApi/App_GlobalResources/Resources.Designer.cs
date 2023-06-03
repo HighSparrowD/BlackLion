@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace MyWebApi.App_GlobalResources {
+namespace WebApi.App_GlobalResources {
     using System;
     
     
@@ -39,7 +39,7 @@ namespace MyWebApi.App_GlobalResources {
         public static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("MyWebApi.App_GlobalResources.Resources", typeof(Resources).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("WebApi.App_GlobalResources.Resources", typeof(Resources).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -75,6 +75,42 @@ namespace MyWebApi.App_GlobalResources {
         public static string ReportReason_TestReason {
             get {
                 return ResourceManager.GetString("ReportReason_TestReason", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        public static string UsageReason_Friendship {
+            get {
+                return ResourceManager.GetString("UsageReason_Friendship", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        public static string UsageReason_NoMatter {
+            get {
+                return ResourceManager.GetString("UsageReason_NoMatter", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        public static string UsageReason_Relationship {
+            get {
+                return ResourceManager.GetString("UsageReason_Relationship", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        public static string UsageReason_Sex {
+            get {
+                return ResourceManager.GetString("UsageReason_Sex", resourceCulture);
             }
         }
     }

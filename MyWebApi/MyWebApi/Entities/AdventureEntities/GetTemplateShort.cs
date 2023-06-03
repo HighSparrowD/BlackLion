@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text.Json.Serialization;
 
-namespace MyWebApi.Entities.AdventureEntities
+namespace WebApi.Entities.AdventureEntities
 {
     public class GetTemplateShort
     {

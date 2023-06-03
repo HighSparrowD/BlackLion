@@ -1,7 +1,7 @@
-﻿using MyWebApi.Entities.UserActionEntities;
+﻿using WebApi.Entities.UserActionEntities;
 using System.Text.Json.Serialization;
 
-namespace MyWebApi.Entities.UserInfoEntities
+namespace WebApi.Entities.UserInfoEntities
 {
     public class BasicUserInfo
     {

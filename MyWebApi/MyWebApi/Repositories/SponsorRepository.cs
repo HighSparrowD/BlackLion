@@ -1,18 +1,18 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using MyWebApi.Data;
-using MyWebApi.Entities.SponsorEntities;
-using MyWebApi.Entities.UserActionEntities;
-using MyWebApi.Entities.UserInfoEntities;
-using MyWebApi.Enums;
-using MyWebApi.Interfaces;
+using WebApi.Data;
+using WebApi.Entities.SponsorEntities;
+using WebApi.Entities.UserActionEntities;
+using WebApi.Entities.UserInfoEntities;
+using WebApi.Enums;
+using WebApi.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using static MyWebApi.Enums.SystemEnums;
+using static WebApi.Enums.SystemEnums;
 
-namespace MyWebApi.Repositories
+namespace WebApi.Repositories
 {
     public class SponsorRepository : ISponsorRepository
     {
@@ -50,7 +50,7 @@ namespace MyWebApi.Repositories
                 await RemoveSponsorByCodeWordAsync(model.CodeWord);
                 var contactInfoId = await AddContactInfoAsync(new SponsorContactInfo {Id = model.Id, SponsorId = model.Id, Email = model.Email, Facebook = model.Facebook, Instagram = model.Instagram, Tel = model.Tel });
                 var statsId = await CreateSponorStats(model.Id);
-                var hasBaseAccount = await _contx.SYSTEM_USERS.FindAsync(model.Id) != null;
+                var hasBaseAccount = await _contx.users.FindAsync(model.Id) != null;
 
                 var user = new Sponsor
                 {
@@ -422,7 +422,7 @@ namespace MyWebApi.Repositories
                 foreach (var attendee in attendees)
                 {
                     notification.UserId = null;
-                    notification.UserId1 = attendee.UserId;
+                    notification.UserId1 = attendee.Id;
                     await RegisterUserEventNotification(notification);
                 }
             }

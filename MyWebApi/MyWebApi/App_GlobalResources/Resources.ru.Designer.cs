@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace MyWebApi.App_GlobalResources {
+namespace WebApi.App_GlobalResources {
     using System;
     
     
@@ -39,7 +39,7 @@ namespace MyWebApi.App_GlobalResources {
         public static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("MyWebApi.App_GlobalResources.Resources - Copy", typeof(ResourcesRu).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("WebApi.App_GlobalResources.Resources - Copy", typeof(ResourcesRu).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;

@@ -1,8 +1,8 @@
-﻿using MyWebApi.Enums;
+﻿using WebApi.Enums;
 using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
 
-namespace MyWebApi.Entities.DailyTaskEntities
+namespace WebApi.Entities.DailyTaskEntities
 {
     public class DailyTask
     {

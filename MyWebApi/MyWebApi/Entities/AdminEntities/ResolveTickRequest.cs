@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MyWebApi.Entities.AdminEntities
+namespace WebApi.Entities.AdminEntities
 {
     public class ResolveTickRequest
     {

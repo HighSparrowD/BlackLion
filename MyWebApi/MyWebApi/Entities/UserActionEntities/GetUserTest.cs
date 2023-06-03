@@ -1,8 +1,8 @@
-﻿using MyWebApi.Entities.TestEntities;
-using MyWebApi.Entities.UserInfoEntities;
+﻿using WebApi.Entities.TestEntities;
+using WebApi.Entities.UserInfoEntities;
     
 #nullable enable
-namespace MyWebApi.Entities.UserActionEntities
+namespace WebApi.Entities.UserActionEntities
 {
     public class GetUserTest
     { 

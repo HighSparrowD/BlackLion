@@ -1,4 +1,4 @@
-﻿namespace MyWebApi.Enums;
+﻿namespace WebApi.Enums;
 
 public enum TickRequestStatus
 {

@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Collections.Generic;
 
-namespace MyWebApi.Entities.LocalisationEntities
+namespace WebApi.Entities.LocalisationEntities
 {
     public class Localisation
     {

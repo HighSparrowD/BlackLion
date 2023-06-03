@@ -1,23 +1,24 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using MyWebApi.Data;
-using MyWebApi.Entities.AchievementEntities;
-using MyWebApi.Entities.AdminEntities;
-using MyWebApi.Entities.DailyTaskEntities;
-using MyWebApi.Entities.LocationEntities;
-using MyWebApi.Entities.ReasonEntities;
-using MyWebApi.Entities.ReportEntities;
-using MyWebApi.Entities.SecondaryEntities;
-using MyWebApi.Entities.TestEntities;
-using MyWebApi.Entities.UserInfoEntities;
-using MyWebApi.Enums;
-using MyWebApi.Interfaces;
+using WebApi.Data;
+using WebApi.Entities.AchievementEntities;
+using WebApi.Entities.AdminEntities;
+using WebApi.Entities.DailyTaskEntities;
+using WebApi.Entities.LocationEntities;
+using WebApi.Entities.ReasonEntities;
+using WebApi.Entities.ReportEntities;
+using WebApi.Entities.SecondaryEntities;
+using WebApi.Entities.TestEntities;
+using WebApi.Entities.UserActionEntities;
+using WebApi.Entities.UserInfoEntities;
+using WebApi.Enums;
+using WebApi.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace MyWebApi.Repositories
+namespace WebApi.Repositories
 {
     public class AdminRepository : IAdminRepository
     {
@@ -117,10 +118,8 @@ namespace MyWebApi.Repositories
         {
             try
             {
-                var user = await _contx.SYSTEM_USERS.Where(u => u.UserId == userId).SingleOrDefaultAsync();
-                var userBase = await _contx.SYSTEM_USERS_BASES.Where(u => u.Id == userId).SingleOrDefaultAsync();
-                var userData = await _contx.SYSTEM_USERS_DATA.Where(u => u.Id == userId).SingleOrDefaultAsync();
-                var userPrefs = await _contx.SYSTEM_USERS_PREFERENCES.Where(u => u.Id == userId).SingleOrDefaultAsync();
+                var user = await _contx.users.Where(u => u.Id == userId).SingleOrDefaultAsync();
+                var userData = await _contx.users_settings.Where(u => u.Id == userId).SingleOrDefaultAsync();
                 var userLocation = await _contx.USER_LOCATIONS.Where(u => u.Id == userId).SingleOrDefaultAsync();
                 var userAchievements = await _contx.USER_ACHIEVEMENTS.Where(u => u.UserBaseInfoId == userId).ToListAsync();
                 var userPurchases = await _contx.USER_WALLET_PURCHASES.Where(u => u.UserId == userId).ToListAsync();
@@ -183,24 +182,14 @@ namespace MyWebApi.Repositories
                     _contx.USER_TRUST_LEVELS.Remove(userTrustLevel);
                     await _contx.SaveChangesAsync();
                 }
-                if (userBase != null)
-                {
-                    _contx.SYSTEM_USERS_BASES.Remove(userBase);
-                    await _contx.SaveChangesAsync();
-                }
-                if (userPrefs != null)
-                {
-                    _contx.SYSTEM_USERS_PREFERENCES.Remove(userPrefs);
-                    await _contx.SaveChangesAsync();
-                }
                 if (userData != null)
                 {
-                    _contx.SYSTEM_USERS_DATA.Remove(userData);
+                    _contx.users_settings.Remove(userData);
                     await _contx.SaveChangesAsync();
                 }
                 if (user != null)
                 {
-                    _contx.SYSTEM_USERS.Remove(user);
+                    _contx.users.Remove(user);
                     await _contx.SaveChangesAsync();
                 }
 
@@ -215,12 +204,10 @@ namespace MyWebApi.Repositories
         {
             try
             {
-                var usersCount = await _contx.SYSTEM_USERS.CountAsync();
+                var usersCount = await _contx.users.CountAsync();
 
-                var user = await _contx.SYSTEM_USERS.ToListAsync();
-                var userBase = await _contx.SYSTEM_USERS_BASES.ToListAsync();
-                var userData = await _contx.SYSTEM_USERS_DATA.ToListAsync();
-                var userPrefs = await _contx.SYSTEM_USERS_PREFERENCES.ToListAsync();
+                var user = await _contx.users.ToListAsync();
+                var userData = await _contx.users_settings.ToListAsync();
                 var userLocation = await _contx.USER_LOCATIONS.ToListAsync();
                 var userAchievements = await _contx.USER_ACHIEVEMENTS.ToListAsync();
                 var userPurchases = await _contx.USER_WALLET_PURCHASES.ToListAsync();
@@ -236,10 +223,8 @@ namespace MyWebApi.Repositories
                 _contx.USER_NOTIFICATIONS.RemoveRange(userNotifications);
                 _contx.USER_NOTIFICATIONS.RemoveRange(userNotifications1);
                 _contx.SPONSOR_RATINGS.RemoveRange(sponsorRatings);
-                _contx.SYSTEM_USERS_BASES.RemoveRange(userBase);
-                _contx.SYSTEM_USERS_PREFERENCES.RemoveRange(userPrefs);
-                _contx.SYSTEM_USERS_DATA.RemoveRange(userData);
-                _contx.SYSTEM_USERS.RemoveRange(user);
+                _contx.users_settings.RemoveRange(userData);
+                _contx.users.RemoveRange(user);
 
                 await _contx.SaveChangesAsync();
 
@@ -298,7 +283,7 @@ namespace MyWebApi.Repositories
                 await Task.Run(async() => {             
                     foreach (var achievement in achievements)
                     {
-                        var users = await _contx.SYSTEM_USERS_DATA.ToListAsync();
+                        var users = await _contx.users_data.ToListAsync();
                         foreach (var user in users)
                         {
                             if (achievement.ClassLocalisationId == user.LanguageId)
@@ -521,13 +506,6 @@ namespace MyWebApi.Repositories
             return returnData;
         }
 
-        public async Task<string> GetUserPhotoAsync(long userId)
-        {
-            return await _contx.SYSTEM_USERS_BASES.Where(b => b.Id == userId)
-                .Select(u => u.UserMedia)
-                .FirstOrDefaultAsync();
-        }
-
         public async Task<bool> AbortTickRequestAsync(Guid requestId)
         {
             try
@@ -567,88 +545,10 @@ namespace MyWebApi.Repositories
             catch { return false; }
         }
 
-        public async Task<bool> CreateDecoyAsync(long? copyUserId = null, UserRegistrationModel model = null)
-        {
-            var rand = new Random();
-
-            UserBaseInfo uBase = null;
-            UserDataInfo uData = null;
-            UserPreferences uPrefs= null;
-            User m = null;
-            Location location = null;
-
-            if (model != null)
-            {
-                var langCount = await _userRep.GetUserMaximumLanguageCountAsync(model.Id);
-                if (model.UserLanguages.Count > langCount)
-                    throw new Exception($"This user cannot have more than {langCount} languages !");
-                
-                uBase = new UserBaseInfo(model.Id + rand.Next(8000), model.UserName, model.UserRealName, model.UserDescription, model.UserMedia, model.IsPhotoReal, model.IsMediaPhoto);
-                uData = new UserDataInfo
-                {
-                    Id = uBase.Id,
-                    UserLanguages = model.UserLanguages,
-                    ReasonId = model.ReasonId,
-                    UserAge = model.UserAge,
-                    UserGender = model.UserGender,
-                    LanguageId = model.UserAppLanguageId,
-                };
-                uPrefs = new UserPreferences(uBase.Id, model.UserLanguagePreferences, model.UserLocationPreferences, model.AgePrefs, model.CommunicationPrefs, model.UserGenderPrefs, model.ShouldUserPersonalityFunc);
-                uPrefs.ShouldFilterUsersWithoutRealPhoto = false;
-                m = new User(uBase.Id)
-                {
-                    IsBusy = false,
-                    IsDeleted = false,
-                    IsBanned = false,
-                    IsUpdated = false,
-                    ShouldEnhance = false,
-                    ShouldConsiderLanguages = false,
-                    HasPremium = false,
-                    HadReceivedReward = false,
-                    ShouldComment = false,
-                    ShouldSendHints = true,
-                    DailyRewardPoint = 0,
-                    BonusIndex = 1,
-                    ProfileViewsCount = 0,
-                    InvitedUsersCount = 0,
-                    InvitedUsersBonus = 0,
-                    TagSearchesCount = 0,
-                    MaxProfileViewsCount = 50,
-                    ReportCount = 0,
-                    IdentityType = IdentityConfirmationType.None,
-                };
-
-                if (model.UserCityCode != null && model.UserCountryCode != null)
-                    location = new Location { Id = uBase.Id, CityId = (int)model.UserCityCode, CountryId = (int)model.UserCountryCode, CityCountryClassLocalisationId = model.UserAppLanguageId, CountryClassLocalisationId = model.UserAppLanguageId };
-                else
-                    location = new Location { Id = uBase.Id };
-
-                uData.LocationId = location.Id;
-            }
-            else
-            {
-                uBase = await _contx.SYSTEM_USERS_BASES.Where(b => b.Id == copyUserId).AsNoTracking().SingleOrDefaultAsync();
-                uData = await _contx.SYSTEM_USERS_DATA.Where(b => b.Id == copyUserId).AsNoTracking().SingleOrDefaultAsync();
-                uPrefs = await _contx.SYSTEM_USERS_PREFERENCES.Where(b => b.Id == copyUserId).AsNoTracking().SingleOrDefaultAsync();
-                m = await _contx.SYSTEM_USERS.Where(b => b.UserId == copyUserId).AsNoTracking().SingleOrDefaultAsync();
-                location = await _contx.USER_LOCATIONS.Where(b => b.Id == copyUserId).AsNoTracking().SingleOrDefaultAsync();
-
-                uBase.Id += rand.Next(8000);
-                uData.Id = uBase.Id;
-                uPrefs.Id = uBase.Id;
-                m.UserId = uBase.Id;
-                location.Id = uBase.Id;
-            }
-
-            await _userRep.RegisterUserAsync(m, uBase, uData, uPrefs, location);
-
-            return true;
-        }
-
         public async Task<List<long>> GetRecentlyBannedUsersAsync()
         {
-            return await _contx.SYSTEM_USERS.Where(u => u.IsBanned && u.BanDate != null)
-                .Select(u => u.UserId)
+            return await _contx.users.Where(u => u.IsBanned && u.BanDate != null)
+                .Select(u => u.Id)
                 .ToListAsync();
         }
 

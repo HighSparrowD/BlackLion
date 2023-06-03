@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Drawing;
 
-namespace MyWebApi.Entities.UserInfoEntities
+namespace WebApi.Entities.UserInfoEntities
 {
     public class Balance
     {

@@ -15,9 +15,16 @@ import Core.HelpersMethodes as Helpers
 from AdminCabinet import AdminCabinet
 from StartModule import StartModule
 
-bot = TeleBot("5488749379:AAEJ0t9RksogDD14zJLRYqSisBUpu2pS2WU") #TODO: relocate code to an .env file or db
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+key = os.getenv("KEY")
+Helpers.api_address = os.getenv("APIADDRESS")
+
+bot = TeleBot(key)
 bot.parse_mode = telegram.ParseMode.HTML
-Menus.start_program_in_debug_mode(bot) #TODO: remove in production
+Menus.start_program_in_debug_mode(bot) #TODO: remove in production?
 
 random_talkers = []
 sponsor_handlers = []
@@ -64,7 +71,7 @@ def ShopC(message):
 def Sponsor_Handler(message):
     create_sponsor_handler(message)
 
-
+#TODO: Past mistake. Remake
 @bot.message_handler(commands=["switchstatus", "showstatus"], func=lambda message: message.chat.type == 'private', is_multihandler=True)
 def SwitchAdminStatus(message):
     if message.text == "/switchstatus":
@@ -257,6 +264,5 @@ def create_admin_cabinet(message):
 
 def send_registration_warning(userId):
     bot.send_message(userId, "Please register before entering this section", reply_markup=Menus.register_markup)
-
 
 bot.polling()

@@ -1,30 +1,49 @@
-﻿using System.Collections.Generic;
+﻿using WebApi.Enums;
+using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
-namespace MyWebApi.Entities.UserActionEntities
+namespace WebApi.Entities.UserActionEntities
 {
     #nullable enable
     public class UpdateUserProfile
     {
+        [JsonPropertyName("id")]
         public long Id { get; set; }
+        [JsonPropertyName("userName")]
         public string? UserName { get; set; }
-        public string? UserRealName { get; set; }
-        public string? UserDescription { get; set; }
-        public int UserAppLanguageId { get; set; }
-        public string? UserMedia { get; set; }
-        public int? UserCountryCode { get; set; }
-        public int? UserCityCode { get; set; }
-        public List<int>? UserLanguages { get; set; }
-        public short ReasonId { get; set; }
-        public int UserAge { get; set; }
-        public short UserGender { get; set; }
-        public List<int>? UserLanguagePreferences { get; set; }
-        public List<int>? UserLocationPreferences { get; set; }
-        public List<int>? AgePrefs { get; set; }
-        public int CommunicationPrefs { get; set; }
-        public short UserGenderPrefs { get; set; }
-        public bool ShouldUserPersonalityFunc { get; set; }
-        public bool IsPhotoReal { get; set; }
+        [JsonPropertyName("userRealName")]
+        public string? RealName { get; set; }
+        [JsonPropertyName("userDescription")]
+        public string? Description { get; set; }
+        [JsonPropertyName("userAppLanguageId")]
+        public int AppLanguageId { get; set; }
+        [JsonPropertyName("userMedia")]
+        public string? Media { get; set; }
+        [JsonPropertyName("isMediaPhoto")]
         public bool IsMediaPhoto { get; set; }
+        [JsonPropertyName("userCountryCode")]
+        public int? CountryCode { get; set; }
+        [JsonPropertyName("userCityCode")]
+        public int? CityCode { get; set; }
+        [JsonPropertyName("userLanguages")]
+        public List<int>? Languages { get; set; }
+        [JsonPropertyName("reasonId")]
+        public UsageReason Reason { get; set; }
+        [JsonPropertyName("userAge")]
+        public int Age { get; set; }
+        [JsonPropertyName("userGender")]
+        public short Gender { get; set; }
+        [JsonPropertyName("userLanguagePreferences")]
+        public List<int>? LanguagePreferences { get; set; }
+        [JsonPropertyName("locationPreferences")]
+        public List<int>? LocationPreferences { get; set; }
+        [JsonPropertyName("agePrefs")]
+        public List<int>? AgePrefs { get; set; }
+        [JsonPropertyName("communicationPrefs")]
+        public int CommunicationPrefs { get; set; }
+        [JsonPropertyName("userGenderPrefs")]
+        public short GenderPrefs { get; set; }
+        [JsonPropertyName("wasChanged")]
         public bool WasChanged { get; set; }
     }
 }

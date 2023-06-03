@@ -1,15 +1,13 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using MyWebApi.Entities.UserActionEntities;
+﻿using Microsoft.Extensions.DependencyInjection;
+using WebApi.Entities.UserActionEntities;
 using Microsoft.Extensions.Hosting;
-using MyWebApi.Data;
-using MyWebApi.Interfaces;
+using WebApi.Interfaces;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using MyWebApi.Enums;
+using WebApi.Enums;
 
-namespace MyWebApi.Services.Background
+namespace WebApi.Services.Background
 {
     public class BackgroundWorker : BackgroundService
     {
@@ -42,7 +40,7 @@ namespace MyWebApi.Services.Background
 
             var timespan = new TimeSpan(differenceHours, differenceMinutes, differenceSeconds);
 
-            Console.WriteLine($"Correcting by timestamp {timespan}");
+            Console.WriteLine($"Correcting by timespan: {timespan}");
             await Task.Delay(timespan);
         }
 
@@ -67,7 +65,7 @@ namespace MyWebApi.Services.Background
                     var user = batch[i];
 
                     user.HadReceivedReward = false;
-                    user.IsFree = false;
+                    user.UserSettings.IsFree = false;
                     user.ReportCount = 0;
                     user.ProfileViewsCount = 0;
                     user.RTViewsCount = 0;
@@ -80,11 +78,11 @@ namespace MyWebApi.Services.Background
 
                     //Random achievements
                     //TODO: Localize
-                    var achievements = await userRepo.GetRandomAchievements(user.UserId);
+                    var achievements = await userRepo.GetRandomAchievements(user.Id);
                     await userRepo.AddUserNotificationAsync(new UserNotification
                     {
                         Description = "<b>Today's Random Achievements</b>\n\n" + string.Join("\n\n", achievements),
-                        UserId1 = user.UserId,
+                        UserId1 = user.Id,
                         Severity = Severities.Moderate,
                         Section = Sections.Neutral
                     });
@@ -110,7 +108,7 @@ namespace MyWebApi.Services.Background
                             await userRepo.AddUserNotificationAsync(new UserNotification
                             {
                                 Severity = Severities.Urgent,
-                                UserId1 = user.UserId,
+                                UserId1 = user.Id,
                                 Description = "Your premium access ends today !"
                             });
                         }

@@ -1,6 +1,6 @@
-﻿using MyWebApi.Enums;
+﻿using WebApi.Enums;
 
-namespace MyWebApi.Entities.UserActionEntities
+namespace WebApi.Entities.UserActionEntities
 {
     #nullable enable
     public class SendTickRequest

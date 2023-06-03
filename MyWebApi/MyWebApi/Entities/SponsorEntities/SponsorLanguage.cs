@@ -1,8 +1,8 @@
-﻿using MyWebApi.Entities.SecondaryEntities;
+﻿using WebApi.Entities.SecondaryEntities;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace MyWebApi.Entities.SponsorEntities
+namespace WebApi.Entities.SponsorEntities
 {
     public class SponsorLanguage
     {

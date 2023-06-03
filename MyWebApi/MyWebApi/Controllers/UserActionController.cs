@@ -1,25 +1,25 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using MyWebApi.Interfaces;
+using WebApi.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using MyWebApi.Entities.UserInfoEntities;
-using MyWebApi.Entities.ReportEntities;
-using MyWebApi.Entities.LocationEntities;
-using MyWebApi.Entities.ReasonEntities;
-using MyWebApi.Entities.AchievementEntities;
-using MyWebApi.Entities.UserActionEntities;
-using MyWebApi.Entities.SponsorEntities;
-using MyWebApi.Entities.DailyTaskEntities;
-using MyWebApi.Entities.TestEntities;
-using static MyWebApi.Enums.SystemEnums;
-using MyWebApi.Entities.AdminEntities;
-using MyWebApi.Entities.EffectEntities;
-using MyWebApi.Entities.AdventureEntities;
-using MyWebApi.Enums;
+using WebApi.Entities.UserInfoEntities;
+using WebApi.Entities.ReportEntities;
+using WebApi.Entities.LocationEntities;
+using WebApi.Entities.ReasonEntities;
+using WebApi.Entities.AchievementEntities;
+using WebApi.Entities.UserActionEntities;
+using WebApi.Entities.SponsorEntities;
+using WebApi.Entities.DailyTaskEntities;
+using WebApi.Entities.TestEntities;
+using static WebApi.Enums.SystemEnums;
+using WebApi.Entities.AdminEntities;
+using WebApi.Entities.EffectEntities;
+using WebApi.Entities.AdventureEntities;
+using WebApi.Enums;
 
-namespace MyWebApi.Controllers
+namespace WebApi.Controllers
 {
     [ApiController]
     [Route("[controller]")]
@@ -84,50 +84,10 @@ namespace MyWebApi.Controllers
         }
 
         [HttpPost("/UpdateUserProfile")]
-        public async Task<byte> UpdateUserProfile(UpdateUserProfile model)
+        public async Task UpdateUserProfile(UpdateUserProfile model)
         {
             if (model.WasChanged)
-            {
-                var langCount = await GetUserMaximumLanguageCount(model.Id);
-
-                //TODO: Uncoment when premium functionality is fully implemented
-                //if (model.UserLanguages.Count > langCount)
-                //    throw new Exception($"This user cannot have more than {langCount} languages !");
-
-                Location location = new Location { Id = model.Id};
-
-                if(model.UserCityCode != null && model.UserCountryCode != null)
-                {
-                    location.CityId = (int)model.UserCityCode;
-                    location.CityCountryClassLocalisationId = model.UserAppLanguageId;
-                    location.CountryId = (int)model.UserCountryCode;
-                    location.CountryClassLocalisationId = model.UserAppLanguageId;
-                }
-
-                var uBase = new UserBaseInfo(model.Id, model.UserName, model.UserRealName, "", model.UserMedia, model.IsPhotoReal, model.IsMediaPhoto);
-                uBase.UserRawDescription = model.UserDescription;
-                var uData = new UserDataInfo
-                {
-                    Id = model.Id,
-                    UserLanguages = model.UserLanguages,
-                    ReasonId = model.ReasonId,
-                    UserAge = model.UserAge,
-                    UserGender = model.UserGender,
-                    LanguageId = model.UserAppLanguageId,
-                    LocationId = location.Id,
-                };
-                var uPrefs = new UserPreferences(model.Id, model.UserLanguagePreferences, model.UserLocationPreferences, model.AgePrefs, model.CommunicationPrefs, model.UserGenderPrefs, model.ShouldUserPersonalityFunc);
-
-                if ((await _repository.UpdateUserAppLanguageAsync(model.Id, model.UserAppLanguageId)) == 1)
-                    if (location== null || (await _repository.UpdateUserLocationAsync(location)) == 1)
-                        if ((await _repository.UpdateUserDataAsync(uData)) == 1)
-                            if ((await _repository.UpdateUserBaseAsync(uBase)) == 1)
-                                if ((await _repository.UpdateUserPreferencesAsync(uPrefs)) == 1)
-                                    return 1;
-                return 0;
-            }
-
-            return 1;
+                await _repository.UpdateUserAsync(model);
         }
 
         [HttpGet("/UpdateUserAppLanguage/{userId}/{appLanguage}")]
@@ -136,40 +96,10 @@ namespace MyWebApi.Controllers
             return await _repository.UpdateUserAppLanguageAsync(userId, appLanguage);
         }
 
-        [HttpPost("/UpdateUserBase")]
-        public async Task<ActionResult<byte>> UpdateUserBase(UserBaseInfo user)
-        {
-            return await _repository.UpdateUserBaseAsync(user);
-        }
-
-        [HttpPost("/UpdateUserData")]
-        public async Task<ActionResult<byte>> UpdateUserBase(UserDataInfo user)
-        {
-            return await _repository.UpdateUserDataAsync(user);
-        }
-
-        [HttpPost("/UpdateUserPreferences")]
-        public async Task<ActionResult<byte>> UpdateUserBase(UserPreferences user)
-        {
-            return await _repository.UpdateUserPreferencesAsync(user);
-        }
-
-        [HttpPost("/UpdateUserLocation")]
-        public async Task<ActionResult<byte>> UpdateUserLocation(Location location)
-        {
-            return await _repository.UpdateUserLocationAsync(location);
-        }
-
         [HttpGet("/GetUserByUsername/{username}")]
         public async Task<ActionResult<User>> GetUserInfo(string username)
         {
             return await _repository.GetUserInfoByUsrnameAsync(username);
-        }
-
-        [HttpGet("/GetUserBaseInfo/{userId}")]
-        public async Task<ActionResult<UserBaseInfo>> UserBaseInfo(long userId)
-        {
-            return await _repository.GetUserBaseInfoAsync(userId);
         }
 
         [HttpGet("/GetUserList/{userId}")]
@@ -182,25 +112,6 @@ namespace MyWebApi.Controllers
         public async Task<List<GetUserData>> GetUserList3(long userId)
         {
             return await _repository.GetUsersAsync(userId, isFreeSearch: true);
-        }
-
-        [HttpGet("/GetFriends")]
-        public async Task<IEnumerable<FriendModel>> GetFriendsList()
-        {
-            return await _repository.GetFriendsAsync();
-        }
-
-        [HttpGet("/GetFriendInfo/{userId}")]
-        public async Task<User> GetFriendInfo(long userId)
-        {
-            return await _repository.GetFriendInfoAsync(userId);
-        }
-
-        [HttpPost("/AddFriend/{userId}")]
-        public async Task<long> AddFriendUser(long userId)
-        {
-            var actionId = _repository.AddFriendUserAsync(userId);
-            return await actionId;
         }
 
         [HttpGet("/GetBaseUserInfo")]
@@ -255,59 +166,8 @@ namespace MyWebApi.Controllers
         [HttpPost("/RegisterUser")]
         public async Task<long> AddUser(UserRegistrationModel model)
         {
-            var langCount = await GetUserMaximumLanguageCount(model.Id);
-            if (model.UserLanguages.Count > langCount)
-                throw new Exception($"This user cannot have more than {langCount} languages !");
 
-            Location location = null;
-            var uBase = new UserBaseInfo(model.Id, model.UserName, model.UserRealName, model.UserDescription, model.UserMedia, model.IsPhotoReal, model.IsMediaPhoto);
-            var uData = new UserDataInfo
-            {
-                Id = model.Id,
-                UserLanguages = model.UserLanguages,
-                ReasonId = model.ReasonId,
-                UserAge = model.UserAge,
-                UserGender = model.UserGender,
-                LanguageId = model.UserAppLanguageId,
-            };
-            var uPrefs = new UserPreferences(model.Id, model.UserLanguagePreferences, model.UserLocationPreferences, model.AgePrefs, model.CommunicationPrefs, model.UserGenderPrefs, model.ShouldUserPersonalityFunc);
-            uPrefs.ShouldFilterUsersWithoutRealPhoto = false;
-            var m = new User(model.Id)
-            {
-                IsBusy = false,
-                IsDeleted = false,
-                IsBanned = false,
-                ShouldConsiderLanguages = false,
-                IsUpdated = false,
-                HasPremium = false,
-                ShouldEnhance = false,
-                HadReceivedReward = false,
-                IncreasedFamiliarity = true,
-                ShouldComment = false,
-                ShouldSendHints = true,
-                DailyRewardPoint = 0,
-                BonusIndex = 1,
-                ProfileViewsCount = 0,
-                InvitedUsersCount = 0,
-                InvitedUsersBonus = 0,
-                TagSearchesCount = 0,
-                MaxRTViewsCount = 25,
-                MaxTagSearchCount = 3,
-                ReportCount = 0,
-                MaxProfileViewsCount = 50,
-                IdentityType = IdentityConfirmationType.None,
-                EnteredPromoCodes = model.Promo,
-            };
-
-            if (model.UserCityCode != null && model.UserCountryCode != null)
-                location = new Location { Id = model.Id, CityId = (int)model.UserCityCode, CountryId = (int)model.UserCountryCode, CityCountryClassLocalisationId = model.UserAppLanguageId, CountryClassLocalisationId = model.UserAppLanguageId};
-            else
-                location = new Location { Id = model.Id };
-
-            uData.LocationId = location.Id;
-
-            var id = await _repository.RegisterUserAsync(m, uBase, uData, uPrefs, location);
-            return id;
+            return await _repository.RegisterUserAsync(model);
         }
 
         [HttpGet("/ReRegisterUser/{userId}")]

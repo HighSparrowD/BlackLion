@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace MyWebApi.Entities.SponsorEntities
+namespace WebApi.Entities.SponsorEntities
 {
     public class RegisterSponsor
     {

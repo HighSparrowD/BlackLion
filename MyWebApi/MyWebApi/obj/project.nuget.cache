@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "UrWqQIxhsBXFNBznGphhFzK9INNG1YkG+JxTML+U939RSa0x/Ybv+XOZHlEQxms90bPjKZbcpJZh/we0jb92vg==",
+  "dgSpecHash": "zD7SIuXxeoyKmEFcvfGUdIcLCk5K1y5b2Ooz5WZVEas0CsRH+f4SOU9lE5b7wjVtmJzIJjPIWI6kd10K6buQ+A==",
   "success": true,
-  "projectFilePath": "C:\\Git\\BlackLion\\MyWebApi\\MyWebApi\\MyWebApi.csproj",
+  "projectFilePath": "C:\\Git\\BlackLion\\MyWebApi\\MyWebApi\\WebApi.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\crazy\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",
     "C:\\Users\\crazy\\.nuget\\packages\\microsoft.aspnetcore.authentication.certificate\\6.0.9\\microsoft.aspnetcore.authentication.certificate.6.0.9.nupkg.sha512",

@@ -1,7 +1,7 @@
-﻿using MyWebApi.Enums;
+﻿using WebApi.Enums;
 using System.Text.Json.Serialization;
 
-namespace MyWebApi.Entities.UserActionEntities
+namespace WebApi.Entities.UserActionEntities
 {
     public class SendUserReport
     {

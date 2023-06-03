@@ -1,13 +1,13 @@
 ﻿using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using MyWebApi.Entities.LocalisationEntities;
-using MyWebApi.Entities.UserInfoEntities;
+using WebApi.Entities.LocalisationEntities;
+using WebApi.Entities.UserInfoEntities;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Threading.Tasks;
 using static System.Net.Mime.MediaTypeNames;
 
-namespace MyWebApi.Entities.AchievementEntities
+namespace WebApi.Entities.AchievementEntities
 {
     public class UserAchievement
     {
@@ -23,7 +23,7 @@ namespace MyWebApi.Entities.AchievementEntities
         //[ForeignKey("AchievementId")]
         public virtual Achievement Achievement { get; set; }
         //[ForeignKey("UserBaseInfoId")]
-        public virtual UserBaseInfo User { get; set; }
+        public virtual User User { get; set; }
 
         public UserAchievement()
         {

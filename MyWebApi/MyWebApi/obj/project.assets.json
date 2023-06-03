@@ -2409,9 +2409,9 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Git\\BlackLion\\MyWebApi\\MyWebApi\\MyWebApi.csproj",
-      "projectName": "MyWebApi",
-      "projectPath": "C:\\Git\\BlackLion\\MyWebApi\\MyWebApi\\MyWebApi.csproj",
+      "projectUniqueName": "C:\\Git\\BlackLion\\MyWebApi\\MyWebApi\\WebApi.csproj",
+      "projectName": "WebApi",
+      "projectPath": "C:\\Git\\BlackLion\\MyWebApi\\MyWebApi\\WebApi.csproj",
       "packagesPath": "C:\\Users\\crazy\\.nuget\\packages\\",
       "outputPath": "C:\\Git\\BlackLion\\MyWebApi\\MyWebApi\\obj\\",
       "projectStyle": "PackageReference",

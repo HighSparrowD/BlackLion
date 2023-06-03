@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace MyWebApi.Entities.AdminEntities
+namespace WebApi.Entities.AdminEntities
 {
     public class Admin
     {

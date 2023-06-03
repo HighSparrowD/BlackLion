@@ -1,8 +1,8 @@
-﻿using MyWebApi.Entities.UserInfoEntities;
+﻿using WebApi.Entities.UserInfoEntities;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace MyWebApi.Interfaces
+namespace WebApi.Interfaces
 {
     public interface IBackgroundRepository
     {

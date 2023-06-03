@@ -1,10 +1,10 @@
-﻿using MyWebApi.Entities.UserInfoEntities;
-using MyWebApi.Enums;
+﻿using WebApi.Entities.UserInfoEntities;
+using WebApi.Enums;
 using System;
 using System.ComponentModel.DataAnnotations;
 
 #nullable enable
-namespace MyWebApi.Entities.UserActionEntities
+namespace WebApi.Entities.UserActionEntities
 {
     public class UserNotification
     {

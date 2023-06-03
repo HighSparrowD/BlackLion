@@ -1,10 +1,10 @@
-﻿using MyWebApi.Entities.SponsorEntities;
-using MyWebApi.Entities.UserActionEntities;
-using MyWebApi.Entities.UserInfoEntities;
+﻿using WebApi.Entities.SponsorEntities;
+using WebApi.Entities.UserActionEntities;
+using WebApi.Entities.UserInfoEntities;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-namespace MyWebApi.Interfaces
+namespace WebApi.Interfaces
 {
     public interface ISponsorRepository
     {

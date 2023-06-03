@@ -1,4 +1,4 @@
-﻿namespace MyWebApi.Entities.UserActionEntities
+﻿namespace WebApi.Entities.UserActionEntities
 {
     public class GetUserMedia
     {

@@ -123,4 +123,16 @@
   <data name="ReportReason_TestReason" xml:space="preserve">
     <value>Just testing out</value>
   </data>
+  <data name="UsageReason_Friendship" xml:space="preserve">
+    <value />
+  </data>
+  <data name="UsageReason_NoMatter" xml:space="preserve">
+    <value />
+  </data>
+  <data name="UsageReason_Relationship" xml:space="preserve">
+    <value />
+  </data>
+  <data name="UsageReason_Sex" xml:space="preserve">
+    <value />
+  </data>
 </root>

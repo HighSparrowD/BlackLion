@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MyWebApi.Entities.EffectEntities
+namespace WebApi.Entities.EffectEntities
 {
     public class TheDetector : ActiveEffect
     {

@@ -1,6 +1,6 @@
-﻿using MyWebApi.Enums;
+﻿using WebApi.Enums;
 
-namespace MyWebApi.Entities.UserActionEntities
+namespace WebApi.Entities.UserActionEntities
 {
     public class UserTags
     {

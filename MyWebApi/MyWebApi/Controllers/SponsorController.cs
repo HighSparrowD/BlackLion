@@ -1,12 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using MyWebApi.Entities.SponsorEntities;
-using MyWebApi.Entities.UserInfoEntities;
-using MyWebApi.Interfaces;
+using WebApi.Entities.SponsorEntities;
+using WebApi.Entities.UserInfoEntities;
+using WebApi.Interfaces;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace MyWebApi.Controllers
+namespace WebApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]

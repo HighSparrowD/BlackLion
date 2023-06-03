@@ -1498,7 +1498,7 @@ class Adventurer:
             cities = json.loads(requests.get(f"https://localhost:44381/GetCities/{country}/{self.user_localization}",
                                              verify=False).text)
 
-            # For edit purposes. If left as they are -> can result bugs
+            # For edit purposes. If left as they are -> can cause bugs
             self.cities.clear()
 
             for city in cities:

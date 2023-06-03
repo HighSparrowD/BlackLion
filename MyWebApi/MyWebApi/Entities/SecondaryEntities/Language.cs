@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 
-namespace MyWebApi.Entities.SecondaryEntities
+namespace WebApi.Entities.SecondaryEntities
 {
     public class Language
     {

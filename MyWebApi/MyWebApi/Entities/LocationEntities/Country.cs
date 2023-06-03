@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
-namespace MyWebApi.Entities.LocationEntities
+namespace WebApi.Entities.LocationEntities
 {
     public class Country
     {

@@ -1,21 +1,21 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
-using MyWebApi.Entities.AchievementEntities;
-using MyWebApi.Entities.AdminEntities;
-using MyWebApi.Entities.LocationEntities;
-using MyWebApi.Entities.ReasonEntities;
-using MyWebApi.Entities.ReportEntities;
-using MyWebApi.Entities.SecondaryEntities;
-using MyWebApi.Entities.TestEntities;
-using MyWebApi.Entities.UserInfoEntities;
-using MyWebApi.Interfaces;
+using WebApi.Entities.AchievementEntities;
+using WebApi.Entities.AdminEntities;
+using WebApi.Entities.LocationEntities;
+using WebApi.Entities.ReasonEntities;
+using WebApi.Entities.ReportEntities;
+using WebApi.Entities.SecondaryEntities;
+using WebApi.Entities.TestEntities;
+using WebApi.Entities.UserActionEntities;
+using WebApi.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace MyWebApi.Controllers
+namespace WebApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -23,34 +23,32 @@ namespace MyWebApi.Controllers
     {
         private IAdminRepository _repository;
         private readonly ILogger<UserActionController> _logger;
-        private IStringLocalizer<AdminController> _localizer;
 
-        public AdminController(ILogger<UserActionController> logger, IAdminRepository repos, IStringLocalizer<AdminController> localizer)
+        public AdminController(ILogger<UserActionController> logger, IAdminRepository repos)
         {
             _repository = repos;
             _logger = logger;
-            _localizer = localizer;
         }
 
-        [HttpGet("/get-admin-localisation")]
-        public async Task<Dictionary<string, string>> GetAdminLocalisation()
-        {
-            var localisationDict = new Dictionary<string, string>();
+        //[HttpGet("/get-admin-localisation")]
+        //public async Task<Dictionary<string, string>> GetAdminLocalisation()
+        //{
+        //    var localisationDict = new Dictionary<string, string>();
 
-            await Task.Run(() => {
-                var rawLocalization = _localizer.GetAllStrings()
-                    .Select(w => new {w.Name, w.Value})
-                    .ToList();
+        //    await Task.Run(() => {
+        //        var rawLocalization = _localizer.GetAllStrings()
+        //            .Select(w => new {w.Name, w.Value})
+        //            .ToList();
 
 
-                foreach (var item in rawLocalization)
-                {
-                    localisationDict.Add(item.Name, item.Value);
-                }
-            });
+        //        foreach (var item in rawLocalization)
+        //        {
+        //            localisationDict.Add(item.Name, item.Value);
+        //        }
+        //    });
 
-            return localisationDict;
-        }
+        //    return localisationDict;
+        //}
 
         [HttpPost("/UpdateCountries")]
         public async Task<long> UpdateCountries(List<Country> countries)
@@ -164,24 +162,6 @@ namespace MyWebApi.Controllers
         public async Task<string> GetNewNotificationsCount(long adminId)
         {
             return await _repository.GetNewNotificationsCountAsync(adminId);
-        }
-
-        [HttpGet("/GetUserPhoto/{userId}")]
-        public async Task<string> GetUserPhoto(long userId)
-        {
-            return await _repository.GetUserPhotoAsync(userId);
-        }
-
-        [HttpGet("/Decoy/{userId}")]
-        public async Task<bool> CreateDecoy(long userId)
-        {
-            return await _repository.CreateDecoyAsync(copyUserId: userId);
-        }
-
-        [HttpPost("/Decoy")]
-        public async Task<bool> CreateDecoy(UserRegistrationModel model)
-        {
-            return await _repository.CreateDecoyAsync(model: model);
         }
 
         [HttpGet("/banned-users")]

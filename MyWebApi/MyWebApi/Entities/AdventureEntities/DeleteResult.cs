@@ -1,4 +1,4 @@
-﻿namespace MyWebApi.Entities.AdventureEntities;
+﻿namespace WebApi.Entities.AdventureEntities;
 
 public enum DeleteResult
 {

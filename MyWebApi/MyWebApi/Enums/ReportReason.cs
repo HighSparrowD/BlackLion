@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace MyWebApi.Enums;
+namespace WebApi.Enums;
 
 //TODO: Fill-Up 
 public enum ReportReason : short

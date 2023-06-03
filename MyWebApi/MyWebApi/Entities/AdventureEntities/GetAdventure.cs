@@ -1,8 +1,8 @@
-﻿using MyWebApi.Enums;
+﻿using WebApi.Enums;
 using System;
 using System.Text.Json.Serialization;
 
-namespace MyWebApi.Entities.AdventureEntities
+namespace WebApi.Entities.AdventureEntities
 {
     public class GetAdventure
     {

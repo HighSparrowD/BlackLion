@@ -1,14 +1,14 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
-using MyWebApi.Data;
-using MyWebApi.Entities.UserInfoEntities;
-using MyWebApi.Interfaces;
-using MyWebApi.Migrations;
+using WebApi.Data;
+using WebApi.Entities.UserInfoEntities;
+using WebApi.Interfaces;
+using WebApi.Migrations;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace MyWebApi.Repositories
+namespace WebApi.Repositories
 {
     public class BackgroundRepository : IBackgroundRepository
     {
@@ -21,7 +21,7 @@ namespace MyWebApi.Repositories
 
         public async Task<List<User>> GetBatchToUpdate(int batchSize)
         {
-            return await _context.SYSTEM_USERS.Where(u => !u.IsUpdated).Take(batchSize)
+            return await _context.users.Where(u => !u.IsUpdated).Take(batchSize)
                 .ToListAsync(); ;
         }
 

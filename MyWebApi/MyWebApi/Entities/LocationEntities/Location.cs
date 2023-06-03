@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace MyWebApi.Entities.LocationEntities
+namespace WebApi.Entities.LocationEntities
 {
     #nullable enable
     public class Location
