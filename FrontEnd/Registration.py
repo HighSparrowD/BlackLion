@@ -1261,7 +1261,7 @@ class Registrator:
 
         for gender in json.loads(
                 requests.get(f"https://localhost:44381/genders", verify=False).text):
-            self.genders[gender["id"]] = gender["genderName"].strip()
+            self.genders[gender["id"]] = gender["name"].strip()
 
         for country in json.loads(
                 requests.get(f"https://localhost:44381/GetCountries/{self.app_language}", verify=False).text):
@@ -1269,11 +1269,11 @@ class Registrator:
 
         for reason in json.loads(
                 requests.get(f"https://localhost:44381/usage-reasons", verify=False).text):
-            self.reasons[reason["id"]] = reason["reasonName"].strip()
+            self.reasons[reason["id"]] = reason["name"].strip()
 
         for pref in json.loads(requests.get(f"https://localhost:44381/communication-preferences",
                                             verify=False).text):
-            self.communication_pref[pref["id"]] = pref["communicationPrefName"].strip()
+            self.communication_pref[pref["id"]] = pref["name"].strip()
 
     def destruct(self):
         self.bot.callback_query_handlers.remove(self.chCode)

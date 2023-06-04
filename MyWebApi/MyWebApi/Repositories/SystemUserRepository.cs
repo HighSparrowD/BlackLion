@@ -52,11 +52,11 @@ namespace WebApi.Repositories
             {
                 location = new Location { Id = model.Id, CityId = (int)model.CityCode, CountryId = (int)model.CountryCode, CityCountryClassLocalisationId = model.AppLanguage, CountryClassLocalisationId = model.AppLanguage };
 
-                country = await _contx.Countries.Where(c => c.Id == model.CountryCode && c.ClassLocalisationId == model.AppLanguage)
+                country = await _contx.Countries.Where(c => c.Id == model.CountryCode && c.Lang == model.AppLanguage)
                     .Select(c => c.CountryName)
                     .FirstOrDefaultAsync();
 
-                city = await _contx.Cities.Where(c => c.Id == model.CityCode && c.CountryClassLocalisationId == model.AppLanguage)
+                city = await _contx.Cities.Where(c => c.Id == model.CityCode && c.Lang == model.AppLanguage)
                     .Select(c => c.CityName)
                     .FirstOrDefaultAsync();
             }
@@ -1604,11 +1604,11 @@ namespace WebApi.Repositories
             if (location.CountryId != null)
             {
                 countryName = await _contx.Countries
-                    .Where(c => c.Id == location.CountryId && c.ClassLocalisationId == location.CountryClassLocalisationId)
+                    .Where(c => c.Id == location.CountryId && c.Lang == location.CountryClassLocalisationId)
                     .Select(c => c.CountryName)
                     .FirstOrDefaultAsync();
                 cityName = await _contx.Cities
-                    .Where(c => c.Id == location.CityId && c.CountryClassLocalisationId == location.CityCountryClassLocalisationId)
+                    .Where(c => c.Id == location.CityId && c.Lang == location.CityCountryClassLocalisationId)
                     .Select(c => c.CityName)
                     .FirstOrDefaultAsync(); ;
             }

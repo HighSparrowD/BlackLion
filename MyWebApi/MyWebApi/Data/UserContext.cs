@@ -59,8 +59,8 @@ namespace WebApi.Data
         public DbSet<DailyReward> DailyRewards => Set<DailyReward>();
         public DbSet<InvitationCredentials> InvitationCredentials => Set<InvitationCredentials>();
         public DbSet<Invitation> Invitations => Set<Invitation>();
-        public DbSet<DailyTask> DailyTasks => Set<DailyTask>();
-        public DbSet<UserDailyTask> UserDailyTasks => Set<UserDailyTask>();
+        public DbSet<DailyTask> DailyTasks => Set<DailyTask>(); //TODO: Remove
+        public DbSet<UserDailyTask> UserDailyTasks => Set<UserDailyTask>(); //TODO: Remove
         public DbSet<UserPersonalityStats> PersonalityStats => Set<UserPersonalityStats>();
         public DbSet<UserPersonalityPoints> PersonalityPoints => Set<UserPersonalityPoints>();
         public DbSet<ActiveEffect> ActiveEffects => Set<ActiveEffect>();
@@ -103,18 +103,18 @@ namespace WebApi.Data
             builder.Entity<UserTest>().HasKey(t => new { t.TestId, t.UserId });
             builder.Entity<TestQuestion>().HasMany(q => q.Answers);
 
-            builder.Entity<Country>().HasKey(c => new { c.Id, c.ClassLocalisationId });
+            builder.Entity<DailyTask>().HasKey(q => new {q.Id, q.ClassLocalisationId});
+            builder.Entity<UserDailyTask>().HasKey(q => new {q.UserId, q.DailyTaskId});
+
+            builder.Entity<Country>().HasKey(c => new { c.Id, c.Lang });
             builder.Entity<Language>().HasKey(l => new { l.Id, l.ClassLocalisationId });
-            builder.Entity<City>().HasKey(c => new { c.Id, c.CountryClassLocalisationId });
+            builder.Entity<City>().HasKey(c => new { c.Id, c.Lang });
             builder.Entity<FeedbackReason>().HasKey(g => new { g.Id, g.ClassLocalisationId });
             builder.Entity<Visit>().HasKey(g => new { g.UserId, g.SectionId });
             builder.Entity<Achievement>().HasKey(g => new { g.Id, g.Language });
             builder.Entity<UserAchievement>().HasKey(g => new { g.UserBaseInfoId, g.AchievementId });
             builder.Entity<BlackList>().HasKey(g => new { g.Id, g.UserId });
-            builder.Entity<UpdateCountry>().HasKey(g => new { g.Id, g.ClassLocalisationId });
             builder.Entity<Localization>().HasKey(m => new { m.Id, m.SectionId });
-            builder.Entity<DailyTask>().HasKey(t => new { t.Id, t.ClassLocalisationId });
-            builder.Entity<UserDailyTask>().HasKey(t => new { t.UserId, t.DailyTaskId });
             builder.Entity<AdventureAttendee>().HasKey(t => new { t.UserId, t.AdventureId });
             builder.Entity<UserTag>().HasKey(t => new { t.UserId, t.Tag });
             builder.Entity<Hint>().HasKey(t => new { t.Id, t.Localization });
