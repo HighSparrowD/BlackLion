@@ -107,7 +107,7 @@ namespace WebApi.Data
             builder.Entity<UserDailyTask>().HasKey(q => new {q.UserId, q.DailyTaskId});
 
             builder.Entity<Country>().HasKey(c => new { c.Id, c.Lang });
-            builder.Entity<Language>().HasKey(l => new { l.Id, l.ClassLocalisationId });
+            builder.Entity<Language>().HasKey(l => new { l.Id, l.Lang });
             builder.Entity<City>().HasKey(c => new { c.Id, c.Lang });
             builder.Entity<FeedbackReason>().HasKey(g => new { g.Id, g.ClassLocalisationId });
             builder.Entity<Visit>().HasKey(g => new { g.UserId, g.SectionId });

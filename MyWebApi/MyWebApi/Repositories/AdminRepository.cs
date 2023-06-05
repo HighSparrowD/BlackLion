@@ -17,6 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using WebApi.Entities;
 
 namespace WebApi.Repositories
 {
@@ -31,38 +32,70 @@ namespace WebApi.Repositories
             _userRep = userRepository;
         }
 
-        public async Task<long> UploadCities(List<City> cities)
+        public async Task<long> UploadCities(List<UpdateCity> cities)
         {
-            cities.ForEach(async c => await _contx.Cities.AddAsync(c));
+            var dbCities = await _contx.Cities.ToListAsync();
+
+            foreach (var city in cities)
+            {
+                if (dbCities.Any(c => c.Id == city.Id))
+                    continue;
+
+                await _contx.Cities.AddAsync(new City
+                {
+                    Id = city.Id,
+                    CityName = city.CityName,
+                    CountryId = city.CountryId,
+                    Lang = city.Lang
+                });
+            }
+
             await _contx.SaveChangesAsync();
             return cities.Count;
         }
 
-        public async Task<long> UploadCountries(List<Country> countries)
+        public async Task<long> UploadCountries(List<UpdateCountry> countries)
         {
-            countries.ForEach(async c => 
-            {
-                if (!_contx.Countries.Contains(c))
-                    await _contx.Countries.AddAsync(c);
-                else
-                    _contx.Countries.Update(c);
-            });
-            await _contx.SaveChangesAsync();
+            var dbCountries = await _contx.Countries.ToListAsync();
 
+            foreach (var country in countries)
+            {
+                if (dbCountries.Any(c => c.Id == country.Id))
+                    continue;
+
+                await _contx.Countries.AddAsync(new Country
+                {
+                    Id = country.Id,
+                    CountryName = country.CountryName,
+                    Priority = country.Priority,
+                    Lang = country.Lang
+                });
+            }
+
+            await _contx.SaveChangesAsync();
             return countries.Count;
         }
 
-        public async Task<long> UploadLanguages(List<Language> langs)
+        public async Task<long> UploadLanguages(List<UpdateLanguage> langs)
         {
-            langs.ForEach(async l => 
-            {
-                if (!_contx.Languages.Contains(l))
-                    await _contx.Languages.AddAsync(l);
-                else
-                    _contx.Languages.Update(l);
-            });
-            await _contx.SaveChangesAsync();
+            var dbLangs = await _contx.Languages.ToListAsync();
 
+            foreach (var lang in langs)
+            {
+                if (dbLangs.Any(c => c.Id == lang.Id))
+                    continue;
+
+                await _contx.Languages.AddAsync(new Language
+                {
+                    Id = lang.Id,
+                    LanguageName = lang.LanguageName,
+                    LanguageNameNative = lang.LanguageNameNative,
+                    Priority = lang.Priority,
+                    Lang = lang.Lang
+                });
+            }
+
+            await _contx.SaveChangesAsync();
             return langs.Count;
         }
 

@@ -74,10 +74,10 @@ namespace WebApi.Controllers
             return await _repository.GetCities(countryId, localisationId);
         }
 
-        [HttpGet("/GetLanguages/{localisationId}")]
-        public async Task<List<Language>> GetLanguages(int localisationId)
+        [HttpGet("/GetLanguages/{lang}")]
+        public async Task<List<Language>> GetLanguages(AppLanguage lang)
         {
-            return await _repository.GetLanguagesAsync(localisationId);
+            return await _repository.GetLanguagesAsync(lang);
         }
 
         [HttpGet("/GetSingleTest/{id}/{locId}")]

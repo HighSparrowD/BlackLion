@@ -12,6 +12,6 @@ namespace WebApi.Entities.LocalisationEntities
         public string LanguageName { get; set; }
         //public virtual List<City> Cities { get; set; }
         //public virtual List<UpdateCountry> Countries { get; set; }
-        public virtual List<Language> Languages { get; set; }
+        //public virtual List<Language> Languages { get; set; }
     }
 }

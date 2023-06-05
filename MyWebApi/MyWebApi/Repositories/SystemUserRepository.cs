@@ -3087,7 +3087,7 @@ namespace WebApi.Repositories
 
             var commonIds = user1Langs.Intersect(user2Langs);
             var commons = await _contx.Languages.Where(l => commonIds
-                .Any(i => i == l.Id) && l.ClassLocalisationId == 0)
+                .Any(i => i == l.Id) && l.Lang == 0)
                 .Select(l => l.LanguageName)
                 .ToListAsync();
 

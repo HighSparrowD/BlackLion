@@ -68,6 +68,3 @@ C:\Git\BlackLion\MyWebApi\MyWebApi\obj\Debug\net6.0\refint\WebApi.dll
 C:\Git\BlackLion\MyWebApi\MyWebApi\obj\Debug\net6.0\WebApi.pdb
 C:\Git\BlackLion\MyWebApi\MyWebApi\obj\Debug\net6.0\WebApi.genruntimeconfig.cache
 C:\Git\BlackLion\MyWebApi\MyWebApi\obj\Debug\net6.0\ref\WebApi.dll
-C:\Git\BlackLion\MyWebApi\MyWebApi\obj\Debug\net6.0\ru\WebApi.resources.cs
-C:\Git\BlackLion\MyWebApi\MyWebApi\obj\Debug\net6.0\uk\WebApi.resources.cs
-C:\Git\BlackLion\MyWebApi\MyWebApi\obj\Debug\net6.0\en\WebApi.resources.cs
