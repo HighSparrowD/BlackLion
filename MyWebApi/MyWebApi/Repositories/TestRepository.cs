@@ -41,9 +41,9 @@ namespace WebApi.Repositories
         {
             var localisations = await _contx.ClassLocalizations
                 .Where(l => l.Id == localisationId)
-                .Include(l => l.Languages)
+                //.Include(l => l.Languages)
                 //.Include(l => l.Cities) // Retrieve using GetCities after choosing a country!
-                .Include(l => l.Countries)
+                //.Include(l => l.Countries)
                 .ToListAsync();
             return localisations;
         }
@@ -71,13 +71,13 @@ namespace WebApi.Repositories
 
         public async Task<List<City>> GetCities(int countryId, AppLanguage localisationId)
         {
-            var cities = await _contx.Cities.Where(c => c.CountryId == countryId && c.CountryClassLocalisationId == localisationId).ToListAsync();
+            var cities = await _contx.Cities.Where(c => c.CountryId == countryId && c.Lang == localisationId).ToListAsync();
             return cities;
         }
 
         public async Task<List<Country>> GetCountries(AppLanguage localisationId)
         {
-            return await _contx.Countries.Where(c => c.ClassLocalisationId == localisationId)
+            return await _contx.Countries.Where(c => c.Lang == localisationId)
                 .OrderBy(c => c.Priority)
                 .ToListAsync();
         }
@@ -114,10 +114,10 @@ namespace WebApi.Repositories
             return preferences;
         }
 
-        public async Task<List<Language>> GetLanguagesAsync(int localisationId)
+        public async Task<List<Language>> GetLanguagesAsync(AppLanguage lang)
         {
             return await _contx.Languages
-                .Where(l => l.ClassLocalisationId == localisationId)
+                .Where(l => l.Lang == lang)
                 .OrderByDescending(l => l.Priority)
                 .ToListAsync();
         }

@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
+using WebApi.Enums;
 
 namespace WebApi.Entities.SecondaryEntities
 {
@@ -12,6 +13,6 @@ namespace WebApi.Entities.SecondaryEntities
         [AllowNull]
         public short? Priority { get; set; }
         [Key]
-        public int ClassLocalisationId { get; set; }
+        public AppLanguage Lang { get; set; }
     }
 }

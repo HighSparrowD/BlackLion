@@ -10,7 +10,7 @@ namespace WebApi.Entities.LocationEntities
         [Key]
         public int Id { get; set; }
         [Key]
-        public AppLanguage ClassLocalisationId { get; set; }
+        public AppLanguage Lang { get; set; }
         public string CountryName { get; set; }
         [AllowNull]
         public short? Priority { get; set; }

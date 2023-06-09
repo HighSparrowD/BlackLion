@@ -8,7 +8,6 @@ namespace WebApi.Entities.DailyTaskEntities
     {
         [Key]
         public long Id { get; set; }
-        [Key]
         public int ClassLocalisationId { get; set; }
         public int Condition { get; set; }
         public string Description { get; set; }

@@ -14,6 +14,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using WebApi.Entities;
 
 namespace WebApi.Controllers
 {
@@ -51,19 +52,19 @@ namespace WebApi.Controllers
         //}
 
         [HttpPost("/UpdateCountries")]
-        public async Task<long> UpdateCountries(List<Country> countries)
+        public async Task<long> UpdateCountries(List<UpdateCountry> countries)
         {
             return await _repository.UploadCountries(countries);
         }
 
         [HttpPost("/UpdateCities")]
-        public async Task<long> UpdateCities(List<City> cities)
+        public async Task<long> UpdateCities(List<UpdateCity> cities)
         {
             return await _repository.UploadCities(cities);
         }
 
         [HttpPost("/UpdateLanguages")]
-        public async Task<long> UpdateLanguages(List<Language> langs)
+        public async Task<long> UpdateLanguages(List<UpdateLanguage> langs)
         {
             return await _repository.UploadLanguages(langs);
         }

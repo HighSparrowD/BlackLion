@@ -514,7 +514,7 @@ namespace WebApi.Migrations
                     b.Property<int>("Id")
                         .HasColumnType("integer");
 
-                    b.Property<byte>("CountryClassLocalisationId")
+                    b.Property<byte>("Lang")
                         .HasColumnType("smallint");
 
                     b.Property<string>("CityName")
@@ -523,9 +523,12 @@ namespace WebApi.Migrations
                     b.Property<int>("CountryId")
                         .HasColumnType("integer");
 
-                    b.HasKey("Id", "CountryClassLocalisationId");
+                    b.Property<byte?>("CountryLang")
+                        .HasColumnType("smallint");
 
-                    b.HasIndex("CountryId", "CountryClassLocalisationId");
+                    b.HasKey("Id", "Lang");
+
+                    b.HasIndex("CountryId", "CountryLang");
 
                     b.ToTable("cities", (string)null);
                 });
@@ -535,7 +538,7 @@ namespace WebApi.Migrations
                     b.Property<int>("Id")
                         .HasColumnType("integer");
 
-                    b.Property<byte>("ClassLocalisationId")
+                    b.Property<byte>("Lang")
                         .HasColumnType("smallint");
 
                     b.Property<string>("CountryName")
@@ -544,7 +547,7 @@ namespace WebApi.Migrations
                     b.Property<short?>("Priority")
                         .HasColumnType("smallint");
 
-                    b.HasKey("Id", "ClassLocalisationId");
+                    b.HasKey("Id", "Lang");
 
                     b.ToTable("countries", (string)null);
                 });
@@ -563,40 +566,25 @@ namespace WebApi.Migrations
                     b.Property<int?>("CityId")
                         .HasColumnType("integer");
 
+                    b.Property<byte?>("CityLang")
+                        .HasColumnType("smallint");
+
                     b.Property<byte?>("CountryClassLocalisationId")
                         .HasColumnType("smallint");
 
                     b.Property<int?>("CountryId")
                         .HasColumnType("integer");
 
+                    b.Property<byte?>("CountryLang")
+                        .HasColumnType("smallint");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("CityId", "CityCountryClassLocalisationId");
+                    b.HasIndex("CityId", "CityLang");
 
-                    b.HasIndex("CountryId", "CountryClassLocalisationId");
+                    b.HasIndex("CountryId", "CountryLang");
 
                     b.ToTable("user_locations", (string)null);
-                });
-
-            modelBuilder.Entity("WebApi.Entities.LocationEntities.UpdateCountry", b =>
-                {
-                    b.Property<long>("Id")
-                        .HasColumnType("bigint");
-
-                    b.Property<int>("ClassLocalisationId")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("ClassLocalizationId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("CountryName")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id", "ClassLocalisationId");
-
-                    b.HasIndex("ClassLocalizationId");
-
-                    b.ToTable("UpdateCountry");
                 });
 
             modelBuilder.Entity("WebApi.Entities.ReasonEntities.FeedbackReason", b =>
@@ -682,8 +670,8 @@ namespace WebApi.Migrations
                     b.Property<int>("Id")
                         .HasColumnType("integer");
 
-                    b.Property<int>("ClassLocalisationId")
-                        .HasColumnType("integer");
+                    b.Property<byte>("Lang")
+                        .HasColumnType("smallint");
 
                     b.Property<int?>("ClassLocalizationId")
                         .HasColumnType("integer");
@@ -697,7 +685,7 @@ namespace WebApi.Migrations
                     b.Property<short?>("Priority")
                         .HasColumnType("smallint");
 
-                    b.HasKey("Id", "ClassLocalisationId");
+                    b.HasKey("Id", "Lang");
 
                     b.HasIndex("ClassLocalizationId");
 
@@ -745,22 +733,6 @@ namespace WebApi.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("promocodes", (string)null);
-                });
-
-            modelBuilder.Entity("WebApi.Entities.SecondaryEntities.UserReason", b =>
-                {
-                    b.Property<short>("Id")
-                        .HasColumnType("smallint");
-
-                    b.Property<int>("ClassLocalisationId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("ReasonName")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id", "ClassLocalisationId");
-
-                    b.ToTable("UserReason");
                 });
 
             modelBuilder.Entity("WebApi.Entities.SponsorEntities.Ad", b =>
@@ -895,6 +867,9 @@ namespace WebApi.Migrations
                     b.Property<int>("LanguageId")
                         .HasColumnType("integer");
 
+                    b.Property<byte?>("LanguageLang")
+                        .HasColumnType("smallint");
+
                     b.Property<short>("Level")
                         .HasColumnType("smallint");
 
@@ -905,7 +880,7 @@ namespace WebApi.Migrations
 
                     b.HasIndex("SponsorId");
 
-                    b.HasIndex("LanguageClassLocalisationId", "LanguageId");
+                    b.HasIndex("LanguageId", "LanguageLang");
 
                     b.ToTable("sponsor_languages", (string)null);
                 });
@@ -1798,31 +1773,22 @@ namespace WebApi.Migrations
                 {
                     b.HasOne("WebApi.Entities.LocationEntities.Country", null)
                         .WithMany("Cities")
-                        .HasForeignKey("CountryId", "CountryClassLocalisationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("CountryId", "CountryLang");
                 });
 
             modelBuilder.Entity("WebApi.Entities.LocationEntities.Location", b =>
                 {
                     b.HasOne("WebApi.Entities.LocationEntities.City", "City")
                         .WithMany()
-                        .HasForeignKey("CityId", "CityCountryClassLocalisationId");
+                        .HasForeignKey("CityId", "CityLang");
 
                     b.HasOne("WebApi.Entities.LocationEntities.Country", "Country")
                         .WithMany()
-                        .HasForeignKey("CountryId", "CountryClassLocalisationId");
+                        .HasForeignKey("CountryId", "CountryLang");
 
                     b.Navigation("City");
 
                     b.Navigation("Country");
-                });
-
-            modelBuilder.Entity("WebApi.Entities.LocationEntities.UpdateCountry", b =>
-                {
-                    b.HasOne("WebApi.Entities.LocalisationEntities.ClassLocalization", null)
-                        .WithMany("Countries")
-                        .HasForeignKey("ClassLocalizationId");
                 });
 
             modelBuilder.Entity("WebApi.Entities.ReportEntities.Feedback", b =>
@@ -1904,9 +1870,7 @@ namespace WebApi.Migrations
 
                     b.HasOne("WebApi.Entities.SecondaryEntities.Language", "Language")
                         .WithMany()
-                        .HasForeignKey("LanguageClassLocalisationId", "LanguageId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("LanguageId", "LanguageLang");
 
                     b.Navigation("Language");
                 });
@@ -2061,8 +2025,6 @@ namespace WebApi.Migrations
 
             modelBuilder.Entity("WebApi.Entities.LocalisationEntities.ClassLocalization", b =>
                 {
-                    b.Navigation("Countries");
-
                     b.Navigation("Languages");
                 });
 

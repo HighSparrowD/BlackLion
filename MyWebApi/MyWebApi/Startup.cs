@@ -1,25 +1,19 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using WebApi.Data;
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using WebApi.Interfaces;
 using WebApi.Repositories;
 using System.Globalization;
 using Microsoft.AspNetCore.Localization;
-using Microsoft.AspNetCore.Localization.Routing;
 using Microsoft.Extensions.Options;
 using WebApi.Services.Background;
+using System.Text.Json.Serialization;
 
 namespace WebApi
 {
@@ -45,6 +39,12 @@ namespace WebApi
                 options.DefaultRequestCulture = new RequestCulture(_config["Globalization:DefaultCulture"]);
                 options.SupportedCultures = supportedCultures.Select(c => new CultureInfo(c)).ToList();
                 options.SupportedUICultures = supportedCultures.Select(c => new CultureInfo(c)).ToList();
+            });
+
+            services.AddControllers().AddJsonOptions(opts =>
+            {
+                var enumConverter = new JsonStringEnumConverter();
+                opts.JsonSerializerOptions.Converters.Add(enumConverter);
             });
 
             services.AddHostedService<BackgroundWorker>();

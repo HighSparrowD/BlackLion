@@ -19,7 +19,7 @@ namespace WebApi.Interfaces
         List<GetLocalizedEnum> GetCommunicationPreferences();
         Task<List<City>> GetCities(int countryId, AppLanguage localisationId);
         Task<List<Country>> GetCountries(AppLanguage localisationId);
-        Task<List<Language>> GetLanguagesAsync(int localisationId);
+        Task<List<Language>> GetLanguagesAsync(AppLanguage localisationId);
         Task<Test> GetSingleTestAsync(long testId, AppLanguage localisationId);
         //Task<List<IntellectualTest>> GetIntellectualTestsAsync();
     }
