@@ -46,7 +46,7 @@ namespace WebApi.Repositories
 
         public async Task<List<City>> GetCities(int countryId, AppLanguage localisationId)
         {
-            var cities = await _contx.Cities.Where(c => c.CountryId == countryId && c.Lang == localisationId).ToListAsync();
+            var cities = await _contx.Cities.Where(c => c.CountryId == countryId && c.CountryLang == localisationId).ToListAsync();
             return cities;
         }
 

@@ -56,7 +56,7 @@ namespace WebApi.Repositories
                     .Select(c => c.CountryName)
                     .FirstOrDefaultAsync();
 
-                city = await _contx.Cities.Where(c => c.Id == model.CityCode && c.Lang == model.AppLanguage)
+                city = await _contx.Cities.Where(c => c.Id == model.CityCode && c.CountryLang == model.AppLanguage)
                     .Select(c => c.CityName)
                     .FirstOrDefaultAsync();
             }
@@ -1596,7 +1596,7 @@ namespace WebApi.Repositories
                     .Select(c => c.CountryName)
                     .FirstOrDefaultAsync();
                 cityName = await _contx.Cities
-                    .Where(c => c.Id == location.CityId && c.Lang == location.CityCountryClassLocalisationId)
+                    .Where(c => c.Id == location.CityId && c.CountryLang == location.CityCountryClassLocalisationId)
                     .Select(c => c.CityName)
                     .FirstOrDefaultAsync(); ;
             }
