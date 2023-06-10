@@ -19,8 +19,8 @@ namespace WebApi.Repositories
         public async Task<List<string>> SuggestLanguagesAsync(string incorrectLanguage)
         {
             return await _contx.Languages
-                .Where(t => EF.Functions.FuzzyStringMatchLevenshteinLessEqual(t.LanguageName, incorrectLanguage, 3) <= 2)
-                .OrderBy(t => EF.Functions.FuzzyStringMatchLevenshteinLessEqual(t.LanguageName, incorrectLanguage, 3))
+                .Where(t => EF.Functions.FuzzyStringMatchLevenshteinLessEqual(t.LanguageName, incorrectLanguage, 2) <= 2)
+                .OrderBy(t => EF.Functions.FuzzyStringMatchLevenshteinLessEqual(t.LanguageName, incorrectLanguage, 2))
                 .Select(t => t.LanguageName)
                 .Take(3)
                 .ToListAsync();
@@ -29,8 +29,8 @@ namespace WebApi.Repositories
         public async Task<List<string>> SuggestCountriesAsync(string incorrectCountry)
         {
             return await _contx.Countries
-                .Where(t => EF.Functions.FuzzyStringMatchLevenshteinLessEqual(t.CountryName, incorrectCountry, 3) <= 2)
-                .OrderBy(t => EF.Functions.FuzzyStringMatchLevenshteinLessEqual(t.CountryName, incorrectCountry, 3))
+                .Where(t => EF.Functions.FuzzyStringMatchLevenshteinLessEqual(t.CountryName, incorrectCountry, 2) <= 2)
+                .OrderBy(t => EF.Functions.FuzzyStringMatchLevenshteinLessEqual(t.CountryName, incorrectCountry, 2))
                 .Select(t => t.CountryName)
                 .Take(3)
                 .ToListAsync();
@@ -39,8 +39,8 @@ namespace WebApi.Repositories
         public async Task<List<string>> SuggestCitiesAsync(string incorrectCity)
         {
             return await _contx.Cities
-                .Where(t => EF.Functions.FuzzyStringMatchLevenshteinLessEqual(t.CityName, incorrectCity, 3) <= 2)
-                .OrderBy(t => EF.Functions.FuzzyStringMatchLevenshteinLessEqual(t.CityName, incorrectCity, 3))
+                .Where(t => EF.Functions.FuzzyStringMatchLevenshteinLessEqual(t.CityName, incorrectCity, 2) <= 2)
+                .OrderBy(t => EF.Functions.FuzzyStringMatchLevenshteinLessEqual(t.CityName, incorrectCity, 2))
                 .Select(t => t.CityName)
                 .Take(3)
                 .ToListAsync();
