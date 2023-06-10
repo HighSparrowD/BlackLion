@@ -1,5 +1,4 @@
-﻿using WebApi.Entities.LocalisationEntities;
-using WebApi.Entities.LocationEntities;
+﻿using WebApi.Entities.LocationEntities;
 using WebApi.Entities.SecondaryEntities;
 using WebApi.Entities.TestEntities;
 using System.Collections.Generic;
@@ -11,9 +10,6 @@ namespace WebApi.Interfaces
 {
     public interface ITestRepository
     {
-        Task<List<Localization>> GetLocalisationAsync(int localisationId);
-        Task<List<ClassLocalization>> GetClassLocalisationAsync(int localisationId);
-        Task<List<SecondaryLocalizationModel>> GetSecondaryLocalisationAsync();
         List<GetLocalizedEnum> GetAppLanguages();
         List<GetLocalizedEnum> GetReasons();
         List<GetLocalizedEnum> GetCommunicationPreferences();
@@ -22,5 +18,6 @@ namespace WebApi.Interfaces
         Task<List<Language>> GetLanguagesAsync(AppLanguage localisationId);
         Task<Test> GetSingleTestAsync(long testId, AppLanguage localisationId);
         //Task<List<IntellectualTest>> GetIntellectualTestsAsync();
+        Task<List<string>> GetSimmilarTagsAsync(string tag);
     }
 }

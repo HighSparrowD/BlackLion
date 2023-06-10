@@ -10,15 +10,12 @@ using WebApi.Entities.LocationEntities;
 using WebApi.Entities.ReasonEntities;
 using WebApi.Entities.AchievementEntities;
 using WebApi.Entities.UserActionEntities;
-using WebApi.Entities.SponsorEntities;
 using WebApi.Entities.DailyTaskEntities;
 using WebApi.Entities.TestEntities;
 using static WebApi.Enums.SystemEnums;
-using WebApi.Entities.AdminEntities;
 using WebApi.Entities.EffectEntities;
 using WebApi.Entities.AdventureEntities;
 using WebApi.Enums;
-using WebApi.Entities.SecondaryEntities;
 
 namespace WebApi.Controllers
 {
@@ -103,7 +100,7 @@ namespace WebApi.Controllers
             return await _repository.GetUserInfoByUsrnameAsync(username);
         }
 
-        [HttpGet("/GetUserList/{userId}")]
+        [HttpGet("/GetUserList")]
         public async Task<List<GetUserData>> GetUserList(long userId)
         {
             return await _repository.GetUsersAsync(userId);
@@ -211,12 +208,6 @@ namespace WebApi.Controllers
         public async Task<List<Report>> GetAllUserReports(long id)
         {
             return await _repository.GetAllUserReportsAsync(id);
-        }
-
-        [HttpGet("/GetAllUsersIds")]
-        public async Task<List<long>> GetAllUsers()
-        {
-            return await _repository.GetAllUsersAsync();
         }
 
         [HttpGet("/GetUsersRecentFeedbacks/{userId}")]
@@ -399,23 +390,11 @@ namespace WebApi.Controllers
             return await _repository.RegisterUserEncounter(model);
         }
 
-        [HttpGet("/GetUserEncounter/{encounterId}")]
-        public async Task<Encounter> GetUserEncounter(long encounterId)
+        [HttpGet("/profile-encounters/{userId}")]
+        public async Task<List<Encounter>> GetUserProfileEncounters([FromRoute] long userId)
         {
-            return await _repository.GetUserEncounter(encounterId);
-        }
-
-        [HttpGet("/GetUserEncounters/{userId}/{sectionId}")]
-        public async Task<List<Encounter>> GetUserEncounters(long userId, int sectionId)
-        {
-            return await _repository.GetUserEncounters(userId, sectionId);
-        }
-
-        [HttpGet("/GetUserProfileEncounters/{userId}")]
-        public async Task<List<Encounter>> GetUserProfileEncounters(long userId)
-        {
-            var familiatorEncounters = await _repository.GetUserEncounters(userId, (int)Sections.Familiator);
-            familiatorEncounters.AddRange(await _repository.GetUserEncounters(userId, (int)Sections.Requester));
+            var familiatorEncounters = await _repository.GetUserEncounters(userId, Section.Familiator);
+            familiatorEncounters.AddRange(await _repository.GetUserEncounters(userId, Section.Requester));
 
             return familiatorEncounters;
         }
@@ -631,7 +610,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/GetTags/{userId}")]
-        public async Task<List<UserTag>> UpdateTags(long userId)
+        public async Task<List<UserTag>> GetTags(long userId)
         {
             return await _repository.GetTags(userId);
         }

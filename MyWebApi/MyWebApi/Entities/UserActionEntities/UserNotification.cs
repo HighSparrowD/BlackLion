@@ -14,7 +14,7 @@ namespace WebApi.Entities.UserActionEntities
         public long UserId1 { get; set; }
         public bool IsLikedBack { get; set; }
         public Severities Severity { get; set; }
-        public Sections Section { get; set; }
+        public Section Section { get; set; }
         public string? Description { get; set; }
         //[ForeignKey("UserId")]
         //public virtual User? Sender { get; set; }

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WebApi.Data;
@@ -12,16 +13,17 @@ using WebApi.Data;
 namespace WebApi.Migrations
 {
     [DbContext(typeof(UserContext))]
-    partial class UserContextModelSnapshot : ModelSnapshot
+    [Migration("20230609161634_LocalizationCleanup")]
+    partial class LocalizationCleanup
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("ProductVersion", "7.0.5")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
-            NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "fuzzystrmatch");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("WebApi.Entities.AchievementEntities.Achievement", b =>
@@ -1069,8 +1071,6 @@ namespace WebApi.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
-
                     b.ToTable("notifications", (string)null);
                 });
 
@@ -1148,7 +1148,7 @@ namespace WebApi.Migrations
                     b.Property<long>("EncounteredUserId")
                         .HasColumnType("bigint");
 
-                    b.Property<int>("Section")
+                    b.Property<int>("SectionId")
                         .HasColumnType("integer");
 
                     b.Property<long>("UserId")
@@ -1307,13 +1307,16 @@ namespace WebApi.Migrations
                     b.Property<int>("TagSearchesCount")
                         .HasColumnType("integer");
 
+                    b.Property<long?>("UserSettingsId")
+                        .HasColumnType("bigint");
+
                     b.HasKey("Id");
 
                     b.HasIndex("DataId");
 
                     b.HasIndex("LocationId");
 
-                    b.HasIndex("SettingsId");
+                    b.HasIndex("UserSettingsId");
 
                     b.ToTable("users", (string)null);
                 });
@@ -1852,17 +1855,10 @@ namespace WebApi.Migrations
                     b.Navigation("InvitorCredentials");
                 });
 
-            modelBuilder.Entity("WebApi.Entities.UserActionEntities.UserNotification", b =>
-                {
-                    b.HasOne("WebApi.Entities.UserInfoEntities.User", null)
-                        .WithMany("Notifications")
-                        .HasForeignKey("UserId");
-                });
-
             modelBuilder.Entity("WebApi.Entities.UserInfoEntities.BlackList", b =>
                 {
                     b.HasOne("WebApi.Entities.UserInfoEntities.User", "BannedUser")
-                        .WithMany("BlackList")
+                        .WithMany("UserBlackList")
                         .HasForeignKey("BannedUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1873,7 +1869,7 @@ namespace WebApi.Migrations
             modelBuilder.Entity("WebApi.Entities.UserInfoEntities.Encounter", b =>
                 {
                     b.HasOne("WebApi.Entities.UserInfoEntities.User", "EncounteredUser")
-                        .WithMany("Encounters")
+                        .WithMany()
                         .HasForeignKey("EncounteredUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1906,17 +1902,15 @@ namespace WebApi.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("WebApi.Entities.UserInfoEntities.UserSettings", "Settings")
+                    b.HasOne("WebApi.Entities.UserInfoEntities.UserSettings", "UserSettings")
                         .WithMany()
-                        .HasForeignKey("SettingsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("UserSettingsId");
 
                     b.Navigation("Data");
 
                     b.Navigation("Location");
 
-                    b.Navigation("Settings");
+                    b.Navigation("UserSettings");
                 });
 
             modelBuilder.Entity("WebApi.Entities.UserInfoEntities.UserTag", b =>
@@ -1971,13 +1965,9 @@ namespace WebApi.Migrations
 
             modelBuilder.Entity("WebApi.Entities.UserInfoEntities.User", b =>
                 {
-                    b.Navigation("BlackList");
-
-                    b.Navigation("Encounters");
-
-                    b.Navigation("Notifications");
-
                     b.Navigation("Tags");
+
+                    b.Navigation("UserBlackList");
                 });
 #pragma warning restore 612, 618
         }

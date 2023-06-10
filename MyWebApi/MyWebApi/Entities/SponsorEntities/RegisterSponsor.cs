@@ -1,6 +1,6 @@
-﻿
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using WebApi.Enums;
 
 namespace WebApi.Entities.SponsorEntities
 {
@@ -15,7 +15,7 @@ namespace WebApi.Entities.SponsorEntities
         public int UserAppLanguage { get; set; }
         public int UserCountryId { get; set; }
         public int UserCityId { get; set; }
-        public List<int> Languages { get; set; }
+        public List<AppLanguage> Languages { get; set; }
         public List<string> LanguageLevels { get; set; }
         [MaxLength(255)]
         public string Tel { get; set; }

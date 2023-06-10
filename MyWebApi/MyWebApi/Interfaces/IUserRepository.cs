@@ -43,7 +43,6 @@ namespace WebApi.Interfaces
         Task<int> GetUserAppLanguage(long id);
         Task<long> RegisterUserAsync(UserRegistrationModel model, bool wasRegistered=false);
         Task<Country> GetCountryAsync(long id);
-        Task<List<long>> GetAllUsersAsync();
         Task<List<FeedbackReason>> GetFeedbackReasonsAsync(int localisationId);
         //Task<List<ReportReason>> GetReportReasonsAsync(int localisationId);
         Task<long> AddFeedbackAsync(Feedback report);
@@ -80,7 +79,7 @@ namespace WebApi.Interfaces
         Task<DateTime> GrantPremiumToUser(long userId, int cost, int dayDuration, short currency);
         Task<Guid?> RegisterUserEncounter(Encounter model);
         Task<Encounter> GetUserEncounter(long encounterId);
-        Task<List<Encounter>> GetUserEncounters(long userId, int sectionId);
+        Task<List<Encounter>> GetUserEncounters(long userId, Section section);
         Task<int> AddUserTrustProgressAsync(long userId, double progress);
         Task<int> UpdateUserTrustLevelAsync(long userId, int level);
         Task<UserTrustLevel> GetUserTrustLevel(long userId);

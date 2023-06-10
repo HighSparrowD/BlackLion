@@ -20,11 +20,15 @@ from dotenv import load_dotenv
 
 load_dotenv()
 key = os.getenv("KEY")
+users = os.getenv("DEBUGUSERS").split(",")
 Helpers.api_address = os.getenv("APIADDRESS")
 
 bot = TeleBot(key)
 bot.parse_mode = telegram.ParseMode.HTML
 Menus.start_program_in_debug_mode(bot) #TODO: remove in production?
+
+for user in users:
+    go_back_to_main_menu(bot, user, None, False)
 
 random_talkers = []
 sponsor_handlers = []
@@ -208,13 +212,13 @@ def create_settings(message, userId):
     response = Helpers.switch_user_busy_status(userId, 11)
     status = response["status"]
 
-    if status == 1: # Success
+    if status == "Success": # Success
         return Settings(bot, message)
-    elif status == 2: # Busy
+    elif status == "Busy": # Busy
         return
-    elif status == 3: # Does not exist
+    elif status == "DoesNotExist": # Does not exist
         send_registration_warning(userId)
-    elif status == 4: # Is deleted
+    elif status == "IsDeleted": # Is deleted
         bot.send_message(userId, "Hey! your account had been deleted recently. Would you like to pass a quick registration and save all your lost data?\n Then hit /register !")
 
 
@@ -264,5 +268,6 @@ def create_admin_cabinet(message):
 
 def send_registration_warning(userId):
     bot.send_message(userId, "Please register before entering this section", reply_markup=Menus.register_markup)
+
 
 bot.polling()

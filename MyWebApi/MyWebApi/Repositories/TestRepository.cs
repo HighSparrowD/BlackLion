@@ -3,7 +3,6 @@ using WebApi.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using WebApi.Entities.LocalisationEntities;
 using WebApi.Entities.TestEntities;
 using WebApi.Entities.SecondaryEntities;
 using System.Linq;
@@ -22,30 +21,6 @@ namespace WebApi.Repositories
         public TestRepository(UserContext contx)
         {
             _contx = contx;
-        }
-
-        public async Task<List<SecondaryLocalizationModel>> GetSecondaryLocalisationAsync()
-        {
-            var localisations = await _contx.SecondaryLocalizations.ToListAsync();
-            return localisations;
-        }
-
-        public async Task<List<Localization>> GetLocalisationAsync(int localisationId)
-        {
-            var localisations = await _contx.Localizations.Where(l => l.Id == localisationId)
-                .Include(l => l.Loc).ToListAsync();
-            return localisations;
-        }
-
-        public async Task<List<ClassLocalization>> GetClassLocalisationAsync(int localisationId)
-        {
-            var localisations = await _contx.ClassLocalizations
-                .Where(l => l.Id == localisationId)
-                //.Include(l => l.Languages)
-                //.Include(l => l.Cities) // Retrieve using GetCities after choosing a country!
-                //.Include(l => l.Countries)
-                .ToListAsync();
-            return localisations;
         }
 
         public List<GetLocalizedEnum> GetAppLanguages()
@@ -130,6 +105,16 @@ namespace WebApi.Repositories
                 .ThenInclude(q => q.Answers)
                 .Include(t => t.Results.OrderBy(r => r.Score))
                 .SingleOrDefaultAsync();
+        }
+
+        public async Task<List<string>> GetSimmilarTagsAsync(string tag)
+        {
+            return await _contx.UserTags
+                .Where(t => EF.Functions.FuzzyStringMatchDifference(EF.Functions.FuzzyStringMatchSoundex(t.Tag), tag) >= 1)
+                .OrderByDescending(t => EF.Functions.FuzzyStringMatchDifference(EF.Functions.FuzzyStringMatchSoundex(t.Tag), tag))
+                .Select(t => t.Tag)
+                .Take(3)
+                .ToListAsync();
         }
     }
 }

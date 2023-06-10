@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Localization;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using WebApi.Interfaces;
 
 namespace WebApi.Controllers
 {
@@ -9,30 +10,48 @@ namespace WebApi.Controllers
     [ApiController]
     public class RegistrationController : Controller
     {
-        public IStringLocalizer<RegistrationController> _localizer { get; set; }
+        public IRegistrationRepository _repository { get; set; }
 
-        public RegistrationController(IStringLocalizer<RegistrationController> localizer)
+        public RegistrationController(IRegistrationRepository registrationRepo)
         {
-            _localizer = localizer;
+            _repository = registrationRepo;
         }
 
-        [HttpGet("/get-registration-localization")]
-        public async Task<Dictionary<string, string>> GetRegistrationLocalization()
+        //[HttpGet("/get-registration-localization")]
+        //public async Task<Dictionary<string, string>> GetRegistrationLocalization()
+        //{
+        //    var s = Request.Headers;
+
+        //    var localizationDict = new Dictionary<string, string>();
+        //    await Task.Run(() =>
+        //    {
+        //        var rawLocalization = _localizer.GetAllStrings();
+
+        //        foreach (var item in rawLocalization)
+        //        {
+        //            localizationDict.Add(item.Name, item.Value);
+        //        }
+        //    });
+
+        //    return localizationDict;
+        //}
+
+        [HttpGet("/suggest-languages")]
+        public async Task<List<string>> SuggestLanguages([FromQuery] string language)
         {
-            var s = Request.Headers;
+            return await _repository.SuggestLanguagesAsync(language);
+        }
 
-            var localizationDict = new Dictionary<string, string>();
-            await Task.Run(() =>
-            {
-                var rawLocalization = _localizer.GetAllStrings();
+        [HttpGet("/suggest-countries")]
+        public async Task<List<string>> SuggestCountries([FromQuery] string country)
+        {
+            return await _repository.SuggestCountriesAsync(country);
+        }
 
-                foreach (var item in rawLocalization)
-                {
-                    localizationDict.Add(item.Name, item.Value);
-                }
-            });
-
-            return localizationDict;
+        [HttpGet("/suggest-cities")]
+        public async Task<List<string>> SuggestCities([FromQuery] string city)
+        {
+            return await _repository.SuggestCitiesAsync(city);
         }
     }
 }
