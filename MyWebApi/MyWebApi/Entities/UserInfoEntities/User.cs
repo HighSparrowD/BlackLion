@@ -5,6 +5,8 @@ using System.ComponentModel.DataAnnotations;
 using System.Data;
 using WebApi.Enums;
 using WebApi.Entities.LocationEntities;
+using System.ComponentModel.DataAnnotations.Schema;
+using WebApi.Entities.UserActionEntities;
 #nullable enable
 
 namespace WebApi.Entities.UserInfoEntities
@@ -13,8 +15,11 @@ namespace WebApi.Entities.UserInfoEntities
     {
         [Key]
         public long Id { get; set; }
+        [ForeignKey("Data")]
         public long DataId { get; set; }
+        [ForeignKey("Settings")]
         public long SettingsId { get; set; }
+        [ForeignKey("Location")]
         public long LocationId { get; set; }
         public bool IsBusy { get; set; }
         public bool IsBanned { get; set; }
@@ -45,10 +50,12 @@ namespace WebApi.Entities.UserInfoEntities
         public bool IsDecoy { get; set; }
 
         public virtual UserData? Data  { get; set; }
-        public virtual UserSettings? UserSettings  { get; set; }
+        public virtual UserSettings? Settings  { get; set; }
         public virtual Location? Location  { get; set; }
-        public virtual List<BlackList>? UserBlackList { get; set; }
+        public virtual List<BlackList>? BlackList { get; set; }
         public virtual List<UserTag>? Tags { get; set; }
+        public virtual List<Encounter>? Encounters { get; set; }
+        public virtual List<UserNotification>? Notifications { get; set; }
         //public virtual UserTrustLevel? TrustLevel { get; set; }
         //public virtual List<Encounter>? UserEncounters { get; set; }
 

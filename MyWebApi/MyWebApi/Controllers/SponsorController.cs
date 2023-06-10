@@ -5,6 +5,7 @@ using WebApi.Entities.UserInfoEntities;
 using WebApi.Interfaces;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using WebApi.Enums;
 
 namespace WebApi.Controllers
 {
@@ -190,7 +191,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/GetSponsorLanguages/{sponsorId}")]
-        public async Task<List<int>> GetSponsorLanguages(long sponsorId)
+        public async Task<List<AppLanguage>> GetSponsorLanguages(long sponsorId)
         {
             return await _repository.GetSponsorLanguagesAsync(sponsorId);
         }

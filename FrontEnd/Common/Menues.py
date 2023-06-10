@@ -51,9 +51,7 @@ def show_admin_markup(bot, user):
 
 
 def start_program_in_debug_mode(bot): # TODO: remove in production
-    users = Helpers.start_program_in_debug_mode(bot)
-    for user in users:
-        go_back_to_main_menu(bot, user, None, False)
+    Helpers.start_program_in_debug_mode(bot)
 
 
 def count_pages(section_elements, current_markup_elements, markup_pages_count, prefs=False, additionalButton=False, buttonText="", buttonData=0):

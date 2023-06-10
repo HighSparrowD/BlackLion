@@ -1,6 +1,6 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+using WebApi.Enums;
 
 namespace WebApi.Entities.UserInfoEntities
 {
@@ -10,7 +10,7 @@ namespace WebApi.Entities.UserInfoEntities
         public Guid Id{ get; set; }
         public long UserId{ get; set; }
         public long EncounteredUserId{ get; set; }
-        public int SectionId { get; set; }
+        public Section Section { get; set; }
         public DateTime EncounterDate { get; set; }
         //[ForeignKey("UserId")]
         //public User User{ get; set; }

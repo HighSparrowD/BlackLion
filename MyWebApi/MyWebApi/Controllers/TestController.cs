@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using WebApi.Interfaces;
 using Microsoft.Extensions.Logging;
-using WebApi.Entities.LocalisationEntities;
 using WebApi.Entities.TestEntities;
 using WebApi.Entities.SecondaryEntities;
 using WebApi.Entities.LocationEntities;
@@ -23,25 +22,6 @@ namespace WebApi.Controllers
         {
             _repository = repos;
             _logger = logger;
-        }
-
-            
-        [HttpGet("/GetLocalisation/{localisationId}")]
-        public async Task<List<Localization>> GetLocalisations(int localisationId)
-        {
-            return await _repository.GetLocalisationAsync(localisationId);
-        }
-
-        [HttpGet("/GetSecondaryLocalisations")]
-        public async Task<List<SecondaryLocalizationModel>> GetSecondaryLocalisations()
-        {
-            return await _repository.GetSecondaryLocalisationAsync();
-        }
-
-        [HttpGet("/GetClassLocalisations/{localisationId}")]
-        public async Task<List<ClassLocalization>> GetClassLocalisations(int localisationId)
-        {
-            return await _repository.GetClassLocalisationAsync(localisationId);
         }
 
         [HttpGet("/app-languages")]
@@ -93,6 +73,12 @@ namespace WebApi.Controllers
         //    var tests = await _repository.GetIntellectualTestsAsync();
         //    return tests;
         //}
+
+        [HttpGet("/similar-tags")]
+        public async Task<List<string>> GetSimmilarTagsAsync([FromQuery] string tag)
+        {
+            return await _repository.GetSimmilarTagsAsync(tag);
+        }
 
     }
 }

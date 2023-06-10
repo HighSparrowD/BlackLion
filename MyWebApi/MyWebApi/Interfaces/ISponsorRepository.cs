@@ -4,6 +4,8 @@ using WebApi.Entities.UserInfoEntities;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using WebApi.Enums;
+
 namespace WebApi.Interfaces
 {
     public interface ISponsorRepository
@@ -41,6 +43,6 @@ namespace WebApi.Interfaces
         Task<int> GetSponsorLevel(long sponsorId);
         Task<Stats> GetSponsorStats(long sponsorId);
         Task<long> AddSponsorLanguage(SponsorLanguage model);
-        Task<List<int>> GetSponsorLanguagesAsync(long sponsorId);
+        Task<List<AppLanguage>> GetSponsorLanguagesAsync(long sponsorId);
     }
 }

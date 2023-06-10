@@ -65,7 +65,7 @@ namespace WebApi.Services.Background
                     var user = batch[i];
 
                     user.HadReceivedReward = false;
-                    user.UserSettings.IsFree = false;
+                    user.Settings.IsFree = false;
                     user.ReportCount = 0;
                     user.ProfileViewsCount = 0;
                     user.RTViewsCount = 0;
@@ -84,7 +84,7 @@ namespace WebApi.Services.Background
                         Description = "<b>Today's Random Achievements</b>\n\n" + string.Join("\n\n", achievements),
                         UserId1 = user.Id,
                         Severity = Severities.Moderate,
-                        Section = Sections.Neutral
+                        Section = Section.Neutral
                     });
 
                     if (user.PremiumExpirationDate != null)

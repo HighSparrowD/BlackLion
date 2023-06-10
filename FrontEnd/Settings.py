@@ -56,15 +56,15 @@ class Settings:
         self.gesture = None
 
         #TODO: check this parameter instead of calling API every time
-        self.uses_Personality = self.current_user_data["userPreferences"]["shouldUsePersonalityFunc"]
+        self.uses_Personality = self.current_user_data["settings"]["shouldUsePersonalityFunc"]
         self.has_Premium = self.current_user_data["hasPremium"]
-        self.language_cons_status = self.current_user_data["shouldConsiderLanguages"]
-        self.free_status = self.current_user_data["isFree"]
-        self.comments_status = self.current_user_data["shouldComment"]
-        self.hints_status = self.current_user_data["shouldSendHints"]
-        self.real_photo_filter_status = self.current_user_data["userPreferences"]["shouldFilterUsersWithoutRealPhoto"]
-        self.increased_familiarity_status = self.current_user_data["increasedFamiliarity"]
-        self.user_language = self.current_user_data["userDataInfo"]["languageId"]
+        self.language_cons_status = self.current_user_data["settings"]["shouldConsiderLanguages"]
+        self.free_status = self.current_user_data["settings"]["isFree"]
+        self.comments_status = self.current_user_data["settings"]["shouldComment"]
+        self.hints_status = self.current_user_data["settings"]["shouldSendHints"]
+        self.real_photo_filter_status = self.current_user_data["settings"]["shouldFilterUsersWithoutRealPhoto"]
+        self.increased_familiarity_status = self.current_user_data["settings"]["increasedFamiliarity"]
+        self.user_language = self.current_user_data["data"]["language"]
 
         self.userBalance = json.loads(requests.get(f"https://localhost:44381/GetActiveUserWalletBalance/{self.current_user}", verify=False).text)
         self.requestStatus = requests.get(f"https://localhost:44381/CheckTickRequestStatus/{self.current_user}", verify=False).text
@@ -637,7 +637,7 @@ class Settings:
             self.encounter_list = {}
             self.markup_page = 1
 
-            encounters = json.loads(requests.get(f"https://localhost:44381/GetUserProfileEncounters/{self.current_user}", verify=False).text)
+            encounters = json.loads(requests.get(f"https://localhost:44381/profile-encounters/{self.current_user}", verify=False).text)
 
             if encounters:
                 for encounter in encounters:

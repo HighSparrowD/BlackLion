@@ -1,6 +1,6 @@
 ﻿namespace WebApi.Enums;
 
-public enum Sections
+public enum Section
 {
     Registration = 1,
     Familiator = 2,

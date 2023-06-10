@@ -75,7 +75,7 @@ namespace WebApi.Repositories
 
                 for (int i = 0; i <= model.Languages.Count - 1; i++)
                 {
-                    await AddSponsorLanguage(new SponsorLanguage { SponsorId = model.Id, LanguageClassLocalisationId = model.UserAppLanguage, LanguageId = model.Languages[i], Level = (short)(LanguageLevels)Enum.Parse(typeof(LanguageLevels), model.LanguageLevels[i]) }); ;
+                    await AddSponsorLanguage(new SponsorLanguage { SponsorId = model.Id, Lang = model.Languages[i], Level = (short)(LanguageLevels)Enum.Parse(typeof(LanguageLevels), model.LanguageLevels[i]) }); ;
                 }
 
                 return user.Id;
@@ -413,11 +413,11 @@ namespace WebApi.Repositories
             return model.Id;
         }
 
-        public async Task<List<int>> GetSponsorLanguagesAsync(long sponsorId)
+        public async Task<List<AppLanguage>> GetSponsorLanguagesAsync(long sponsorId)
         {
             return await _contx.SponsorLanguages
                 .Where(l => l.SponsorId == sponsorId)
-                .Select(l => l.LanguageId)
+                .Select(l => l.Lang)
                 .ToListAsync();
         }
     }

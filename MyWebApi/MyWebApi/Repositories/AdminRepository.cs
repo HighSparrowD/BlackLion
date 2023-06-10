@@ -405,7 +405,7 @@ namespace WebApi.Repositories
                     Description = $"Your identity confirmation had been accepted :)\n{model.Comment}",
                     UserId1 = request.UserId,
                     Severity = Severities.Urgent,
-                    Section = Sections.Neutral,
+                    Section = Section.Neutral,
                 });
             else
                 await _userRep.AddUserNotificationAsync(new Entities.UserActionEntities.UserNotification
@@ -413,7 +413,7 @@ namespace WebApi.Repositories
                     Description = $"Sorry, your identity confirmation request had been denied.\n{model.Comment}",
                     UserId1 = request.UserId,
                     Severity = Severities.Urgent,
-                    Section = Sections.Neutral,
+                    Section = Section.Neutral,
                 });
 
             return model.IsAccepted;

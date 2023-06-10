@@ -1,4 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System;
+using System.Linq;
 using WebApi.Entities.AchievementEntities;
 using WebApi.Entities.AdminEntities;
 using WebApi.Entities.AdventureEntities;
@@ -6,7 +8,6 @@ using WebApi.Entities.DailyRewardEntities;
 using WebApi.Entities.DailyTaskEntities;
 using WebApi.Entities.EffectEntities;
 using WebApi.Entities.HintEntities;
-using WebApi.Entities.LocalisationEntities;
 using WebApi.Entities.LocationEntities;
 using WebApi.Entities.ReasonEntities;
 using WebApi.Entities.ReportEntities;
@@ -39,9 +40,6 @@ namespace WebApi.Data
         public DbSet<UserNotification> Notifications => Set<UserNotification>();
         public DbSet<Encounter> Encounters => Set<Encounter>();
         public DbSet<Admin> Admins => Set<Admin>();
-        public DbSet<Localization> Localizations => Set<Localization>();
-        public DbSet<SecondaryLocalizationModel> SecondaryLocalizations => Set<SecondaryLocalizationModel>();
-        public DbSet<ClassLocalization> ClassLocalizations => Set<ClassLocalization>();
         public DbSet<Test> Tests => Set<Test>();
         public DbSet<TestQuestion> TestsQuestions => Set<TestQuestion>();
         public DbSet<TestAnswer> TestsAnswers => Set<TestAnswer>();
@@ -80,6 +78,8 @@ namespace WebApi.Data
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
+            builder.HasPostgresExtension("fuzzystrmatch");
+
             ConfigureRelations(builder);
             ConfigureMapping(builder);
         }
@@ -87,14 +87,13 @@ namespace WebApi.Data
         private void ConfigureRelations(ModelBuilder builder)
         {
             builder.Entity<User>().HasOne(u => u.Data);
-            builder.Entity<User>().HasOne(u => u.UserSettings);
+            builder.Entity<User>().HasOne(u => u.Settings);
             builder.Entity<User>().HasOne(u => u.Location);
-            builder.Entity<User>().HasMany(u => u.UserBlackList);
+            builder.Entity<User>().HasMany(u => u.BlackList);
             builder.Entity<User>().HasMany(u => u.Tags);
             builder.Entity<Location>().HasOne(u => u.Country);
             builder.Entity<Location>().HasOne(u => u.City);
 
-            builder.Entity<Localization>().HasMany(l => l.Loc);
             builder.Entity<Country>().HasMany(c => c.Cities);
             builder.Entity<Sponsor>().HasMany(s => s.SponsorAds);
             builder.Entity<Test>().HasMany(t => t.Questions);
@@ -114,7 +113,6 @@ namespace WebApi.Data
             builder.Entity<Achievement>().HasKey(g => new { g.Id, g.Language });
             builder.Entity<UserAchievement>().HasKey(g => new { g.UserBaseInfoId, g.AchievementId });
             builder.Entity<BlackList>().HasKey(g => new { g.Id, g.UserId });
-            builder.Entity<Localization>().HasKey(m => new { m.Id, m.SectionId });
             builder.Entity<AdventureAttendee>().HasKey(t => new { t.UserId, t.AdventureId });
             builder.Entity<UserTag>().HasKey(t => new { t.UserId, t.Tag });
             builder.Entity<Hint>().HasKey(t => new { t.Id, t.Localization });
@@ -144,9 +142,6 @@ namespace WebApi.Data
             builder.Entity<UserNotification>().ToTable("notifications");
             builder.Entity<Encounter>().ToTable("encounters");
             builder.Entity<Admin>().ToTable("admins");
-            builder.Entity<Localization>().ToTable("localizations"); //TODO: Remove
-            builder.Entity<SecondaryLocalizationModel>().ToTable("secondary_localizations"); //TODO: Remove
-            builder.Entity<ClassLocalization>().ToTable("class_localizations"); //TODO: Remove
             //builder.Entity<AppLanguage>().ToTable("app_languages"); //TODO: Remove
             builder.Entity<Test>().ToTable("tests");
             builder.Entity<TestQuestion>().ToTable("tests_questions");

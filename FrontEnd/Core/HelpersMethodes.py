@@ -255,7 +255,6 @@ def delete_user_notification(notificationId):
 
 def start_program_in_debug_mode(bot):  # TODO: remove in production
     requests.get(f"{api_address}/SetDebugProperties", verify=False)
-    return json.loads(requests.get(f"{api_address}/GetAllUsersIds", verify=False).text)
 
 
 def get_request_sender(requestId):
