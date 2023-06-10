@@ -215,7 +215,7 @@ class Registrator:
                     return True
                 else:
                     self.bot.send_message(self.current_user, "Language was not recognized, try finding it in our list above")
-                    self.suggest_languages(lang)
+                    self.suggest_languages(msg_text)
                     self.bot.register_next_step_handler(msg, self.spoken_language_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
                     return False
 
@@ -403,7 +403,7 @@ class Registrator:
                             return False
                 else:
                     self.bot.send_message(self.current_user, "Country was not recognized, try finding it in our list above")
-                    self.suggest_countries(country)
+                    self.suggest_countries(msg_text)
                     self.bot.register_next_step_handler(msg, self.location_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
                     return False
 
@@ -479,7 +479,7 @@ class Registrator:
                     return True
                 else:
                     self.bot.send_message(self.current_user, "City was not recognized, try finding it in our list above")
-                    self.suggest_cities(city)
+                    self.suggest_cities(msg_text)
                     self.bot.register_next_step_handler(msg, self.city_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
                     return False
 
@@ -695,7 +695,7 @@ class Registrator:
                     return True
                 else:
                     self.bot.send_message(self.current_user, "Language was not recognized, try finding it in our list above")
-                    self.suggest_languages(lang)
+                    self.suggest_languages(msg_text)
                     self.bot.register_next_step_handler(msg, self.language_preferences_step, acceptMode=acceptMode, editMode=editMode,
                                                         chat_id=self.current_user)
                     return False
@@ -775,7 +775,7 @@ class Registrator:
                     return True
                 else:
                     self.bot.send_message(self.current_user, "Country was not recognized, try finding it in our list above")
-                    self.suggest_countries(country)
+                    self.suggest_countries(msg_text)
                     self.bot.register_next_step_handler(msg, self.location_preferences_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
                     return False
 
@@ -1275,7 +1275,7 @@ class Registrator:
             self.bot.send_message(self.current_user, f"Maybe you've meant: {', '.join(countries)}")
 
     def suggest_cities(self, city):
-        cities = Helpers.suggest_countries(city)
+        cities = Helpers.suggest_cities(city)
 
         if cities:
             self.bot.send_message(self.current_user, f"Maybe you've meant: {', '.join(cities)}")
