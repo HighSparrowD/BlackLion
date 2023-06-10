@@ -60,6 +60,7 @@ namespace WebApi
             services.AddScoped<IAdminRepository, AdminRepository>();
             services.AddScoped<ISponsorRepository, SponsorRepository>();
             services.AddScoped<IBackgroundRepository, BackgroundRepository>();
+            services.AddScoped<IRegistrationRepository, RegistrationRepository>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

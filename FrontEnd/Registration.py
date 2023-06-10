@@ -214,8 +214,8 @@ class Registrator:
                     self.bot.register_next_step_handler(msg, self.spoken_language_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
                     return True
                 else:
-                    self.bot.send_message(self.current_user,
-                                          "Language was not recognized, try finding it in our list above")
+                    self.bot.send_message(self.current_user, "Language was not recognized, try finding it in our list above")
+                    self.suggest_languages(lang)
                     self.bot.register_next_step_handler(msg, self.spoken_language_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
                     return False
 
@@ -402,8 +402,8 @@ class Registrator:
                                                   "Gotcha. Parameters: Country, City, and Location Preferences were reset")
                             return False
                 else:
-                    self.bot.send_message(self.current_user,
-                                          "Country was not recognized, try finding it in our list above")
+                    self.bot.send_message(self.current_user, "Country was not recognized, try finding it in our list above")
+                    self.suggest_countries(country)
                     self.bot.register_next_step_handler(msg, self.location_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
                     return False
 
@@ -478,8 +478,8 @@ class Registrator:
                     self.bot.register_next_step_handler(msg, self.city_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
                     return True
                 else:
-                    self.bot.send_message(self.current_user,
-                                          "City was not recognized, try finding it in our list above")
+                    self.bot.send_message(self.current_user, "City was not recognized, try finding it in our list above")
+                    self.suggest_cities(city)
                     self.bot.register_next_step_handler(msg, self.city_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
                     return False
 
@@ -694,8 +694,8 @@ class Registrator:
                                                         chat_id=self.current_user)
                     return True
                 else:
-                    self.bot.send_message(self.current_user,
-                                          "Language was not recognized, try finding it in our list above")
+                    self.bot.send_message(self.current_user, "Language was not recognized, try finding it in our list above")
+                    self.suggest_languages(lang)
                     self.bot.register_next_step_handler(msg, self.language_preferences_step, acceptMode=acceptMode, editMode=editMode,
                                                         chat_id=self.current_user)
                     return False
@@ -774,8 +774,8 @@ class Registrator:
                     self.bot.register_next_step_handler(msg, self.location_preferences_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
                     return True
                 else:
-                    self.bot.send_message(self.current_user,
-                                          "Country was not recognized, try finding it in our list above")
+                    self.bot.send_message(self.current_user, "Country was not recognized, try finding it in our list above")
+                    self.suggest_countries(country)
                     self.bot.register_next_step_handler(msg, self.location_preferences_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
                     return False
 
@@ -1261,6 +1261,24 @@ class Registrator:
         for pref in json.loads(requests.get(f"https://localhost:44381/communication-preferences",
                                             verify=False).text):
             self.communication_pref[pref["id"]] = pref["name"].strip()
+
+    def suggest_languages(self, language):
+        languages = Helpers.suggest_languages(language)
+
+        if languages:
+            self.bot.send_message(self.current_user, f"Maybe you've meant: {', '.join(languages)}")
+
+    def suggest_countries(self, country):
+        countries = Helpers.suggest_countries(country)
+
+        if countries:
+            self.bot.send_message(self.current_user, f"Maybe you've meant: {', '.join(countries)}")
+
+    def suggest_cities(self, city):
+        cities = Helpers.suggest_countries(city)
+
+        if cities:
+            self.bot.send_message(self.current_user, f"Maybe you've meant: {', '.join(cities)}")
 
     def destruct(self):
         self.bot.callback_query_handlers.remove(self.chCode)

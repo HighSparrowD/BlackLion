@@ -610,7 +610,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/GetTags/{userId}")]
-        public async Task<List<UserTag>> UpdateTags(long userId)
+        public async Task<List<UserTag>> GetTags(long userId)
         {
             return await _repository.GetTags(userId);
         }

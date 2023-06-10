@@ -174,6 +174,27 @@ def get_user_app_language(userId):
         return None
 
 
+def suggest_languages(language):
+    try:
+        return json.loads(requests.get(f"{api_address}/suggest-languages?language={language}", verify=False).text)
+    except:
+        return None
+
+
+def suggest_countries(country):
+    try:
+        return json.loads(requests.get(f"{api_address}/suggest-countries?country={country}", verify=False).text)
+    except:
+        return None
+
+
+def suggest_cities(city):
+    try:
+        return json.loads(requests.get(f"{api_address}/suggest-cities?city={city}", verify=False).text)
+    except:
+        return None
+
+
 def get_user_active_reply(userId):
     try:
         return json.loads(requests.get(f"{api_address}/GetActiveAutoReply/{userId}", verify=False).text)
@@ -503,7 +524,6 @@ def register_adventure(adventureData):
         return requests.post(f"{api_address}/RegisterAdventure", d,
                              headers={"Content-Type": "application/json"},
                              verify=False).text
-
 
 
 def change_adventure(adventureData):
