@@ -15,6 +15,10 @@ langs = {
 }
 
 
+prioritized_langs = ["English", "Russian", "Ukrainian", "Czech", "Polish"]
+prioritized_countries = ["Ukraine", "Russia", "Czechia", "Poland", "United States"]
+
+
 def create_countries_resource(language, start_index=0, loc_index=0):
     global countries_last_index
     ids = []
@@ -29,24 +33,24 @@ def create_countries_resource(language, start_index=0, loc_index=0):
 
     if loc_index == 0:
         for country in countries:
+            if country[0].lower() not in countryNames:
+                ids.append(i)
+                countryNames.append(country[0].lower())
+                languages.append(langs[loc_index])
+                priorities.append(5 if country[0] not in prioritized_countries else 1)
 
-            ids.append(i)
-            countryNames.append(country[0])
-            languages.append(langs[loc_index])
-            priorities.append(5)
-
-            i += 1
+                i += 1
     else:
         for country in countries:
+            translated_name = ts.google(country[0].lower(), from_language="en", to_language=language)
 
-            translated_name = ts.google(country[0], from_language="en", to_language=language)
+            if translated_name not in countryNames:
+                ids.append(i)
+                countryNames.append(translated_name)
+                languages.append(langs[loc_index])
+                priorities.append(5 if country[0] not in prioritized_countries else 1)
 
-            ids.append(i)
-            countryNames.append(translated_name)
-            languages.append(langs[loc_index])
-            priorities.append(5)
-
-            i += 1
+                i += 1
 
     data = {
         "Id": ids,
@@ -67,8 +71,8 @@ def create_cities_resource(language, start_index=0, loc_index=0):
     global cities_last_index
 
     ids = []
-    countryNames = []
-    countryIds = []
+    cityNames = []
+    cityIds = []
     languages = []
 
     cities = pandas.read_csv("worldcities.csv", usecols=["city", "country"])
@@ -83,8 +87,8 @@ def create_cities_resource(language, start_index=0, loc_index=0):
         for index, data in cities.iterrows():
 
             ids.append(i)
-            countryNames.append(data[0])
-            countryIds.append(countries.index(data[1]) + 1)
+            cityNames.append(data[0])
+            cityIds.append(countries.index(data[1]) + 1)
             languages.append(langs[loc_index])
 
             i += 1
@@ -95,8 +99,8 @@ def create_cities_resource(language, start_index=0, loc_index=0):
             translated_name = ts.google(data[0], from_language="en", to_language=language)
 
             ids.append(i)
-            countryNames.append(translated_name)
-            countryIds.append(countries.index(data[1]) + 1)
+            cityNames.append(translated_name)
+            cityIds.append(countries.index(data[1]) + 1)
             languages.append(langs[loc_index])
 
             print(i)
@@ -104,8 +108,8 @@ def create_cities_resource(language, start_index=0, loc_index=0):
 
     data = {
         "Id": ids,
-        "Name": countryNames,
-        "Country Id": countryIds,
+        "Name": cityNames,
+        "Country Id": cityIds,
         "Language": languages
     }
 
@@ -134,23 +138,23 @@ def create_languages_resource(language, start_index=0, loc_index=0):
         for lang in languages:
 
             ids.append(i)
-            languageNames.append(lang[0].strip())
-            languageNativeNames.append(lang[0].strip()) # lang[1] TODO: Make it work with a native one
+            languageNames.append(lang[0].strip().lower())
+            languageNativeNames.append(lang[0].strip().lower()) # lang[1] TODO: Make it work with a native one
             languages_translation.append(langs[loc_index])
-            priorities.append(5)
+            priorities.append(5 if lang[0] not in prioritized_langs else 1)
 
             i += 1
 
     else:
         for lang in languages:
 
-            translated_lang = ts.google(lang[0].strip(), from_language="en", to_language=language)
+            translated_lang = ts.google(lang[0].strip().lower(), from_language="en", to_language=language)
 
             ids.append(i)
             languageNames.append(translated_lang)
-            languageNativeNames.append(lang[0].strip()) #lang[1] TODO: Make it work with a native one
+            languageNativeNames.append(lang[0].strip().lower()) #lang[1] TODO: Make it work with a native one
             languages_translation.append(langs[loc_index])
-            priorities.append(5)
+            priorities.append(5 if lang[0] not in prioritized_langs else 1)
 
             d.append({
                     "Id": i,
@@ -220,6 +224,7 @@ def update_cities(language):
 
     s = requests.post("https://localhost:44381/UpdateCities", json_data, headers={
             "Content-Type": "application/json"},   verify=False).text
+    pass
 
 
 def update_languages(language):
@@ -272,4 +277,5 @@ def load_eng_localization():
 
 create_eng_localization()
 # load_eng_localization()
-update_languages("en")
+update_cities("en")
+# update_languages("en")

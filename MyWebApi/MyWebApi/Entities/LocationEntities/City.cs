@@ -8,7 +8,7 @@ namespace WebApi.Entities.LocationEntities
         [Key]
         public int Id { get; set; }
         [Key]
-        public AppLanguage Lang { get; set; }
+        public AppLanguage CountryLang { get; set; }
         public string CityName { get; set; }
         public int CountryId { get; set; }
     }

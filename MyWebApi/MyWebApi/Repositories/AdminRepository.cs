@@ -44,9 +44,9 @@ namespace WebApi.Repositories
                 await _contx.Cities.AddAsync(new City
                 {
                     Id = city.Id,
-                    CityName = city.CityName,
+                    CityName = city.CityName.ToLower(),
                     CountryId = city.CountryId,
-                    Lang = city.Lang
+                    CountryLang = city.Lang
                 });
             }
 

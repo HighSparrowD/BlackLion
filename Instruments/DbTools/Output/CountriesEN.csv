@@ -1,0 +1,240 @@
+Id,Name,Language,Priority
+1,afghanistan,Eng,5
+2,albania,Eng,5
+3,algeria,Eng,5
+4,american samoa,Eng,5
+5,andorra,Eng,5
+6,angola,Eng,5
+7,anguilla,Eng,5
+8,antigua and barbuda,Eng,5
+9,argentina,Eng,5
+10,armenia,Eng,5
+11,aruba,Eng,5
+12,australia,Eng,5
+13,austria,Eng,5
+14,azerbaijan,Eng,5
+15,bahrain,Eng,5
+16,bangladesh,Eng,5
+17,barbados,Eng,5
+18,belarus,Eng,5
+19,belgium,Eng,5
+20,belize,Eng,5
+21,benin,Eng,5
+22,bermuda,Eng,5
+23,bhutan,Eng,5
+24,bolivia,Eng,5
+25,bosnia and herzegovina,Eng,5
+26,botswana,Eng,5
+27,brazil,Eng,5
+28,british virgin islands,Eng,5
+29,brunei,Eng,5
+30,bulgaria,Eng,5
+31,burkina faso,Eng,5
+32,burundi,Eng,5
+33,cabo verde,Eng,5
+34,cambodia,Eng,5
+35,cameroon,Eng,5
+36,canada,Eng,5
+37,cayman islands,Eng,5
+38,central african republic,Eng,5
+39,chad,Eng,5
+40,chile,Eng,5
+41,china,Eng,5
+42,christmas island,Eng,5
+43,colombia,Eng,5
+44,comoros,Eng,5
+45,congo (brazzaville),Eng,5
+46,congo (kinshasa),Eng,5
+47,cook islands,Eng,5
+48,costa rica,Eng,5
+49,croatia,Eng,5
+50,cuba,Eng,5
+51,curaçao,Eng,5
+52,cyprus,Eng,5
+53,czechia,Eng,1
+54,côte d'ivoire,Eng,5
+55,denmark,Eng,5
+56,djibouti,Eng,5
+57,dominica,Eng,5
+58,dominican republic,Eng,5
+59,ecuador,Eng,5
+60,egypt,Eng,5
+61,el salvador,Eng,5
+62,equatorial guinea,Eng,5
+63,eritrea,Eng,5
+64,estonia,Eng,5
+65,ethiopia,Eng,5
+66,falkland islands (islas malvinas),Eng,5
+67,faroe islands,Eng,5
+68,federated states of micronesia,Eng,5
+69,fiji,Eng,5
+70,finland,Eng,5
+71,france,Eng,5
+72,french guiana,Eng,5
+73,french polynesia,Eng,5
+74,gabon,Eng,5
+75,gaza strip,Eng,5
+76,georgia,Eng,5
+77,germany,Eng,5
+78,ghana,Eng,5
+79,gibraltar,Eng,5
+80,greece,Eng,5
+81,greenland,Eng,5
+82,grenada,Eng,5
+83,guadeloupe,Eng,5
+84,guam,Eng,5
+85,guatemala,Eng,5
+86,guinea,Eng,5
+87,guinea-bissau,Eng,5
+88,guyana,Eng,5
+89,haiti,Eng,5
+90,honduras,Eng,5
+91,hong kong,Eng,5
+92,hungary,Eng,5
+93,iceland,Eng,5
+94,india,Eng,5
+95,indonesia,Eng,5
+96,iran,Eng,5
+97,iraq,Eng,5
+98,ireland,Eng,5
+99,isle of man,Eng,5
+100,israel,Eng,5
+101,italy,Eng,5
+102,jamaica,Eng,5
+103,japan,Eng,5
+104,jersey,Eng,5
+105,jordan,Eng,5
+106,kazakhstan,Eng,5
+107,kenya,Eng,5
+108,kiribati,Eng,5
+109,kosovo,Eng,5
+110,kuwait,Eng,5
+111,kyrgyzstan,Eng,5
+112,laos,Eng,5
+113,latvia,Eng,5
+114,lebanon,Eng,5
+115,lesotho,Eng,5
+116,liberia,Eng,5
+117,libya,Eng,5
+118,liechtenstein,Eng,5
+119,lithuania,Eng,5
+120,luxembourg,Eng,5
+121,macau,Eng,5
+122,macedonia,Eng,5
+123,madagascar,Eng,5
+124,malawi,Eng,5
+125,malaysia,Eng,5
+126,maldives,Eng,5
+127,mali,Eng,5
+128,malta,Eng,5
+129,marshall islands,Eng,5
+130,martinique,Eng,5
+131,mauritania,Eng,5
+132,mauritius,Eng,5
+133,mayotte,Eng,5
+134,mexico,Eng,5
+135,moldova,Eng,5
+136,monaco,Eng,5
+137,mongolia,Eng,5
+138,montenegro,Eng,5
+139,montserrat,Eng,5
+140,morocco,Eng,5
+141,mozambique,Eng,5
+142,myanmar,Eng,5
+143,namibia,Eng,5
+144,nauru,Eng,5
+145,nepal,Eng,5
+146,netherlands,Eng,5
+147,new caledonia,Eng,5
+148,new zealand,Eng,5
+149,nicaragua,Eng,5
+150,niger,Eng,5
+151,nigeria,Eng,5
+152,niue,Eng,5
+153,norfolk island,Eng,5
+154,north korea,Eng,5
+155,northern mariana islands,Eng,5
+156,norway,Eng,5
+157,oman,Eng,5
+158,pakistan,Eng,5
+159,palau,Eng,5
+160,panama,Eng,5
+161,papua new guinea,Eng,5
+162,paraguay,Eng,5
+163,peru,Eng,5
+164,philippines,Eng,5
+165,pitcairn islands,Eng,5
+166,poland,Eng,1
+167,portugal,Eng,5
+168,puerto rico,Eng,5
+169,qatar,Eng,5
+170,reunion,Eng,5
+171,romania,Eng,5
+172,russia,Eng,1
+173,rwanda,Eng,5
+174,saint barthelemy,Eng,5
+175,"saint helena, ascension, and tristan da cunha",Eng,5
+176,saint kitts and nevis,Eng,5
+177,saint lucia,Eng,5
+178,saint martin,Eng,5
+179,saint pierre and miquelon,Eng,5
+180,saint vincent and the grenadines,Eng,5
+181,samoa,Eng,5
+182,san marino,Eng,5
+183,sao tome and principe,Eng,5
+184,saudi arabia,Eng,5
+185,senegal,Eng,5
+186,serbia,Eng,5
+187,seychelles,Eng,5
+188,sierra leone,Eng,5
+189,singapore,Eng,5
+190,sint maarten,Eng,5
+191,slovakia,Eng,5
+192,slovenia,Eng,5
+193,solomon islands,Eng,5
+194,somalia,Eng,5
+195,south africa,Eng,5
+196,south georgia and south sandwich islands,Eng,5
+197,south korea,Eng,5
+198,south sudan,Eng,5
+199,spain,Eng,5
+200,sri lanka,Eng,5
+201,sudan,Eng,5
+202,suriname,Eng,5
+203,svalbard,Eng,5
+204,swaziland,Eng,5
+205,sweden,Eng,5
+206,switzerland,Eng,5
+207,syria,Eng,5
+208,taiwan,Eng,5
+209,tajikistan,Eng,5
+210,tanzania,Eng,5
+211,thailand,Eng,5
+212,the bahamas,Eng,5
+213,the gambia,Eng,5
+214,timor-leste,Eng,5
+215,togo,Eng,5
+216,tonga,Eng,5
+217,trinidad and tobago,Eng,5
+218,tunisia,Eng,5
+219,turkey,Eng,5
+220,turkmenistan,Eng,5
+221,turks and caicos islands,Eng,5
+222,tuvalu,Eng,5
+223,u.s. virgin islands,Eng,5
+224,uganda,Eng,5
+225,ukraine,Eng,1
+226,united arab emirates,Eng,5
+227,united kingdom,Eng,5
+228,united states,Eng,1
+229,uruguay,Eng,5
+230,uzbekistan,Eng,5
+231,vanuatu,Eng,5
+232,vatican city,Eng,5
+233,venezuela,Eng,5
+234,vietnam,Eng,5
+235,wallis and futuna,Eng,5
+236,west bank,Eng,5
+237,yemen,Eng,5
+238,zambia,Eng,5
+239,zimbabwe,Eng,5
