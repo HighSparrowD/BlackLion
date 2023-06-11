@@ -7,7 +7,7 @@ namespace WebApi.Entities.AdventureEntities
     public class ManageAdventure
     {
         [JsonPropertyName("id")]
-        public Guid Id { get; set; }
+        public long Id { get; set; }
         [JsonPropertyName("userId")]
         public long UserId { get; set; }
         [JsonPropertyName("name")]

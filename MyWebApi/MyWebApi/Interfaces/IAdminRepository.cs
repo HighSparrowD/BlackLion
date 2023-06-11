@@ -31,11 +31,11 @@ namespace WebApi.Interfaces
         Task<byte> AddNewAchievements(List<Achievement> achievements);
         Task<byte> AddDailyTaskAsync(DailyTask model);
         Task<List<TickRequest>> GetTickRequestsAsync();
-        Task<TickRequest> GetTickRequestAsync(Guid? requestId = null);
+        Task<TickRequest> GetTickRequestAsync(long? requestId = null);
         Task<string> GetNewNotificationsCountAsync(long adminId);
         Task<bool> ResolveTickRequestAsync(ResolveTickRequest request);
-        Task<bool> AbortTickRequestAsync(Guid requestId);
-        Task<bool> NotifyFailierTickRequestAsync(Guid requestId, long adminId);
+        Task<bool> AbortTickRequestAsync(long requestId);
+        Task<bool> NotifyFailierTickRequestAsync(long requestId, long adminId);
         Task<List<long>> GetRecentlyBannedUsersAsync();
     }
 }

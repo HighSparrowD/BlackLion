@@ -6,7 +6,7 @@ namespace WebApi.Entities.UserInfoEntities
     public class Transaction
     {
         [Key]
-        public Guid Id { get; set; }
+        public long Id { get; set; }
         public long UserId { get; set; }
         public DateTime PointInTime{ get; set; }
         public int Amount{ get; set; }

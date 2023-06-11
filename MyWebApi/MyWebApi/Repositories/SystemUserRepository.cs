@@ -111,7 +111,7 @@ namespace WebApi.Repositories
 
             if(invitation != null)
             {
-                var invitor = invitation.InvitorCredentials.Invitor;
+                var invitor = invitation.InviterCredentials.Inviter;
                 invitor.InvitedUsersCount++;
 
                 var bonus = invitor.HasPremium ? 0.05 : 0;
@@ -165,7 +165,7 @@ namespace WebApi.Repositories
 
                 //User instantly receives a like by an invitor if he approves it
                 if (invitor.Settings.IncreasedFamiliarity)
-                    await RegisterUserRequestAsync(new UserNotification { UserId = invitor.Id, UserId1 = model.Id, IsLikedBack = false });
+                    await RegisterUserRequestAsync(new UserNotification { SenderId = invitor.Id, UserId = model.Id, IsLikedBack = false });
 
                 //Invitor is notified about referential registration
                 await NotifyUserAboutReferentialRegistrationAsync(invitor.Id, model.Id);
@@ -221,7 +221,7 @@ namespace WebApi.Repositories
                 .Where(u => u.Encounters.Where(e => e.Section == Section.Requester || e.Section == Section.Familiator)
                     .All(e => e.EncounteredUserId != currentUser.Id)) //May casuse errors
                 //Check if request already exists
-                .Where(u => u.Notifications.All(n => n.UserId != currentUser.Id && n.UserId1 != currentUser.Id)) //May casuse errors
+                .Where(u => u.Notifications.All(n => n.SenderId != currentUser.Id && n.UserId != currentUser.Id)) //May casuse errors
                 .Include(u => u.Data)
                 .Include(u => u.Location)
                 .Include(u => u.Settings)
@@ -812,7 +812,7 @@ namespace WebApi.Repositories
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<Guid> AddUserReportAsync(SendUserReport request)
+        public async Task<long> AddUserReportAsync(SendUserReport request)
         {
             try
             {
@@ -830,9 +830,8 @@ namespace WebApi.Repositories
 
                 var report = new Report
                 {
-                    Id = Guid.NewGuid(),
-                    UserId = request.Sender,
-                    UserId1 = request.ReportedUser,
+                    SenderId = request.Sender,
+                    UserId = request.ReportedUser,
                     Text = request.Text,
                     Reason = request.Reason,
                     InsertedUtc = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc)
@@ -844,7 +843,7 @@ namespace WebApi.Repositories
 
                 return report.Id;
             }
-            catch {return Guid.Empty;}
+            catch {return 0;}
         }
 
         public async Task<List<Report>> GetMostRecentReports()
@@ -853,7 +852,7 @@ namespace WebApi.Repositories
             return await _contx.UserReports.Where(r => r.InsertedUtc > pointInTime).ToListAsync();
         }
 
-        public async Task<Report> GetSingleUserReportByIdAsync(Guid id)
+        public async Task<Report> GetSingleUserReportByIdAsync(long id)
         {
             return await _contx.UserReports.Where(r => r.Id == id)
                 .Include(r => r.User)
@@ -863,7 +862,7 @@ namespace WebApi.Repositories
 
         public async Task<List<Report>> GetAllReportsOnUserAsync(long userId)
         {
-            return await _contx.UserReports.Where(r => r.UserId1 == userId).ToListAsync();
+            return await _contx.UserReports.Where(r => r.UserId == userId).ToListAsync();
         }
 
         public List<GetLocalizedEnum> GetReportReasonsAsync()
@@ -917,7 +916,7 @@ namespace WebApi.Repositories
 
         public async Task<List<Report>> GetAllUserReportsAsync(long userId)
         {
-            return await _contx.UserReports.Where(u => u.UserId == userId)
+            return await _contx.UserReports.Where(u => u.SenderId == userId)
                 .Include(r => r.User)
                 .ToListAsync();
         }
@@ -971,7 +970,7 @@ namespace WebApi.Repositories
         public async Task<string> AddAchievementProgress(long userId, long achievementId, int progress)
         {
             var achievement = await _contx.UserAchievements
-                .Where(a => a.UserBaseInfoId == userId && a.AchievementId == achievementId)
+                .Where(a => a.UserId == userId && a.AchievementId == achievementId)
                 .Include(a => a.Achievement)
                 .SingleOrDefaultAsync();
 
@@ -988,7 +987,7 @@ namespace WebApi.Repositories
         public async Task<string> GrantAchievementToUser(long userId, long achievementId)
         {
             var achievement = await _contx.UserAchievements
-                .Where(a => a.UserBaseInfoId == userId && a.AchievementId == achievementId && !a.IsAcquired)
+                .Where(a => a.UserId == userId && a.AchievementId == achievementId && !a.IsAcquired)
                 .Include(a => a.Achievement)
                 .SingleOrDefaultAsync();
 
@@ -1001,7 +1000,7 @@ namespace WebApi.Repositories
 
             await AddUserNotificationAsync(new UserNotification
             {
-                UserId1 = userId,
+                UserId = userId,
                 IsLikedBack = false,
                 Section = (Section)achievement.Achievement.SectionId,
                 Severity = Severities.Minor,
@@ -1018,7 +1017,7 @@ namespace WebApi.Repositories
         public async Task<List<UserAchievement>> GetUserAchievements(long userId)
         {
             return await _contx.UserAchievements
-                .Where(a => a.UserBaseInfoId == userId)
+                .Where(a => a.UserId == userId)
                 .Include(a => a.Achievement)
                 .ToListAsync();
         }
@@ -1026,7 +1025,7 @@ namespace WebApi.Repositories
         public async Task<UserAchievement> GetSingleUserAchievement(long userId, long achievementId)
         {
             return await _contx.UserAchievements
-                .Where(a => a.UserBaseInfoId == userId && a.AchievementId == achievementId)
+                .Where(a => a.UserId == userId && a.AchievementId == achievementId)
                 .Include(a => a.Achievement)
                 .FirstOrDefaultAsync();
         }
@@ -1053,7 +1052,7 @@ namespace WebApi.Repositories
                 await _contx.SaveChangesAsync();
             }
 
-            var userAchievements = await _contx.UserAchievements.Where(u => u.UserBaseInfoId == userId)
+            var userAchievements = await _contx.UserAchievements.Where(u => u.UserId == userId)
                 .ToListAsync();
 
             if (userAchievements.Count > 0 && userAchievements != null)
@@ -1080,7 +1079,7 @@ namespace WebApi.Repositories
                 await _contx.SaveChangesAsync();
             }
 
-            var userNotifications = await _contx.Notifications.Where(u => u.UserId == userId)
+            var userNotifications = await _contx.Notifications.Where(u => u.SenderId == userId)
                 .ToListAsync();
 
             if (userNotifications.Count > 0 && userNotifications != null)
@@ -1089,7 +1088,7 @@ namespace WebApi.Repositories
                 await _contx.SaveChangesAsync();
             }
 
-            var userNotifications1 = await _contx.Notifications.Where(u => u.UserId1 == userId)
+            var userNotifications1 = await _contx.Notifications.Where(u => u.UserId == userId)
                 .ToListAsync();
 
             if (userNotifications1.Count > 0 && userNotifications1 != null)
@@ -1174,7 +1173,7 @@ namespace WebApi.Repositories
             if (wasRegistered)
             {
                 userAchievements = await  _contx.UserAchievements
-                    .Where(u => u.UserBaseInfoId == userId)
+                    .Where(u => u.UserId == userId)
                     .ToListAsync();
                 _contx.UserAchievements.RemoveRange(userAchievements);
             }
@@ -1192,7 +1191,7 @@ namespace WebApi.Repositories
         public async Task<List<UserAchievement>> GetUserAchievementsAsAdmin(long userId)
         {
             return await _contx.UserAchievements
-                .Where(a => a.UserBaseInfoId == userId && !a.IsAcquired)
+                .Where(a => a.UserId == userId && !a.IsAcquired)
                 .ToListAsync();
         }
 
@@ -1421,7 +1420,6 @@ namespace WebApi.Repositories
         {
             var purchase = new Transaction
             {
-                Id = Guid.NewGuid(),
                 UserId = userId,
                 PointInTime = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc),
                 Amount = points,
@@ -1521,7 +1519,7 @@ namespace WebApi.Repositories
             _contx.Update(user);
             await _contx.SaveChangesAsync();
 
-            await AddUserNotificationAsync(new UserNotification { UserId1 = user.Id, IsLikedBack = false, Severity = Severities.Moderate, Section = Section.Neutral, Description = $"You have been granted premium access. Enjoy your benefits :)\nPremium expiration {user.PremiumExpirationDate.Value.ToString("dd.MM.yyyy")}" });
+            await AddUserNotificationAsync(new UserNotification { UserId = user.Id, IsLikedBack = false, Severity = Severities.Moderate, Section = Section.Neutral, Description = $"You have been granted premium access. Enjoy your benefits :)\nPremium expiration {user.PremiumExpirationDate.Value.ToString("dd.MM.yyyy")}" });
 
             return user.PremiumExpirationDate.Value;
         }
@@ -1548,10 +1546,10 @@ namespace WebApi.Repositories
             {
                 if (userData.Language != appLanguage) // Check if user had changed an app language to a different one
                 {
-                    var userAchievements = await _contx.UserAchievements.Where(a => a.UserBaseInfoId == userId).ToListAsync();
+                    var userAchievements = await _contx.UserAchievements.Where(a => a.UserId == userId).ToListAsync();
                     userAchievements.ForEach(async a =>
                     {
-                        a.Language = appLanguage;
+                        a.AchievementLanguage = appLanguage;
                         var achievement = await _contx.Achievements
                         .Where(achievement => achievement.Id == a.AchievementId && achievement.Language == appLanguage)
                         .SingleOrDefaultAsync();
@@ -1702,13 +1700,13 @@ namespace WebApi.Repositories
         {
 
             return await _contx.Notifications
-                .Where(r => r.UserId1 == userId && r.UserId != null)
+                .Where(r => r.UserId == userId && r.SenderId != null)
                 .Where(r => r.Section == Section.Familiator || r.Section == Section.Requester)
                 .ToListAsync();
 
         }
 
-        public async Task<UserNotification> GetUserRequest(Guid requestId)
+        public async Task<UserNotification> GetUserRequest(long requestId)
         {
                 return await _contx.Notifications
                     .Where(r => r.Id == requestId)
@@ -1727,12 +1725,12 @@ namespace WebApi.Repositories
 
                 if ((byte)new Random().Next(0, 2) == 0)
                 {
-                    var senderUserName = await _contx.UsersData.Where(d => d.Id == request.UserId)
+                    var senderUserName = await _contx.UsersData.Where(d => d.Id == request.SenderId)
                         .Select(d => d.UserName)
                         .FirstOrDefaultAsync();
 
                     //Delete request, user had just responded to
-                    var requestId = await _contx.Notifications.Where(n => n.UserId == request.UserId1 && n.UserId1 == request.UserId)
+                    var requestId = await _contx.Notifications.Where(n => n.SenderId == request.UserId && n.UserId == request.SenderId)
                         .Select(n => n.Id)
                         .SingleOrDefaultAsync();
 
@@ -1745,12 +1743,12 @@ namespace WebApi.Repositories
                 else
                 {
                     var receiverUserName = await _contx.UsersData
-                        .Where(d => d.Id == request.UserId1)
+                        .Where(d => d.Id == request.UserId)
                         .Select(d => d.UserName)
                         .FirstOrDefaultAsync();
 
                     //Delete request, user had just answered
-                    var requestId = await _contx.Notifications.Where(n => n.UserId == request.UserId1 && n.UserId1 == request.UserId)
+                    var requestId = await _contx.Notifications.Where(n => n.SenderId == request.UserId && n.UserId == request.SenderId)
                         .Select(n => n.Id)
                         .FirstOrDefaultAsync();
 
@@ -1764,7 +1762,7 @@ namespace WebApi.Repositories
             else
                 request.Section = Section.Familiator;
 
-            await RegisterUserEncounter(new Encounter { UserId = (long)request.UserId, EncounteredUserId = request.UserId1, Section = Section.Requester });
+            await RegisterUserEncounter(new Encounter { UserId = (long)request.SenderId, EncounteredUserId = request.UserId, Section = Section.Requester });
 
             var id = await AddUserNotificationAsync(request);
 
@@ -1804,7 +1802,7 @@ namespace WebApi.Repositories
         public async Task<byte> DeleteUserRequests(long userId)
         {
             var requests = await _contx.Notifications
-                .Where(r => r.UserId1 == userId)
+                .Where(r => r.UserId == userId)
                 .Where(r => r.Section == Section.Familiator || r.Section == Section.Requester)
                 .ToListAsync();
 
@@ -1814,7 +1812,7 @@ namespace WebApi.Repositories
             return 1;
         }
 
-        public async Task<byte> DeleteUserRequest(Guid requestId)
+        public async Task<byte> DeleteUserRequest(long requestId)
         {
             var request = await _contx.Notifications
                 .Where(r => r.Id == requestId)
@@ -1830,7 +1828,7 @@ namespace WebApi.Repositories
         public async Task<bool> CheckUserHasRequests(long userId)
         {
             var requests = await _contx.Notifications
-                .Where(r => r.UserId1 == userId)
+                .Where(r => r.UserId == userId)
                 .Where(r => r.Section == Section.Familiator || r.Section == Section.Requester)
                 .ToListAsync();
                 
@@ -1852,9 +1850,8 @@ namespace WebApi.Repositories
             return true;
         }
 
-        public async Task<Guid?> RegisterUserEncounter(Encounter model)
+        public async Task<long?> RegisterUserEncounter(Encounter model)
         {
-            model.Id = Guid.NewGuid();
             model.EncounterDate = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
 
             var user = await _contx.Users.FindAsync(model.UserId);
@@ -1899,7 +1896,7 @@ namespace WebApi.Repositories
         public bool CheckRequestExists(long senderId, long recieverId)
         {
             return _contx.Notifications
-                .Where(r => r.UserId == senderId && r.UserId1 == recieverId)
+                .Where(r => r.SenderId == senderId && r.UserId == recieverId)
                 .Where(r => r.Section == Section.Requester || r.Section == Section.Familiator)
                 .FirstOrDefault() != null;
         }
@@ -2155,8 +2152,7 @@ namespace WebApi.Repositories
 
                 invitation = new Invitation
                 {
-                    Id = Guid.NewGuid(),
-                    InvitorCredentialsId = invitationCreds.Id,
+                    InviterCredentialsId = invitationCreds.Id,
                     InvitedUserId = userId,
                     InvitationTime = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc)
                 };
@@ -2180,7 +2176,7 @@ namespace WebApi.Repositories
         {
             return await _contx.Invitations
                 .Where(i => i.InvitedUserId == userId)
-                .Include(i => i.InvitorCredentials).ThenInclude(i => i.Invitor)
+                .Include(i => i.InviterCredentials).ThenInclude(i => i.Inviter)
                 .FirstOrDefaultAsync();
         }
 
@@ -2192,7 +2188,7 @@ namespace WebApi.Repositories
 
                 await AddUserNotificationAsync(new UserNotification
                 {
-                    UserId1 = userId,
+                    UserId = userId,
                     IsLikedBack = false,
                     Description = $"Hey! new user had been registered via your link. Thanks for helping us grow!\nSo far, you have invited: {invitedUsersCount} people. \nYou receive 1p for every action they are maiking ;-)",
                     Section = Section.Registration,
@@ -2210,7 +2206,7 @@ namespace WebApi.Repositories
         {
             try
             {
-                await AddUserNotificationAsync(new UserNotification {UserId1=userId, Severity=Severities.Urgent, Section=Section.Neutral, Description="Your premium access has expired"});
+                await AddUserNotificationAsync(new UserNotification {UserId=userId, Severity=Severities.Urgent, Section=Section.Neutral, Description="Your premium access has expired"});
                 return true;
             }
             catch
@@ -2219,16 +2215,15 @@ namespace WebApi.Repositories
             }
         }
 
-        public async Task<Guid> AddUserNotificationAsync(UserNotification model)
+        public async Task<long> AddUserNotificationAsync(UserNotification model)
         {
             try
             {
-                model.Id = Guid.NewGuid();
                 await _contx.Notifications.AddAsync(model);
                 await _contx.SaveChangesAsync();
 
-                if (model.UserId != null)
-                    await AddUserTrustProgressAsync((long)model.UserId, 0.000002);
+                if (model.SenderId != null)
+                    await AddUserTrustProgressAsync((long)model.SenderId, 0.000002);
 
                 return model.Id;
             }
@@ -2238,21 +2233,21 @@ namespace WebApi.Repositories
         public async Task<int> GetInvitedUsersCountAsync(long userId)
         {
             return await _contx.Invitations
-                .Where(i => i.InvitorCredentials.UserId == userId)
+                .Where(i => i.InviterCredentials.UserId == userId)
                 .CountAsync();
         }
 
         public async Task<bool> CheckUserHasNotificationsAsync(long userId)
         {
             return await _contx.Notifications
-                .Where(n => n.UserId1 == userId && n.Section != Section.Familiator && n.Section != Section.Requester)
+                .Where(n => n.UserId == userId && n.Section != Section.Familiator && n.Section != Section.Requester)
                 .CountAsync() > 0;
         }
 
         public async Task<List<UserNotification>> GetUserNotifications(long userId)
         {
             return await _contx.Notifications
-                .Where(n => n.UserId1 == userId)
+                .Where(n => n.UserId == userId)
                 .ToListAsync();
         }
 
@@ -2290,7 +2285,7 @@ namespace WebApi.Repositories
         public async Task<List<string>> GetRandomAchievements(long userId)
         {
             var achievents = await _contx.UserAchievements
-                .Where(a => a.UserBaseInfoId == userId)
+                .Where(a => a.UserId == userId)
                 .Where(a => !a.IsAcquired)
                 .Select(a => $"{a.Achievement.Name}\n{a.Achievement.Description}\n\n{a.Achievement.ConditionValue} / {a.Achievement.Value}")
                 .ToListAsync();
@@ -2399,7 +2394,7 @@ namespace WebApi.Repositories
             task.IsAcquired = true;
             await AddUserNotificationAsync(new UserNotification
             {
-                UserId1 = userId,
+                UserId = userId,
                 IsLikedBack = false,
                 Severity = Severities.Moderate,
                 Description = task.AcquireMessage,
@@ -2564,9 +2559,9 @@ namespace WebApi.Repositories
             return 0;
         }
 
-        public async Task<List<Guid>> GetUserNotificationsIdsAsync(long userId)
+        public async Task<List<long>> GetUserNotificationsIdsAsync(long userId)
         {
-            var ids = await _contx.Notifications.Where(n => n.UserId1 == userId)
+            var ids = await _contx.Notifications.Where(n => n.UserId == userId)
                 .Select(n => n.Id)
                 .ToListAsync();
 
@@ -2990,7 +2985,7 @@ namespace WebApi.Repositories
                     .Where(u => u.BlackList.All(l => l.BannedUserId != currentUser.Id))
                     //.Where(u => currentUser.BlackList.Where(l => l.BannedUserId == u.Id).FirstOrDefault() == null)
                     //Check if request already exists
-                    .Where(u => u.Notifications.All(n => n.UserId != currentUser.Id && n.UserId1 != currentUser.Id)) //May casuse errors
+                    .Where(u => u.Notifications.All(n => n.SenderId != currentUser.Id && n.UserId != currentUser.Id)) //May casuse errors
                     //.Where(u => u.Tags.Intersect(u.Tags).Count() >= 1)
                     .Include(u => u.Data)
                     .Include(u => u.Settings)
@@ -3282,8 +3277,8 @@ namespace WebApi.Repositories
                             userBalance.SecondChances--;
                             await RegisterUserRequestAsync(new UserNotification
                             {
-                                UserId = userId,
-                                UserId1 = (long)user2Id,
+                                SenderId = userId,
+                                UserId = (long)user2Id,
                                 IsLikedBack = false,
                                 Description = description,
                                 Section = Section.Familiator,
@@ -3372,7 +3367,7 @@ namespace WebApi.Repositories
             }
         }
 
-        public async Task<bool> DeactivateEffectAsync(long userId, Guid activeEffectId)
+        public async Task<bool> DeactivateEffectAsync(long userId, long activeEffectId)
         {
             try
             {
@@ -3445,7 +3440,6 @@ namespace WebApi.Repositories
 
                 var model = new TickRequest
                 {
-                    Id = Guid.NewGuid(),
                     UserId = request.UserId,
                     AdminId = null,
                     State = null,
@@ -3780,9 +3774,9 @@ namespace WebApi.Repositories
             return false;
         }
 
-        public async Task<GetUserData> GetRequestSenderAsync(Guid requestId)
+        public async Task<GetUserData> GetRequestSenderAsync(long requestId)
         {
-            var senderId = await _contx.Notifications.Where(r => r.Id == requestId).Select(r => r.UserId)
+            var senderId = await _contx.Notifications.Where(r => r.Id == requestId).Select(r => r.SenderId)
                 .SingleOrDefaultAsync();
 
             var sender = await _contx.Users.Where(u => u.Id == senderId)
@@ -3933,7 +3927,6 @@ namespace WebApi.Repositories
         {
             var adventure = new Adventure
             {
-                Id = Guid.NewGuid(),
                 UserId = model.UserId,
                 Name = model.Name,
                 Address = model.Address,
@@ -4005,7 +3998,7 @@ namespace WebApi.Repositories
 
             return await SendAdventureRequestAsync(adventure.Id, request.UserId);
         }
-        public async Task<ParticipationRequestStatus> SendAdventureRequestAsync(Guid adventureId, long userId)
+        public async Task<ParticipationRequestStatus> SendAdventureRequestAsync(long adventureId, long userId)
         {
             var adventure = await _contx.Adventures.Where(a => a.Id == adventureId)
                 .FirstOrDefaultAsync();
@@ -4032,8 +4025,8 @@ namespace WebApi.Repositories
                 Section = Section.Adventurer,
                 Severity = Severities.Urgent,
                 Description = "Someone had requested participation in your adventure", //TODO: Perhaps clarify if actions had been done with use of unique code
-                UserId = userId,
-                UserId1 = adventure.UserId
+                SenderId = userId,
+                UserId = adventure.UserId
             });
 
             var newAttendee = new AdventureAttendee
@@ -4055,7 +4048,7 @@ namespace WebApi.Repositories
             return true;
         }
 
-        public async Task<bool> ProcessSubscriptionRequestAsync(Guid adventureId, long userId, AdventureAttendeeStatus status)
+        public async Task<bool> ProcessSubscriptionRequestAsync(long adventureId, long userId, AdventureAttendeeStatus status)
         {
             var attendee = await _contx.AdventureAttendees.Where(a => a.UserId == userId && a.AdventureId == adventureId)
                 .SingleOrDefaultAsync();
@@ -4078,7 +4071,7 @@ namespace WebApi.Repositories
 
                 await AddUserNotificationAsync(new UserNotification
                 {
-                    UserId1 = userId,
+                    UserId = userId,
                     Section = Section.Adventurer,
                     Severity = Severities.Moderate,
                     Description = $"Your request to join adventure {adventure.Name} had been accepted.\n{contact}"
@@ -4089,7 +4082,7 @@ namespace WebApi.Repositories
             return true;
         }
 
-        public async Task<List<AttendeeInfo>> GetAdventureAttendeesAsync(Guid adventureId)
+        public async Task<List<AttendeeInfo>> GetAdventureAttendeesAsync(long adventureId)
         {
             return await _contx.AdventureAttendees.Where(a => a.AdventureId == adventureId && (a.Status == AdventureAttendeeStatus.New || a.Status == AdventureAttendeeStatus.Accepted))
             .Select(a => new AttendeeInfo
@@ -4327,7 +4320,7 @@ namespace WebApi.Repositories
             }).FirstOrDefaultAsync();
         }
 
-        public async Task<ManageAdventure> GetAdventureAsync(Guid id)
+        public async Task<ManageAdventure> GetAdventureAsync(long id)
         {
             return await _contx.Adventures.Where(a => a.Id == id)
                 .Select(a => new ManageAdventure(a))
@@ -4368,7 +4361,6 @@ namespace WebApi.Repositories
             //Create template
             var template = new AdventureTemplate
             {
-                Id = Guid.NewGuid(),
                 Name = model.Name,
                 UserId = model.UserId,
                 IsOffline = model.IsOffline,
@@ -4405,7 +4397,7 @@ namespace WebApi.Repositories
             }).ToListAsync();
         }
 
-        public async Task<ManageTemplate> GetAdventureTemplateAsync(Guid id)
+        public async Task<ManageTemplate> GetAdventureTemplateAsync(long id)
         {
             return await _contx.AdventureTemplates.Where(t => t.Id == id).Select(t => new ManageTemplate
             {
@@ -4432,7 +4424,7 @@ namespace WebApi.Repositories
             }).FirstOrDefaultAsync();
         }
 
-        public async Task<DeleteResult> DeleteAdventureTemplateAsync(Guid templateId)
+        public async Task<DeleteResult> DeleteAdventureTemplateAsync(long templateId)
         {
             var template = await _contx.AdventureTemplates.Where(t => t.Id == templateId)
                 .FirstOrDefaultAsync();
@@ -4446,7 +4438,7 @@ namespace WebApi.Repositories
             return DeleteResult.Success;
         }
 
-        public async Task<DeleteResult> DeleteAdventureAttendeeAsync(Guid adventureId, long attendeeId)
+        public async Task<DeleteResult> DeleteAdventureAttendeeAsync(long adventureId, long attendeeId)
         {
             var attendee = await _contx.AdventureAttendees.Where(a => a.AdventureId == adventureId && a.UserId == attendeeId)
                 .FirstOrDefaultAsync();
@@ -4459,7 +4451,7 @@ namespace WebApi.Repositories
 
             await AddUserNotificationAsync(new UserNotification
             {
-                UserId1 = attendee.UserId,
+                UserId = attendee.UserId,
                 Section = Section.Adventurer,
                 Severity = Severities.Urgent,
                 Description = "You have been removed from one of the adventures" // TODO: More precise ?

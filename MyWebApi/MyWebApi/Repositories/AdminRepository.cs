@@ -154,14 +154,14 @@ namespace WebApi.Repositories
                 var user = await _contx.Users.Where(u => u.Id == userId).SingleOrDefaultAsync();
                 var userData = await _contx.UsersSettings.Where(u => u.Id == userId).SingleOrDefaultAsync();
                 var userLocation = await _contx.UserLocations.Where(u => u.Id == userId).SingleOrDefaultAsync();
-                var userAchievements = await _contx.UserAchievements.Where(u => u.UserBaseInfoId == userId).ToListAsync();
+                var userAchievements = await _contx.UserAchievements.Where(u => u.UserId == userId).ToListAsync();
                 var userPurchases = await _contx.Transaction.Where(u => u.UserId == userId).ToListAsync();
                 var userBalances = await _contx.Balances.Where(u => u.UserId == userId).ToListAsync();
-                var userNotifications = await _contx.Notifications.Where(u => u.UserId == userId).ToListAsync();
-                var userNotifications1 = await _contx.Notifications.Where(u => u.UserId1 == userId).ToListAsync();
+                var userNotifications = await _contx.Notifications.Where(u => u.SenderId == userId).ToListAsync();
+                var userNotifications1 = await _contx.Notifications.Where(u => u.UserId == userId).ToListAsync();
                 var sponsorRatings = await _contx.SponsorRatings.Where(u => u.UserId == userId).ToListAsync();
                 var userTrustLevel = await _contx.TrustLevels.Where(u => u.Id == userId).SingleOrDefaultAsync();
-                var userInvitations = await _contx.Invitations.Where(u => u.InvitorCredentials.UserId == userId).ToListAsync();
+                var userInvitations = await _contx.Invitations.Where(u => u.InviterCredentials.UserId == userId).ToListAsync();
                 var userInvitationCreds = await _contx.InvitationCredentials.Where(u => u.UserId == userId).SingleOrDefaultAsync();
 
                 if (userInvitations.Count > 0)
@@ -353,7 +353,7 @@ namespace WebApi.Repositories
                 .ToListAsync();
         }
 
-        public async Task<TickRequest> GetTickRequestAsync(Guid? requestId = null)
+        public async Task<TickRequest> GetTickRequestAsync(long? requestId = null)
         {
             if (requestId != null)
             {
@@ -403,7 +403,7 @@ namespace WebApi.Repositories
                 await _userRep.AddUserNotificationAsync(new Entities.UserActionEntities.UserNotification
                 {
                     Description = $"Your identity confirmation had been accepted :)\n{model.Comment}",
-                    UserId1 = request.UserId,
+                    UserId = request.UserId,
                     Severity = Severities.Urgent,
                     Section = Section.Neutral,
                 });
@@ -411,7 +411,7 @@ namespace WebApi.Repositories
                 await _userRep.AddUserNotificationAsync(new Entities.UserActionEntities.UserNotification
                 {
                     Description = $"Sorry, your identity confirmation request had been denied.\n{model.Comment}",
-                    UserId1 = request.UserId,
+                    UserId = request.UserId,
                     Severity = Severities.Urgent,
                     Section = Section.Neutral,
                 });
@@ -539,7 +539,7 @@ namespace WebApi.Repositories
             return returnData;
         }
 
-        public async Task<bool> AbortTickRequestAsync(Guid requestId)
+        public async Task<bool> AbortTickRequestAsync(long requestId)
         {
             try
             {
@@ -558,7 +558,7 @@ namespace WebApi.Repositories
             catch { return false; }
         }
 
-        public async Task<bool> NotifyFailierTickRequestAsync(Guid requestId, long adminId)
+        public async Task<bool> NotifyFailierTickRequestAsync(long requestId, long adminId)
         {
             try
             {
