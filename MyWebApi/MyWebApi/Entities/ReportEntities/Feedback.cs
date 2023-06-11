@@ -2,6 +2,7 @@
 using WebApi.Entities.UserInfoEntities;
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace WebApi.Entities.ReportEntities
 {
@@ -9,6 +10,7 @@ namespace WebApi.Entities.ReportEntities
     {
         [Key]
         public long Id { get; set; }
+        [ForeignKey("User")]
         public long UserId { get; set; }
         public string Text { get; set; }
         public short ReasonId { get; set; }

@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
+using System.Reflection.Emit;
 using WebApi.Entities.AchievementEntities;
 using WebApi.Entities.AdminEntities;
 using WebApi.Entities.AdventureEntities;
@@ -82,6 +83,23 @@ namespace WebApi.Data
 
             ConfigureRelations(builder);
             ConfigureMapping(builder);
+
+            // Hilo
+            ConfigureAchievements(builder);
+            ConfigureActiveEffects(builder);
+            ConfigureAds(builder);
+            ConfigureAdventures(builder);
+            ConfigureAdventureTemplates(builder);
+            ConfigureBalances(builder);
+            ConfigureBlackLists(builder);
+            ConfigureEncounters(builder);
+            ConfigureFeedbacks(builder);
+            ConfigureInvitations(builder);
+            ConfigureNotifications(builder);
+            ConfigureReports(builder);
+            ConfigureTickRequests(builder);
+            ConfigureTransactions(builder);
+            ConfigureUserTags(builder);
         }
 
         private void ConfigureRelations(ModelBuilder builder)
@@ -91,6 +109,8 @@ namespace WebApi.Data
             builder.Entity<User>().HasOne(u => u.Location);
             builder.Entity<User>().HasMany(u => u.BlackList);
             builder.Entity<User>().HasMany(u => u.Tags);
+            builder.Entity<User>().HasMany(u => u.Encounters);
+            builder.Entity<User>().HasMany(u => u.Notifications);
             builder.Entity<Location>().HasOne(u => u.Country);
             builder.Entity<Location>().HasOne(u => u.City);
 
@@ -111,7 +131,7 @@ namespace WebApi.Data
             builder.Entity<FeedbackReason>().HasKey(g => new { g.Id, g.ClassLocalisationId });
             builder.Entity<Visit>().HasKey(g => new { g.UserId, g.SectionId });
             builder.Entity<Achievement>().HasKey(g => new { g.Id, g.Language });
-            builder.Entity<UserAchievement>().HasKey(g => new { g.UserBaseInfoId, g.AchievementId });
+            builder.Entity<UserAchievement>().HasKey(g => new { g.UserId, g.AchievementId });
             builder.Entity<BlackList>().HasKey(g => new { g.Id, g.UserId });
             builder.Entity<AdventureAttendee>().HasKey(t => new { t.UserId, t.AdventureId });
             builder.Entity<UserTag>().HasKey(t => new { t.UserId, t.Tag });
@@ -119,6 +139,17 @@ namespace WebApi.Data
 
             builder.Entity<Sponsor>().HasMany(s => s.SponsorLanguages);
             builder.Entity<SponsorLanguage>().HasOne(s => s.Language);
+
+            builder.Entity<UserNotification>().HasOne(un => un.Receiver);
+            builder.Entity<UserNotification>().HasOne(un => un.Sender);
+
+            builder.Entity<UserAchievement>().HasOne(un => un.Achievement)
+                .WithMany()
+                .HasForeignKey(a => new {a.AchievementId, a.AchievementLanguage});
+            builder.Entity<UserAchievement>().HasOne(un => un.User);
+
+            builder.Entity<Encounter>().HasOne(un => un.User);
+            builder.Entity<Encounter>().HasOne(un => un.EncounteredUser);
         }
 
         private void ConfigureMapping(ModelBuilder builder)
@@ -142,7 +173,6 @@ namespace WebApi.Data
             builder.Entity<UserNotification>().ToTable("notifications");
             builder.Entity<Encounter>().ToTable("encounters");
             builder.Entity<Admin>().ToTable("admins");
-            //builder.Entity<AppLanguage>().ToTable("app_languages"); //TODO: Remove
             builder.Entity<Test>().ToTable("tests");
             builder.Entity<TestQuestion>().ToTable("tests_questions");
             builder.Entity<TestAnswer>().ToTable("tests_answers");
@@ -170,7 +200,218 @@ namespace WebApi.Data
             builder.Entity<AdventureAttendee>().ToTable("adventure_attendees");
             builder.Entity<PromoCode>().ToTable("promocodes");
             builder.Entity<Hint>().ToTable("hints");
+        }
 
+        //Hilo configuration
+
+        private void ConfigureAchievements(ModelBuilder builder)
+        {
+            const string sequenceName = "achievements_hilo";
+
+            builder.HasSequence<int>(sequenceName)
+                .StartsAt(1)
+                .IncrementsBy(1);
+
+            builder.Entity<Achievement>(b =>
+            {
+                b.Property(a => a.Id).UseHiLo(sequenceName);
+            });
+        }
+
+        private void ConfigureActiveEffects(ModelBuilder builder)
+        {
+            const string sequenceName = "active_effects_hilo";
+
+            builder.HasSequence<int>(sequenceName)
+                .StartsAt(1)
+                .IncrementsBy(1);
+
+            builder.Entity<ActiveEffect>(b =>
+            {
+                b.Property(a => a.Id).UseHiLo(sequenceName);
+            });
+        }
+
+        private void ConfigureAds(ModelBuilder builder)
+        {
+            const string sequenceName = "ads_hilo";
+
+            builder.HasSequence<int>(sequenceName)
+                .StartsAt(1)
+                .IncrementsBy(1);
+
+            builder.Entity<Ad>(b =>
+            {
+                b.Property(a => a.Id).UseHiLo(sequenceName);
+            });
+        }
+
+        private void ConfigureAdventures(ModelBuilder builder)
+        {
+            const string sequenceName = "adventures_hilo";
+
+            builder.HasSequence<int>(sequenceName)
+                .StartsAt(1)
+                .IncrementsBy(1);
+
+            builder.Entity<Adventure>(b =>
+            {
+                b.Property(a => a.Id).UseHiLo(sequenceName);
+            });
+        }
+
+        private void ConfigureAdventureTemplates(ModelBuilder builder)
+        {
+            const string sequenceName = "adventure_templates_hilo";
+
+            builder.HasSequence<int>(sequenceName)
+                .StartsAt(1)
+                .IncrementsBy(1);
+
+            builder.Entity<AdventureTemplate>(b =>
+            {
+                b.Property(a => a.Id).UseHiLo(sequenceName);
+            });
+        }
+
+        private void ConfigureBalances(ModelBuilder builder)
+        {
+            const string sequenceName = "balances_hilo";
+
+            builder.HasSequence<int>(sequenceName)
+                .StartsAt(1)
+                .IncrementsBy(1);
+
+            builder.Entity<Balance>(b =>
+            {
+                b.Property(a => a.Id).UseHiLo(sequenceName);
+            });
+        }
+
+        private void ConfigureBlackLists(ModelBuilder builder)
+        {
+            const string sequenceName = "black_lists_hilo";
+
+            builder.HasSequence<int>(sequenceName)
+                .StartsAt(1)
+                .IncrementsBy(1);
+
+            builder.Entity <BlackList>(b =>
+            {
+                b.Property(a => a.Id).UseHiLo(sequenceName);
+            });
+        }
+
+        private void ConfigureEncounters(ModelBuilder builder)
+        {
+            const string sequenceName = "encounters_hilo";
+
+            builder.HasSequence<int>(sequenceName)
+                .StartsAt(1)
+                .IncrementsBy(1);
+
+            builder.Entity<Encounter>(b =>
+            {
+                b.Property(a => a.Id).UseHiLo(sequenceName);
+            });
+        }
+
+        private void ConfigureFeedbacks(ModelBuilder builder)
+        {
+            const string sequenceName = "feedbacks_hilo";
+
+            builder.HasSequence<int>(sequenceName)
+                .StartsAt(1)
+                .IncrementsBy(1);
+
+            builder.Entity<Feedback>(b =>
+            {
+                b.Property(a => a.Id).UseHiLo(sequenceName);
+            });
+        }
+
+        private void ConfigureInvitations(ModelBuilder builder)
+        {
+            const string sequenceName = "invitations_hilo";
+
+            builder.HasSequence<int>(sequenceName)
+                .StartsAt(1)
+                .IncrementsBy(1);
+
+            builder.Entity<Invitation>(b =>
+            {
+                b.Property(a => a.Id).UseHiLo(sequenceName);
+            });
+        }
+
+        private void ConfigureNotifications(ModelBuilder builder)
+        {
+            const string sequenceName = "notifications_hilo";
+
+            builder.HasSequence<int>(sequenceName)
+                .StartsAt(1)
+                .IncrementsBy(1);
+
+            builder.Entity<UserNotification>(b =>
+            {
+                b.Property(a => a.Id).UseHiLo(sequenceName);
+            });
+        }
+
+        private void ConfigureTickRequests(ModelBuilder builder)
+        {
+            const string sequenceName = "tick_requests_hilo";
+
+            builder.HasSequence<int>(sequenceName)
+                .StartsAt(1)
+                .IncrementsBy(1);
+
+            builder.Entity<TickRequest>(b =>
+            {
+                b.Property(a => a.Id).UseHiLo(sequenceName);
+            });
+        }
+
+        private void ConfigureTransactions(ModelBuilder builder)
+        {
+            const string sequenceName = "transactions_hilo";
+
+            builder.HasSequence<int>(sequenceName)
+                .StartsAt(1)
+                .IncrementsBy(1);
+
+            builder.Entity<Transaction>(b =>
+            {
+                b.Property(a => a.Id).UseHiLo(sequenceName);
+            });
+        }
+
+        private void ConfigureReports(ModelBuilder builder)
+        {
+            const string sequenceName = "reports_hilo";
+
+            builder.HasSequence<int>(sequenceName)
+                .StartsAt(1)
+                .IncrementsBy(1);
+
+            builder.Entity<Report>(b =>
+            {
+                b.Property(a => a.Id).UseHiLo(sequenceName);
+            });
+        }
+
+        private void ConfigureUserTags(ModelBuilder builder)
+        {
+            const string sequenceName = "user_tags_hilo";
+
+            builder.HasSequence<int>(sequenceName)
+                .StartsAt(1)
+                .IncrementsBy(1);
+
+            builder.Entity<UserTag>(b =>
+            {
+                b.Property(a => a.Id).UseHiLo(sequenceName);
+            });
         }
     }
 }

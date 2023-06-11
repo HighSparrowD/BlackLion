@@ -1,13 +1,12 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
-using System.Drawing;
 
 namespace WebApi.Entities.UserInfoEntities
 {
     public class Balance
     {
         [Key]
-        public Guid Id { get; set; }
+        public long Id { get; set; }
         public long UserId { get; set; }
         public int Points { get; set; }
         public int PersonalityPoints { get; set; }
@@ -25,7 +24,6 @@ namespace WebApi.Entities.UserInfoEntities
 
         public Balance(long userId, int points, DateTime pointInTime)
         {
-            Id = Guid.NewGuid();
             UserId = userId;
             Points = points;
             PersonalityPoints = 15;

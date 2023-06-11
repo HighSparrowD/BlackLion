@@ -5,6 +5,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Entities\LocalizationEntities\**" />
+    <Content Remove="Entities\LocalizationEntities\**" />
+    <EmbeddedResource Remove="Entities\LocalizationEntities\**" />
+    <None Remove="Entities\LocalizationEntities\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Certificate" Version="6.0.9" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="7.0.5">
       <PrivateAssets>all</PrivateAssets>
@@ -18,7 +25,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Entities\LocalizationEntities\" />
     <Folder Include="Images\" />
     <Folder Include="Migrations\" />
   </ItemGroup>

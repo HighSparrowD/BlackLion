@@ -1,7 +1,7 @@
 ﻿using WebApi.Entities.UserInfoEntities;
 using WebApi.Enums;
-using System;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace WebApi.Entities.AdminEntities
 {
@@ -9,7 +9,8 @@ namespace WebApi.Entities.AdminEntities
     public class TickRequest
     {
         [Key]
-        public Guid Id { get; set; }
+        public long Id { get; set; }
+        [ForeignKey("User")]
         public long UserId { get; set; }
         public long? AdminId { get; set; }
         public TickRequestStatus? State { get; set; }

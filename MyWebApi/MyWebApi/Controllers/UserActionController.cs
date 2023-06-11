@@ -150,7 +150,7 @@ namespace WebApi.Controllers
         }
 
         [HttpPost("/AddUserReport")]
-        public async Task<Guid> AddUserReport([FromBody] SendUserReport report)
+        public async Task<long> AddUserReport([FromBody] SendUserReport report)
         {
             return await _repository.AddUserReportAsync(report);
         }
@@ -193,7 +193,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/GetSingleUserReportById/{id}")]
-        public async Task<Report> GetSingleUserReportByIdAsync(Guid id)
+        public async Task<Report> GetSingleUserReportByIdAsync(long id)
         {
             return await _repository.GetSingleUserReportByIdAsync(id);
         }
@@ -343,7 +343,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/GetUserRequest/{requestId}")]
-        public async Task<UserNotification> GetUserRequest(Guid requestId)
+        public async Task<UserNotification> GetUserRequest(long requestId)
         {
             return await _repository.GetUserRequest(requestId);
         }
@@ -373,7 +373,7 @@ namespace WebApi.Controllers
         }
 
         [HttpDelete("/DeleteUserRequest/{requestId}")]
-        public async Task<byte> DeleteUserRequest(Guid requestId)
+        public async Task<byte> DeleteUserRequest(long requestId)
         {
             return await _repository.DeleteUserRequest(requestId);
         }
@@ -385,7 +385,7 @@ namespace WebApi.Controllers
         }
 
         [HttpPost("/RegisterUserEncounter")]
-        public async Task<Guid?> RegisterUserEncounter(Encounter model)
+        public async Task<long?> RegisterUserEncounter(Encounter model)
         {
             return await _repository.RegisterUserEncounter(model);
         }
@@ -550,7 +550,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/GetUserNotificationsIds/{userId}")]
-        public async Task<List<Guid>> GetUserNotificationsIds(long userId)
+        public async Task<List<long>> GetUserNotificationsIds(long userId)
         {
             return await _repository.GetUserNotificationsIdsAsync(userId);
         }
@@ -813,7 +813,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/GetRequestSender/{requestId}")]
-        public async Task<ActionResult<GetUserData>> GetRequestSender(Guid requestId)
+        public async Task<ActionResult<GetUserData>> GetRequestSender(long requestId)
         {
             var sender = await _repository.GetRequestSenderAsync(requestId);
 
@@ -879,7 +879,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/adventure-template/{id}")]
-        public async Task<ManageTemplate> AdventureTenmplates([FromRoute] Guid id)
+        public async Task<ManageTemplate> AdventureTenmplate([FromRoute] long id)
         {
             return await _repository.GetAdventureTemplateAsync(id);
         }
@@ -897,20 +897,20 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/SubscribeOnAdventure/{id}/{userId}")]
-        public async Task<ParticipationRequestStatus> SubscribeOnAdventure(Guid id, long userId)
+        public async Task<ParticipationRequestStatus> SubscribeOnAdventure(long id, long userId)
         {
             return await _repository.SendAdventureRequestAsync(id, userId);
         }
 
         //TODO: perhaps change return type to enum
         [HttpGet("/process-adventure-request/{id}/{userId}/{status}")]
-        public async Task<bool> ProcessSubscriptionRequest(Guid id, long userId, AdventureAttendeeStatus status)
+        public async Task<bool> ProcessSubscriptionRequest(long id, long userId, AdventureAttendeeStatus status)
         {
             return await _repository.ProcessSubscriptionRequestAsync(id, userId, status);
         }
 
         [HttpGet("/adventure-attendees/{id}")]
-        public async Task<List<AttendeeInfo>> GetAdventureAttendees(Guid id)
+        public async Task<List<AttendeeInfo>> GetAdventureAttendees(long id)
         {
             return await _repository.GetAdventureAttendeesAsync(id);
         }
@@ -922,7 +922,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/adventure/{id}")]
-        public async Task<ManageAdventure> GetAdventure(Guid id)
+        public async Task<ManageAdventure> GetAdventure(long id)
         {
             return await _repository.GetAdventureAsync(id);
         }
@@ -946,13 +946,13 @@ namespace WebApi.Controllers
         }
 
         [HttpDelete("/delete-template/{templateId}")]
-        public async Task<DeleteResult> DeleteTemplate([FromRoute]Guid templateId, [FromServices] IUserRepository userRepo)
+        public async Task<DeleteResult> DeleteTemplate([FromRoute]long templateId, [FromServices] IUserRepository userRepo)
         {
             return await userRepo.DeleteAdventureTemplateAsync(templateId);
         }
 
         [HttpDelete("/delete-attendee/{adventureId}/{attendeeId}")]
-        public async Task<DeleteResult> DeleteAttendee([FromRoute] Guid adventureId, [FromRoute] long attendeeId, [FromServices] IUserRepository userRepo)
+        public async Task<DeleteResult> DeleteAttendee([FromRoute] long adventureId, [FromRoute] long attendeeId, [FromServices] IUserRepository userRepo)
         {
             return await userRepo.DeleteAdventureAttendeeAsync(adventureId, attendeeId);
         }

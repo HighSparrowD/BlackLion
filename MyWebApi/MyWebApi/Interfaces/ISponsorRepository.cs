@@ -28,7 +28,7 @@ namespace WebApi.Interfaces
         Task<long> AddContactInfoAsync(SponsorContactInfo model);
         Task<long> UpdateContactInfoAsync(SponsorContactInfo model);
         Task<Sponsor> GetSponsorInfo(long userId);
-        Task<Guid> RegisterUserEventNotification(UserNotification model);
+        Task<long> RegisterUserEventNotification(UserNotification model);
         Task<long> RegisterSponsorEventNotification(SponsorNotification model);
         Task<long> UpdateSponsorAsync(Sponsor model);
         Task<long> UpdateAdAsync(Ad model);

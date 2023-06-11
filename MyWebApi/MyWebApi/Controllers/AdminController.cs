@@ -130,7 +130,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/GetTickRequest/{id?}")]
-        public async Task<TickRequest> GetTickRequest(Guid? id = null)
+        public async Task<TickRequest> GetTickRequest(long? id = null)
         {
             return await _repository.GetTickRequestAsync(id);
         }
@@ -142,13 +142,13 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/AbortTickRequest/{id}")]
-        public async Task<bool> AbortTickRequest(Guid id)
+        public async Task<bool> AbortTickRequest(long id)
         {
             return await _repository.AbortTickRequestAsync(id);
         }
 
         [HttpGet("/NotifyFailierTickRequest/{id}/{adminId}")]
-        public async Task<bool> NotifyFailierTickRequest(Guid id, long adminId)
+        public async Task<bool> NotifyFailierTickRequest(long id, long adminId)
         {
             return await _repository.NotifyFailierTickRequestAsync(id, adminId);
         }

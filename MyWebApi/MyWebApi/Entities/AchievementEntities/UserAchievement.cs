@@ -2,48 +2,49 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using WebApi.Enums;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace WebApi.Entities.AchievementEntities
 {
     public class UserAchievement
     {
         [Key]
-        public long AchievementId { get; set; }
+        [ForeignKey("Achievement")]
+        public int AchievementId { get; set; }
         [Key]
-        public long UserBaseInfoId { get; set; }
+        [ForeignKey("User")]
+        public long UserId { get; set; }
         public int Progress { get; set; }
         public string AcquireMessage { get; set; }
         public string ShortDescription { get; set; }
         public bool IsAcquired{ get; set; }
-        public AppLanguage Language{ get; set; }
-        //[ForeignKey("AchievementId")]
+        public AppLanguage AchievementLanguage{ get; set; }
         public virtual Achievement Achievement { get; set; }
-        //[ForeignKey("UserBaseInfoId")]
         public virtual User User { get; set; }
 
         public UserAchievement()
         {
         }
 
-        public UserAchievement(long achievementId, long userBaseInfoId, AppLanguage language, string sysAchievementName, string sysAchievementDescription, int sysAchievementValue, AppLanguage localisation)
+        public UserAchievement(int achievementId, long userId, AppLanguage language, string sysAchievementName, string sysAchievementDescription, int sysAchievementValue, AppLanguage localisation)
         {
             AchievementId = achievementId;
-            UserBaseInfoId = userBaseInfoId;
-            Language = language;
+            UserId = userId;
+            AchievementLanguage = language;
             Progress = 0;
             IsAcquired = false;
             AcquireMessage = GenerateAcquireMessage(sysAchievementName, sysAchievementDescription, sysAchievementValue, localisation);
             ShortDescription = sysAchievementName; //GenerateShortDescription(sysAchievementDescription); //TODO: remember what purpose short description was entended to serve
         }
-        public UserAchievement(long achievementId, long userBaseInfoId, int progress, string acquireMessage, string shortDescription, bool isAcquired, AppLanguage language)
+        public UserAchievement(int achievementId, long userBaseInfoId, int progress, string acquireMessage, string shortDescription, bool isAcquired, AppLanguage language)
         {
             AchievementId = achievementId;
-            UserBaseInfoId = userBaseInfoId;
+            UserId = userBaseInfoId;
             Progress = progress;
             AcquireMessage = acquireMessage;
             ShortDescription = shortDescription;
             IsAcquired = isAcquired;
-            Language = language;
+            AchievementLanguage = language;
         }
 
         public void RetranslateAquireMessage(Achievement achievement, AppLanguage localisation)

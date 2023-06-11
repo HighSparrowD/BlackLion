@@ -24,10 +24,43 @@ namespace WebApi.Migrations
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "fuzzystrmatch");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.HasSequence<int>("achievements_hilo");
+
+            modelBuilder.HasSequence<int>("active_effects_hilo");
+
+            modelBuilder.HasSequence<int>("ads_hilo");
+
+            modelBuilder.HasSequence<int>("adventure_templates_hilo");
+
+            modelBuilder.HasSequence<int>("adventures_hilo");
+
+            modelBuilder.HasSequence<int>("balances_hilo");
+
+            modelBuilder.HasSequence<int>("black_lists_hilo");
+
+            modelBuilder.HasSequence<int>("encounters_hilo");
+
+            modelBuilder.HasSequence<int>("feedbacks_hilo");
+
+            modelBuilder.HasSequence<int>("invitations_hilo");
+
+            modelBuilder.HasSequence<int>("notifications_hilo");
+
+            modelBuilder.HasSequence<int>("reports_hilo");
+
+            modelBuilder.HasSequence<int>("tick_requests_hilo");
+
+            modelBuilder.HasSequence<int>("transactions_hilo");
+
+            modelBuilder.HasSequence<int>("user_tags_hilo");
+
             modelBuilder.Entity("WebApi.Entities.AchievementEntities.Achievement", b =>
                 {
-                    b.Property<long>("Id")
-                        .HasColumnType("bigint");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<int>("Id"), "achievements_hilo");
 
                     b.Property<byte>("Language")
                         .HasColumnType("smallint");
@@ -54,13 +87,13 @@ namespace WebApi.Migrations
 
             modelBuilder.Entity("WebApi.Entities.AchievementEntities.UserAchievement", b =>
                 {
-                    b.Property<long>("UserBaseInfoId")
+                    b.Property<long>("UserId")
                         .HasColumnType("bigint");
 
-                    b.Property<long>("AchievementId")
-                        .HasColumnType("bigint");
+                    b.Property<int>("AchievementId")
+                        .HasColumnType("integer");
 
-                    b.Property<byte?>("AchievementLanguage")
+                    b.Property<byte>("AchievementLanguage")
                         .HasColumnType("smallint");
 
                     b.Property<string>("AcquireMessage")
@@ -69,21 +102,13 @@ namespace WebApi.Migrations
                     b.Property<bool>("IsAcquired")
                         .HasColumnType("boolean");
 
-                    b.Property<byte>("Language")
-                        .HasColumnType("smallint");
-
                     b.Property<int>("Progress")
                         .HasColumnType("integer");
 
                     b.Property<string>("ShortDescription")
                         .HasColumnType("text");
 
-                    b.Property<long?>("UserId")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("UserBaseInfoId", "AchievementId");
-
-                    b.HasIndex("UserId");
+                    b.HasKey("UserId", "AchievementId");
 
                     b.HasIndex("AchievementId", "AchievementLanguage");
 
@@ -108,9 +133,11 @@ namespace WebApi.Migrations
 
             modelBuilder.Entity("WebApi.Entities.AdminEntities.TickRequest", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<long>("Id"), "tick_requests_hilo");
 
                     b.Property<long?>("AdminId")
                         .HasColumnType("bigint");
@@ -145,9 +172,11 @@ namespace WebApi.Migrations
 
             modelBuilder.Entity("WebApi.Entities.AdventureEntities.Adventure", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<long>("Id"), "adventures_hilo");
 
                     b.Property<string>("Address")
                         .HasColumnType("text");
@@ -233,8 +262,8 @@ namespace WebApi.Migrations
                     b.Property<long>("UserId")
                         .HasColumnType("bigint");
 
-                    b.Property<Guid>("AdventureId")
-                        .HasColumnType("uuid");
+                    b.Property<long>("AdventureId")
+                        .HasColumnType("bigint");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
@@ -251,9 +280,11 @@ namespace WebApi.Migrations
 
             modelBuilder.Entity("WebApi.Entities.AdventureEntities.AdventureTemplate", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<long>("Id"), "adventure_templates_hilo");
 
                     b.Property<string>("Address")
                         .HasColumnType("text");
@@ -396,9 +427,11 @@ namespace WebApi.Migrations
 
             modelBuilder.Entity("WebApi.Entities.EffectEntities.ActiveEffect", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<long>("Id"), "active_effects_hilo");
 
                     b.Property<int>("EffectId")
                         .HasColumnType("integer");
@@ -539,7 +572,7 @@ namespace WebApi.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<long>("Id"), "feedbacks_hilo");
 
                     b.Property<DateTime>("InsertedUtc")
                         .HasColumnType("timestamp with time zone");
@@ -567,9 +600,11 @@ namespace WebApi.Migrations
 
             modelBuilder.Entity("WebApi.Entities.ReportEntities.Report", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<long>("Id"), "reports_hilo");
 
                     b.Property<DateTime>("InsertedUtc")
                         .HasColumnType("timestamp with time zone");
@@ -577,20 +612,20 @@ namespace WebApi.Migrations
                     b.Property<short>("Reason")
                         .HasColumnType("smallint");
 
+                    b.Property<long>("SenderId")
+                        .HasColumnType("bigint");
+
                     b.Property<string>("Text")
                         .HasColumnType("text");
 
                     b.Property<long>("UserId")
                         .HasColumnType("bigint");
 
-                    b.Property<long>("UserId1")
-                        .HasColumnType("bigint");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("SenderId");
 
-                    b.HasIndex("UserId1");
+                    b.HasIndex("UserId");
 
                     b.ToTable("user_reports", (string)null);
                 });
@@ -666,7 +701,7 @@ namespace WebApi.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<long>("Id"), "ads_hilo");
 
                     b.Property<string>("Description")
                         .HasColumnType("text");
@@ -1020,9 +1055,11 @@ namespace WebApi.Migrations
 
             modelBuilder.Entity("WebApi.Entities.UserActionEntities.Invitation", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<long>("Id"), "invitations_hilo");
 
                     b.Property<DateTime>("InvitationTime")
                         .HasColumnType("timestamp with time zone");
@@ -1030,21 +1067,25 @@ namespace WebApi.Migrations
                     b.Property<long>("InvitedUserId")
                         .HasColumnType("bigint");
 
-                    b.Property<Guid>("InvitorCredentialsId")
+                    b.Property<Guid>("InviterCredentialsId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("InvitorCredentialsId");
+                    b.HasIndex("InvitedUserId");
+
+                    b.HasIndex("InviterCredentialsId");
 
                     b.ToTable("invitation", (string)null);
                 });
 
             modelBuilder.Entity("WebApi.Entities.UserActionEntities.UserNotification", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<long>("Id"), "notifications_hilo");
 
                     b.Property<string>("Description")
                         .HasColumnType("text");
@@ -1055,16 +1096,18 @@ namespace WebApi.Migrations
                     b.Property<int>("Section")
                         .HasColumnType("integer");
 
+                    b.Property<long?>("SenderId")
+                        .HasColumnType("bigint");
+
                     b.Property<int>("Severity")
                         .HasColumnType("integer");
 
-                    b.Property<long?>("UserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("UserId1")
+                    b.Property<long>("UserId")
                         .HasColumnType("bigint");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("SenderId");
 
                     b.HasIndex("UserId");
 
@@ -1073,9 +1116,11 @@ namespace WebApi.Migrations
 
             modelBuilder.Entity("WebApi.Entities.UserInfoEntities.Balance", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<long>("Id"), "balances_hilo");
 
                     b.Property<int>("CardDecksMini")
                         .HasColumnType("integer");
@@ -1118,7 +1163,10 @@ namespace WebApi.Migrations
             modelBuilder.Entity("WebApi.Entities.UserInfoEntities.BlackList", b =>
                 {
                     b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<long>("Id"), "black_lists_hilo");
 
                     b.Property<long>("UserId")
                         .HasColumnType("bigint");
@@ -1135,9 +1183,11 @@ namespace WebApi.Migrations
 
             modelBuilder.Entity("WebApi.Entities.UserInfoEntities.Encounter", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<long>("Id"), "encounters_hilo");
 
                     b.Property<DateTime>("EncounterDate")
                         .HasColumnType("timestamp with time zone");
@@ -1154,6 +1204,8 @@ namespace WebApi.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("EncounteredUserId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("encounters", (string)null);
                 });
@@ -1182,9 +1234,11 @@ namespace WebApi.Migrations
 
             modelBuilder.Entity("WebApi.Entities.UserInfoEntities.Transaction", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<long>("Id"), "transactions_hilo");
 
                     b.Property<int>("Amount")
                         .HasColumnType("integer");
@@ -1549,6 +1603,12 @@ namespace WebApi.Migrations
                     b.Property<string>("Tag")
                         .HasColumnType("text");
 
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<long>("Id"), "user_tags_hilo");
+
                     b.Property<int>("TagType")
                         .HasColumnType("integer");
 
@@ -1631,11 +1691,15 @@ namespace WebApi.Migrations
                 {
                     b.HasOne("WebApi.Entities.UserInfoEntities.User", "User")
                         .WithMany()
-                        .HasForeignKey("UserId");
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("WebApi.Entities.AchievementEntities.Achievement", "Achievement")
                         .WithMany()
-                        .HasForeignKey("AchievementId", "AchievementLanguage");
+                        .HasForeignKey("AchievementId", "AchievementLanguage")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Achievement");
 
@@ -1733,13 +1797,13 @@ namespace WebApi.Migrations
                 {
                     b.HasOne("WebApi.Entities.UserInfoEntities.User", "Sender")
                         .WithMany()
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("SenderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("WebApi.Entities.UserInfoEntities.User", "User")
                         .WithMany()
-                        .HasForeignKey("UserId1")
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -1842,20 +1906,38 @@ namespace WebApi.Migrations
 
             modelBuilder.Entity("WebApi.Entities.UserActionEntities.Invitation", b =>
                 {
-                    b.HasOne("WebApi.Entities.UserInfoEntities.InvitationCredentials", "InvitorCredentials")
+                    b.HasOne("WebApi.Entities.UserInfoEntities.User", "InvitedUser")
                         .WithMany()
-                        .HasForeignKey("InvitorCredentialsId")
+                        .HasForeignKey("InvitedUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("InvitorCredentials");
+                    b.HasOne("WebApi.Entities.UserInfoEntities.InvitationCredentials", "InviterCredentials")
+                        .WithMany()
+                        .HasForeignKey("InviterCredentialsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("InvitedUser");
+
+                    b.Navigation("InviterCredentials");
                 });
 
             modelBuilder.Entity("WebApi.Entities.UserActionEntities.UserNotification", b =>
                 {
-                    b.HasOne("WebApi.Entities.UserInfoEntities.User", null)
+                    b.HasOne("WebApi.Entities.UserInfoEntities.User", "Sender")
+                        .WithMany()
+                        .HasForeignKey("SenderId");
+
+                    b.HasOne("WebApi.Entities.UserInfoEntities.User", "Receiver")
                         .WithMany("Notifications")
-                        .HasForeignKey("UserId");
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Receiver");
+
+                    b.Navigation("Sender");
                 });
 
             modelBuilder.Entity("WebApi.Entities.UserInfoEntities.BlackList", b =>
@@ -1872,23 +1954,31 @@ namespace WebApi.Migrations
             modelBuilder.Entity("WebApi.Entities.UserInfoEntities.Encounter", b =>
                 {
                     b.HasOne("WebApi.Entities.UserInfoEntities.User", "EncounteredUser")
-                        .WithMany("Encounters")
+                        .WithMany()
                         .HasForeignKey("EncounteredUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("WebApi.Entities.UserInfoEntities.User", "User")
+                        .WithMany("Encounters")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("EncounteredUser");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("WebApi.Entities.UserInfoEntities.InvitationCredentials", b =>
                 {
-                    b.HasOne("WebApi.Entities.UserInfoEntities.User", "Invitor")
+                    b.HasOne("WebApi.Entities.UserInfoEntities.User", "Inviter")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Invitor");
+                    b.Navigation("Inviter");
                 });
 
             modelBuilder.Entity("WebApi.Entities.UserInfoEntities.User", b =>

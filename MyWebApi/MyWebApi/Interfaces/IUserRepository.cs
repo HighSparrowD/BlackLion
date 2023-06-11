@@ -27,12 +27,12 @@ namespace WebApi.Interfaces
         Task<bool> SetDebugProperties(); //TODO: remove in production
         Task<User> GetUserInfoAsync(long id);
         Task<List<UserNotification>> GetUserRequests(long userId);
-        Task<UserNotification> GetUserRequest(Guid requestId);
+        Task<UserNotification> GetUserRequest(long requestId);
         bool CheckRequestExists(long senderId, long recieverId);
         Task<string> RegisterUserRequestAsync(UserNotification request);
         Task<string> DeclineRequestAsync(long user1, long user2);
         Task<byte> DeleteUserRequests(long userId);
-        Task<byte> DeleteUserRequest(Guid requestId);
+        Task<byte> DeleteUserRequest(long requestId);
         Task<User> GetUserInfoByUsrnameAsync(string username);
         Task<BasicUserInfo> GetUserBasicInfo(long userId);
         Task<UserPartialData> GetUserPartialData(long userId);
@@ -46,9 +46,9 @@ namespace WebApi.Interfaces
         Task<List<FeedbackReason>> GetFeedbackReasonsAsync(int localisationId);
         //Task<List<ReportReason>> GetReportReasonsAsync(int localisationId);
         Task<long> AddFeedbackAsync(Feedback report);
-        Task<Guid> AddUserReportAsync(SendUserReport report);
+        Task<long> AddUserReportAsync(SendUserReport report);
         Task<List<Report>> GetMostRecentReports();
-        Task<Report> GetSingleUserReportByIdAsync(Guid id);
+        Task<Report> GetSingleUserReportByIdAsync(long id);
         Task<List<Report>> GetAllReportsOnUserAsync(long userId);
         Task<List<Report>> GetAllUserReportsAsync(long userId);
         Task<List<Feedback>> GetMostRecentFeedbacks();
@@ -77,7 +77,7 @@ namespace WebApi.Interfaces
         Task<bool> CheckBalanceIsSufficient(long userId, int cost);
         Task<DateTime> GetPremiumExpirationDate(long userId);
         Task<DateTime> GrantPremiumToUser(long userId, int cost, int dayDuration, short currency);
-        Task<Guid?> RegisterUserEncounter(Encounter model);
+        Task<long?> RegisterUserEncounter(Encounter model);
         Task<Encounter> GetUserEncounter(long encounterId);
         Task<List<Encounter>> GetUserEncounters(long userId, Section section);
         Task<int> AddUserTrustProgressAsync(long userId, double progress);
@@ -96,11 +96,11 @@ namespace WebApi.Interfaces
         Task<bool> InviteUserAsync(Guid invitationId, long userId);
         Task<Invitation> GetInvitationAsync(long userId);
         Task<bool> NotifyUserAboutReferentialRegistrationAsync(long userId, long invitedUserId);
-        Task<Guid> AddUserNotificationAsync(UserNotification model);
+        Task<long> AddUserNotificationAsync(UserNotification model);
         Task<int> GetInvitedUsersCountAsync(long userId);
         Task<bool> CheckUserHasNotificationsAsync(long userId);
         Task<List<UserNotification>> GetUserNotifications(long userId);
-        Task<List<Guid>> GetUserNotificationsIdsAsync(long userId);
+        Task<List<long>> GetUserNotificationsIdsAsync(long userId);
         Task<UserNotification> GetUserNotificationAsync(Guid notificationId);
         Task<byte> SendNotificationConfirmationCodeAsync(Guid notidicationId);
         Task<bool> DeleteUserNotification(Guid notificationId);
@@ -136,7 +136,7 @@ namespace WebApi.Interfaces
         Task<DateTime?> ActivateDurableEffectAsync(long userId, int effectId);
         Task<bool> ActivateToggleEffectAsync(long userId, int effectId, long? user2Id=null, string description=null);
         Task<List<ActiveEffect>> GetUserActiveEffects(long userId);
-        Task<bool> DeactivateEffectAsync(long userId, Guid activeEffectId);
+        Task<bool> DeactivateEffectAsync(long userId, long activeEffectId);
         Task<bool> CheckEffectIsActiveAsync(long userId, int effectId);
         Task<bool> PurchaseEffectAsync(long userId, int effectId, int points, short currency, short count=1);
         Task<bool> PurchasePersonalityPointsAsync(long userId, int points, short currency, short count=1);
@@ -158,7 +158,7 @@ namespace WebApi.Interfaces
         Task<PersonalityCaps> GetUserPersonalityCapsAsync(long userId);
         Task<bool> GetUserRTLanguageConsiderationAsync(long userId);
         Task SetUserCurrencyAsync(long userId, short currency);
-        Task<GetUserData> GetRequestSenderAsync(Guid requestId);
+        Task<GetUserData> GetRequestSenderAsync(long requestId);
         Task<bool> CheckPromoIsCorrectAsync(long userId, string promoText, bool isActivatedBeforeRegistration);
         Task<bool> GetUserIncreasedFamiliarityAsync(long userId);
         Task<bool> SwitchIncreasedFamiliarityAsync(long userId);
@@ -179,18 +179,18 @@ namespace WebApi.Interfaces
         Task<string> RegisterAdventureAsync(ManageAdventure model);
         Task ChangeAdventureAsync(ManageAdventure model);
         Task<bool> DeleteAdventureAsync(Guid adventureId, long userId);
-        Task<ParticipationRequestStatus> SendAdventureRequestAsync(Guid adventureId, long userId);
+        Task<ParticipationRequestStatus> SendAdventureRequestAsync(long adventureId, long userId);
         Task<ParticipationRequestStatus> SendAdventureRequestByCodeAsync(ParticipationRequest request);
         Task<List<GetTemplateShort>> GetAdventureTemplatesAsync(long userId);
-        Task<ManageTemplate> GetAdventureTemplateAsync(Guid id);
-        Task<bool> ProcessSubscriptionRequestAsync(Guid adventureId, long userId, AdventureAttendeeStatus status);
-        Task<List<AttendeeInfo>> GetAdventureAttendeesAsync(Guid adventureId);
+        Task<ManageTemplate> GetAdventureTemplateAsync(long id);
+        Task<bool> ProcessSubscriptionRequestAsync(long adventureId, long userId, AdventureAttendeeStatus status);
+        Task<List<AttendeeInfo>> GetAdventureAttendeesAsync(long adventureId);
         Task<List<Adventure>> GetUsersSubscribedAdventuresAsync(long userId);
         Task<List<GetAdventure>> GetUserAdventuresAsync(long userId);
-        Task<ManageAdventure> GetAdventureAsync(Guid id);
+        Task<ManageAdventure> GetAdventureAsync(long id);
         Task<bool> SaveAdventureTemplateAsync(ManageTemplate model);
-        Task<DeleteResult> DeleteAdventureTemplateAsync(Guid templateId);
-        Task<DeleteResult> DeleteAdventureAttendeeAsync(Guid adventureId, long attendeeId);
+        Task<DeleteResult> DeleteAdventureTemplateAsync(long templateId);
+        Task<DeleteResult> DeleteAdventureAttendeeAsync(long adventureId, long attendeeId);
         Task<SetGroupIdResult> SetAdventureGroupIdAsync(SetGroupIdRequest request);
     }
 }

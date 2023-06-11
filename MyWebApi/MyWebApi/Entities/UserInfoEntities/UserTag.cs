@@ -7,8 +7,8 @@ namespace WebApi.Entities.UserInfoEntities
     public class UserTag
     {
         [Key]
+        public long Id { get; set; }
         public long UserId { get; set; }
-        [Key]
         public string Tag { get; set; }
         public TagType TagType { get; set; }
 

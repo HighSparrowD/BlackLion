@@ -6,7 +6,7 @@ namespace WebApi.Entities.AdventureEntities
     public class AdventureTemplate
     {
         [Key]
-        public Guid Id { get; set; }
+        public long Id { get; set; }
         public long UserId { get; set; }
         public string Name { get; set; }
         public bool IsOffline { get; set; }
