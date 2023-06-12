@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using WebApi.Entities.SecondaryEntities;
 using WebApi.Entities.ReportEntities;
-using WebApi.Entities.ReasonEntities;
 using WebApi.Entities.AchievementEntities;
 using WebApi.Entities.DailyTaskEntities;
 using WebApi.Entities.AdminEntities;
@@ -23,7 +22,6 @@ namespace WebApi.Interfaces
         Task<long> UploadLanguages(List<UpdateLanguage> langs);
         Task<byte> UploadPsTestsAsync(List<UploadTest> model);
         //Task<long> UploadInTest(UploadInTest model);
-        Task<long> UploadFeedbackReasons(List<FeedbackReason> reasons);
         Task<List<Feedback>> GetFeedbacks ();
         Task<long> DeleteUser (long userId);
         Task<int> DeleteAllUsers ();

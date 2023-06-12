@@ -20,7 +20,7 @@ class FeedbackModule:
         #TODO: REMOVE
         language = int(requests.get(f"https://localhost:44381/GetUserAppLanguage/{msg.from_user.id}", verify=False).text)
 
-        self.reasons = json.loads(requests.get(f"https://localhost:44381/GetFeedbackReasons/{language}", verify=False).text)
+        self.reasons = json.loads(requests.get(f"https://localhost:44381/feedback-reasons", verify=False).text)
         self.reas = []
 
         self.markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)

@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using WebApi.App_GlobalResources;
+﻿using WebApi.App_GlobalResources;
 using WebApi.Enums;
 
 namespace WebApi.Utilities
@@ -9,6 +8,11 @@ namespace WebApi.Utilities
         public static string GetLocalizedValue(ReportReason reason)
         {
             return Resources.ResourceManager.GetString("ReportReason_" + reason.ToString()) ?? reason.ToString();
+        }
+
+        public static string GetLocalizedValue(FeedbackReason reason)
+        {
+            return Resources.ResourceManager.GetString("FeedbackReason_" + reason.ToString()) ?? reason.ToString();
         }
 
         public static string GetLocalizedValue(UsageReason reason)

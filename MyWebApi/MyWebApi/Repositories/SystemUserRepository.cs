@@ -1,6 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Microsoft.Extensions.Options;
 using WebApi.Data;
 using WebApi.Entities.AchievementEntities;
 using WebApi.Entities.AdminEntities;
@@ -8,10 +6,8 @@ using WebApi.Entities.AdventureEntities;
 using WebApi.Entities.DailyTaskEntities;
 using WebApi.Entities.EffectEntities;
 using WebApi.Entities.LocationEntities;
-using WebApi.Entities.ReasonEntities;
 using WebApi.Entities.ReportEntities;
 using WebApi.Entities.SecondaryEntities;
-using WebApi.Entities.SponsorEntities;
 using WebApi.Entities.TestEntities;
 using WebApi.Entities.UserActionEntities;
 using WebApi.Entities.UserInfoEntities;
@@ -21,10 +17,7 @@ using WebApi.Utilities;
 using QRCoder;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using static WebApi.Enums.SystemEnums;
 
@@ -739,12 +732,6 @@ namespace WebApi.Repositories
                 .FirstOrDefaultAsync();
 
             return (byte)data.Language;
-        }
-
-        public async Task<List<FeedbackReason>> GetFeedbackReasonsAsync(int localisationId)
-        {
-
-            return await _contx.FeedbackReasons.Where(r => r.ClassLocalisationId == localisationId).ToListAsync();
         }
 
         public async Task<bool> CheckUserIsRegistered(long userId)
@@ -4490,6 +4477,11 @@ namespace WebApi.Repositories
             }
 
             return genders;
+        }
+
+        public Task<List<FeedbackReason>> GetFeedbackReasonsAsync(int localisationId)
+        {
+            throw new NotImplementedException();
         }
     }
 }

@@ -1,16 +1,12 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using WebApi.Data;
 using WebApi.Entities.AchievementEntities;
 using WebApi.Entities.AdminEntities;
 using WebApi.Entities.DailyTaskEntities;
 using WebApi.Entities.LocationEntities;
-using WebApi.Entities.ReasonEntities;
 using WebApi.Entities.ReportEntities;
 using WebApi.Entities.SecondaryEntities;
 using WebApi.Entities.TestEntities;
-using WebApi.Entities.UserActionEntities;
-using WebApi.Entities.UserInfoEntities;
 using WebApi.Enums;
 using WebApi.Interfaces;
 using System;
@@ -97,19 +93,6 @@ namespace WebApi.Repositories
 
             await _contx.SaveChangesAsync();
             return langs.Count;
-        }
-
-        public async Task<long> UploadFeedbackReasons(List<FeedbackReason> reasons)
-        {
-            reasons.ForEach(async r => 
-            {
-                if (!_contx.FeedbackReasons.Contains(r))
-                    await _contx.FeedbackReasons.AddAsync(r);
-                else
-                    _contx.FeedbackReasons.Update(r);
-            });
-            await _contx.SaveChangesAsync();
-            return reasons.Count;
         }
 
         public async Task<List<Feedback>> GetFeedbacks()

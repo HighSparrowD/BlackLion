@@ -73,6 +73,22 @@ namespace WebApi.Repositories
             return reasons;
         }
 
+        public List<GetLocalizedEnum> GetFeedbackReasons()
+        {
+            var reasons = new List<GetLocalizedEnum>();
+
+            foreach (var reason in Enum.GetValues(typeof(FeedbackReason)))
+            {
+                reasons.Add(new GetLocalizedEnum
+                {
+                    Id = (byte)reason,
+                    Name = EnumLocalizer.GetLocalizedValue((FeedbackReason)reason)
+                });
+            }
+
+            return reasons;
+        }
+
         public List<GetLocalizedEnum> GetCommunicationPreferences()
         {
             var preferences = new List<GetLocalizedEnum>();

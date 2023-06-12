@@ -12,6 +12,7 @@ namespace WebApi.Interfaces
     {
         List<GetLocalizedEnum> GetAppLanguages();
         List<GetLocalizedEnum> GetReasons();
+        List<GetLocalizedEnum> GetFeedbackReasons();
         List<GetLocalizedEnum> GetCommunicationPreferences();
         Task<List<City>> GetCities(int countryId, AppLanguage localisationId);
         Task<List<Country>> GetCountries(AppLanguage localisationId);
