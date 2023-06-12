@@ -1,0 +1,240 @@
+Id,Name,Language,Priority
+1,afghanistan,EN,5
+2,albania,EN,5
+3,algeria,EN,5
+4,american samoa,EN,5
+5,andorra,EN,5
+6,angola,EN,5
+7,anguilla,EN,5
+8,antigua and barbuda,EN,5
+9,argentina,EN,5
+10,armenia,EN,5
+11,aruba,EN,5
+12,australia,EN,5
+13,austria,EN,5
+14,azerbaijan,EN,5
+15,bahrain,EN,5
+16,bangladesh,EN,5
+17,barbados,EN,5
+18,belarus,EN,5
+19,belgium,EN,5
+20,belize,EN,5
+21,benin,EN,5
+22,bermuda,EN,5
+23,bhutan,EN,5
+24,bolivia,EN,5
+25,bosnia and herzegovina,EN,5
+26,botswana,EN,5
+27,brazil,EN,5
+28,british virgin islands,EN,5
+29,brunei,EN,5
+30,bulgaria,EN,5
+31,burkina faso,EN,5
+32,burundi,EN,5
+33,cabo verde,EN,5
+34,cambodia,EN,5
+35,cameroon,EN,5
+36,canada,EN,5
+37,cayman islands,EN,5
+38,central african republic,EN,5
+39,chad,EN,5
+40,chile,EN,5
+41,china,EN,5
+42,christmas island,EN,5
+43,colombia,EN,5
+44,comoros,EN,5
+45,congo (brazzaville),EN,5
+46,congo (kinshasa),EN,5
+47,cook islands,EN,5
+48,costa rica,EN,5
+49,croatia,EN,5
+50,cuba,EN,5
+51,curaçao,EN,5
+52,cyprus,EN,5
+53,czechia,EN,1
+54,côte d'ivoire,EN,5
+55,denmark,EN,5
+56,djibouti,EN,5
+57,dominica,EN,5
+58,dominican republic,EN,5
+59,ecuador,EN,5
+60,egypt,EN,5
+61,el salvador,EN,5
+62,equatorial guinea,EN,5
+63,eritrea,EN,5
+64,estonia,EN,5
+65,ethiopia,EN,5
+66,falkland islands (islas malvinas),EN,5
+67,faroe islands,EN,5
+68,federated states of micronesia,EN,5
+69,fiji,EN,5
+70,finland,EN,5
+71,france,EN,5
+72,french guiana,EN,5
+73,french polynesia,EN,5
+74,gabon,EN,5
+75,gaza strip,EN,5
+76,georgia,EN,5
+77,germany,EN,5
+78,ghana,EN,5
+79,gibraltar,EN,5
+80,greece,EN,5
+81,greenland,EN,5
+82,grenada,EN,5
+83,guadeloupe,EN,5
+84,guam,EN,5
+85,guatemala,EN,5
+86,guinea,EN,5
+87,guinea-bissau,EN,5
+88,guyana,EN,5
+89,haiti,EN,5
+90,honduras,EN,5
+91,hong kong,EN,5
+92,hungary,EN,5
+93,iceland,EN,5
+94,india,EN,5
+95,indonesia,EN,5
+96,iran,EN,5
+97,iraq,EN,5
+98,ireland,EN,5
+99,isle of man,EN,5
+100,israel,EN,5
+101,italy,EN,5
+102,jamaica,EN,5
+103,japan,EN,5
+104,jersey,EN,5
+105,jordan,EN,5
+106,kazakhstan,EN,5
+107,kenya,EN,5
+108,kiribati,EN,5
+109,kosovo,EN,5
+110,kuwait,EN,5
+111,kyrgyzstan,EN,5
+112,laos,EN,5
+113,latvia,EN,5
+114,lebanon,EN,5
+115,lesotho,EN,5
+116,liberia,EN,5
+117,libya,EN,5
+118,liechtenstein,EN,5
+119,lithuania,EN,5
+120,luxembourg,EN,5
+121,macau,EN,5
+122,macedonia,EN,5
+123,madagascar,EN,5
+124,malawi,EN,5
+125,malaysia,EN,5
+126,maldives,EN,5
+127,mali,EN,5
+128,malta,EN,5
+129,marshall islands,EN,5
+130,martinique,EN,5
+131,mauritania,EN,5
+132,mauritius,EN,5
+133,mayotte,EN,5
+134,mexico,EN,5
+135,moldova,EN,5
+136,monaco,EN,5
+137,mongolia,EN,5
+138,montenegro,EN,5
+139,montserrat,EN,5
+140,morocco,EN,5
+141,mozambique,EN,5
+142,myanmar,EN,5
+143,namibia,EN,5
+144,nauru,EN,5
+145,nepal,EN,5
+146,netherlands,EN,5
+147,new caledonia,EN,5
+148,new zealand,EN,5
+149,nicaragua,EN,5
+150,niger,EN,5
+151,nigeria,EN,5
+152,niue,EN,5
+153,norfolk island,EN,5
+154,north korea,EN,5
+155,northern mariana islands,EN,5
+156,norway,EN,5
+157,oman,EN,5
+158,pakistan,EN,5
+159,palau,EN,5
+160,panama,EN,5
+161,papua new guinea,EN,5
+162,paraguay,EN,5
+163,peru,EN,5
+164,philippines,EN,5
+165,pitcairn islands,EN,5
+166,poland,EN,1
+167,portugal,EN,5
+168,puerto rico,EN,5
+169,qatar,EN,5
+170,reunion,EN,5
+171,romania,EN,5
+172,russia,EN,1
+173,rwanda,EN,5
+174,saint barthelemy,EN,5
+175,"saint helena, ascension, and tristan da cunha",EN,5
+176,saint kitts and nevis,EN,5
+177,saint lucia,EN,5
+178,saint martin,EN,5
+179,saint pierre and miquelon,EN,5
+180,saint vincent and the grenadines,EN,5
+181,samoa,EN,5
+182,san marino,EN,5
+183,sao tome and principe,EN,5
+184,saudi arabia,EN,5
+185,senegal,EN,5
+186,serbia,EN,5
+187,seychelles,EN,5
+188,sierra leone,EN,5
+189,singapore,EN,5
+190,sint maarten,EN,5
+191,slovakia,EN,5
+192,slovenia,EN,5
+193,solomon islands,EN,5
+194,somalia,EN,5
+195,south africa,EN,5
+196,south georgia and south sandwich islands,EN,5
+197,south korea,EN,5
+198,south sudan,EN,5
+199,spain,EN,5
+200,sri lanka,EN,5
+201,sudan,EN,5
+202,suriname,EN,5
+203,svalbard,EN,5
+204,swaziland,EN,5
+205,sweden,EN,5
+206,switzerland,EN,5
+207,syria,EN,5
+208,taiwan,EN,5
+209,tajikistan,EN,5
+210,tanzania,EN,5
+211,thailand,EN,5
+212,the bahamas,EN,5
+213,the gambia,EN,5
+214,timor-leste,EN,5
+215,togo,EN,5
+216,tonga,EN,5
+217,trinidad and tobago,EN,5
+218,tunisia,EN,5
+219,turkey,EN,5
+220,turkmenistan,EN,5
+221,turks and caicos islands,EN,5
+222,tuvalu,EN,5
+223,u.s. virgin islands,EN,5
+224,uganda,EN,5
+225,ukraine,EN,1
+226,united arab emirates,EN,5
+227,united kingdom,EN,5
+228,united states,EN,1
+229,uruguay,EN,5
+230,uzbekistan,EN,5
+231,vanuatu,EN,5
+232,vatican city,EN,5
+233,venezuela,EN,5
+234,vietnam,EN,5
+235,wallis and futuna,EN,5
+236,west bank,EN,5
+237,yemen,EN,5
+238,zambia,EN,5
+239,zimbabwe,EN,5

@@ -9,9 +9,9 @@ cities_last_index = 0
 languages_last_index = 0
 
 langs = {
-    0: "Eng",
-    1: "Rus",
-    2: "Ukr",
+    0: "EN",
+    1: "RU",
+    2: "UK",
 }
 
 prioritized_langs = ["English", "Russian", "Ukrainian", "Czech", "Polish"]
@@ -271,7 +271,7 @@ def load_eng_localization():
     update_languages("en")
 
 
-create_eng_localization()
-# load_eng_localization()
-update_cities("en")
+# create_eng_localization()
+load_eng_localization()
+# update_cities("en")
 # update_languages("en")
