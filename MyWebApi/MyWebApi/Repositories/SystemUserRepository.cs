@@ -158,7 +158,7 @@ namespace WebApi.Repositories
 
                 //User instantly receives a like by an invitor if he approves it
                 if (invitor.Settings.IncreasedFamiliarity)
-                    await RegisterUserRequestAsync(new UserNotification { SenderId = invitor.Id, UserId = model.Id, IsLikedBack = false });
+                    await RegisterUserRequestAsync(new UserNotification { SenderId = invitor.Id, ReceiverId = model.Id, IsLikedBack = false });
 
                 //Invitor is notified about referential registration
                 await NotifyUserAboutReferentialRegistrationAsync(invitor.Id, model.Id);
@@ -214,7 +214,7 @@ namespace WebApi.Repositories
                 .Where(u => u.Encounters.Where(e => e.Section == Section.Requester || e.Section == Section.Familiator)
                     .All(e => e.EncounteredUserId != currentUser.Id)) //May casuse errors
                 //Check if request already exists
-                .Where(u => u.Notifications.All(n => n.SenderId != currentUser.Id && n.UserId != currentUser.Id)) //May casuse errors
+                .Where(u => u.Notifications.All(n => n.SenderId != currentUser.Id && n.ReceiverId != currentUser.Id)) //May casuse errors
                 .Include(u => u.Data)
                 .Include(u => u.Location)
                 .Include(u => u.Settings)
@@ -987,7 +987,7 @@ namespace WebApi.Repositories
 
             await AddUserNotificationAsync(new UserNotification
             {
-                UserId = userId,
+                ReceiverId = userId,
                 IsLikedBack = false,
                 Section = (Section)achievement.Achievement.SectionId,
                 Severity = Severities.Minor,
@@ -1075,7 +1075,7 @@ namespace WebApi.Repositories
                 await _contx.SaveChangesAsync();
             }
 
-            var userNotifications1 = await _contx.Notifications.Where(u => u.UserId == userId)
+            var userNotifications1 = await _contx.Notifications.Where(u => u.ReceiverId == userId)
                 .ToListAsync();
 
             if (userNotifications1.Count > 0 && userNotifications1 != null)
@@ -1506,7 +1506,7 @@ namespace WebApi.Repositories
             _contx.Update(user);
             await _contx.SaveChangesAsync();
 
-            await AddUserNotificationAsync(new UserNotification { UserId = user.Id, IsLikedBack = false, Severity = Severities.Moderate, Section = Section.Neutral, Description = $"You have been granted premium access. Enjoy your benefits :)\nPremium expiration {user.PremiumExpirationDate.Value.ToString("dd.MM.yyyy")}" });
+            await AddUserNotificationAsync(new UserNotification { ReceiverId = user.Id, IsLikedBack = false, Severity = Severities.Moderate, Section = Section.Neutral, Description = $"You have been granted premium access. Enjoy your benefits :)\nPremium expiration {user.PremiumExpirationDate.Value.ToString("dd.MM.yyyy")}" });
 
             return user.PremiumExpirationDate.Value;
         }
@@ -1687,7 +1687,7 @@ namespace WebApi.Repositories
         {
 
             return await _contx.Notifications
-                .Where(r => r.UserId == userId && r.SenderId != null)
+                .Where(r => r.ReceiverId == userId && r.SenderId != null)
                 .Where(r => r.Section == Section.Familiator || r.Section == Section.Requester)
                 .ToListAsync();
 
@@ -1717,7 +1717,7 @@ namespace WebApi.Repositories
                         .FirstOrDefaultAsync();
 
                     //Delete request, user had just responded to
-                    var requestId = await _contx.Notifications.Where(n => n.SenderId == request.UserId && n.UserId == request.SenderId)
+                    var requestId = await _contx.Notifications.Where(n => n.SenderId == request.ReceiverId && n.ReceiverId == request.SenderId)
                         .Select(n => n.Id)
                         .SingleOrDefaultAsync();
 
@@ -1730,12 +1730,12 @@ namespace WebApi.Repositories
                 else
                 {
                     var receiverUserName = await _contx.UsersData
-                        .Where(d => d.Id == request.UserId)
+                        .Where(d => d.Id == request.ReceiverId)
                         .Select(d => d.UserName)
                         .FirstOrDefaultAsync();
 
                     //Delete request, user had just answered
-                    var requestId = await _contx.Notifications.Where(n => n.SenderId == request.UserId && n.UserId == request.SenderId)
+                    var requestId = await _contx.Notifications.Where(n => n.SenderId == request.ReceiverId && n.ReceiverId == request.SenderId)
                         .Select(n => n.Id)
                         .FirstOrDefaultAsync();
 
@@ -1749,7 +1749,7 @@ namespace WebApi.Repositories
             else
                 request.Section = Section.Familiator;
 
-            await RegisterUserEncounter(new Encounter { UserId = (long)request.SenderId, EncounteredUserId = request.UserId, Section = Section.Requester });
+            await RegisterUserEncounter(new Encounter { UserId = (long)request.SenderId, EncounteredUserId = request.ReceiverId, Section = Section.Requester });
 
             var id = await AddUserNotificationAsync(request);
 
@@ -1789,7 +1789,7 @@ namespace WebApi.Repositories
         public async Task<byte> DeleteUserRequests(long userId)
         {
             var requests = await _contx.Notifications
-                .Where(r => r.UserId == userId)
+                .Where(r => r.ReceiverId == userId)
                 .Where(r => r.Section == Section.Familiator || r.Section == Section.Requester)
                 .ToListAsync();
 
@@ -1815,7 +1815,7 @@ namespace WebApi.Repositories
         public async Task<bool> CheckUserHasRequests(long userId)
         {
             var requests = await _contx.Notifications
-                .Where(r => r.UserId == userId)
+                .Where(r => r.ReceiverId == userId)
                 .Where(r => r.Section == Section.Familiator || r.Section == Section.Requester)
                 .ToListAsync();
                 
@@ -1883,7 +1883,7 @@ namespace WebApi.Repositories
         public bool CheckRequestExists(long senderId, long recieverId)
         {
             return _contx.Notifications
-                .Where(r => r.SenderId == senderId && r.UserId == recieverId)
+                .Where(r => r.SenderId == senderId && r.ReceiverId == recieverId)
                 .Where(r => r.Section == Section.Requester || r.Section == Section.Familiator)
                 .FirstOrDefault() != null;
         }
@@ -2175,7 +2175,7 @@ namespace WebApi.Repositories
 
                 await AddUserNotificationAsync(new UserNotification
                 {
-                    UserId = userId,
+                    ReceiverId = userId,
                     IsLikedBack = false,
                     Description = $"Hey! new user had been registered via your link. Thanks for helping us grow!\nSo far, you have invited: {invitedUsersCount} people. \nYou receive 1p for every action they are maiking ;-)",
                     Section = Section.Registration,
@@ -2193,7 +2193,7 @@ namespace WebApi.Repositories
         {
             try
             {
-                await AddUserNotificationAsync(new UserNotification {UserId=userId, Severity=Severities.Urgent, Section=Section.Neutral, Description="Your premium access has expired"});
+                await AddUserNotificationAsync(new UserNotification {ReceiverId=userId, Severity=Severities.Urgent, Section=Section.Neutral, Description="Your premium access has expired"});
                 return true;
             }
             catch
@@ -2227,14 +2227,14 @@ namespace WebApi.Repositories
         public async Task<bool> CheckUserHasNotificationsAsync(long userId)
         {
             return await _contx.Notifications
-                .Where(n => n.UserId == userId && n.Section != Section.Familiator && n.Section != Section.Requester)
+                .Where(n => n.ReceiverId == userId && n.Section != Section.Familiator && n.Section != Section.Requester)
                 .CountAsync() > 0;
         }
 
         public async Task<List<UserNotification>> GetUserNotifications(long userId)
         {
             return await _contx.Notifications
-                .Where(n => n.UserId == userId)
+                .Where(n => n.ReceiverId == userId)
                 .ToListAsync();
         }
 
@@ -2381,7 +2381,7 @@ namespace WebApi.Repositories
             task.IsAcquired = true;
             await AddUserNotificationAsync(new UserNotification
             {
-                UserId = userId,
+                ReceiverId = userId,
                 IsLikedBack = false,
                 Severity = Severities.Moderate,
                 Description = task.AcquireMessage,
@@ -2548,7 +2548,7 @@ namespace WebApi.Repositories
 
         public async Task<List<long>> GetUserNotificationsIdsAsync(long userId)
         {
-            var ids = await _contx.Notifications.Where(n => n.UserId == userId)
+            var ids = await _contx.Notifications.Where(n => n.ReceiverId == userId)
                 .Select(n => n.Id)
                 .ToListAsync();
 
@@ -2972,7 +2972,7 @@ namespace WebApi.Repositories
                     .Where(u => u.BlackList.All(l => l.BannedUserId != currentUser.Id))
                     //.Where(u => currentUser.BlackList.Where(l => l.BannedUserId == u.Id).FirstOrDefault() == null)
                     //Check if request already exists
-                    .Where(u => u.Notifications.All(n => n.SenderId != currentUser.Id && n.UserId != currentUser.Id)) //May casuse errors
+                    .Where(u => u.Notifications.All(n => n.SenderId != currentUser.Id && n.ReceiverId != currentUser.Id)) //May casuse errors
                     //.Where(u => u.Tags.Intersect(u.Tags).Count() >= 1)
                     .Include(u => u.Data)
                     .Include(u => u.Settings)
@@ -3265,7 +3265,7 @@ namespace WebApi.Repositories
                             await RegisterUserRequestAsync(new UserNotification
                             {
                                 SenderId = userId,
-                                UserId = (long)user2Id,
+                                ReceiverId = (long)user2Id,
                                 IsLikedBack = false,
                                 Description = description,
                                 Section = Section.Familiator,
@@ -4013,7 +4013,7 @@ namespace WebApi.Repositories
                 Severity = Severities.Urgent,
                 Description = "Someone had requested participation in your adventure", //TODO: Perhaps clarify if actions had been done with use of unique code
                 SenderId = userId,
-                UserId = adventure.UserId
+                ReceiverId = adventure.UserId
             });
 
             var newAttendee = new AdventureAttendee
@@ -4058,7 +4058,7 @@ namespace WebApi.Repositories
 
                 await AddUserNotificationAsync(new UserNotification
                 {
-                    UserId = userId,
+                    ReceiverId = userId,
                     Section = Section.Adventurer,
                     Severity = Severities.Moderate,
                     Description = $"Your request to join adventure {adventure.Name} had been accepted.\n{contact}"
@@ -4438,7 +4438,7 @@ namespace WebApi.Repositories
 
             await AddUserNotificationAsync(new UserNotification
             {
-                UserId = attendee.UserId,
+                ReceiverId = attendee.UserId,
                 Section = Section.Adventurer,
                 Severity = Severities.Urgent,
                 Description = "You have been removed from one of the adventures" // TODO: More precise ?

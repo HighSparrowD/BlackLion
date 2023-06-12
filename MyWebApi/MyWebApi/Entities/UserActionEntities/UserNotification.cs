@@ -13,7 +13,7 @@ namespace WebApi.Entities.UserActionEntities
         [ForeignKey("Sender")]
         public long? SenderId { get; set; }
         [ForeignKey("Receiver")]
-        public long UserId { get; set; }
+        public long ReceiverId { get; set; }
         public bool IsLikedBack { get; set; }
         public Severities Severity { get; set; }
         public Section Section { get; set; }
