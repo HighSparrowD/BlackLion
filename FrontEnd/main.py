@@ -25,7 +25,7 @@ Helpers.api_address = os.getenv("APIADDRESS")
 
 bot = TeleBot(key)
 bot.parse_mode = telegram.ParseMode.HTML
-Menus.start_program_in_debug_mode(bot) #TODO: remove in production?
+Menus.start_program_in_debug_mode(bot)  # TODO: remove in production?
 
 for user in users:
     go_back_to_main_menu(bot, user, None, False)
@@ -38,10 +38,10 @@ admin_cabinets = []
 
 @bot.message_handler(commands=["start"], func=lambda message: message.chat.type == 'private')
 def Start(message):
-    #Allow only if user is not registered
+    # Allow only if user is not registered
     if not Helpers.check_user_is_registered(message.from_user.id):
         StartModule(bot, message)
-        #TODO: Maybe send a sticker or smth
+        # TODO: Maybe send a sticker or smth
     else:
         Menus.go_back_to_main_menu(bot, message.from_user.id, message)
 
@@ -166,13 +166,13 @@ def create_familiator(message, userId):
     response = Helpers.switch_user_busy_status(userId, 2)
     status = response["status"]
 
-    if status == 1: # Success
+    if status == "Success":  # Success
         return Familiator(bot, message, userId, response["hasVisited"])
-    elif status == 2: # Busy
+    elif status == "Busy":  # Busy
         return
-    elif status == 3: # Does not exist
+    elif status == "DoesNotExist":  # Does not exist
         send_registration_warning(userId)
-    elif status == 4: # Is deleted
+    elif status == "IsDeleted":  # Is deleted
         bot.send_message(message.from_user.id, "Hey! your account had been deleted recently. Would you like to pass a quick registration and save all your lost data?\n Then hit /register !")
 
 
@@ -180,15 +180,15 @@ def create_random_talker(message, userId):
     response = Helpers.switch_user_busy_status(userId, 6)
     status = response["status"]
 
-    if status == 1: # Success
+    if status == "Success":  # Success
         return RandomTalker(bot, message, random_talkers, response["hasVisited"])
-    elif status == 2: # Busy
+    elif status == "Busy":  # Busy
         return
-    elif status == 3: # Does not exist
+    elif status == "DoesNotExist":  # Does not exist
         send_registration_warning(userId)
-    elif status == 4: # Is deleted
+    elif status == "IsDeleted":  # Is deleted
         bot.send_message(userId, "Hey! your account had been deleted recently. Would you like to pass a quick registration and save all your lost data?\n Then hit /register !")
-    elif status == 5:
+    elif status == "IsBanned":  # Is banned
         bot.send_message(userId, "Your reputation is to low. Please contact the administration to resolve that", reply_markup=Menus.menu_markup)
 
 
@@ -196,15 +196,15 @@ def create_shop(message, userId):
     response = Helpers.switch_user_busy_status(userId, 10)
     status = response["status"]
 
-    if status == 1: # Success
+    if status == "Success":  # Success
         return Shop(bot, message, response["hasVisited"])
-    elif status == 2: # Busy
+    elif status == "Busy":  # Busy
         return
-    elif status == 3: # Does not exist
+    elif status == "DoesNotExist":  # Does not exist
         send_registration_warning(userId)
-    elif status == 4: # Is deleted
+    elif status == "IsDeleted":  # Is deleted
         bot.send_message(userId, "Hey! your account had been deleted recently. Would you like to pass a quick registration and save all your lost data?\n Then hit /register !")
-    elif status == 5:
+    elif status == "IsBanned":  # Is banned
         bot.send_message(userId, "Your reputation is to low. Please contact the administration to resolve that", reply_markup=Menus.menu_markup)
 
 
@@ -212,13 +212,13 @@ def create_settings(message, userId):
     response = Helpers.switch_user_busy_status(userId, 11)
     status = response["status"]
 
-    if status == "Success": # Success
+    if status == "Success":  # Success
         return Settings(bot, message)
-    elif status == "Busy": # Busy
+    elif status == "Busy":  # Busy
         return
-    elif status == "DoesNotExist": # Does not exist
+    elif status == "DoesNotExist":  # Does not exist
         send_registration_warning(userId)
-    elif status == "IsDeleted": # Is deleted
+    elif status == "IsDeleted":  # Is deleted
         bot.send_message(userId, "Hey! your account had been deleted recently. Would you like to pass a quick registration and save all your lost data?\n Then hit /register !")
 
 
@@ -226,13 +226,13 @@ def create_reporter(message, userId):
     response = Helpers.switch_user_busy_status(userId, 7)
     status = response["status"]
 
-    if status == 1: # Success
+    if status == "Success":  # Success
         return FeedbackModule(bot, message, response["hasVisited"])
-    elif status == 2: # Busy
+    elif status == "Busy":  # Busy
         return
-    elif status == 3: # Does not exist
+    elif status == "DoesNotExist":  # Does not exist
         send_registration_warning(userId)
-    elif status == 4: # Is deleted
+    elif status == "IsDeleted":  # Is deleted
         bot.send_message(userId, "Hey! your account had been deleted recently. Would you like to pass a quick registration and save all your lost data?\n Then hit /register !")
 
 
@@ -240,13 +240,13 @@ def create_adventurer(message, userId):
     response = Helpers.switch_user_busy_status(userId, 13)
     status = response["status"]
 
-    if status == 1: # Success
+    if status == "Success":  # Success
         return Adventurer(bot, message, response["hasVisited"])
-    elif status == 2: # Busy
+    elif status == "Busy":  # Busy
         return
-    elif status == 3: # Does not exist
+    elif status == "DoesNotExist":  # Does not exist
         send_registration_warning(userId)
-    elif status == 4: # Is deleted
+    elif status == "IsDeleted":  # Is deleted
         bot.send_message(userId, "Hey! your account had been deleted recently. Would you like to pass a quick registration and save all your lost data?\n Then hit /register !")
 
 

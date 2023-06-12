@@ -13,6 +13,9 @@ class StartModule:
 
         self.hasEnteredPromo = False
 
+        # TODO: load from API
+        self.app_languages = ["EN", "RU", "UK"]
+
         self.startMessage = "1. About us\n2. Read rules\n3. Enter Promo code\n4. Register profile"
         self.registerMessage = "1. Yes\n2. Go back"
         self.about_us_message = "--About US-- TODO: Fill up"
@@ -38,13 +41,13 @@ class StartModule:
             self.app_languages_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
             start_message = "Welcome to our bot.\nPlease select a language before proceeding"
 
-            self.app_languages_markup.add("EN", "RU", "UK")
+            self.app_languages_markup.add(self.app_languages[0], self.app_languages[1], self.app_languages[2])
             self.bot.send_message(msg.chat.id, start_message, reply_markup=self.app_languages_markup)
             self.bot.register_next_step_handler(msg, self.app_language_step, acceptMode=True, chat_id=self.current_user)
 
         else:
-            self.user_localisation = self.app_language_converter(msg.text)
-            if self.user_localisation is None or self.user_localisation == 0:
+            self.user_localisation = msg.text
+            if self.user_localisation in self.app_languages:
                 self.get_localisations()
                 self.start(msg)
             else:
@@ -121,13 +124,3 @@ class StartModule:
 
     def get_invitor_id(self, html_text):
         return html_text.strip("/start")
-
-    #TODO: convert using the retrieved list of languages
-    def app_language_converter(self, lang):
-        if lang == "EN":
-            return 0
-        elif lang == "RU":
-            return 1
-        elif lang == "UK":
-            return 2
-        return None
