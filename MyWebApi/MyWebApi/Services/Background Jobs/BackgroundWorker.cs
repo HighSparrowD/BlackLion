@@ -76,6 +76,8 @@ namespace WebApi.Services.Background
                     user.MaxRTViewsCount = 25;
                     user.MaxTagSearchCount = 3;
 
+                    user.Settings.IsFree = null;
+
                     //Random achievements
                     //TODO: Localize
                     var achievements = await userRepo.GetRandomAchievements(user.Id);
