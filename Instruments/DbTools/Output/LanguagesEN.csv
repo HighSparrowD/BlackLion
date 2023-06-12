@@ -1,186 +1,186 @@
 Id,Name,Native Name,Language,Priority
-1,afar,afar,Eng,5
-2,abkhaz,abkhaz,Eng,5
-3,avestan,avestan,Eng,5
-4,afrikaans,afrikaans,Eng,5
-5,akan,akan,Eng,5
-6,amharic,amharic,Eng,5
-7,aragonese,aragonese,Eng,5
-8,arabic,arabic,Eng,5
-9,assamese,assamese,Eng,5
-10,avaric,avaric,Eng,5
-11,aymara,aymara,Eng,5
-12,azerbaijani,azerbaijani,Eng,5
-13,south azerbaijani,south azerbaijani,Eng,5
-14,bashkir,bashkir,Eng,5
-15,belarusian,belarusian,Eng,5
-16,bulgarian,bulgarian,Eng,5
-17,bihari,bihari,Eng,5
-18,bislama,bislama,Eng,5
-19,bambara,bambara,Eng,5
-20,bengali; bangla,bengali; bangla,Eng,5
-21,"tibetan standard, tibetan, central","tibetan standard, tibetan, central",Eng,5
-22,breton,breton,Eng,5
-23,bosnian,bosnian,Eng,5
-24,catalan; valencian,catalan; valencian,Eng,5
-25,chechen,chechen,Eng,5
-26,chamorro,chamorro,Eng,5
-27,corsican,corsican,Eng,5
-28,cree,cree,Eng,5
-29,czech,czech,Eng,5
-30,"old church slavonic, church slavonic, old bulgarian","old church slavonic, church slavonic, old bulgarian",Eng,5
-31,chuvash,chuvash,Eng,5
-32,welsh,welsh,Eng,5
-33,danish,danish,Eng,5
-34,german,german,Eng,5
-35,divehi; dhivehi; maldivian;,divehi; dhivehi; maldivian;,Eng,5
-36,dzongkha,dzongkha,Eng,5
-37,ewe,ewe,Eng,5
-38,"greek, modern","greek, modern",Eng,5
-39,english,english,Eng,5
-40,esperanto,esperanto,Eng,5
-41,spanish; castilian,spanish; castilian,Eng,5
-42,estonian,estonian,Eng,5
-43,basque,basque,Eng,5
-44,persian (farsi),persian (farsi),Eng,5
-45,fula; fulah; pulaar; pular,fula; fulah; pulaar; pular,Eng,5
-46,finnish,finnish,Eng,5
-47,fijian,fijian,Eng,5
-48,faroese,faroese,Eng,5
-49,french,french,Eng,5
-50,western frisian,western frisian,Eng,5
-51,irish,irish,Eng,5
-52,scottish gaelic; gaelic,scottish gaelic; gaelic,Eng,5
-53,galician,galician,Eng,5
-54,guaraní,guaraní,Eng,5
-55,gujarati,gujarati,Eng,5
-56,manx,manx,Eng,5
-57,hausa,hausa,Eng,5
-58,hebrew (modern),hebrew (modern),Eng,5
-59,hindi,hindi,Eng,5
-60,hiri motu,hiri motu,Eng,5
-61,croatian,croatian,Eng,5
-62,haitian; haitian creole,haitian; haitian creole,Eng,5
-63,hungarian,hungarian,Eng,5
-64,armenian,armenian,Eng,5
-65,herero,herero,Eng,5
-66,interlingua,interlingua,Eng,5
-67,indonesian,indonesian,Eng,5
-68,interlingue,interlingue,Eng,5
-69,igbo,igbo,Eng,5
-70,nuosu,nuosu,Eng,5
-71,inupiaq,inupiaq,Eng,5
-72,ido,ido,Eng,5
-73,icelandic,icelandic,Eng,5
-74,italian,italian,Eng,5
-75,inuktitut,inuktitut,Eng,5
-76,japanese,japanese,Eng,5
-77,javanese,javanese,Eng,5
-78,georgian,georgian,Eng,5
-79,kongo,kongo,Eng,5
-80,"kikuyu, gikuyu","kikuyu, gikuyu",Eng,5
-81,"kwanyama, kuanyama","kwanyama, kuanyama",Eng,5
-82,kazakh,kazakh,Eng,5
-83,"kalaallisut, greenlandic","kalaallisut, greenlandic",Eng,5
-84,khmer,khmer,Eng,5
-85,kannada,kannada,Eng,5
-86,korean,korean,Eng,5
-87,kanuri,kanuri,Eng,5
-88,kashmiri,kashmiri,Eng,5
-89,kurdish,kurdish,Eng,5
-90,komi,komi,Eng,5
-91,cornish,cornish,Eng,5
-92,kyrgyz,kyrgyz,Eng,5
-93,latin,latin,Eng,5
-94,"luxembourgish, letzeburgesch","luxembourgish, letzeburgesch",Eng,5
-95,ganda,ganda,Eng,5
-96,"limburgish, limburgan, limburger","limburgish, limburgan, limburger",Eng,5
-97,lingala,lingala,Eng,5
-98,lao,lao,Eng,5
-99,lithuanian,lithuanian,Eng,5
-100,luba-katanga,luba-katanga,Eng,5
-101,latvian,latvian,Eng,5
-102,malagasy,malagasy,Eng,5
-103,marshallese,marshallese,Eng,5
-104,māori,māori,Eng,5
-105,macedonian,macedonian,Eng,5
-106,malayalam,malayalam,Eng,5
-107,mongolian,mongolian,Eng,5
-108,marathi (marāṭhī),marathi (marāṭhī),Eng,5
-109,malay,malay,Eng,5
-110,maltese,maltese,Eng,5
-111,burmese,burmese,Eng,5
-112,nauru,nauru,Eng,5
-113,norwegian bokmål,norwegian bokmål,Eng,5
-114,north ndebele,north ndebele,Eng,5
-115,nepali,nepali,Eng,5
-116,ndonga,ndonga,Eng,5
-117,dutch,dutch,Eng,5
-118,norwegian nynorsk,norwegian nynorsk,Eng,5
-119,norwegian,norwegian,Eng,5
-120,south ndebele,south ndebele,Eng,5
-121,"navajo, navaho","navajo, navaho",Eng,5
-122,chichewa; chewa; nyanja,chichewa; chewa; nyanja,Eng,5
-123,occitan,occitan,Eng,5
-124,"ojibwe, ojibwa","ojibwe, ojibwa",Eng,5
-125,oromo,oromo,Eng,5
-126,oriya,oriya,Eng,5
-127,"ossetian, ossetic","ossetian, ossetic",Eng,5
-128,"panjabi, punjabi","panjabi, punjabi",Eng,5
-129,pāli,pāli,Eng,5
-130,polish,polish,Eng,5
-131,"pashto, pushto","pashto, pushto",Eng,5
-132,portuguese,portuguese,Eng,5
-133,quechua,quechua,Eng,5
-134,romansh,romansh,Eng,5
-135,kirundi,kirundi,Eng,5
-136,romanian,romanian,Eng,5
-137,russian,russian,Eng,5
-138,kinyarwanda,kinyarwanda,Eng,5
-139,sanskrit (saṁskṛta),sanskrit (saṁskṛta),Eng,5
-140,sardinian,sardinian,Eng,5
-141,sindhi,sindhi,Eng,5
-142,northern sami,northern sami,Eng,5
-143,sango,sango,Eng,5
-144,"sinhala, sinhalese","sinhala, sinhalese",Eng,5
-145,slovak,slovak,Eng,5
-146,slovene,slovene,Eng,5
-147,samoan,samoan,Eng,5
-148,shona,shona,Eng,5
-149,somali,somali,Eng,5
-150,albanian,albanian,Eng,5
-151,serbian,serbian,Eng,5
-152,swati,swati,Eng,5
-153,southern sotho,southern sotho,Eng,5
-154,sundanese,sundanese,Eng,5
-155,swedish,swedish,Eng,5
-156,swahili,swahili,Eng,5
-157,tamil,tamil,Eng,5
-158,telugu,telugu,Eng,5
-159,tajik,tajik,Eng,5
-160,thai,thai,Eng,5
-161,tigrinya,tigrinya,Eng,5
-162,turkmen,turkmen,Eng,5
-163,tagalog,tagalog,Eng,5
-164,tswana,tswana,Eng,5
-165,tonga (tonga islands),tonga (tonga islands),Eng,5
-166,turkish,turkish,Eng,5
-167,tsonga,tsonga,Eng,5
-168,tatar,tatar,Eng,5
-169,twi,twi,Eng,5
-170,tahitian,tahitian,Eng,5
-171,"uyghur, uighur","uyghur, uighur",Eng,5
-172,ukrainian,ukrainian,Eng,5
-173,urdu,urdu,Eng,5
-174,uzbek,uzbek,Eng,5
-175,venda,venda,Eng,5
-176,vietnamese,vietnamese,Eng,5
-177,volapük,volapük,Eng,5
-178,walloon,walloon,Eng,5
-179,wolof,wolof,Eng,5
-180,xhosa,xhosa,Eng,5
-181,yiddish,yiddish,Eng,5
-182,yoruba,yoruba,Eng,5
-183,"zhuang, chuang","zhuang, chuang",Eng,5
-184,chinese,chinese,Eng,5
-185,zulu,zulu,Eng,5
+1,afar,afar,EN,5
+2,abkhaz,abkhaz,EN,5
+3,avestan,avestan,EN,5
+4,afrikaans,afrikaans,EN,5
+5,akan,akan,EN,5
+6,amharic,amharic,EN,5
+7,aragonese,aragonese,EN,5
+8,arabic,arabic,EN,5
+9,assamese,assamese,EN,5
+10,avaric,avaric,EN,5
+11,aymara,aymara,EN,5
+12,azerbaijani,azerbaijani,EN,5
+13,south azerbaijani,south azerbaijani,EN,5
+14,bashkir,bashkir,EN,5
+15,belarusian,belarusian,EN,5
+16,bulgarian,bulgarian,EN,5
+17,bihari,bihari,EN,5
+18,bislama,bislama,EN,5
+19,bambara,bambara,EN,5
+20,bengali; bangla,bengali; bangla,EN,5
+21,"tibetan standard, tibetan, central","tibetan standard, tibetan, central",EN,5
+22,breton,breton,EN,5
+23,bosnian,bosnian,EN,5
+24,catalan; valencian,catalan; valencian,EN,5
+25,chechen,chechen,EN,5
+26,chamorro,chamorro,EN,5
+27,corsican,corsican,EN,5
+28,cree,cree,EN,5
+29,czech,czech,EN,5
+30,"old church slavonic, church slavonic, old bulgarian","old church slavonic, church slavonic, old bulgarian",EN,5
+31,chuvash,chuvash,EN,5
+32,welsh,welsh,EN,5
+33,danish,danish,EN,5
+34,german,german,EN,5
+35,divehi; dhivehi; maldivian;,divehi; dhivehi; maldivian;,EN,5
+36,dzongkha,dzongkha,EN,5
+37,ewe,ewe,EN,5
+38,"greek, modern","greek, modern",EN,5
+39,english,english,EN,5
+40,esperanto,esperanto,EN,5
+41,spanish; castilian,spanish; castilian,EN,5
+42,estonian,estonian,EN,5
+43,basque,basque,EN,5
+44,persian (farsi),persian (farsi),EN,5
+45,fula; fulah; pulaar; pular,fula; fulah; pulaar; pular,EN,5
+46,finnish,finnish,EN,5
+47,fijian,fijian,EN,5
+48,faroese,faroese,EN,5
+49,french,french,EN,5
+50,western frisian,western frisian,EN,5
+51,irish,irish,EN,5
+52,scottish gaelic; gaelic,scottish gaelic; gaelic,EN,5
+53,galician,galician,EN,5
+54,guaraní,guaraní,EN,5
+55,gujarati,gujarati,EN,5
+56,manx,manx,EN,5
+57,hausa,hausa,EN,5
+58,hebrew (modern),hebrew (modern),EN,5
+59,hindi,hindi,EN,5
+60,hiri motu,hiri motu,EN,5
+61,croatian,croatian,EN,5
+62,haitian; haitian creole,haitian; haitian creole,EN,5
+63,hungarian,hungarian,EN,5
+64,armenian,armenian,EN,5
+65,herero,herero,EN,5
+66,interlingua,interlingua,EN,5
+67,indonesian,indonesian,EN,5
+68,interlingue,interlingue,EN,5
+69,igbo,igbo,EN,5
+70,nuosu,nuosu,EN,5
+71,inupiaq,inupiaq,EN,5
+72,ido,ido,EN,5
+73,icelandic,icelandic,EN,5
+74,italian,italian,EN,5
+75,inuktitut,inuktitut,EN,5
+76,japanese,japanese,EN,5
+77,javanese,javanese,EN,5
+78,georgian,georgian,EN,5
+79,kongo,kongo,EN,5
+80,"kikuyu, gikuyu","kikuyu, gikuyu",EN,5
+81,"kwanyama, kuanyama","kwanyama, kuanyama",EN,5
+82,kazakh,kazakh,EN,5
+83,"kalaallisut, greenlandic","kalaallisut, greenlandic",EN,5
+84,khmer,khmer,EN,5
+85,kannada,kannada,EN,5
+86,korean,korean,EN,5
+87,kanuri,kanuri,EN,5
+88,kashmiri,kashmiri,EN,5
+89,kurdish,kurdish,EN,5
+90,komi,komi,EN,5
+91,cornish,cornish,EN,5
+92,kyrgyz,kyrgyz,EN,5
+93,latin,latin,EN,5
+94,"luxembourgish, letzeburgesch","luxembourgish, letzeburgesch",EN,5
+95,ganda,ganda,EN,5
+96,"limburgish, limburgan, limburger","limburgish, limburgan, limburger",EN,5
+97,lingala,lingala,EN,5
+98,lao,lao,EN,5
+99,lithuanian,lithuanian,EN,5
+100,luba-katanga,luba-katanga,EN,5
+101,latvian,latvian,EN,5
+102,malagasy,malagasy,EN,5
+103,marshallese,marshallese,EN,5
+104,māori,māori,EN,5
+105,macedonian,macedonian,EN,5
+106,malayalam,malayalam,EN,5
+107,mongolian,mongolian,EN,5
+108,marathi (marāṭhī),marathi (marāṭhī),EN,5
+109,malay,malay,EN,5
+110,maltese,maltese,EN,5
+111,burmese,burmese,EN,5
+112,nauru,nauru,EN,5
+113,norwegian bokmål,norwegian bokmål,EN,5
+114,north ndebele,north ndebele,EN,5
+115,nepali,nepali,EN,5
+116,ndonga,ndonga,EN,5
+117,dutch,dutch,EN,5
+118,norwegian nynorsk,norwegian nynorsk,EN,5
+119,norwegian,norwegian,EN,5
+120,south ndebele,south ndebele,EN,5
+121,"navajo, navaho","navajo, navaho",EN,5
+122,chichewa; chewa; nyanja,chichewa; chewa; nyanja,EN,5
+123,occitan,occitan,EN,5
+124,"ojibwe, ojibwa","ojibwe, ojibwa",EN,5
+125,oromo,oromo,EN,5
+126,oriya,oriya,EN,5
+127,"ossetian, ossetic","ossetian, ossetic",EN,5
+128,"panjabi, punjabi","panjabi, punjabi",EN,5
+129,pāli,pāli,EN,5
+130,polish,polish,EN,5
+131,"pashto, pushto","pashto, pushto",EN,5
+132,portuguese,portuguese,EN,5
+133,quechua,quechua,EN,5
+134,romansh,romansh,EN,5
+135,kirundi,kirundi,EN,5
+136,romanian,romanian,EN,5
+137,russian,russian,EN,5
+138,kinyarwanda,kinyarwanda,EN,5
+139,sanskrit (saṁskṛta),sanskrit (saṁskṛta),EN,5
+140,sardinian,sardinian,EN,5
+141,sindhi,sindhi,EN,5
+142,northern sami,northern sami,EN,5
+143,sango,sango,EN,5
+144,"sinhala, sinhalese","sinhala, sinhalese",EN,5
+145,slovak,slovak,EN,5
+146,slovene,slovene,EN,5
+147,samoan,samoan,EN,5
+148,shona,shona,EN,5
+149,somali,somali,EN,5
+150,albanian,albanian,EN,5
+151,serbian,serbian,EN,5
+152,swati,swati,EN,5
+153,southern sotho,southern sotho,EN,5
+154,sundanese,sundanese,EN,5
+155,swedish,swedish,EN,5
+156,swahili,swahili,EN,5
+157,tamil,tamil,EN,5
+158,telugu,telugu,EN,5
+159,tajik,tajik,EN,5
+160,thai,thai,EN,5
+161,tigrinya,tigrinya,EN,5
+162,turkmen,turkmen,EN,5
+163,tagalog,tagalog,EN,5
+164,tswana,tswana,EN,5
+165,tonga (tonga islands),tonga (tonga islands),EN,5
+166,turkish,turkish,EN,5
+167,tsonga,tsonga,EN,5
+168,tatar,tatar,EN,5
+169,twi,twi,EN,5
+170,tahitian,tahitian,EN,5
+171,"uyghur, uighur","uyghur, uighur",EN,5
+172,ukrainian,ukrainian,EN,5
+173,urdu,urdu,EN,5
+174,uzbek,uzbek,EN,5
+175,venda,venda,EN,5
+176,vietnamese,vietnamese,EN,5
+177,volapük,volapük,EN,5
+178,walloon,walloon,EN,5
+179,wolof,wolof,EN,5
+180,xhosa,xhosa,EN,5
+181,yiddish,yiddish,EN,5
+182,yoruba,yoruba,EN,5
+183,"zhuang, chuang","zhuang, chuang",EN,5
+184,chinese,chinese,EN,5
+185,zulu,zulu,EN,5
