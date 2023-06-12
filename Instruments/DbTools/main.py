@@ -14,7 +14,6 @@ langs = {
     2: "Ukr",
 }
 
-
 prioritized_langs = ["English", "Russian", "Ukrainian", "Czech", "Polish"]
 prioritized_countries = ["Ukraine", "Russia", "Czechia", "Poland", "United States"]
 
@@ -24,8 +23,7 @@ def create_countries_resource(language, start_index=0, loc_index=0):
     ids = []
     countryNames = []
     languages = []
-    priorities = [] #Dummy column. Set manually afterwards
-
+    priorities = []  # Dummy column. Set manually afterward
 
     file = pandas.read_csv("worldcities.csv", usecols=["country", "priority"])
     countries = sorted(file.drop_duplicates().values.tolist())
@@ -59,7 +57,7 @@ def create_countries_resource(language, start_index=0, loc_index=0):
         "Priority": priorities
     }
 
-    #Save output
+    # Save output
     dataframe = pandas.DataFrame(data)
     dataframe = dataframe.fillna(value=0)
     dataframe.to_csv(f"./Output/Countries{language.upper()}.csv", index=False)
@@ -85,7 +83,6 @@ def create_cities_resource(language, start_index=0, loc_index=0):
 
     if loc_index == 0:
         for index, data in cities.iterrows():
-
             ids.append(i)
             cityNames.append(data[0])
             cityIds.append(countries.index(data[1]) + 1)
@@ -95,7 +92,6 @@ def create_cities_resource(language, start_index=0, loc_index=0):
 
     else:
         for index, data in cities.iterrows():
-
             translated_name = ts.google(data[0], from_language="en", to_language=language)
 
             ids.append(i)
@@ -113,7 +109,7 @@ def create_cities_resource(language, start_index=0, loc_index=0):
         "Language": languages
     }
 
-    #Save output
+    # Save output
     dataframe = pandas.DataFrame(data)
     dataframe = dataframe.fillna(value=0)
     dataframe.to_csv(f"./Output/Cities{language.upper()}.csv", index=False)
@@ -130,16 +126,16 @@ def create_languages_resource(language, start_index=0, loc_index=0):
     languages_translation = []
     priorities = []
 
-    languages = pandas.read_csv("Languages.csv", usecols=["Language name", "Native name"]).drop_duplicates().values.tolist()
+    languages = pandas.read_csv("Languages.csv",
+                                usecols=["Language name", "Native name"]).drop_duplicates().values.tolist()
     d = []
     i = start_index
 
     if loc_index == 0:
         for lang in languages:
-
             ids.append(i)
             languageNames.append(lang[0].strip().lower())
-            languageNativeNames.append(lang[0].strip().lower()) # lang[1] TODO: Make it work with a native one
+            languageNativeNames.append(lang[0].strip().lower())  # lang[1] TODO: Make it work with a native one
             languages_translation.append(langs[loc_index])
             priorities.append(5 if lang[0] not in prioritized_langs else 1)
 
@@ -147,22 +143,21 @@ def create_languages_resource(language, start_index=0, loc_index=0):
 
     else:
         for lang in languages:
-
             translated_lang = ts.google(lang[0].strip().lower(), from_language="en", to_language=language)
 
             ids.append(i)
             languageNames.append(translated_lang)
-            languageNativeNames.append(lang[0].strip().lower()) #lang[1] TODO: Make it work with a native one
+            languageNativeNames.append(lang[0].strip().lower())  # lang[1] TODO: Make it work with a native one
             languages_translation.append(langs[loc_index])
             priorities.append(5 if lang[0] not in prioritized_langs else 1)
 
             d.append({
-                    "Id": i,
-                    "LanguageName": translated_lang,
-                    "LanguageNameNative": lang[0].strip(),
-                    "Language": loc_index,
-                    "Priority": priorities
-                }
+                "Id": i,
+                "LanguageName": translated_lang,
+                "LanguageNameNative": lang[0].strip(),
+                "Language": loc_index,
+                "Priority": priorities
+            }
             )
             i += 1
 
@@ -174,7 +169,7 @@ def create_languages_resource(language, start_index=0, loc_index=0):
         "Priority": priorities
     }
 
-    #Save output
+    # Save output
     dataframe = pandas.DataFrame(data)
     dataframe = dataframe.fillna(value=0)
     dataframe.to_csv(f"./Output/Languages{language.upper()}.csv", index=False)
@@ -197,11 +192,11 @@ def update_countries(language):
 
         countries_dicts.append(d)
 
-    #Convert data to json
+    # Convert data to json
     json_data = json.dumps(countries_dicts)
 
     s = requests.post("https://localhost:44381/UpdateCountries", json_data, headers={
-            "Content-Type": "application/json"},   verify=False).text
+        "Content-Type": "application/json"}, verify=False).text
     pass
 
 
@@ -223,12 +218,13 @@ def update_cities(language):
     json_data = json.dumps(cities_dict)
 
     s = requests.post("https://localhost:44381/UpdateCities", json_data, headers={
-            "Content-Type": "application/json"},   verify=False).text
+        "Content-Type": "application/json"}, verify=False).text
     pass
 
 
 def update_languages(language):
-    file = pandas.read_csv(f"./Output/Languages{language.upper()}.csv", usecols=["Id", "Name", "Native Name", "Language", "Priority"])
+    file = pandas.read_csv(f"./Output/Languages{language.upper()}.csv",
+                           usecols=["Id", "Name", "Native Name", "Language", "Priority"])
     languages = sorted(file.drop_duplicates().values.tolist())
     languages_dict = []
 
@@ -243,7 +239,7 @@ def update_languages(language):
 
         languages_dict.append(d)
 
-    data = json.dumps(languages_dict) #ensure_ascii=False
+    data = json.dumps(languages_dict)  # ensure_ascii=False
     s = requests.post("https://localhost:44381/UpdateLanguages", data, headers={
         "Content-Type": "application/json"}, verify=False).text
     pass
