@@ -115,6 +115,15 @@ namespace WebApi.App_GlobalResources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Test.
+        /// </summary>
+        public static string FeedbackReason_Test {
+            get {
+                return ResourceManager.GetString("FeedbackReason_Test", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Female.
         /// </summary>
         public static string Gender_Female {

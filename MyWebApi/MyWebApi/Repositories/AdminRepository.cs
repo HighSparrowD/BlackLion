@@ -1,16 +1,12 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using WebApi.Data;
 using WebApi.Entities.AchievementEntities;
 using WebApi.Entities.AdminEntities;
 using WebApi.Entities.DailyTaskEntities;
 using WebApi.Entities.LocationEntities;
-using WebApi.Entities.ReasonEntities;
 using WebApi.Entities.ReportEntities;
 using WebApi.Entities.SecondaryEntities;
 using WebApi.Entities.TestEntities;
-using WebApi.Entities.UserActionEntities;
-using WebApi.Entities.UserInfoEntities;
 using WebApi.Enums;
 using WebApi.Interfaces;
 using System;
@@ -99,19 +95,6 @@ namespace WebApi.Repositories
             return langs.Count;
         }
 
-        public async Task<long> UploadFeedbackReasons(List<FeedbackReason> reasons)
-        {
-            reasons.ForEach(async r => 
-            {
-                if (!_contx.FeedbackReasons.Contains(r))
-                    await _contx.FeedbackReasons.AddAsync(r);
-                else
-                    _contx.FeedbackReasons.Update(r);
-            });
-            await _contx.SaveChangesAsync();
-            return reasons.Count;
-        }
-
         public async Task<List<Feedback>> GetFeedbacks()
         {
             var reports = await _contx.Feedbacks.Include(r => r.User)
@@ -158,7 +141,7 @@ namespace WebApi.Repositories
                 var userPurchases = await _contx.Transaction.Where(u => u.UserId == userId).ToListAsync();
                 var userBalances = await _contx.Balances.Where(u => u.UserId == userId).ToListAsync();
                 var userNotifications = await _contx.Notifications.Where(u => u.SenderId == userId).ToListAsync();
-                var userNotifications1 = await _contx.Notifications.Where(u => u.UserId == userId).ToListAsync();
+                var userNotifications1 = await _contx.Notifications.Where(u => u.ReceiverId == userId).ToListAsync();
                 var sponsorRatings = await _contx.SponsorRatings.Where(u => u.UserId == userId).ToListAsync();
                 var userTrustLevel = await _contx.TrustLevels.Where(u => u.Id == userId).SingleOrDefaultAsync();
                 var userInvitations = await _contx.Invitations.Where(u => u.InviterCredentials.UserId == userId).ToListAsync();
@@ -403,7 +386,7 @@ namespace WebApi.Repositories
                 await _userRep.AddUserNotificationAsync(new Entities.UserActionEntities.UserNotification
                 {
                     Description = $"Your identity confirmation had been accepted :)\n{model.Comment}",
-                    UserId = request.UserId,
+                    ReceiverId = request.UserId,
                     Severity = Severities.Urgent,
                     Section = Section.Neutral,
                 });
@@ -411,7 +394,7 @@ namespace WebApi.Repositories
                 await _userRep.AddUserNotificationAsync(new Entities.UserActionEntities.UserNotification
                 {
                     Description = $"Sorry, your identity confirmation request had been denied.\n{model.Comment}",
-                    UserId = request.UserId,
+                    ReceiverId = request.UserId,
                     Severity = Severities.Urgent,
                     Section = Section.Neutral,
                 });

@@ -1,8 +1,8 @@
-﻿using WebApi.Entities.ReasonEntities;
-using WebApi.Entities.UserInfoEntities;
+﻿using WebApi.Entities.UserInfoEntities;
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using WebApi.Enums;
 
 namespace WebApi.Entities.ReportEntities
 {
@@ -16,7 +16,7 @@ namespace WebApi.Entities.ReportEntities
         public short ReasonId { get; set; }
         public int ReasonClassLocalisationId { get; set; }
         public DateTime InsertedUtc { get; set; }
-        public virtual FeedbackReason Reason { get; set; }
+        public FeedbackReason Reason { get; set; }
         public virtual User User { get; set; }
     }
 }

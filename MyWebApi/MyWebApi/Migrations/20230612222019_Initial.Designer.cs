@@ -13,7 +13,7 @@ using WebApi.Data;
 namespace WebApi.Migrations
 {
     [DbContext(typeof(UserContext))]
-    [Migration("20230611152724_Initial")]
+    [Migration("20230612222019_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -553,22 +553,6 @@ namespace WebApi.Migrations
                     b.ToTable("user_locations", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Entities.ReasonEntities.FeedbackReason", b =>
-                {
-                    b.Property<short>("Id")
-                        .HasColumnType("smallint");
-
-                    b.Property<int>("ClassLocalisationId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id", "ClassLocalisationId");
-
-                    b.ToTable("feedback_reasons", (string)null);
-                });
-
             modelBuilder.Entity("WebApi.Entities.ReportEntities.Feedback", b =>
                 {
                     b.Property<long>("Id")
@@ -579,6 +563,9 @@ namespace WebApi.Migrations
 
                     b.Property<DateTime>("InsertedUtc")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<byte>("Reason")
+                        .HasColumnType("smallint");
 
                     b.Property<int>("ReasonClassLocalisationId")
                         .HasColumnType("integer");
@@ -595,8 +582,6 @@ namespace WebApi.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("UserId");
-
-                    b.HasIndex("ReasonId", "ReasonClassLocalisationId");
 
                     b.ToTable("feedbacks", (string)null);
                 });
@@ -1096,8 +1081,14 @@ namespace WebApi.Migrations
                     b.Property<bool>("IsLikedBack")
                         .HasColumnType("boolean");
 
+                    b.Property<long>("ReceiverId")
+                        .HasColumnType("bigint");
+
                     b.Property<int>("Section")
                         .HasColumnType("integer");
+
+                    b.Property<long?>("SenderId")
+                        .HasColumnType("bigint");
 
                     b.Property<int>("Severity")
                         .HasColumnType("integer");
@@ -1105,14 +1096,13 @@ namespace WebApi.Migrations
                     b.Property<long?>("UserId")
                         .HasColumnType("bigint");
 
-                    b.Property<long>("UserId1")
-                        .HasColumnType("bigint");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("ReceiverId");
 
-                    b.HasIndex("UserId1");
+                    b.HasIndex("SenderId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("notifications", (string)null);
                 });
@@ -1785,14 +1775,6 @@ namespace WebApi.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("WebApi.Entities.ReasonEntities.FeedbackReason", "Reason")
-                        .WithMany()
-                        .HasForeignKey("ReasonId", "ReasonClassLocalisationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Reason");
-
                     b.Navigation("User");
                 });
 
@@ -1928,15 +1910,19 @@ namespace WebApi.Migrations
 
             modelBuilder.Entity("WebApi.Entities.UserActionEntities.UserNotification", b =>
                 {
-                    b.HasOne("WebApi.Entities.UserInfoEntities.User", "Sender")
-                        .WithMany("Notifications")
-                        .HasForeignKey("UserId");
-
                     b.HasOne("WebApi.Entities.UserInfoEntities.User", "Receiver")
                         .WithMany()
-                        .HasForeignKey("UserId1")
+                        .HasForeignKey("ReceiverId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("WebApi.Entities.UserInfoEntities.User", "Sender")
+                        .WithMany()
+                        .HasForeignKey("SenderId");
+
+                    b.HasOne("WebApi.Entities.UserInfoEntities.User", null)
+                        .WithMany("Notifications")
+                        .HasForeignKey("UserId");
 
                     b.Navigation("Receiver");
 

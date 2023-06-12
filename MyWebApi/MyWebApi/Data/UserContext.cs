@@ -1,7 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using System;
-using System.Linq;
-using System.Reflection.Emit;
 using WebApi.Entities.AchievementEntities;
 using WebApi.Entities.AdminEntities;
 using WebApi.Entities.AdventureEntities;
@@ -10,7 +7,6 @@ using WebApi.Entities.DailyTaskEntities;
 using WebApi.Entities.EffectEntities;
 using WebApi.Entities.HintEntities;
 using WebApi.Entities.LocationEntities;
-using WebApi.Entities.ReasonEntities;
 using WebApi.Entities.ReportEntities;
 using WebApi.Entities.SecondaryEntities;
 using WebApi.Entities.SponsorEntities;
@@ -32,7 +28,6 @@ namespace WebApi.Data
         public DbSet<Language> Languages => Set<Language>();
         public DbSet<BlackList> UserBlacklists => Set<BlackList>();
         public DbSet<Feedback> Feedbacks => Set<Feedback>();
-        public DbSet<FeedbackReason> FeedbackReasons => Set<FeedbackReason>();
         public DbSet<Report> UserReports => Set<Report>();
         public DbSet<Achievement> Achievements => Set<Achievement>();
         public DbSet<UserAchievement> UserAchievements => Set<UserAchievement>();
@@ -128,7 +123,6 @@ namespace WebApi.Data
             builder.Entity<Country>().HasKey(c => new { c.Id, c.Lang });
             builder.Entity<Language>().HasKey(l => new { l.Id, l.Lang });
             builder.Entity<City>().HasKey(c => new { c.Id, c.CountryLang });
-            builder.Entity<FeedbackReason>().HasKey(g => new { g.Id, g.ClassLocalisationId });
             builder.Entity<Visit>().HasKey(g => new { g.UserId, g.SectionId });
             builder.Entity<Achievement>().HasKey(g => new { g.Id, g.Language });
             builder.Entity<UserAchievement>().HasKey(g => new { g.UserId, g.AchievementId });
@@ -164,7 +158,6 @@ namespace WebApi.Data
             builder.Entity<Language>().ToTable("languages");
             builder.Entity<BlackList>().ToTable("black_lists");
             builder.Entity<Feedback>().ToTable("feedbacks");
-            builder.Entity<FeedbackReason>().ToTable("feedback_reasons");
             builder.Entity<Report>().ToTable("user_reports");
             builder.Entity<Achievement>().ToTable("achievements");
             builder.Entity<UserAchievement>().ToTable("user_achievements");

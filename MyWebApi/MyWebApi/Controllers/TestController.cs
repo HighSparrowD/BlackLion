@@ -42,6 +42,12 @@ namespace WebApi.Controllers
             return _repository.GetCommunicationPreferences();
         }
 
+        [HttpGet("/feedback-reasons")]
+        public List<GetLocalizedEnum> FeedbackReasons()
+        {
+            return _repository.GetFeedbackReasons();
+        }
+
         [HttpGet("/GetCountries/{localisationId}")]
         public async Task<List<Country>> GetCountries(AppLanguage localisationId)
         {

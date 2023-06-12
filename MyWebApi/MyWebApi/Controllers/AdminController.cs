@@ -1,18 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using WebApi.Entities.AchievementEntities;
 using WebApi.Entities.AdminEntities;
-using WebApi.Entities.LocationEntities;
-using WebApi.Entities.ReasonEntities;
 using WebApi.Entities.ReportEntities;
-using WebApi.Entities.SecondaryEntities;
 using WebApi.Entities.TestEntities;
-using WebApi.Entities.UserActionEntities;
 using WebApi.Interfaces;
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using WebApi.Entities;
 
@@ -67,12 +60,6 @@ namespace WebApi.Controllers
         public async Task<long> UpdateLanguages(List<UpdateLanguage> langs)
         {
             return await _repository.UploadLanguages(langs);
-        }
-
-        [HttpPost("/UploadFeedbackReasons")]
-        public async Task<long> UploadFeedbackReasons(List<FeedbackReason> reasons)
-        {
-            return await _repository.UploadFeedbackReasons(reasons);
         }
 
         [HttpGet("/GetFeedbacks")]

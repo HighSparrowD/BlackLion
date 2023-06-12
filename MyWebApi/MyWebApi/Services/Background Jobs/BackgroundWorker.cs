@@ -76,13 +76,15 @@ namespace WebApi.Services.Background
                     user.MaxRTViewsCount = 25;
                     user.MaxTagSearchCount = 3;
 
+                    user.Settings.IsFree = null;
+
                     //Random achievements
                     //TODO: Localize
                     var achievements = await userRepo.GetRandomAchievements(user.Id);
                     await userRepo.AddUserNotificationAsync(new UserNotification
                     {
                         Description = "<b>Today's Random Achievements</b>\n\n" + string.Join("\n\n", achievements),
-                        UserId = user.Id,
+                        ReceiverId = user.Id,
                         Severity = Severities.Moderate,
                         Section = Section.Neutral
                     });
@@ -108,7 +110,7 @@ namespace WebApi.Services.Background
                             await userRepo.AddUserNotificationAsync(new UserNotification
                             {
                                 Severity = Severities.Urgent,
-                                UserId = user.Id,
+                                ReceiverId = user.Id,
                                 Description = "Your premium access ends today !"
                             });
                         }

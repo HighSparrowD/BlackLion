@@ -206,19 +206,6 @@ namespace WebApi.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "feedback_reasons",
-                columns: table => new
-                {
-                    Id = table.Column<short>(type: "smallint", nullable: false),
-                    ClassLocalisationId = table.Column<int>(type: "integer", nullable: false),
-                    Description = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_feedback_reasons", x => new { x.Id, x.ClassLocalisationId });
-                });
-
-            migrationBuilder.CreateTable(
                 name: "hints",
                 columns: table => new
                 {
@@ -871,17 +858,12 @@ namespace WebApi.Migrations
                     Text = table.Column<string>(type: "text", nullable: true),
                     ReasonId = table.Column<short>(type: "smallint", nullable: false),
                     ReasonClassLocalisationId = table.Column<int>(type: "integer", nullable: false),
-                    InsertedUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    InsertedUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Reason = table.Column<byte>(type: "smallint", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_feedbacks", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_feedbacks_feedback_reasons_ReasonId_ReasonClassLocalisation~",
-                        columns: x => new { x.ReasonId, x.ReasonClassLocalisationId },
-                        principalTable: "feedback_reasons",
-                        principalColumns: new[] { "Id", "ClassLocalisationId" },
-                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_feedbacks_users_UserId",
                         column: x => x.UserId,
@@ -915,27 +897,33 @@ namespace WebApi.Migrations
                 columns: table => new
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false),
-                    UserId = table.Column<long>(type: "bigint", nullable: true),
-                    UserId1 = table.Column<long>(type: "bigint", nullable: false),
+                    SenderId = table.Column<long>(type: "bigint", nullable: true),
+                    ReceiverId = table.Column<long>(type: "bigint", nullable: false),
                     IsLikedBack = table.Column<bool>(type: "boolean", nullable: false),
                     Severity = table.Column<int>(type: "integer", nullable: false),
                     Section = table.Column<int>(type: "integer", nullable: false),
-                    Description = table.Column<string>(type: "text", nullable: true)
+                    Description = table.Column<string>(type: "text", nullable: true),
+                    UserId = table.Column<long>(type: "bigint", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_notifications", x => x.Id);
                     table.ForeignKey(
+                        name: "FK_notifications_users_ReceiverId",
+                        column: x => x.ReceiverId,
+                        principalTable: "users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_notifications_users_SenderId",
+                        column: x => x.SenderId,
+                        principalTable: "users",
+                        principalColumn: "Id");
+                    table.ForeignKey(
                         name: "FK_notifications_users_UserId",
                         column: x => x.UserId,
                         principalTable: "users",
                         principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_notifications_users_UserId1",
-                        column: x => x.UserId1,
-                        principalTable: "users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -1180,11 +1168,6 @@ namespace WebApi.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_feedbacks_ReasonId_ReasonClassLocalisationId",
-                table: "feedbacks",
-                columns: new[] { "ReasonId", "ReasonClassLocalisationId" });
-
-            migrationBuilder.CreateIndex(
                 name: "IX_feedbacks_UserId",
                 table: "feedbacks",
                 column: "UserId");
@@ -1205,14 +1188,19 @@ namespace WebApi.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_notifications_ReceiverId",
+                table: "notifications",
+                column: "ReceiverId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_notifications_SenderId",
+                table: "notifications",
+                column: "SenderId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_notifications_UserId",
                 table: "notifications",
                 column: "UserId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_notifications_UserId1",
-                table: "notifications",
-                column: "UserId1");
 
             migrationBuilder.CreateIndex(
                 name: "IX_sponsor_languages_LanguageId_LanguageLang",
@@ -1420,9 +1408,6 @@ namespace WebApi.Migrations
 
             migrationBuilder.DropTable(
                 name: "adventures");
-
-            migrationBuilder.DropTable(
-                name: "feedback_reasons");
 
             migrationBuilder.DropTable(
                 name: "invitation_credentials");

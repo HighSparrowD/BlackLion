@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using WebApi.Entities.UserInfoEntities;
 using WebApi.Entities.ReportEntities;
 using WebApi.Entities.LocationEntities;
-using WebApi.Entities.ReasonEntities;
 using WebApi.Entities.AchievementEntities;
 using WebApi.Entities.UserActionEntities;
 using WebApi.Entities.DailyTaskEntities;
@@ -124,12 +123,6 @@ namespace WebApi.Controllers
         public async Task<Country> GetBaseUserInfo(long id)
         {
             return await _repository.GetCountryAsync(id);
-        }
-
-        [HttpGet("/GetFeedbackReasons/{localisationId}")]
-        public async Task<List<FeedbackReason>> GetFeedbackReasons(int localisationId)
-        {
-            return await _repository.GetFeedbackReasonsAsync(localisationId);
         }
 
         [HttpGet("/GetReportReasons/{localisationId}")]
