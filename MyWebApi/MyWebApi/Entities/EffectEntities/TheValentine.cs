@@ -1,4 +1,5 @@
 ﻿using System;
+using WebApi.Enums;
 
 namespace WebApi.Entities.EffectEntities
 {
@@ -6,7 +7,7 @@ namespace WebApi.Entities.EffectEntities
     {
         public TheValentine(long userId) : base(userId)
         {
-            EffectId = 6;
+            EffectId = Currency.TheValentine;
             Name = "TheValentine";
             ExpirationTime = DateTime.SpecifyKind(DateTime.Now.AddHours(1), DateTimeKind.Utc);
         }

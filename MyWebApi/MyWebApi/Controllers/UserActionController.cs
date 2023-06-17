@@ -9,12 +9,12 @@ using WebApi.Entities.ReportEntities;
 using WebApi.Entities.LocationEntities;
 using WebApi.Entities.AchievementEntities;
 using WebApi.Entities.UserActionEntities;
-using WebApi.Entities.DailyTaskEntities;
 using WebApi.Entities.TestEntities;
 using static WebApi.Enums.SystemEnums;
 using WebApi.Entities.EffectEntities;
 using WebApi.Entities.AdventureEntities;
 using WebApi.Enums;
+using WebApi.Entities;
 
 namespace WebApi.Controllers
 {
@@ -221,12 +221,6 @@ namespace WebApi.Controllers
             return await _repository.RemoveUserFromBlackListAsync(userId, bannedUserId);
         }
 
-        [HttpGet("/DeleteUser/{userId}")]
-        public async Task<byte> DeleteUser(long userId)
-        {
-            return await _repository.RemoveUserAsync(userId);
-        }
-
         [HttpGet("/BanUser/{userId}")]
         public async Task<byte> BanUser(long userId)
         {
@@ -312,7 +306,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/GrantPremiumToUser/{userId}/{cost}/{dayDuration}/{currency}")]
-        public async Task<DateTime> GrantPremiumToUser(long userId, int cost, int dayDuration, short currency)
+        public async Task<DateTime> GrantPremiumToUser(long userId, int cost, int dayDuration, Currency currency)
         {
             return await _repository.GrantPremiumToUser(userId, cost, dayDuration, currency);
         }
@@ -492,48 +486,6 @@ namespace WebApi.Controllers
         public async Task<double> CalculateSimilarity(double param1, double param2)
         {
             return await _repository.CalculateSimilarityAsync(param1, param2);
-        }
-
-        [HttpGet("/GetUserDailyTaskById/{userId}/{taskId}")]
-        public async Task<UserDailyTask> GetUserDailyTaskById(long userId, long taskId)
-        {
-            return await _repository.GetUserDailyTaskByIdAsync(userId, taskId);
-        }
-
-        [HttpGet("/GetDailyTaskById/{taskId}")]
-        public async Task<DailyTask> GetDailyTaskById(long taskId)
-        {
-            return await _repository.GetDailyTaskByIdAsync(taskId);
-        }
-
-        [HttpGet("/UpdateUserDailyTaskProgress/{userId}/{taskId}/{progress}")]
-        public async Task<int> UpdateUserDailyTaskProgress(long userId, long taskId, int progress)
-        {
-            return await _repository.UpdateUserDailyTaskProgressAsync(userId, taskId, progress);
-        }
-
-        [HttpGet("/GiveDailyTaskRewardToUser/{userId}/{taskId}")]
-        public async Task<int> GiveDailyTaskRewardToUser(long userId, long taskId)
-        {
-            return await _repository.GiveDailyTaskRewardToUserAsync(userId, taskId);
-        }
-
-        [HttpGet("/CheckUserHasTasksInSection/{userId}/{sectionId}")]
-        public async Task<bool> CheckUserHasTasksInSection(long userId, int sectionId)
-        {
-            return await _repository.CheckUserHasTasksInSectionAsync(userId, sectionId);
-        }
-
-        [HttpGet("/GenerateUserDailyTaskList/{userId}")]
-        public async Task<byte> GenerateUserDailyTaskList(long userId)
-        {
-            return await _repository.GenerateUserDailyTaskListAsync(userId);
-        }
-
-        [HttpGet("/ShowDailyTaskProgress/{userId}/{taskId}")]
-        public async Task<string> ShowDailyTaskProgress(long userId, long taskId)
-        {
-            return await _repository.ShowDailyTaskProgressAsync(userId, taskId);
         }
 
         [HttpGet("/GetUserMaximumLanguageCount/{userId}")]
@@ -759,7 +711,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/ActivateDurableEffect/{userId}/{effectId}")]
-        public async Task<DateTime?> ActivateDurableEffect(long userId, int effectId)
+        public async Task<DateTime?> ActivateDurableEffect(long userId, Currency effectId)
         {
             return await _repository.ActivateDurableEffectAsync(userId, effectId);
         }
@@ -771,7 +723,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/CheckEffectIsActive/{userId}/{effectId}")]
-        public async Task<bool> CheckEffectIsActive(long userId, int effectId)
+        public async Task<bool> CheckEffectIsActive(long userId, Currency effectId)
         {
             return await _repository.CheckEffectIsActiveAsync(userId, effectId);
         }
@@ -789,13 +741,13 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/PurchaseEffect/{userId}/{effectId}/{points}/{currency}/{count?}")]
-        public async Task<bool> PurchaseEffect(long userId, int effectId, int points, short currency, short count=1)
+        public async Task<bool> PurchaseEffect(long userId, int effectId, int points, Currency currency, short count=1)
         {
             return await _repository.PurchaseEffectAsync(userId, effectId, points, currency, count);
         }
 
         [HttpGet("/SetUserCurrency/{userId}/{currency}")]
-        public async Task<ActionResult> SetUserCurrency(long userId, short currency)
+        public async Task<ActionResult> SetUserCurrency(long userId, Currency currency)
         {
             await _repository.SetUserCurrencyAsync(userId, currency);
 
@@ -819,13 +771,13 @@ namespace WebApi.Controllers
         [HttpGet("/PurchesPPForPoints/{userId}/{price}/{count?}")]
         public async Task<bool> PurchesPPForPoints(long userId, int price, short count=1)
         {
-            return await _repository.PurchasePersonalityPointsAsync(userId, price, (short)Currencies.Points, count);
+            return await _repository.PurchasePersonalityPointsAsync(userId, price, Currency.Points, count);
         }
 
         [HttpGet("/PurchesPPForRealMoney/{userId}/{price}/{count?}")]
         public async Task<bool> PurchesPPForRealMoney(long userId, int price, short count = 1)
         {
-            return await _repository.PurchasePersonalityPointsAsync(userId, price, (short)Currencies.RealMoney, count);
+            return await _repository.PurchasePersonalityPointsAsync(userId, price, Currency.RealMoney, count);
         }
 
         [HttpGet("/CheckPromoIsCorrect/{userId}/{promo}/{isActivatedBeforeRegistration}")]
@@ -990,6 +942,18 @@ namespace WebApi.Controllers
         public List<GetLocalizedEnum> GetGenders()
         {
             return _repository.GetGenders();
+        }
+
+        [HttpGet("/delete-user")]
+        public async Task<DeleteResult> DeleteUser(long userId)
+        {
+            return await _repository.DeleteUserAsync(userId);
+        }
+
+        [HttpGet("/restore-user")]
+        public async Task<RestoreResult> RestoreUser(long userId)
+        {
+            return await _repository.RestoreUserAsync(userId);
         }
     }
 }

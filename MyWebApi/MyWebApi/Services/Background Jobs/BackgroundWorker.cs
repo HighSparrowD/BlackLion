@@ -85,7 +85,7 @@ namespace WebApi.Services.Background
                     {
                         Description = "<b>Today's Random Achievements</b>\n\n" + string.Join("\n\n", achievements),
                         ReceiverId = user.Id,
-                        Severity = Severities.Moderate,
+                        Severity = Severity.Moderate,
                         Section = Section.Neutral
                     });
 
@@ -109,7 +109,7 @@ namespace WebApi.Services.Background
                             //Notify user that his premium is about to expire
                             await userRepo.AddUserNotificationAsync(new UserNotification
                             {
-                                Severity = Severities.Urgent,
+                                Severity = Severity.Urgent,
                                 ReceiverId = user.Id,
                                 Description = "Your premium access ends today !"
                             });

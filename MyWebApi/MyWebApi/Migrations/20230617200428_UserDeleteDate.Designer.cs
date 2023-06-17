@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WebApi.Data;
@@ -12,9 +13,11 @@ using WebApi.Data;
 namespace WebApi.Migrations
 {
     [DbContext(typeof(UserContext))]
-    partial class UserContextModelSnapshot : ModelSnapshot
+    [Migration("20230617200428_UserDeleteDate")]
+    partial class UserDeleteDate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -367,6 +370,64 @@ namespace WebApi.Migrations
                     b.ToTable("daily_rewards", (string)null);
                 });
 
+            modelBuilder.Entity("WebApi.Entities.DailyTaskEntities.DailyTask", b =>
+                {
+                    b.Property<long>("Id")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("ClassLocalisationId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Condition")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Reward")
+                        .HasColumnType("integer");
+
+                    b.Property<short>("RewardCurrency")
+                        .HasColumnType("smallint");
+
+                    b.Property<int>("SectionId")
+                        .HasColumnType("integer");
+
+                    b.Property<short>("TaskType")
+                        .HasColumnType("smallint");
+
+                    b.HasKey("Id", "ClassLocalisationId");
+
+                    b.ToTable("DailyTasks");
+                });
+
+            modelBuilder.Entity("WebApi.Entities.DailyTaskEntities.UserDailyTask", b =>
+                {
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("DailyTaskId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("AcquireMessage")
+                        .HasColumnType("text");
+
+                    b.Property<int>("DailyTaskClassLocalisationId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsAcquired")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("Progress")
+                        .HasColumnType("integer");
+
+                    b.HasKey("UserId", "DailyTaskId");
+
+                    b.HasIndex("DailyTaskId", "DailyTaskClassLocalisationId");
+
+                    b.ToTable("UserDailyTasks");
+                });
+
             modelBuilder.Entity("WebApi.Entities.EffectEntities.ActiveEffect", b =>
                 {
                     b.Property<long>("Id")
@@ -375,8 +436,8 @@ namespace WebApi.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<long>("Id"), "active_effects_hilo");
 
-                    b.Property<short>("EffectId")
-                        .HasColumnType("smallint");
+                    b.Property<int>("EffectId")
+                        .HasColumnType("integer");
 
                     b.Property<DateTime?>("ExpirationTime")
                         .HasColumnType("timestamp with time zone");
@@ -1666,6 +1727,17 @@ namespace WebApi.Migrations
                         .IsRequired();
 
                     b.Navigation("Adventure");
+                });
+
+            modelBuilder.Entity("WebApi.Entities.DailyTaskEntities.UserDailyTask", b =>
+                {
+                    b.HasOne("WebApi.Entities.DailyTaskEntities.DailyTask", "DailyTask")
+                        .WithMany()
+                        .HasForeignKey("DailyTaskId", "DailyTaskClassLocalisationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("DailyTask");
                 });
 
             modelBuilder.Entity("WebApi.Entities.LocationEntities.City", b =>

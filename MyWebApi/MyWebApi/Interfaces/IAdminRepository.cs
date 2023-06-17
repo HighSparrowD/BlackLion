@@ -1,13 +1,9 @@
 ﻿using System.Threading.Tasks;
 using System.Collections.Generic;
-using WebApi.Entities.SecondaryEntities;
 using WebApi.Entities.ReportEntities;
 using WebApi.Entities.AchievementEntities;
-using WebApi.Entities.DailyTaskEntities;
 using WebApi.Entities.AdminEntities;
-using System;
 using WebApi.Entities.TestEntities;
-using WebApi.Entities.UserActionEntities;
 using WebApi.Entities;
 
 namespace WebApi.Interfaces
@@ -27,7 +23,6 @@ namespace WebApi.Interfaces
         Task<int> DeleteAllUsers ();
         Task<byte> UploadAchievements(List<Achievement> achievements);
         Task<byte> AddNewAchievements(List<Achievement> achievements);
-        Task<byte> AddDailyTaskAsync(DailyTask model);
         Task<List<TickRequest>> GetTickRequestsAsync();
         Task<TickRequest> GetTickRequestAsync(long? requestId = null);
         Task<string> GetNewNotificationsCountAsync(long adminId);

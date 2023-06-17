@@ -6,11 +6,11 @@ using WebApi.Entities.LocationEntities;
 using WebApi.Entities.AchievementEntities;
 using System;
 using WebApi.Entities.UserActionEntities;
-using WebApi.Entities.DailyTaskEntities;
 using WebApi.Enums;
 using WebApi.Entities.TestEntities;
 using WebApi.Entities.EffectEntities;
 using WebApi.Entities.AdventureEntities;
+using WebApi.Entities;
 
 namespace WebApi.Interfaces
 {
@@ -41,7 +41,6 @@ namespace WebApi.Interfaces
         Task<int> GetUserAppLanguage(long id);
         Task<long> RegisterUserAsync(UserRegistrationModel model, bool wasRegistered=false);
         Task<Country> GetCountryAsync(long id);
-        Task<List<FeedbackReason>> GetFeedbackReasonsAsync(int localisationId);
         //Task<List<ReportReason>> GetReportReasonsAsync(int localisationId);
         Task<long> AddFeedbackAsync(Feedback report);
         Task<long> AddUserReportAsync(SendUserReport report);
@@ -56,7 +55,6 @@ namespace WebApi.Interfaces
         Task<bool> AddUserToBlackListAsync(long userId, long bannedUserId);
         Task<bool> RemoveUserFromBlackListAsync(long userId, long bannedUserId);
         Task<List<BlackList>> GetBlackList (long userId);
-        Task<byte> RemoveUserAsync(long userId);
         Task<byte> ReRegisterUser(long userId);
         Task<byte> BanUserAsync(long userId);
         Task<byte> UnbanUserAsync(long userId);
@@ -74,7 +72,7 @@ namespace WebApi.Interfaces
         Task<bool> CheckUserHasPremiumAsync(long userId);
         Task<bool> CheckBalanceIsSufficient(long userId, int cost);
         Task<DateTime> GetPremiumExpirationDate(long userId);
-        Task<DateTime> GrantPremiumToUser(long userId, int cost, int dayDuration, short currency);
+        Task<DateTime> GrantPremiumToUser(long userId, int cost, int dayDuration, Currency currency);
         Task<long?> RegisterUserEncounter(Encounter model);
         Task<Encounter> GetUserEncounter(long encounterId);
         Task<List<Encounter>> GetUserEncounters(long userId, Section section);
@@ -105,14 +103,8 @@ namespace WebApi.Interfaces
         Task<bool> DeleteUserNotification(UserNotification notification);
         Task<List<string>> GetRandomAchievements(long userId);
         Task<double> CalculateSimilarityAsync(double param1, double param2);
-        Task<DailyTask> GetDailyTaskByIdAsync(long id);
-        Task<UserDailyTask> GetUserDailyTaskByIdAsync(long userId, long taskId);
-        Task<int> UpdateUserDailyTaskProgressAsync(long userId, long id, int progress);
-        Task<int> GiveDailyTaskRewardToUserAsync(long userId, long taskId);
-        Task<int> GiveDailyTaskRewardToUserAsync(long userId, UserDailyTask task);
-        Task<bool> CheckUserHasTasksInSectionAsync(long userId, int sectionId);
-        Task<byte> GenerateUserDailyTaskListAsync(long userId);
-        Task<string> ShowDailyTaskProgressAsync(long userId, long taskId);
+        Task<DeleteResult> DeleteUserAsync(long userId);
+        Task<RestoreResult> RestoreUserAsync(long userId);
         Task<int> GetUserMaximumLanguageCountAsync(long userId);
         int GetMaximumLanguageCount(bool? hasPremium);
         Task<int> GetUserPersonalityPointsAmount(long userId);
@@ -131,13 +123,13 @@ namespace WebApi.Interfaces
         Task<bool> SetAutoReplyVoiceAsync(long userId, string voice);
         Task<ActiveAutoReply> GetActiveAutoReplyAsync(long userId);
         Task<bool> CheckUserHasEffectAsync(long userId, int effectId);
-        Task<DateTime?> ActivateDurableEffectAsync(long userId, int effectId);
+        Task<DateTime?> ActivateDurableEffectAsync(long userId, Currency effectId);
         Task<bool> ActivateToggleEffectAsync(long userId, int effectId, long? user2Id=null, string description=null);
         Task<List<ActiveEffect>> GetUserActiveEffects(long userId);
         Task<bool> DeactivateEffectAsync(long userId, long activeEffectId);
-        Task<bool> CheckEffectIsActiveAsync(long userId, int effectId);
-        Task<bool> PurchaseEffectAsync(long userId, int effectId, int points, short currency, short count=1);
-        Task<bool> PurchasePersonalityPointsAsync(long userId, int points, short currency, short count=1);
+        Task<bool> CheckEffectIsActiveAsync(long userId, Currency effectId);
+        Task<bool> PurchaseEffectAsync(long userId, int effectId, int points, Currency currency, short count=1);
+        Task<bool> PurchasePersonalityPointsAsync(long userId, int points, Currency currency, short count=1);
         Task<bool> SendTickRequestAsync(SendTickRequest request);
         Task<bool> SwitchUserFilteringByPhotoAsync(long userId);
         Task<bool> GetUserFilteringByPhotoStatusAsync(long userId);
@@ -155,7 +147,7 @@ namespace WebApi.Interfaces
         //Get stats user can invest points in
         Task<PersonalityCaps> GetUserPersonalityCapsAsync(long userId);
         Task<bool> GetUserRTLanguageConsiderationAsync(long userId);
-        Task SetUserCurrencyAsync(long userId, short currency);
+        Task SetUserCurrencyAsync(long userId, Currency currency);
         Task<GetUserData> GetRequestSenderAsync(long requestId);
         Task<bool> CheckPromoIsCorrectAsync(long userId, string promoText, bool isActivatedBeforeRegistration);
         Task<bool> GetUserIncreasedFamiliarityAsync(long userId);
