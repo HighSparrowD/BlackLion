@@ -1,6 +1,6 @@
 ﻿namespace WebApi.Enums;
 
-public enum Severities
+public enum Severity
 {
     Minor = 1,
     Moderate = 2,

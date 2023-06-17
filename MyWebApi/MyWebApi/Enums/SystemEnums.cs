@@ -47,36 +47,11 @@
             Report = 4,
         }
 
-        public enum Currencies
-        {
-            Points = 1,
-            PersonalityPoints = 2,
-            Premium = 3, // Maybe remove in the future
-            RealMoney = 4,
-            SecondChance = 5,
-            TheValentine = 6,
-            TheDetector = 7,
-            Nullifier = 8,
-            CardDeckMini = 9,
-            CardDeckPlatinum = 10,
-            ThePersonality = 11
-        }
-
         public enum TaskTypes
         {
             Common = 1,
             Rare = 2,
             Premium = 3
-        }
-
-        public enum PaymentCurrencies
-        {
-            USD = 1,
-            EUR = 2,
-            UAH = 3,
-            RUB = 4,
-            CZK = 5,
-            PLN = 6,
         }
     }
 }

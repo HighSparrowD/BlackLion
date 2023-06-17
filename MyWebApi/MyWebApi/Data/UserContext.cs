@@ -3,7 +3,6 @@ using WebApi.Entities.AchievementEntities;
 using WebApi.Entities.AdminEntities;
 using WebApi.Entities.AdventureEntities;
 using WebApi.Entities.DailyRewardEntities;
-using WebApi.Entities.DailyTaskEntities;
 using WebApi.Entities.EffectEntities;
 using WebApi.Entities.HintEntities;
 using WebApi.Entities.LocationEntities;
@@ -53,8 +52,6 @@ namespace WebApi.Data
         public DbSet<DailyReward> DailyRewards => Set<DailyReward>();
         public DbSet<InvitationCredentials> InvitationCredentials => Set<InvitationCredentials>();
         public DbSet<Invitation> Invitations => Set<Invitation>();
-        public DbSet<DailyTask> DailyTasks => Set<DailyTask>(); //TODO: Remove
-        public DbSet<UserDailyTask> UserDailyTasks => Set<UserDailyTask>(); //TODO: Remove
         public DbSet<UserPersonalityStats> PersonalityStats => Set<UserPersonalityStats>();
         public DbSet<UserPersonalityPoints> PersonalityPoints => Set<UserPersonalityPoints>();
         public DbSet<ActiveEffect> ActiveEffects => Set<ActiveEffect>();
@@ -116,9 +113,6 @@ namespace WebApi.Data
             builder.Entity<Test>().HasKey(t => new { t.Id, t.Language });
             builder.Entity<UserTest>().HasKey(t => new { t.TestId, t.UserId });
             builder.Entity<TestQuestion>().HasMany(q => q.Answers);
-
-            builder.Entity<DailyTask>().HasKey(q => new {q.Id, q.ClassLocalisationId});
-            builder.Entity<UserDailyTask>().HasKey(q => new {q.UserId, q.DailyTaskId});
 
             builder.Entity<Country>().HasKey(c => new { c.Id, c.Lang });
             builder.Entity<Language>().HasKey(l => new { l.Id, l.Lang });

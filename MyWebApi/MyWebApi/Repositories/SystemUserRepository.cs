@@ -3,7 +3,6 @@ using WebApi.Data;
 using WebApi.Entities.AchievementEntities;
 using WebApi.Entities.AdminEntities;
 using WebApi.Entities.AdventureEntities;
-using WebApi.Entities.DailyTaskEntities;
 using WebApi.Entities.EffectEntities;
 using WebApi.Entities.LocationEntities;
 using WebApi.Entities.ReportEntities;
@@ -117,7 +116,7 @@ namespace WebApi.Repositories
                 if (invitor.InvitedUsersCount == 1)
                 {
                     await TopUpUserWalletPointsBalance(invitor.Id, 250 * multiplier, $"User {invitor.Id} has invited his firs user");
-                    await GrantPremiumToUser(invitor.Id, 0, 1, (short)Currencies.Points);
+                    await GrantPremiumToUser(invitor.Id, 0, 1, Currency.Points);
                 }
                 else if (invitor.InvitedUsersCount == 3 || invitor.InvitedUsersCount % 3 == 0)
                 {
@@ -140,8 +139,8 @@ namespace WebApi.Repositories
                         await TopUpUserWalletPointsBalance(invitor.Id, 1499, $"User {invitor.Id} has invited 10 users");
                         //Adds + 10 random effects to users inventory
                         var effecId = new Random().Next(5, 10);
-                        await PurchaseEffectAsync(invitor.Id, effecId, 0, (int)Currencies.Points, 10);
-                        await GrantPremiumToUser(invitor.Id, 0, 30, (short)Currencies.Points);
+                        await PurchaseEffectAsync(invitor.Id, effecId, 0, Currency.Points, 10);
+                        await GrantPremiumToUser(invitor.Id, 0, 30, Currency.Points);
                     }
                     else
                         await TopUpUserWalletPointsBalance(invitor.Id, 1999 * multiplier, $"User {invitor.Id} has invited more than 10 users");
@@ -329,9 +328,9 @@ namespace WebApi.Repositories
             var secondaryMatches = 0;
             var matchedBy = "";
 
-            var hasActiveValentine = userActiveEffects.Where(e => e.EffectId == (int)Currencies.TheValentine).SingleOrDefault() != null;
+            var hasActiveValentine = userActiveEffects.Where(e => e.EffectId == Currency.TheValentine).SingleOrDefault() != null;
 
-            var userHasDetectorOn = userActiveEffects.Where(e => e.EffectId == (int)Currencies.TheDetector).SingleOrDefault() != null;
+            var userHasDetectorOn = userActiveEffects.Where(e => e.EffectId == Currency.TheDetector).SingleOrDefault() != null;
 
             if (hasActiveValentine)
                 valentineBonus = 2;
@@ -982,7 +981,7 @@ namespace WebApi.Repositories
                 ReceiverId = userId,
                 IsLikedBack = false,
                 Section = (Section)achievement.Achievement.SectionId,
-                Severity = Severities.Minor,
+                Severity = Severity.Minor,
                 Description = achievement.AcquireMessage
             });
 
@@ -1268,16 +1267,6 @@ namespace WebApi.Repositories
                     await AddUserTrustProgressAsync(user1, 0.000005 * (double)userInfo1.BonusIndex);
                     await AddUserTrustProgressAsync(user2, 0.000005 * (double)userInfo2.BonusIndex);
 
-                    if (await CheckUserHasTasksInSectionAsync(user1, (int)Section.RT))
-                    {
-                        //TODO find and topup user's task progress
-                    }
-
-                    if (await CheckUserHasTasksInSectionAsync(user2, (int)Section.RT))
-                    {
-                        //TODO find and topup user's task progress
-                    }
-
                     await RegisterUserEncounter(new Encounter { UserId = user1, EncounteredUserId = user2 });
                     await RegisterUserEncounter(new Encounter { UserId = user2, EncounteredUserId = user1 });
 
@@ -1382,20 +1371,20 @@ namespace WebApi.Repositories
 
         private async Task<bool> RegisterUserWalletPurchaseInPoints(long userId, int points, string description)
         {
-            return await RegisterUserWalletPurchase(userId, points, description, (short)Currencies.Points);
+            return await RegisterUserWalletPurchase(userId, points, description, Currency.Points);
         }
 
         private async Task<bool> RegisterUserWalletPurchaseInPP(long userId, int points, string description)
         {
-            return await RegisterUserWalletPurchase(userId, points, description, (short)Currencies.PersonalityPoints);
+            return await RegisterUserWalletPurchase(userId, points, description, Currency.PersonalityPoints);
         }
 
-        private async Task<bool> RegisterUserWalletPurchaseInRealMoney(long userId, int points, string description)
+        private async Task<bool> RegisterUserWalletPurchaseInRealMoney(long userId, int points, string description, Currency currency)
         {
-            return await RegisterUserWalletPurchase(userId, points, description, (short)Currencies.RealMoney);
+            return await RegisterUserWalletPurchase(userId, points, description, currency);
         }
 
-        private async Task<bool> RegisterUserWalletPurchase(long userId, int points, string description, short currency)
+        private async Task<bool> RegisterUserWalletPurchase(long userId, int points, string description, Currency currency)
         {
             var purchase = new Transaction
             {
@@ -1454,14 +1443,14 @@ namespace WebApi.Repositories
                 return DateTime.MinValue;
         }
 
-        public async Task<DateTime> GrantPremiumToUser(long userId, int cost, int dayDuration, short currency)
+        public async Task<DateTime> GrantPremiumToUser(long userId, int cost, int dayDuration, Currency currency)
         {
             var timeNow = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
             var premiumFutureExpirationDate = DateTime.SpecifyKind(DateTime.Now.AddDays(dayDuration), DateTimeKind.Utc);
 
             var user = await _contx.Users
                 .Where(u => u.Id == userId)
-                .SingleOrDefaultAsync();
+                .FirstOrDefaultAsync();
 
             user.HasPremium = true;
             user.BonusIndex = 2;
@@ -1476,11 +1465,11 @@ namespace WebApi.Repositories
             }
 
             //If transaction was made for points
-            if (currency == (short)Currencies.Points)
+            if (currency == Currency.Points)
                 await TopUpUserWalletPointsBalance(userId, -cost, $"Purchase premium for {dayDuration} days");
             //If transaction was made for real money
-            else if (currency == (short)Currencies.RealMoney)
-                await RegisterUserWalletPurchaseInRealMoney(userId, cost, $"Purchase premium for {dayDuration} days");
+            else if (currency == Currency.RealMoney)
+                await RegisterUserWalletPurchaseInRealMoney(userId, cost, $"Purchase premium for {dayDuration} days", (Currency)user.Currency);
 
             //Reward for premium purchase
             await TopUpUserWalletPointsBalance(userId, 500);
@@ -1498,7 +1487,7 @@ namespace WebApi.Repositories
             _contx.Update(user);
             await _contx.SaveChangesAsync();
 
-            await AddUserNotificationAsync(new UserNotification { ReceiverId = user.Id, IsLikedBack = false, Severity = Severities.Moderate, Section = Section.Neutral, Description = $"You have been granted premium access. Enjoy your benefits :)\nPremium expiration {user.PremiumExpirationDate.Value.ToString("dd.MM.yyyy")}" });
+            await AddUserNotificationAsync(new UserNotification { ReceiverId = user.Id, IsLikedBack = false, Severity = Severity.Moderate, Section = Section.Neutral, Description = $"You have been granted premium access. Enjoy your benefits :)\nPremium expiration {user.PremiumExpirationDate.Value.ToString("dd.MM.yyyy")}" });
 
             return user.PremiumExpirationDate.Value;
         }
@@ -1695,7 +1684,7 @@ namespace WebApi.Repositories
 
         public async Task<string> RegisterUserRequestAsync(UserNotification request)
         {
-            request.Severity = Severities.Moderate;
+            request.Severity = Severity.Moderate;
             var returnMessage = "";
 
             if (request.IsLikedBack)
@@ -1904,13 +1893,6 @@ namespace WebApi.Repositories
                 _contx.TrustLevels.Update(model);
                 await _contx.SaveChangesAsync();
 
-
-                //Possible task -> increse your trust level progress on x points
-                if (await CheckUserHasTasksInSectionAsync(userId, (int)Section.Neutral))
-                {
-                    //TODO find and topup user's task progress
-                }
-
                 return model.Level;
             }
             return -1;
@@ -1945,15 +1927,8 @@ namespace WebApi.Repositories
         {
             var currentUser = await _contx.Users.FindAsync(userId);
 
-            if ((bool)currentUser.HasPremium)
+            if (currentUser.HasPremium)
             {
-                //Possible task -> Update your nickname
-                //Only for premium users
-                if (await CheckUserHasTasksInSectionAsync(userId, (int)Section.Registration))
-                {
-                    //TODO find and topup user's task progress
-                }
-
                 currentUser.Nickname = nickname;
                 _contx.Users.Update(currentUser);
                 await _contx.SaveChangesAsync();
@@ -2139,12 +2114,6 @@ namespace WebApi.Repositories
                 await _contx.Invitations.AddAsync(invitation);
                 await _contx.SaveChangesAsync();
 
-                //Possible task -> invite someone
-                if (await CheckUserHasTasksInSectionAsync(userId, (int)Section.Registration))
-                {
-                    //TODO find and topup user's task progress
-                }
-
                 return true;
             }
 
@@ -2171,7 +2140,7 @@ namespace WebApi.Repositories
                     IsLikedBack = false,
                     Description = $"Hey! new user had been registered via your link. Thanks for helping us grow!\nSo far, you have invited: {invitedUsersCount} people. \nYou receive 1p for every action they are maiking ;-)",
                     Section = Section.Registration,
-                    Severity = Severities.Moderate
+                    Severity = Severity.Moderate
                 });
 
                 return true;
@@ -2185,7 +2154,7 @@ namespace WebApi.Repositories
         {
             try
             {
-                await AddUserNotificationAsync(new UserNotification {ReceiverId=userId, Severity=Severities.Urgent, Section=Section.Neutral, Description="Your premium access has expired"});
+                await AddUserNotificationAsync(new UserNotification {ReceiverId=userId, Severity=Severity.Urgent, Section=Section.Neutral, Description="Your premium access has expired"});
                 return true;
             }
             catch
@@ -2315,189 +2284,6 @@ namespace WebApi.Repositories
             });
 
             return c;
-        }
-
-        public async Task<DailyTask> GetDailyTaskByIdAsync(long id)
-        {
-            return await _contx.DailyTasks
-                .Where(t => t.Id == id)
-                .SingleOrDefaultAsync();
-        }
-
-        public async Task<UserDailyTask> GetUserDailyTaskByIdAsync(long userId, long taskId)
-        {
-            return await _contx.UserDailyTasks
-                .Where(t => t.UserId == userId && t.DailyTaskId == taskId)
-                .Include(t => t.DailyTask)
-                .SingleOrDefaultAsync();
-        }
-
-        public async Task<int> UpdateUserDailyTaskProgressAsync(long userId, long id, int progress)
-        {
-            var task = await GetUserDailyTaskByIdAsync(userId, id);
-
-            //Do nothing if task does not exists or it was acquired
-            if (task == null || task.IsAcquired)
-                return 0;
-
-            //Remove negative values
-            if (progress < 0)
-                progress *= -1;
-
-            if (task.Progress + progress >= task.DailyTask.Condition)
-            {
-                return await GiveDailyTaskRewardToUserAsync(userId, task);
-            }
-
-            task.Progress += progress;
-
-            _contx.UserDailyTasks.Update(task);
-            await _contx.SaveChangesAsync();
-
-            return task.Progress;
-        }
-
-        public async Task<int> GiveDailyTaskRewardToUserAsync(long userId, long taskId)
-        {
-            var task = await GetUserDailyTaskByIdAsync(userId, taskId);
-
-            if (task == null)
-                return 0;
-
-            return await GiveDailyTaskRewardToUserAsync(userId, task);
-        }
-
-        public async Task<int> GiveDailyTaskRewardToUserAsync(long userId, UserDailyTask task)
-        {
-            task.Progress = task.DailyTask.Condition;
-            task.IsAcquired = true;
-            await AddUserNotificationAsync(new UserNotification
-            {
-                ReceiverId = userId,
-                IsLikedBack = false,
-                Severity = Severities.Moderate,
-                Description = task.AcquireMessage,
-                Section = (Section)task.DailyTask.SectionId
-            });
-
-            if (task.DailyTask.RewardCurrency == (byte)Currencies.Points)
-                await TopUpUserWalletPointsBalance(userId, task.DailyTask.Reward, description:"Daily task acquiered");
-            else if (task.DailyTask.RewardCurrency == (byte)Currencies.PersonalityPoints) { }
-            //TODO: Topup user Personality points wallet balace
-            else if (task.DailyTask.RewardCurrency == (byte)Currencies.Premium) { }
-            //TODO: Add premium to user
-
-            _contx.UserDailyTasks.Update(task);
-            await _contx.SaveChangesAsync();
-
-            return 1;
-        }
-
-        public async Task<bool> CheckUserHasTasksInSectionAsync(long userId, int sectionId)
-        {
-            var count = await _contx.UserDailyTasks
-                .Where(t => t.UserId == userId && t.DailyTask.SectionId == sectionId && !t.IsAcquired)
-                .CountAsync();
-
-            return count > 0;
-        }
-
-        public async Task<byte> GenerateUserDailyTaskListAsync(long userId)
-        {
-            var rand = new Random();
-
-            var user = await GetUserInfoAsync(userId);
-            var taskCount = 2;
-
-            //Remove previous users tasks 
-            var prevTasks = await _contx.UserDailyTasks
-                .Where(t => t.UserId == userId)
-                .ToListAsync();
-
-            if (prevTasks.Count > 0)
-            {
-                _contx.UserDailyTasks.RemoveRange(prevTasks);
-                await _contx.SaveChangesAsync();
-            }
-
-            if (user == null)
-                return 0;
-
-            var userDailyTasks = new List<UserDailyTask>();
-
-            //Take common tasks
-            var tasks = (await _contx.DailyTasks
-                .Where(t => t.TaskType == (byte)TaskTypes.Common)
-                .ToListAsync())
-                .OrderBy(t => rand.Next())
-                .Take(35)
-                .ToList();
-
-            //Take rare tasks
-            tasks.AddRange((await _contx.DailyTasks.Where(t => t.TaskType == (byte)TaskTypes.Rare)
-                .ToListAsync())
-                .OrderBy(t => rand.Next())
-                .Take(15)
-                );
-
-            //Give an inclresed probability of getting a premium daily task if user has premium
-            if (user.HasPremium)
-            {
-                //Add an additional task
-                taskCount = 3;
-
-                //Add 8 premium tasks to a list
-                tasks.AddRange((await _contx.DailyTasks.Where(t => t.TaskType == (byte)TaskTypes.Premium)
-                    .ToListAsync())
-                    .OrderBy(t => rand.Next())
-                    .Take(8)
-                    .ToList()
-                    );
-            }
-            else
-            {
-                //Add only 2 premium tasks to a list
-                tasks.AddRange((await _contx.DailyTasks.Where(t => t.TaskType == (byte)TaskTypes.Premium)
-                    .ToListAsync())
-                    .OrderBy(t => rand.Next())
-                    .Take(2)
-                    .ToList()
-                    );
-            }
-
-            tasks = tasks.OrderBy(t => new Random().Next())
-                .Take(taskCount)
-                .ToList();
-
-
-            for (int i = 0; i < taskCount; i++)
-            {
-                var t = tasks[i];
-                userDailyTasks.Add(new UserDailyTask
-                {
-                    UserId = userId,
-                    DailyTaskId = t.Id,
-                    DailyTaskClassLocalisationId = t.ClassLocalisationId,
-                    Progress = 0,
-                    AcquireMessage = await t.GenerateAcquireMessage(t),
-                    IsAcquired = false
-                });
-            }
-
-            await _contx.UserDailyTasks.AddRangeAsync(userDailyTasks);
-            await _contx.SaveChangesAsync();
-
-            return 1;      
-        }
-
-        public async Task<string> ShowDailyTaskProgressAsync(long userId, long taskId)
-        {
-            var task = await GetUserDailyTaskByIdAsync(userId, taskId);
-
-            if (task == null)
-                throw new NullReferenceException($"User does not have a task #{taskId}");
-
-            return $"{task.Progress} / {task.DailyTask.Condition}";
         }
 
         public async Task<int> GetUserMaximumLanguageCountAsync(long userId)
@@ -2942,7 +2728,7 @@ namespace WebApi.Repositories
         public async Task<GetUserData> GetUserListByTagsAsync(GetUserByTags model)
         {
             var currentUser = await GetUserInfoAsync(model.UserId);
-            var hasActiveDetector = await CheckEffectIsActiveAsync(currentUser.Id, (int)Currencies.TheDetector);
+            var hasActiveDetector = await CheckEffectIsActiveAsync(currentUser.Id, Currency.TheDetector);
             
             //Actualize premium property
             await CheckUserHasPremiumAsync(model.UserId);
@@ -3184,7 +2970,7 @@ namespace WebApi.Repositories
             catch { return false; }
         }
 
-        public async Task<DateTime?> ActivateDurableEffectAsync(long userId, int effectId)
+        public async Task<DateTime?> ActivateDurableEffectAsync(long userId, Currency effectId)
         {
             try
             {
@@ -3193,9 +2979,10 @@ namespace WebApi.Repositories
 
                 switch (effectId)
                 {
-                    case 6:
+                    case Currency.TheValentine:
                         var userPoints = await _contx.PersonalityPoints.Where(p => p.UserId == userId)
-                            .SingleOrDefaultAsync();
+                            .FirstOrDefaultAsync();
+
                         if (userPoints != null)
                         {
                             if (AtLeastOneIsNotZero(userPoints))
@@ -3211,7 +2998,7 @@ namespace WebApi.Repositories
                             return null;
                         }
                         return null;
-                    case 7:
+                    case Currency.TheDetector:
                         //Already checked on the Frontend
 
                         //if (!(bool)await CheckUserUsesPersonality(userId))
@@ -3229,7 +3016,7 @@ namespace WebApi.Repositories
                 }
 
                 var activeEffect = await _contx.ActiveEffects.Where(e => e.EffectId == effectId && e.UserId == userId)
-                    .SingleOrDefaultAsync();
+                    .FirstOrDefaultAsync();
 
                 if (activeEffect == null)
                     await _contx.ActiveEffects.AddAsync(effect);
@@ -3261,7 +3048,7 @@ namespace WebApi.Repositories
                                 IsLikedBack = false,
                                 Description = description,
                                 Section = Section.Familiator,
-                                Severity = Severities.Moderate
+                                Severity = Severity.Moderate
                             });
                             _contx.Update(userBalance);
                             await _contx.SaveChangesAsync();
@@ -3381,14 +3168,14 @@ namespace WebApi.Repositories
             return userInfo.MaxProfileViewsCount;
         }
 
-        public async Task<bool> CheckEffectIsActiveAsync(long userId, int effectId)
+        public async Task<bool> CheckEffectIsActiveAsync(long userId, Currency effectId)
         {
             var effects = await GetUserActiveEffects(userId);
 
             if (effects == null)
                 return false;
 
-            return effects.Where(e => e.EffectId == effectId).SingleOrDefault() != null;
+            return effects.Any(e => e.EffectId == effectId);
         }
 
         public async Task<bool> SendTickRequestAsync(SendTickRequest request)
@@ -3681,7 +3468,7 @@ namespace WebApi.Repositories
             return user.ShouldConsiderLanguages;
         }
 
-        public async Task SetUserCurrencyAsync(long userId, short currency)
+        public async Task SetUserCurrencyAsync(long userId, Currency currency)
         {
             var user = await _contx.Users.FindAsync(userId);
 
@@ -3692,9 +3479,11 @@ namespace WebApi.Repositories
             await _contx.SaveChangesAsync();
         }
 
-        public async Task<bool> PurchaseEffectAsync(long userId, int effectId, int points, short currency, short count=1)
+        public async Task<bool> PurchaseEffectAsync(long userId, int effectId, int points, Currency currency, short count=1)
         {
             var balance = await GetUserWalletBalance(userId);
+            var user = await _contx.Users.Where(u => u.Id == userId)
+                .FirstOrDefaultAsync();
 
             if (balance != null)
             {
@@ -3703,45 +3492,45 @@ namespace WebApi.Repositories
                 {
                     case 5:
                         balance.SecondChances += count;
-                        if (currency == (short)Currencies.Points)
+                        if (currency == Currency.Points)
                             await RegisterUserWalletPurchaseInPoints(userId, points, $"User purchase of {count} Second Chance effect for point amount {points}");
                         else
-                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Second Chance effect for real money amount {points}");
+                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Second Chance effect for real money amount {points}", (Currency)user.Currency);
                         break;
                     case 6:
                         balance.Valentines += count;
-                        if (currency == (short)Currencies.Points)
+                        if (currency == Currency.Points)
                             await RegisterUserWalletPurchaseInPoints(userId, points, $"User purchase of {count} Valentine effect for point amount {points}");
                         else
-                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Valentine effect for real money amount {points}");
+                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Valentine effect for real money amount {points}", (Currency)user.Currency);
                         break;
                     case 7:
                         balance.Detectors += count;
-                        if (currency == (short)Currencies.Points)
+                        if (currency == Currency.Points)
                             await RegisterUserWalletPurchaseInPoints(userId, points, $"User purchase of {count} Detector effect for point amount {points}");
                         else
-                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Detector effect for real money amount {points}");
+                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Detector effect for real money amount {points}", (Currency)user.Currency);
                         break;
                     case 8:
                         balance.Nullifiers += count;
-                        if (currency == (short)Currencies.Points)
+                        if (currency == Currency.Points)
                             await RegisterUserWalletPurchaseInPoints(userId, points, $"User purchase of {count} Nullifier effect for point amount {points}");
                         else
-                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Nullifier effect for real money amount {points}");
+                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Nullifier effect for real money amount {points}", (Currency)user.Currency);
                         break;
                     case 9:
                         balance.CardDecksMini += count;
-                        if (currency == (short)Currencies.Points)
+                        if (currency == Currency.Points)
                             await RegisterUserWalletPurchaseInPoints(userId, points, $"User purchase of {count} Card Deck Mini effect for point amount {points}");
                         else
-                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Second Card Deck Mini for real money amount {points}");
+                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Second Card Deck Mini for real money amount {points}", (Currency)user.Currency);
                         break;
                     case 10:
                         balance.CardDecksPlatinum += count;
-                        if (currency == (short)Currencies.Points)
+                        if (currency == Currency.Points)
                             await RegisterUserWalletPurchaseInPoints(userId, points, $"User purchase of {count} Card Deck Platinum effect for point amount {points}");
                         else
-                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Card Deck Platinum effect for real money amount {points}");
+                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Card Deck Platinum effect for real money amount {points}", (Currency)user.Currency);
                         break;
                     default:
                         break;
@@ -3775,13 +3564,15 @@ namespace WebApi.Repositories
             return new GetUserData(sender, bonus);
         }
 
-        public async Task<bool> PurchasePersonalityPointsAsync(long userId, int points, short currency, short count = 1)
+        public async Task<bool> PurchasePersonalityPointsAsync(long userId, int points, Currency currency, short count = 1)
         {
             try
             {
                 var balance = await GetUserWalletBalance(userId);
+                var user = await _contx.Users.Where(u => u.Id == userId)
+                    .FirstOrDefaultAsync();
 
-                if (currency == (short)Currencies.Points)
+                if (currency == Currency.Points)
                 {
                     balance.Points -= points;
                     balance.PersonalityPoints += count;
@@ -3789,9 +3580,8 @@ namespace WebApi.Repositories
                 }
                 else
                 {
-                    balance.Points -= points;
                     balance.PersonalityPoints += count;
-                    await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Personality Points effect for real money amount {points}");
+                    await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Personality Points effect for real money amount {points}", (Currency)user.Currency);
                 }
                 await _contx.SaveChangesAsync();
                 return true;
@@ -4002,7 +3792,7 @@ namespace WebApi.Repositories
             await AddUserNotificationAsync(new UserNotification
             {
                 Section = Section.Adventurer,
-                Severity = Severities.Urgent,
+                Severity = Severity.Urgent,
                 Description = "Someone had requested participation in your adventure", //TODO: Perhaps clarify if actions had been done with use of unique code
                 SenderId = userId,
                 ReceiverId = adventure.UserId
@@ -4052,7 +3842,7 @@ namespace WebApi.Repositories
                 {
                     ReceiverId = userId,
                     Section = Section.Adventurer,
-                    Severity = Severities.Moderate,
+                    Severity = Severity.Moderate,
                     Description = $"Your request to join adventure {adventure.Name} had been accepted.\n{contact}"
                 });
             }
@@ -4432,7 +4222,7 @@ namespace WebApi.Repositories
             {
                 ReceiverId = attendee.UserId,
                 Section = Section.Adventurer,
-                Severity = Severities.Urgent,
+                Severity = Severity.Urgent,
                 Description = "You have been removed from one of the adventures" // TODO: More precise ?
             });
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using WebApi.Enums;
 
 namespace WebApi.Entities.EffectEntities
 {
@@ -7,7 +8,7 @@ namespace WebApi.Entities.EffectEntities
     {
         [Key]
         public long Id { get; set; }
-        public int EffectId { get; set; }
+        public Currency EffectId { get; set; }
         public long UserId{ get; set; }
         public string Name { get; set; }
         public DateTime? ExpirationTime { get; set; }

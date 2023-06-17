@@ -2,7 +2,6 @@
 using WebApi.Data;
 using WebApi.Entities.AchievementEntities;
 using WebApi.Entities.AdminEntities;
-using WebApi.Entities.DailyTaskEntities;
 using WebApi.Entities.LocationEntities;
 using WebApi.Entities.ReportEntities;
 using WebApi.Entities.SecondaryEntities;
@@ -317,19 +316,6 @@ namespace WebApi.Repositories
             catch { return false; }
         }
 
-        public async Task<byte> AddDailyTaskAsync(DailyTask model)
-        {
-            try
-            {
-                model.Id = (await _contx.DailyTasks.CountAsync()) + 1;
-                await _contx.DailyTasks.AddAsync(model);
-                await _contx.SaveChangesAsync();
-
-                return 1;
-            }
-            catch { return 0; }
-        }
-
         public async Task<List<TickRequest>> GetTickRequestsAsync()
         {
             return await _contx.TickRequests.Take(15)
@@ -387,7 +373,7 @@ namespace WebApi.Repositories
                 {
                     Description = $"Your identity confirmation had been accepted :)\n{model.Comment}",
                     ReceiverId = request.UserId,
-                    Severity = Severities.Urgent,
+                    Severity = Severity.Urgent,
                     Section = Section.Neutral,
                 });
             else
@@ -395,7 +381,7 @@ namespace WebApi.Repositories
                 {
                     Description = $"Sorry, your identity confirmation request had been denied.\n{model.Comment}",
                     ReceiverId = request.UserId,
-                    Severity = Severities.Urgent,
+                    Severity = Severity.Urgent,
                     Section = Section.Neutral,
                 });
 

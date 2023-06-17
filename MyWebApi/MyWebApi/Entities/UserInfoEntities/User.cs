@@ -45,7 +45,7 @@ namespace WebApi.Entities.UserInfoEntities
         public int MaxRTViewsCount { get; set; }
         public int MaxTagSearchCount { get; set; }
         public int TagSearchesCount { get; set; }
-        public short? Currency { get; set; }
+        public Currency? Currency { get; set; }
         public string? EnteredPromoCodes { get; set; }
         public bool IsUpdated { get; set; }
         public bool IsDecoy { get; set; }
