@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using static WebApi.Enums.SystemEnums;
+using WebApi.Entities;
 
 namespace WebApi.Repositories
 {
@@ -43,7 +44,7 @@ namespace WebApi.Repositories
 
             if (model.CityCode != null && model.CountryCode != null)
             {
-                location = new Location { Id = model.Id, CityId = (int)model.CityCode, CountryId = (int)model.CountryCode, CityCountryClassLocalisationId = model.AppLanguage, CountryClassLocalisationId = model.AppLanguage };
+                location = new Location { Id = model.Id, CityId = (int)model.CityCode, CountryId = (int)model.CountryCode, CountryLang = model.AppLanguage, CityCountryLang = model.AppLanguage };
 
                 country = await _contx.Countries.Where(c => c.Id == model.CountryCode && c.Lang == model.AppLanguage)
                     .Select(c => c.CountryName)
@@ -892,15 +893,6 @@ namespace WebApi.Repositories
             return false;
         }
 
-        public async Task<byte> RemoveUserAsync(long userId)
-        {
-            var user = await _contx.Users.Where(u => u.Id == userId).SingleOrDefaultAsync();
-            user.IsDeleted = true;
-            _contx.Users.Update(user);
-            await _contx.SaveChangesAsync();
-            return 1;
-        }
-
         public async Task<List<Report>> GetAllUserReportsAsync(long userId)
         {
             return await _contx.UserReports.Where(u => u.SenderId == userId)
@@ -1547,7 +1539,7 @@ namespace WebApi.Repositories
                     await _contx.SaveChangesAsync();
 
                     var userLocation = await _contx.UserLocations.Where(l => l.Id == userId).SingleOrDefaultAsync();
-                    userLocation.CountryClassLocalisationId = appLanguage;
+                    userLocation.CityCountryLang = appLanguage;
                     //userLocation.CityCountryClassLocalisationId = appLanguage; // Uncomment when Cities will be translated on another languages
 
                     _contx.UserLocations.Update(userLocation);
@@ -1577,11 +1569,11 @@ namespace WebApi.Repositories
             if (location.CountryId != null)
             {
                 countryName = await _contx.Countries
-                    .Where(c => c.Id == location.CountryId && c.Lang == location.CountryClassLocalisationId)
+                    .Where(c => c.Id == location.CountryId && c.Lang == location.CityCountryLang)
                     .Select(c => c.CountryName)
                     .FirstOrDefaultAsync();
                 cityName = await _contx.Cities
-                    .Where(c => c.Id == location.CityId && c.CountryLang == location.CityCountryClassLocalisationId)
+                    .Where(c => c.Id == location.CityId && c.CountryLang == location.CountryLang)
                     .Select(c => c.CityName)
                     .FirstOrDefaultAsync(); ;
             }
@@ -1610,9 +1602,9 @@ namespace WebApi.Repositories
             user.Data.UserGenderPrefs = model.GenderPrefs;
 
             location.CountryId = model.CountryCode;
-            location.CountryClassLocalisationId = model.CountryCode != null? model.AppLanguageId : null;
+            location.CityCountryLang = model.CountryCode != null? model.AppLanguageId : null;
             location.CityId = model.CityCode;
-            location.CityCountryClassLocalisationId = model.CityCode != null? model.AppLanguageId : null;
+            location.CountryLang = model.CityCode != null? model.AppLanguageId : null;
 
             _contx.Users.Update(user);
             _contx.UsersData.Update(user.Data);
@@ -4479,9 +4471,32 @@ namespace WebApi.Repositories
             return genders;
         }
 
-        public Task<List<FeedbackReason>> GetFeedbackReasonsAsync(int localisationId)
+        public async Task<DeleteResult> DeleteUserAsync(long userId)
         {
-            throw new NotImplementedException();
+            var user = await _contx.Users.Where(u => u.Id == userId)
+                .FirstOrDefaultAsync();
+
+            if (user == null)
+                return DeleteResult.DoesNotExist;
+
+            user.IsDeleted = true;
+            user.DeleteDate = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
+
+            return DeleteResult.Success;
+        }
+
+        public async Task<RestoreResult> RestoreUserAsync(long userId)
+        {
+            var user = await _contx.Users.Where(u => u.Id == userId)
+                .FirstOrDefaultAsync();
+
+            if (user == null)
+                return RestoreResult.DoesNotExist;
+
+            user.IsDeleted = false;
+            user.DeleteDate = null;
+
+            return RestoreResult.Success;
         }
     }
 }

@@ -23,9 +23,11 @@ namespace WebApi.Entities.UserInfoEntities
         public long LocationId { get; set; }
         public bool IsBusy { get; set; }
         public bool IsBanned { get; set; }
-        public DateTime? BanDate { get; set; }
         public bool IsDeleted { get; set; }
         public bool HasPremium { get; set; }
+        public DateTime? BanDate { get; set; }
+        public DateTime? DeleteDate { get; set; }
+        public DateTime? PremiumExpirationDate{ get; set; }
         public bool HadReceivedReward { get; set; }
         public short? PremiumDuration { get; set; }
         public IdentityConfirmationType IdentityType { get; set; }
@@ -44,7 +46,6 @@ namespace WebApi.Entities.UserInfoEntities
         public int MaxTagSearchCount { get; set; }
         public int TagSearchesCount { get; set; }
         public short? Currency { get; set; }
-        public DateTime? PremiumExpirationDate{ get; set; }
         public string? EnteredPromoCodes { get; set; }
         public bool IsUpdated { get; set; }
         public bool IsDecoy { get; set; }

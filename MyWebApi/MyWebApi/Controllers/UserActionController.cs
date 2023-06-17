@@ -15,6 +15,7 @@ using static WebApi.Enums.SystemEnums;
 using WebApi.Entities.EffectEntities;
 using WebApi.Entities.AdventureEntities;
 using WebApi.Enums;
+using WebApi.Entities;
 
 namespace WebApi.Controllers
 {
@@ -219,12 +220,6 @@ namespace WebApi.Controllers
         public async Task<bool> RemoveUserFromBlackList(long userId, long bannedUserId)
         {
             return await _repository.RemoveUserFromBlackListAsync(userId, bannedUserId);
-        }
-
-        [HttpGet("/DeleteUser/{userId}")]
-        public async Task<byte> DeleteUser(long userId)
-        {
-            return await _repository.RemoveUserAsync(userId);
         }
 
         [HttpGet("/BanUser/{userId}")]
@@ -990,6 +985,18 @@ namespace WebApi.Controllers
         public List<GetLocalizedEnum> GetGenders()
         {
             return _repository.GetGenders();
+        }
+
+        [HttpGet("/delete-user")]
+        public async Task<DeleteResult> DeleteUser(long userId)
+        {
+            return await _repository.DeleteUserAsync(userId);
+        }
+
+        [HttpGet("/restore-user")]
+        public async Task<RestoreResult> RestoreUser(long userId)
+        {
+            return await _repository.RestoreUserAsync(userId);
         }
     }
 }

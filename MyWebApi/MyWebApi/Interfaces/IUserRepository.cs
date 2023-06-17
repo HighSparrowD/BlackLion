@@ -11,6 +11,7 @@ using WebApi.Enums;
 using WebApi.Entities.TestEntities;
 using WebApi.Entities.EffectEntities;
 using WebApi.Entities.AdventureEntities;
+using WebApi.Entities;
 
 namespace WebApi.Interfaces
 {
@@ -41,7 +42,6 @@ namespace WebApi.Interfaces
         Task<int> GetUserAppLanguage(long id);
         Task<long> RegisterUserAsync(UserRegistrationModel model, bool wasRegistered=false);
         Task<Country> GetCountryAsync(long id);
-        Task<List<FeedbackReason>> GetFeedbackReasonsAsync(int localisationId);
         //Task<List<ReportReason>> GetReportReasonsAsync(int localisationId);
         Task<long> AddFeedbackAsync(Feedback report);
         Task<long> AddUserReportAsync(SendUserReport report);
@@ -56,7 +56,6 @@ namespace WebApi.Interfaces
         Task<bool> AddUserToBlackListAsync(long userId, long bannedUserId);
         Task<bool> RemoveUserFromBlackListAsync(long userId, long bannedUserId);
         Task<List<BlackList>> GetBlackList (long userId);
-        Task<byte> RemoveUserAsync(long userId);
         Task<byte> ReRegisterUser(long userId);
         Task<byte> BanUserAsync(long userId);
         Task<byte> UnbanUserAsync(long userId);
@@ -112,6 +111,8 @@ namespace WebApi.Interfaces
         Task<int> GiveDailyTaskRewardToUserAsync(long userId, UserDailyTask task);
         Task<bool> CheckUserHasTasksInSectionAsync(long userId, int sectionId);
         Task<byte> GenerateUserDailyTaskListAsync(long userId);
+        Task<DeleteResult> DeleteUserAsync(long userId);
+        Task<RestoreResult> RestoreUserAsync(long userId);
         Task<string> ShowDailyTaskProgressAsync(long userId, long taskId);
         Task<int> GetUserMaximumLanguageCountAsync(long userId);
         int GetMaximumLanguageCount(bool? hasPremium);

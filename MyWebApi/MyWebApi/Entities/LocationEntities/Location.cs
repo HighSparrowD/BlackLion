@@ -10,8 +10,8 @@ namespace WebApi.Entities.LocationEntities
         public long Id { get; set; }
         public int? CityId { get; set; }
         public int? CountryId { get; set; }
-        public AppLanguage? CityCountryClassLocalisationId { get; set; }
-        public AppLanguage? CountryClassLocalisationId { get; set; }
+        public AppLanguage? CountryLang { get; set; }
+        public AppLanguage? CityCountryLang { get; set; }
         public virtual Country? Country { get; set; }
         public virtual City? City { get; set; }
     }

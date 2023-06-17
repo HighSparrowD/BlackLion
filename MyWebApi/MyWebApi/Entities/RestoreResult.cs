@@ -1,6 +1,6 @@
-﻿namespace WebApi.Entities.AdventureEntities;
+﻿namespace WebApi.Entities;
 
-public enum DeleteResult
+public enum RestoreResult
 {
     Success = 1,
     DoesNotExist = 2,
