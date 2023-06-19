@@ -18,7 +18,7 @@ namespace WebApi.Data
     public class UserContext : DbContext
     {
         public DbSet<User> Users => Set<User>();
-        public DbSet<UserData> UsersData => Set<UserData>();
+        public DbSet<UserData> UserData => Set<UserData>();
         public DbSet<UserSettings> UsersSettings => Set<UserSettings>();
         public DbSet<Location> UserLocations => Set<Location>();
         public DbSet<Visit> UserVisits => Set<Visit>();
@@ -143,7 +143,7 @@ namespace WebApi.Data
         private void ConfigureMapping(ModelBuilder builder)
         {
             builder.Entity<User>().ToTable("users");
-            builder.Entity<UserData>().ToTable("users_data");
+            builder.Entity<UserData>().ToTable("user_data");
             builder.Entity<UserSettings>().ToTable("user_settings");
             builder.Entity<Location>().ToTable("user_locations");
             builder.Entity<Visit>().ToTable("user_visits");

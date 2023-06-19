@@ -27,7 +27,7 @@ Id,Name,Native Name,Language,Priority
 26,chamorro,chamorro,EN,5
 27,corsican,corsican,EN,5
 28,cree,cree,EN,5
-29,czech,czech,EN,5
+29,czech,czech,EN,1
 30,"old church slavonic, church slavonic, old bulgarian","old church slavonic, church slavonic, old bulgarian",EN,5
 31,chuvash,chuvash,EN,5
 32,welsh,welsh,EN,5
@@ -37,7 +37,7 @@ Id,Name,Native Name,Language,Priority
 36,dzongkha,dzongkha,EN,5
 37,ewe,ewe,EN,5
 38,"greek, modern","greek, modern",EN,5
-39,english,english,EN,5
+39,english,english,EN,1
 40,esperanto,esperanto,EN,5
 41,spanish; castilian,spanish; castilian,EN,5
 42,estonian,estonian,EN,5
@@ -128,14 +128,14 @@ Id,Name,Native Name,Language,Priority
 127,"ossetian, ossetic","ossetian, ossetic",EN,5
 128,"panjabi, punjabi","panjabi, punjabi",EN,5
 129,pāli,pāli,EN,5
-130,polish,polish,EN,5
+130,polish,polish,EN,1
 131,"pashto, pushto","pashto, pushto",EN,5
 132,portuguese,portuguese,EN,5
 133,quechua,quechua,EN,5
 134,romansh,romansh,EN,5
 135,kirundi,kirundi,EN,5
 136,romanian,romanian,EN,5
-137,russian,russian,EN,5
+137,russian,russian,EN,1
 138,kinyarwanda,kinyarwanda,EN,5
 139,sanskrit (saṁskṛta),sanskrit (saṁskṛta),EN,5
 140,sardinian,sardinian,EN,5
@@ -170,7 +170,7 @@ Id,Name,Native Name,Language,Priority
 169,twi,twi,EN,5
 170,tahitian,tahitian,EN,5
 171,"uyghur, uighur","uyghur, uighur",EN,5
-172,ukrainian,ukrainian,EN,5
+172,ukrainian,ukrainian,EN,1
 173,urdu,urdu,EN,5
 174,uzbek,uzbek,EN,5
 175,venda,venda,EN,5

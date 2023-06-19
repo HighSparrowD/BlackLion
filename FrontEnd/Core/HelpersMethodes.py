@@ -9,6 +9,8 @@ languages = {
 }
 
 api_address = ""
+points = "Points"
+money = "RealMoney"
 
 
 def check_user_exists(userId):
@@ -268,7 +270,7 @@ def delete_user_request(requestId):
 def delete_user_notification(notificationId):
     try:
         return bool(
-            json.loads(requests.get(f"{api_address}/SendNotificationConfirmationCode/{notificationId}",
+            json.loads(requests.get(f"{api_address}/delete-notification/{notificationId}",
                                     verify=False).text))
     except:
         return None
@@ -425,18 +427,18 @@ def check_promo_is_valid(userId, promo, isActivatedBeforeRegistration):
 
 
 def grant_premium_for_points(userId, cost, dayDuration):
-    return json.loads(requests.get(f"{api_address}/GrantPremiumToUser/{userId}/{cost}/{dayDuration}/{1}",
+    return json.loads(requests.get(f"{api_address}/GrantPremiumToUser/{userId}/{cost}/{dayDuration}/{points}",
                                    verify=False).text)
 
 
 def grant_premium_for_real_money(userId, cost, dayDuration):
-    return json.loads(requests.get(f"{api_address}/GrantPremiumToUser/{userId}/{cost}/{dayDuration}/{4}",
+    return json.loads(requests.get(f"{api_address}/GrantPremiumToUser/{userId}/{cost}/{dayDuration}/{money}",
                                    verify=False).text)
 
 
 def purchase_effect_for_points(userId, effectId, cost, count=1):
     return json.loads(
-        requests.get(f"{api_address}/PurchaseEffect/{userId}/{effectId}/{cost}/1/{count}", verify=False).text)
+        requests.get(f"{api_address}/PurchaseEffect/{userId}/{effectId}/{cost}/{points}/{count}", verify=False).text)
 
 
 def check_user_has_effect(userId, effectId):
@@ -445,9 +447,9 @@ def check_user_has_effect(userId, effectId):
 
 
 # TODO: Change called API endpoint
-def purchase_effect_for_real_money(userId, effectId, cost):
+def purchase_effect_for_real_money(userId, effectId, cost, count=1):
     return json.loads(
-        requests.get(f"{api_address}/GrantPremiumToUser/{userId}/{effectId}/{cost}/{4}", verify=False).text)
+        requests.get(f"{api_address}/PurchaseEffect/{userId}/{effectId}/{cost}/{money}/{count}", verify=False).text)
 
 
 def purchase_PP_for_points(userId, cost, count=1):

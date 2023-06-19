@@ -1,7 +1,4 @@
-﻿using Microsoft.AspNetCore.Cors;
-using System.ComponentModel.DataAnnotations;
-
-namespace WebApi.Enums;
+﻿namespace WebApi.Enums;
 
 //Todo: Add crypto
 public enum Currency : short

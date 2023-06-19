@@ -84,7 +84,7 @@ namespace WebApi.Services.Background
                     await userRepo.AddUserNotificationAsync(new UserNotification
                     {
                         Description = "<b>Today's Random Achievements</b>\n\n" + string.Join("\n\n", achievements),
-                        ReceiverId = user.Id,
+                        UserId = user.Id,
                         Severity = Severity.Moderate,
                         Section = Section.Neutral
                     });
@@ -110,7 +110,7 @@ namespace WebApi.Services.Background
                             await userRepo.AddUserNotificationAsync(new UserNotification
                             {
                                 Severity = Severity.Urgent,
-                                ReceiverId = user.Id,
+                                UserId = user.Id,
                                 Description = "Your premium access ends today !"
                             });
                         }
