@@ -33,7 +33,7 @@ class Shop:
         self.active_transaction_status_message = None
         self.current_transaction = None
 
-        #TODO: load price lists based on currency selected by user
+        # TODO: load price lists based on currency selected by user
         self.start_options_message = "1. Premium\n2. Coins\n3. Effects\n4. Personality Points\n5. Tests\n6. Support Us :)\n7. Exit"
         self.premium_price_list_message = "1. 3 days: 5,999 Coins - VALUE CURRENCY\n2. 21 days: 12,999 Coins - VALUE CURRENCY\n3. 30 days 20,999 Coins - VALUE CURRENCY\n4. Go Back"
         self.effects_list_message = "1. 💥Second Chance💥\n2. 💥The Valentine💥\n3. 💥The Detector💥\n4. 💥The Nullifier💥\n5. 💥Card Deck Mini💥\n6. 💥Card Deck Platinum💥\n7. Go Back"
@@ -330,7 +330,8 @@ class Shop:
 
             if result:
                 self.userBalance["points"] -= self.chosen_pack_price
-                self.display_user_balance()
+                #self.display_user_balance()
+                self.proceed(self.message)
 
                 self.send_active_transaction_message("Transaction was successful")
 

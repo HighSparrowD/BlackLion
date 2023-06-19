@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using WebApi.Enums;
 
 namespace WebApi.Entities.UserInfoEntities
 {
@@ -17,6 +18,7 @@ namespace WebApi.Entities.UserInfoEntities
         public int CardDecksMini { get; set; }
         public int CardDecksPlatinum { get; set; }
         public int ThePersonalities { get; set; }
+        public Currency? Currency { get; set; }
         public DateTime PointInTime { get; set; }
 
         public Balance()

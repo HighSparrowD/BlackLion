@@ -37,8 +37,8 @@ def go_back_to_main_menu(bot, user, message, shouldSwitch=True):
 
     notification_list = Helpers.get_user_notifications(user)
     if notification_list:
-        for notif in notification_list: #TODO: Maybe create a separate module for handling that
-            bot.send_message(notif["userId1"], notif["description"])
+        for notif in notification_list:  # TODO: Maybe create a separate module for handling that
+            bot.send_message(notif["userId"], notif["description"])
             Helpers.delete_user_notification(notif["id"])
     else:
         if response and response["comment"]:
@@ -50,7 +50,7 @@ def show_admin_markup(bot, user):
     bot.send_message(user, "Sending you basic admin command set 😏", reply_markup=admin_menu_markup)
 
 
-def start_program_in_debug_mode(bot): # TODO: remove in production
+def start_program_in_debug_mode(bot):  # TODO: remove in production
     Helpers.start_program_in_debug_mode(bot)
 
 

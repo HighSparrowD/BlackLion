@@ -109,7 +109,7 @@ namespace WebApi.Repositories
         {
             return await _contx.Languages
                 .Where(l => l.Lang == lang)
-                .OrderByDescending(l => l.Priority)
+                .OrderBy(l => l.Priority)
                 .ToListAsync();
         }
 

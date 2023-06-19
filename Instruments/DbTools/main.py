@@ -137,7 +137,7 @@ def create_languages_resource(language, start_index=0, loc_index=0):
             languageNames.append(lang[0].strip().lower())
             languageNativeNames.append(lang[0].strip().lower())  # lang[1] TODO: Make it work with a native one
             languages_translation.append(langs[loc_index])
-            priorities.append(5 if lang[0] not in prioritized_langs else 1)
+            priorities.append(5 if lang[0].strip() not in prioritized_langs else 1)
 
             i += 1
 
@@ -273,5 +273,3 @@ def load_eng_localization():
 
 # create_eng_localization()
 load_eng_localization()
-# update_cities("en")
-# update_languages("en")

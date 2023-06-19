@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WebApi.Data;
@@ -12,9 +13,11 @@ using WebApi.Data;
 namespace WebApi.Migrations
 {
     [DbContext(typeof(UserContext))]
-    partial class UserContextModelSnapshot : ModelSnapshot
+    [Migration("20230619104705_MoveCurrency")]
+    partial class MoveCurrency
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1014,6 +1017,9 @@ namespace WebApi.Migrations
                     b.Property<bool>("IsLikedBack")
                         .HasColumnType("boolean");
 
+                    b.Property<long>("ReceiverId")
+                        .HasColumnType("bigint");
+
                     b.Property<int>("Section")
                         .HasColumnType("integer");
 
@@ -1023,10 +1029,12 @@ namespace WebApi.Migrations
                     b.Property<int>("Severity")
                         .HasColumnType("integer");
 
-                    b.Property<long>("UserId")
+                    b.Property<long?>("UserId")
                         .HasColumnType("bigint");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ReceiverId");
 
                     b.HasIndex("SenderId");
 
@@ -1357,7 +1365,7 @@ namespace WebApi.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("user_data", (string)null);
+                    b.ToTable("users_data", (string)null);
                 });
 
             modelBuilder.Entity("WebApi.Entities.UserInfoEntities.UserPersonalityPoints", b =>
@@ -1830,15 +1838,19 @@ namespace WebApi.Migrations
 
             modelBuilder.Entity("WebApi.Entities.UserActionEntities.UserNotification", b =>
                 {
+                    b.HasOne("WebApi.Entities.UserInfoEntities.User", "Receiver")
+                        .WithMany()
+                        .HasForeignKey("ReceiverId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("WebApi.Entities.UserInfoEntities.User", "Sender")
                         .WithMany()
                         .HasForeignKey("SenderId");
 
-                    b.HasOne("WebApi.Entities.UserInfoEntities.User", "Receiver")
+                    b.HasOne("WebApi.Entities.UserInfoEntities.User", null)
                         .WithMany("Notifications")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("UserId");
 
                     b.Navigation("Receiver");
 

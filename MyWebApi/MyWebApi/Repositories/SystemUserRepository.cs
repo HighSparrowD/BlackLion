@@ -84,7 +84,7 @@ namespace WebApi.Repositories
             user.LocationId = location.Id;
 
             await _contx.Users.AddAsync(user);
-            await _contx.UsersData.AddAsync(uData);
+            await _contx.UserData.AddAsync(uData);
             await _contx.UsersSettings.AddAsync(uSettings);
             await _contx.UserLocations.AddAsync(location);
             await _contx.SaveChangesAsync();
@@ -158,7 +158,7 @@ namespace WebApi.Repositories
 
                 //User instantly receives a like by an invitor if he approves it
                 if (invitor.Settings.IncreasedFamiliarity)
-                    await RegisterUserRequestAsync(new UserNotification { SenderId = invitor.Id, ReceiverId = model.Id, IsLikedBack = false });
+                    await RegisterUserRequestAsync(new UserNotification { SenderId = invitor.Id, UserId = model.Id, IsLikedBack = false });
 
                 //Invitor is notified about referential registration
                 await NotifyUserAboutReferentialRegistrationAsync(invitor.Id, model.Id);
@@ -214,7 +214,7 @@ namespace WebApi.Repositories
                 .Where(u => u.Encounters.Where(e => e.Section == Section.Requester || e.Section == Section.Familiator)
                     .All(e => e.EncounteredUserId != currentUser.Id)) //May casuse errors
                 //Check if request already exists
-                .Where(u => u.Notifications.All(n => n.SenderId != currentUser.Id && n.ReceiverId != currentUser.Id)) //May casuse errors
+                .Where(u => u.Notifications.All(n => n.SenderId != currentUser.Id && n.UserId != currentUser.Id)) //May casuse errors
                 .Include(u => u.Data)
                 .Include(u => u.Location)
                 .Include(u => u.Settings)
@@ -728,7 +728,7 @@ namespace WebApi.Repositories
 
         public async Task<int> GetUserAppLanguage(long id)
         {
-            var data = await _contx.UsersData.Where(u => u.Id == id)
+            var data = await _contx.UserData.Where(u => u.Id == id)
                 .FirstOrDefaultAsync();
 
             return (byte)data.Language;
@@ -978,7 +978,7 @@ namespace WebApi.Repositories
 
             await AddUserNotificationAsync(new UserNotification
             {
-                ReceiverId = userId,
+                UserId = userId,
                 IsLikedBack = false,
                 Section = (Section)achievement.Achievement.SectionId,
                 Severity = Severity.Minor,
@@ -1066,7 +1066,7 @@ namespace WebApi.Repositories
                 await _contx.SaveChangesAsync();
             }
 
-            var userNotifications1 = await _contx.Notifications.Where(u => u.ReceiverId == userId)
+            var userNotifications1 = await _contx.Notifications.Where(u => u.UserId == userId)
                 .ToListAsync();
 
             if (userNotifications1.Count > 0 && userNotifications1 != null)
@@ -1108,7 +1108,7 @@ namespace WebApi.Repositories
             if (user != null)
             {
                 _contx.UserLocations.Remove(user.Location);
-                _contx.UsersData.Remove(user.Data);
+                _contx.UserData.Remove(user.Data);
                 _contx.UsersSettings.Remove(user.Settings);
                 _contx.Users.Remove(user);
             }
@@ -1310,7 +1310,9 @@ namespace WebApi.Repositories
                 userBalance = await GetUserWalletBalance(userId);
             }
 
-            var userParentId = (await _contx.Users.FindAsync(userId)).ParentId;
+            var userParentId = await _contx.Users.Where(u => u.Id == userId)
+                .Select(u => u.ParentId)
+                .FirstOrDefaultAsync();
 
             if (points > 0 && userParentId != null && userParentId > 0)
             {
@@ -1358,7 +1360,9 @@ namespace WebApi.Repositories
                 await CreateUserBalance(userId, points, time);
             }
 
-            var userParentId = (await _contx.Users.FindAsync(userId)).ParentId;
+            var userParentId = await _contx.Users.Where(u => u.Id == userId)
+                .Select(u => u.ParentId)
+                .FirstOrDefaultAsync();
 
             if (userParentId != null && userParentId > 0)
                 await TopUpUserWalletPointsBalance((long)userParentId, 1, $"Referential reward for user's {userParentId} action");
@@ -1452,6 +1456,8 @@ namespace WebApi.Repositories
                 .Where(u => u.Id == userId)
                 .FirstOrDefaultAsync();
 
+            var balance = await GetUserWalletBalance(userId);
+
             user.HasPremium = true;
             user.BonusIndex = 2;
 
@@ -1469,7 +1475,7 @@ namespace WebApi.Repositories
                 await TopUpUserWalletPointsBalance(userId, -cost, $"Purchase premium for {dayDuration} days");
             //If transaction was made for real money
             else if (currency == Currency.RealMoney)
-                await RegisterUserWalletPurchaseInRealMoney(userId, cost, $"Purchase premium for {dayDuration} days", (Currency)user.Currency);
+                await RegisterUserWalletPurchaseInRealMoney(userId, cost, $"Purchase premium for {dayDuration} days", (Currency)balance.Currency);
 
             //Reward for premium purchase
             await TopUpUserWalletPointsBalance(userId, 500);
@@ -1487,7 +1493,7 @@ namespace WebApi.Repositories
             _contx.Update(user);
             await _contx.SaveChangesAsync();
 
-            await AddUserNotificationAsync(new UserNotification { ReceiverId = user.Id, IsLikedBack = false, Severity = Severity.Moderate, Section = Section.Neutral, Description = $"You have been granted premium access. Enjoy your benefits :)\nPremium expiration {user.PremiumExpirationDate.Value.ToString("dd.MM.yyyy")}" });
+            await AddUserNotificationAsync(new UserNotification { UserId = user.Id, IsLikedBack = false, Severity = Severity.Moderate, Section = Section.Neutral, Description = $"You have been granted premium access. Enjoy your benefits :)\nPremium expiration {user.PremiumExpirationDate.Value.ToString("dd.MM.yyyy")}" });
 
             return user.PremiumExpirationDate.Value;
         }
@@ -1507,7 +1513,7 @@ namespace WebApi.Repositories
 
         public async Task<byte> UpdateUserAppLanguageAsync(long userId, AppLanguage appLanguage)
         {
-            var userData = await _contx.UsersData.Where(u => u.Id == userId)
+            var userData = await _contx.UserData.Where(u => u.Id == userId)
                 .FirstOrDefaultAsync();
 
             if (userData != null)
@@ -1535,7 +1541,7 @@ namespace WebApi.Repositories
                     await _contx.SaveChangesAsync();
 
                     userData.Language = appLanguage;
-                    _contx.UsersData.Update(userData);
+                    _contx.UserData.Update(userData);
                     await _contx.SaveChangesAsync();
                 }
                 return 1;
@@ -1596,7 +1602,7 @@ namespace WebApi.Repositories
             location.CountryLang = model.CityCode != null? model.AppLanguageId : null;
 
             _contx.Users.Update(user);
-            _contx.UsersData.Update(user.Data);
+            _contx.UserData.Update(user.Data);
             _contx.UserLocations.Update(location);
             await _contx.SaveChangesAsync();
         }
@@ -1668,7 +1674,7 @@ namespace WebApi.Repositories
         {
 
             return await _contx.Notifications
-                .Where(r => r.ReceiverId == userId && r.SenderId != null)
+                .Where(r => r.UserId == userId && r.SenderId != null)
                 .Where(r => r.Section == Section.Familiator || r.Section == Section.Requester)
                 .ToListAsync();
 
@@ -1693,12 +1699,12 @@ namespace WebApi.Repositories
 
                 if ((byte)new Random().Next(0, 2) == 0)
                 {
-                    var senderUserName = await _contx.UsersData.Where(d => d.Id == request.SenderId)
+                    var senderUserName = await _contx.UserData.Where(d => d.Id == request.SenderId)
                         .Select(d => d.UserName)
                         .FirstOrDefaultAsync();
 
                     //Delete request, user had just responded to
-                    var requestId = await _contx.Notifications.Where(n => n.SenderId == request.ReceiverId && n.ReceiverId == request.SenderId)
+                    var requestId = await _contx.Notifications.Where(n => n.SenderId == request.UserId && n.UserId == request.SenderId)
                         .Select(n => n.Id)
                         .SingleOrDefaultAsync();
 
@@ -1710,13 +1716,13 @@ namespace WebApi.Repositories
                 }
                 else
                 {
-                    var receiverUserName = await _contx.UsersData
-                        .Where(d => d.Id == request.ReceiverId)
+                    var receiverUserName = await _contx.UserData
+                        .Where(d => d.Id == request.UserId)
                         .Select(d => d.UserName)
                         .FirstOrDefaultAsync();
 
                     //Delete request, user had just answered
-                    var requestId = await _contx.Notifications.Where(n => n.SenderId == request.ReceiverId && n.ReceiverId == request.SenderId)
+                    var requestId = await _contx.Notifications.Where(n => n.SenderId == request.UserId && n.UserId == request.SenderId)
                         .Select(n => n.Id)
                         .FirstOrDefaultAsync();
 
@@ -1730,7 +1736,7 @@ namespace WebApi.Repositories
             else
                 request.Section = Section.Familiator;
 
-            await RegisterUserEncounter(new Encounter { UserId = (long)request.SenderId, EncounteredUserId = request.ReceiverId, Section = Section.Requester });
+            await RegisterUserEncounter(new Encounter { UserId = (long)request.SenderId, EncounteredUserId = request.UserId, Section = Section.Requester });
 
             var id = await AddUserNotificationAsync(request);
 
@@ -1770,7 +1776,7 @@ namespace WebApi.Repositories
         public async Task<byte> DeleteUserRequests(long userId)
         {
             var requests = await _contx.Notifications
-                .Where(r => r.ReceiverId == userId)
+                .Where(r => r.UserId == userId)
                 .Where(r => r.Section == Section.Familiator || r.Section == Section.Requester)
                 .ToListAsync();
 
@@ -1796,7 +1802,7 @@ namespace WebApi.Repositories
         public async Task<bool> CheckUserHasRequests(long userId)
         {
             var requests = await _contx.Notifications
-                .Where(r => r.ReceiverId == userId)
+                .Where(r => r.UserId == userId)
                 .Where(r => r.Section == Section.Familiator || r.Section == Section.Requester)
                 .ToListAsync();
                 
@@ -1864,7 +1870,7 @@ namespace WebApi.Repositories
         public bool CheckRequestExists(long senderId, long recieverId)
         {
             return _contx.Notifications
-                .Where(r => r.SenderId == senderId && r.ReceiverId == recieverId)
+                .Where(r => r.SenderId == senderId && r.UserId == recieverId)
                 .Where(r => r.Section == Section.Requester || r.Section == Section.Familiator)
                 .FirstOrDefault() != null;
         }
@@ -2136,7 +2142,7 @@ namespace WebApi.Repositories
 
                 await AddUserNotificationAsync(new UserNotification
                 {
-                    ReceiverId = userId,
+                    UserId = userId,
                     IsLikedBack = false,
                     Description = $"Hey! new user had been registered via your link. Thanks for helping us grow!\nSo far, you have invited: {invitedUsersCount} people. \nYou receive 1p for every action they are maiking ;-)",
                     Section = Section.Registration,
@@ -2154,7 +2160,7 @@ namespace WebApi.Repositories
         {
             try
             {
-                await AddUserNotificationAsync(new UserNotification {ReceiverId=userId, Severity=Severity.Urgent, Section=Section.Neutral, Description="Your premium access has expired"});
+                await AddUserNotificationAsync(new UserNotification {UserId=userId, Severity=Severity.Urgent, Section=Section.Neutral, Description="Your premium access has expired"});
                 return true;
             }
             catch
@@ -2188,33 +2194,18 @@ namespace WebApi.Repositories
         public async Task<bool> CheckUserHasNotificationsAsync(long userId)
         {
             return await _contx.Notifications
-                .Where(n => n.ReceiverId == userId && n.Section != Section.Familiator && n.Section != Section.Requester)
+                .Where(n => n.UserId == userId && n.Section != Section.Familiator && n.Section != Section.Requester)
                 .CountAsync() > 0;
         }
 
         public async Task<List<UserNotification>> GetUserNotifications(long userId)
         {
             return await _contx.Notifications
-                .Where(n => n.ReceiverId == userId)
+                .Where(n => n.UserId == userId)
                 .ToListAsync();
         }
 
-        public async Task<bool> DeleteUserNotification(Guid notificationId)
-        {
-            try
-            {
-                var notification = await GetUserNotificationAsync(notificationId);
-
-                if (notification != null)
-                {
-                    return await DeleteUserNotification(notification);
-                }
-                return false;
-            }
-            catch { return false; }
-        }
-
-        public async Task<bool> DeleteUserNotification(UserNotification notification)
+        private async Task<bool> DeleteUserNotification(UserNotification notification)
         {
             try
             {
@@ -2304,16 +2295,18 @@ namespace WebApi.Repositories
             return 450; //TODO: Think if value should be hardcoded 
         }
 
-        public async Task<UserNotification> GetUserNotificationAsync(Guid notificationId)
+        public async Task<UserNotification> GetUserNotificationAsync(long notificationId)
         {
-            var notification = await _contx.Notifications.FindAsync(notificationId);
+            var notification = await _contx.Notifications.Where(n => n.Id == notificationId)
+                .FirstOrDefaultAsync();
 
             return notification;
         }
 
-        public async Task<byte> SendNotificationConfirmationCodeAsync(Guid notificationId)
+        public async Task<byte> DeleteNotificationAsync(long notificationId)
         {
-            var notification = await _contx.Notifications.FindAsync(notificationId);
+            var notification = await _contx.Notifications.Where(n => n.Id == notificationId)
+                .FirstOrDefaultAsync();
 
             if (notification == null)
                 return 0;
@@ -2326,7 +2319,7 @@ namespace WebApi.Repositories
 
         public async Task<List<long>> GetUserNotificationsIdsAsync(long userId)
         {
-            var ids = await _contx.Notifications.Where(n => n.ReceiverId == userId)
+            var ids = await _contx.Notifications.Where(n => n.UserId == userId)
                 .Select(n => n.Id)
                 .ToListAsync();
 
@@ -2628,16 +2621,16 @@ namespace WebApi.Repositories
         {
             try
             {
-                var userPrefs = await _contx.UsersSettings.Where(s => s.Id == userId)
+                var settings = await _contx.UsersSettings.Where(s => s.Id == userId)
                     .FirstOrDefaultAsync();
                 
-                if (userPrefs.ShouldUsePersonalityFunc)
+                if (settings.ShouldUsePersonalityFunc)
                 {
-                    userPrefs.ShouldUsePersonalityFunc = false;
+                    settings.ShouldUsePersonalityFunc = false;
                 }
                 else
                 {
-                    userPrefs.ShouldUsePersonalityFunc = true;
+                    settings.ShouldUsePersonalityFunc = true;
                     UserPersonalityStats personalityStats;
                     UserPersonalityPoints personalityPoints;
 
@@ -2658,10 +2651,10 @@ namespace WebApi.Repositories
                     }
                 }
 
-                _contx.UsersSettings.Update(userPrefs);
+                _contx.UsersSettings.Update(settings);
                 await _contx.SaveChangesAsync();
 
-                return userPrefs.ShouldUsePersonalityFunc;
+                return settings.ShouldUsePersonalityFunc;
             }
             catch { throw new NullReferenceException($"User {userId} does not exist !"); }
         }
@@ -2750,7 +2743,7 @@ namespace WebApi.Repositories
                     .Where(u => u.BlackList.All(l => l.BannedUserId != currentUser.Id))
                     //.Where(u => currentUser.BlackList.Where(l => l.BannedUserId == u.Id).FirstOrDefault() == null)
                     //Check if request already exists
-                    .Where(u => u.Notifications.All(n => n.SenderId != currentUser.Id && n.ReceiverId != currentUser.Id)) //May casuse errors
+                    .Where(u => u.Notifications.All(n => n.SenderId != currentUser.Id && n.UserId != currentUser.Id)) //May casuse errors
                     //.Where(u => u.Tags.Intersect(u.Tags).Count() >= 1)
                     .Include(u => u.Data)
                     .Include(u => u.Settings)
@@ -2826,11 +2819,11 @@ namespace WebApi.Repositories
 
         public async Task<string> RetreiveCommonLanguagesAsync(long user1Id, long user2Id, int localisationId)
         {
-            var user1Langs = await _contx.UsersData.Where(u => u.Id == user1Id)
+            var user1Langs = await _contx.UserData.Where(u => u.Id == user1Id)
                 .Select(u => u.UserLanguages)
                 .SingleOrDefaultAsync();
 
-            var user2Langs = await _contx.UsersData.Where(u => u.Id == user2Id)
+            var user2Langs = await _contx.UserData.Where(u => u.Id == user2Id)
                 .Select(u => u.UserLanguages)
                 .SingleOrDefaultAsync();
 
@@ -2847,12 +2840,12 @@ namespace WebApi.Repositories
         {
             try
             {
-                var data = await _contx.UsersData.Where(u => u.Id == userId)
+                var data = await _contx.UserData.Where(u => u.Id == userId)
                     .SingleOrDefaultAsync();
 
                 data.AutoReplyText = text;
 
-                _contx.UsersData.Update(data);
+                _contx.UserData.Update(data);
                 await _contx.SaveChangesAsync();
 
                 return true;
@@ -2866,12 +2859,12 @@ namespace WebApi.Repositories
             {
                 if (await CheckUserHasPremiumAsync(userId))
                 {
-                    var data = await _contx.UsersData.Where(u => u.Id == userId)
+                    var data = await _contx.UserData.Where(u => u.Id == userId)
                         .SingleOrDefaultAsync();
 
                     data.AutoReplyVoice = voice;
 
-                    _contx.UsersData.Update(data);
+                    _contx.UserData.Update(data);
                     await _contx.SaveChangesAsync();
 
                     return true;
@@ -2885,7 +2878,7 @@ namespace WebApi.Repositories
         public async Task<ActiveAutoReply> GetActiveAutoReplyAsync(long userId)
         {
             var reply = new ActiveAutoReply();
-            var replyData = await _contx.UsersData.Where(d => d.Id == userId)
+            var replyData = await _contx.UserData.Where(d => d.Id == userId)
                 .Select(d => new { d.AutoReplyText, d.AutoReplyVoice })
                 .FirstOrDefaultAsync();
 
@@ -3044,7 +3037,7 @@ namespace WebApi.Repositories
                             await RegisterUserRequestAsync(new UserNotification
                             {
                                 SenderId = userId,
-                                ReceiverId = (long)user2Id,
+                                UserId = (long)user2Id,
                                 IsLikedBack = false,
                                 Description = description,
                                 Section = Section.Familiator,
@@ -3226,16 +3219,16 @@ namespace WebApi.Repositories
 
         public async Task<bool> SwitchUserFilteringByPhotoAsync(long userId)
         {
-            var userPrefs = await _contx.UsersSettings.Where(p => p.Id == userId)
-                .SingleOrDefaultAsync();
+            var settings = await _contx.UsersSettings.Where(p => p.Id == userId)
+                .FirstOrDefaultAsync();
 
-            if (userPrefs == null)
+            if (settings == null)
                 throw new NullReferenceException($"User {userId} was not found");
 
-            userPrefs.ShouldFilterUsersWithoutRealPhoto = !userPrefs.ShouldFilterUsersWithoutRealPhoto;
+            settings.ShouldFilterUsersWithoutRealPhoto = !settings.ShouldFilterUsersWithoutRealPhoto;
             await _contx.SaveChangesAsync();
 
-            return userPrefs.ShouldFilterUsersWithoutRealPhoto;
+            return settings.ShouldFilterUsersWithoutRealPhoto;
         }
 
         public async Task<bool> GetUserFilteringByPhotoStatusAsync(long userId)
@@ -3251,7 +3244,7 @@ namespace WebApi.Repositories
 
         public async Task<List<GetTestShortData>> GetTestDataByPropertyAsync(long userId, short param)
         {
-            var localisation = await _contx.UsersData.Where(u => u.Id == userId).Select(u => u.Language)
+            var localisation = await _contx.UserData.Where(u => u.Id == userId).Select(u => u.Language)
                 .FirstOrDefaultAsync();
 
             //Get tests user already has
@@ -3445,17 +3438,17 @@ namespace WebApi.Repositories
 
         public async Task<bool> SwitchUserRTLanguageConsiderationAsync(long userId)
         {
-            var user = await _contx.UsersSettings.Where(u => u.Id == userId)
-                .SingleOrDefaultAsync();
+            var settings = await _contx.UsersSettings.Where(u => u.Id == userId)
+                .FirstOrDefaultAsync();
 
-            if (user == null)
+            if (settings == null)
                 throw new NullReferenceException($"User #{userId} does not exist");
 
-            user.ShouldConsiderLanguages = !user.ShouldConsiderLanguages;
+            settings.ShouldConsiderLanguages = !settings.ShouldConsiderLanguages;
 
             await _contx.SaveChangesAsync();
 
-            return user.ShouldConsiderLanguages;
+            return settings.ShouldConsiderLanguages;
         }
 
         public async Task<bool> GetUserRTLanguageConsiderationAsync(long userId)
@@ -3470,24 +3463,23 @@ namespace WebApi.Repositories
 
         public async Task SetUserCurrencyAsync(long userId, Currency currency)
         {
-            var user = await _contx.Users.FindAsync(userId);
+            var balance = await GetUserWalletBalance(userId);
 
-            if (user == null)
+            if (balance == null)
                 throw new NullReferenceException($"User #{userId} does not exist");
 
-            user.Currency = currency;
+            balance.Currency = currency;
             await _contx.SaveChangesAsync();
         }
 
         public async Task<bool> PurchaseEffectAsync(long userId, int effectId, int points, Currency currency, short count=1)
         {
             var balance = await GetUserWalletBalance(userId);
-            var user = await _contx.Users.Where(u => u.Id == userId)
-                .FirstOrDefaultAsync();
 
             if (balance != null)
             {
                 balance.Points -= points;
+                points *= -1;
                 switch (effectId)
                 {
                     case 5:
@@ -3495,42 +3487,42 @@ namespace WebApi.Repositories
                         if (currency == Currency.Points)
                             await RegisterUserWalletPurchaseInPoints(userId, points, $"User purchase of {count} Second Chance effect for point amount {points}");
                         else
-                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Second Chance effect for real money amount {points}", (Currency)user.Currency);
+                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Second Chance effect for real money amount {points}", (Currency)balance.Currency);
                         break;
                     case 6:
                         balance.Valentines += count;
                         if (currency == Currency.Points)
                             await RegisterUserWalletPurchaseInPoints(userId, points, $"User purchase of {count} Valentine effect for point amount {points}");
                         else
-                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Valentine effect for real money amount {points}", (Currency)user.Currency);
+                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Valentine effect for real money amount {points}", (Currency)balance.Currency);
                         break;
                     case 7:
                         balance.Detectors += count;
                         if (currency == Currency.Points)
                             await RegisterUserWalletPurchaseInPoints(userId, points, $"User purchase of {count} Detector effect for point amount {points}");
                         else
-                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Detector effect for real money amount {points}", (Currency)user.Currency);
+                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Detector effect for real money amount {points}", (Currency)balance.Currency);
                         break;
                     case 8:
                         balance.Nullifiers += count;
                         if (currency == Currency.Points)
                             await RegisterUserWalletPurchaseInPoints(userId, points, $"User purchase of {count} Nullifier effect for point amount {points}");
                         else
-                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Nullifier effect for real money amount {points}", (Currency)user.Currency);
+                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Nullifier effect for real money amount {points}", (Currency)balance.Currency);
                         break;
                     case 9:
                         balance.CardDecksMini += count;
                         if (currency == Currency.Points)
                             await RegisterUserWalletPurchaseInPoints(userId, points, $"User purchase of {count} Card Deck Mini effect for point amount {points}");
                         else
-                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Second Card Deck Mini for real money amount {points}", (Currency)user.Currency);
+                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Second Card Deck Mini for real money amount {points}", (Currency)balance.Currency);
                         break;
                     case 10:
                         balance.CardDecksPlatinum += count;
                         if (currency == Currency.Points)
                             await RegisterUserWalletPurchaseInPoints(userId, points, $"User purchase of {count} Card Deck Platinum effect for point amount {points}");
                         else
-                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Card Deck Platinum effect for real money amount {points}", (Currency)user.Currency);
+                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Card Deck Platinum effect for real money amount {points}", (Currency)balance.Currency);
                         break;
                     default:
                         break;
@@ -3569,19 +3561,18 @@ namespace WebApi.Repositories
             try
             {
                 var balance = await GetUserWalletBalance(userId);
-                var user = await _contx.Users.Where(u => u.Id == userId)
-                    .FirstOrDefaultAsync();
 
                 if (currency == Currency.Points)
                 {
                     balance.Points -= points;
+                    points *= -1;
                     balance.PersonalityPoints += count;
                     await RegisterUserWalletPurchaseInPoints(userId, points, $"User purchase of {count} Personality Points effect for point amount {points}");
                 }
                 else
                 {
                     balance.PersonalityPoints += count;
-                    await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Personality Points effect for real money amount {points}", (Currency)user.Currency);
+                    await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Personality Points effect for real money amount {points}", (Currency)balance.Currency);
                 }
                 await _contx.SaveChangesAsync();
                 return true;
@@ -3640,15 +3631,15 @@ namespace WebApi.Repositories
 
         public async Task<bool> SwitchIncreasedFamiliarityAsync(long userId)
         {
-            var user = await _contx.Users.FindAsync(userId);
+            var settings = await _contx.UsersSettings.FindAsync(userId);
 
-            if (user == null)
+            if (settings == null)
                 throw new NullReferenceException($"User {userId} does not exist !");
 
-            user.Settings.IncreasedFamiliarity = !user.Settings.IncreasedFamiliarity;
+            settings.IncreasedFamiliarity = !settings.IncreasedFamiliarity;
             await _contx.SaveChangesAsync();
 
-            return user.Settings.IncreasedFamiliarity;
+            return settings.IncreasedFamiliarity;
         }
 
         public async Task<bool> AddUserCommercialVector(long userId, string tagString)
@@ -3672,24 +3663,24 @@ namespace WebApi.Repositories
 
         public async Task<bool> SwitchUserFreeSearchParamAsync(long userId)
         {
-            var user = await _contx.UsersSettings.FindAsync(userId);
+            var settings = await _contx.UsersSettings.FindAsync(userId);
 
-            if (user == null)
+            if (settings == null)
                 throw new NullReferenceException($"User #{userId} does not exist");
 
             //null is the same thing as false in that case
-            if (user.IsFree == null)
+            if (settings.IsFree == null)
             {
-                user.IsFree = true;
+                settings.IsFree = true;
                 await _contx.SaveChangesAsync();
 
                 return true;
             }
 
-            user.IsFree = !user.IsFree;
+            settings.IsFree = !settings.IsFree;
             await _contx.SaveChangesAsync();
 
-            return (bool)user.IsFree;
+            return (bool)settings.IsFree;
         }
 
         public async Task<string> RegisterAdventureAsync(ManageAdventure model)
@@ -3785,7 +3776,7 @@ namespace WebApi.Repositories
             if (existingAttendee != null)
                 return ParticipationRequestStatus.AlreadyParticipating;
 
-            var userName = await _contx.UsersData.Where(u => u.Id == userId)
+            var userName = await _contx.UserData.Where(u => u.Id == userId)
                 .Select(u => u.UserName)
                 .FirstOrDefaultAsync();
 
@@ -3795,7 +3786,7 @@ namespace WebApi.Repositories
                 Severity = Severity.Urgent,
                 Description = "Someone had requested participation in your adventure", //TODO: Perhaps clarify if actions had been done with use of unique code
                 SenderId = userId,
-                ReceiverId = adventure.UserId
+                UserId = adventure.UserId
             });
 
             var newAttendee = new AdventureAttendee
@@ -3840,7 +3831,7 @@ namespace WebApi.Repositories
 
                 await AddUserNotificationAsync(new UserNotification
                 {
-                    ReceiverId = userId,
+                    UserId = userId,
                     Section = Section.Adventurer,
                     Severity = Severity.Moderate,
                     Description = $"Your request to join adventure {adventure.Name} had been accepted.\n{contact}"
@@ -4047,31 +4038,31 @@ namespace WebApi.Repositories
 
         public async Task SwitchHintsVisibilityAsync(long userId)
         {
-            var user = await  _contx.Users.Where(u => u.Id == userId)
+            var settings = await  _contx.UsersSettings.Where(u => u.Id == userId)
                 .FirstOrDefaultAsync();
 
-            if (user == null)
+            if (settings == null)
                 return;
 
-            user.Settings.ShouldSendHints = !user.Settings.ShouldSendHints;
+            settings.ShouldSendHints = !settings.ShouldSendHints;
             await _contx.SaveChangesAsync();
         }
 
         public async Task SwitchSearchCommentsVisibilityAsync(long userId)
         {
-            var user = await _contx.Users.Where(u => u.Id == userId)
+            var settings = await _contx.UsersSettings.Where(u => u.Id == userId)
                 .FirstOrDefaultAsync();
 
-            if (user == null)
+            if (settings == null)
                 return;
 
-            user.Settings.ShouldComment = !user.Settings.ShouldComment;
+            settings.ShouldComment = !settings.ShouldComment;
             await _contx.SaveChangesAsync();
         }
 
         public async Task<GetUserMedia> GetUserMediaAsync(long userId)
         {
-            return await _contx.UsersData.Where(u => u.Id == userId).Select(u => new GetUserMedia
+            return await _contx.UserData.Where(u => u.Id == userId).Select(u => new GetUserMedia
             {
                 Media = u.UserMedia,
                 IsPhoto = u.IsMediaPhoto
@@ -4220,7 +4211,7 @@ namespace WebApi.Repositories
 
             await AddUserNotificationAsync(new UserNotification
             {
-                ReceiverId = attendee.UserId,
+                UserId = attendee.UserId,
                 Section = Section.Adventurer,
                 Severity = Severity.Urgent,
                 Description = "You have been removed from one of the adventures" // TODO: More precise ?

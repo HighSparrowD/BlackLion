@@ -140,7 +140,7 @@ namespace WebApi.Repositories
                 var userPurchases = await _contx.Transaction.Where(u => u.UserId == userId).ToListAsync();
                 var userBalances = await _contx.Balances.Where(u => u.UserId == userId).ToListAsync();
                 var userNotifications = await _contx.Notifications.Where(u => u.SenderId == userId).ToListAsync();
-                var userNotifications1 = await _contx.Notifications.Where(u => u.ReceiverId == userId).ToListAsync();
+                var userNotifications1 = await _contx.Notifications.Where(u => u.UserId == userId).ToListAsync();
                 var sponsorRatings = await _contx.SponsorRatings.Where(u => u.UserId == userId).ToListAsync();
                 var userTrustLevel = await _contx.TrustLevels.Where(u => u.Id == userId).SingleOrDefaultAsync();
                 var userInvitations = await _contx.Invitations.Where(u => u.InviterCredentials.UserId == userId).ToListAsync();
@@ -298,7 +298,7 @@ namespace WebApi.Repositories
                 await Task.Run(async() => {             
                     foreach (var achievement in achievements)
                     {
-                        var users = await _contx.UsersData.ToListAsync();
+                        var users = await _contx.UserData.ToListAsync();
                         foreach (var user in users)
                         {
                             if (achievement.Language == user.Language)
@@ -372,7 +372,7 @@ namespace WebApi.Repositories
                 await _userRep.AddUserNotificationAsync(new Entities.UserActionEntities.UserNotification
                 {
                     Description = $"Your identity confirmation had been accepted :)\n{model.Comment}",
-                    ReceiverId = request.UserId,
+                    UserId = request.UserId,
                     Severity = Severity.Urgent,
                     Section = Section.Neutral,
                 });
@@ -380,7 +380,7 @@ namespace WebApi.Repositories
                 await _userRep.AddUserNotificationAsync(new Entities.UserActionEntities.UserNotification
                 {
                     Description = $"Sorry, your identity confirmation request had been denied.\n{model.Comment}",
-                    ReceiverId = request.UserId,
+                    UserId = request.UserId,
                     Severity = Severity.Urgent,
                     Section = Section.Neutral,
                 });

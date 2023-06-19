@@ -470,12 +470,6 @@ namespace WebApi.Controllers
             return await _repository.GetUserNotifications(userId);
         }
 
-        [HttpGet("/DeleteUserNotification/{userId}/{notificationId}")]
-        public async Task<bool> DeleteUserNotification(Guid notificationId)
-        {
-            return await _repository.DeleteUserNotification(notificationId);
-        }
-
         [HttpGet("/GetRandomAchievements/{userId}")]
         public async Task<List<string>> GetRandomAchievements(long userId)
         {
@@ -501,15 +495,15 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/GetUserNotification/{notificationId}")]
-        public async Task<UserNotification> GetUserNotification(Guid notificationId)
+        public async Task<UserNotification> GetUserNotification(long notificationId)
         {
             return await _repository.GetUserNotificationAsync(notificationId);
         }
 
-        [HttpGet("/SendNotificationConfirmationCode/{notificationId}")]
-        public async Task<byte> SendNotificationConfirmationCode(Guid notificationId)
+        [HttpGet("/delete-notification/{notificationId}")]
+        public async Task<byte> DeleteNotification(long notificationId)
         {
-            return await _repository.SendNotificationConfirmationCodeAsync(notificationId);
+            return await _repository.DeleteNotificationAsync(notificationId);
         }
 
         [HttpGet("/GetUserPersonalityPointsAmount/{userId}")]
