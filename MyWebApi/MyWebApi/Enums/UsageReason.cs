@@ -9,6 +9,8 @@ public enum UsageReason : byte
     Friendship = 1,
     //[Display(Name = "UsageReason_Sex")]
     //Sex = 2,
+    [Display(Name = "UsageReason_Communication")]
+    Communication = 2,
     [Display(Name = "UsageReason_NoMatter")]
     NoMatter = 3
 }

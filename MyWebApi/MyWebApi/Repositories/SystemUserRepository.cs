@@ -20,6 +20,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using static WebApi.Enums.SystemEnums;
 using WebApi.Entities;
+using WebApi.App_GlobalResources;
 
 namespace WebApi.Repositories
 {
@@ -190,12 +191,15 @@ namespace WebApi.Repositories
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<List<GetUserData>> GetUsersAsync(long userId, bool isRepeated=false, bool isFreeSearch = false)
+        public async Task<SearchResponse> GetUsersAsync(long userId, bool isRepeated=false, bool isFreeSearch = false)
         {
-            const byte minProfilesCount = 5;
+            var currentUser = await GetUserInfoAsync(userId);
             var returnData = new List<GetUserData>();
 
-            var currentUser = await GetUserInfoAsync(userId);
+            if (currentUser.ProfileViewsCount >= currentUser.MaxProfileViewsCount)
+                return new SearchResponse(Resources.ResourceManager.GetString("Familiator_OutOfViews"));
+
+            var profileCount = currentUser.MaxProfileViewsCount - currentUser.ProfileViewsCount;
 
             //Check if user STILL has premium
             await CheckUserHasPremiumAsync(currentUser.Id);
@@ -219,6 +223,10 @@ namespace WebApi.Repositories
                 .Include(u => u.Location)
                 .Include(u => u.Settings)
                 .AsNoTracking();
+
+            //Free search
+            if (isFreeSearch)
+                query = query.Where(u => u.Settings.IsFree != null && (bool)u.Settings.IsFree);
 
             //Identity check
             if (currentUser.Settings.ShouldFilterUsersWithoutRealPhoto && currentUser.HasPremium)
@@ -266,28 +274,28 @@ namespace WebApi.Repositories
                 }
             }
 
-            //TODO: Reconsider usefulness
-            //Check if method wasnt already repeated
-            if (!isRepeated)
-            {
-                //Check if users count is less than the limit
-                if (returnData.Count <= minProfilesCount)
-                {
-                    returnData = await GetUsersAsync(userId, isRepeated: true, isFreeSearch: isFreeSearch);
-                }
+            ////TODO: Reconsider usefulness
+            ////Check if method wasnt already repeated
+            //if (!isRepeated)
+            //{
+            //    //Check if users count is less than the limit
+            //    if (returnData.Count <= profileCount)
+            //    {
+            //        returnData = await GetUsersAsync(userId, isRepeated: true, isFreeSearch: isFreeSearch);
+            //    }
 
-                //Add user trust exp only if method was not repeated
-                await AddUserTrustProgressAsync(userId, 0.000003);
+            //    //Add user trust exp only if method was not repeated
+            //    await AddUserTrustProgressAsync(userId, 0.000003);
 
-                //Order user list randomly 
-                returnData = returnData.OrderBy(u => new Random().Next())
-                    .ToList();
+            //    //Order user list randomly 
+            //    returnData = returnData.OrderBy(u => new Random().Next())
+            //        .ToList();
 
-                returnData.OrderByDescending(u => u.CityId == currentUser.Location.CityId)
-                    .ToList();
-            }
+            //    returnData.OrderByDescending(u => u.CityId == currentUser.Location.CityId)
+            //        .ToList();
+            //}
 
-            return returnData;
+            return new SearchResponse(returnData);
         }
 
         private async Task<GetUserData> AssembleProfileAsync(User currentUser, User foundUser)
@@ -2718,7 +2726,7 @@ namespace WebApi.Repositories
             { return null; }
         }
 
-        public async Task<GetUserData> GetUserListByTagsAsync(GetUserByTags model)
+        public async Task<SearchResponse> GetUserByTagsAsync(GetUserByTags model)
         {
             var currentUser = await GetUserInfoAsync(model.UserId);
             var hasActiveDetector = await CheckEffectIsActiveAsync(currentUser.Id, Currency.TheDetector);
@@ -2728,7 +2736,7 @@ namespace WebApi.Repositories
 
             //User has already reached his limit;
             if (currentUser.TagSearchesCount > currentUser.MaxTagSearchCount)
-                return null;
+                return new SearchResponse(Resources.ResourceManager.GetString("Familiator_OutOfTags"));
 
             var query = _contx.Users
                     .Where(u => u.Id != currentUser.Id)
@@ -2792,7 +2800,7 @@ namespace WebApi.Repositories
             if (hasActiveDetector)
                 outputUser.AddDescriptionBonusDownwards(String.Join(" ", user.Tags));
 
-            return outputUser;
+            return new SearchResponse(outputUser);
         }
 
         public async Task<bool?> CheckUserUsesPersonality(long userId)

@@ -36,7 +36,7 @@ namespace WebApi.Interfaces
         Task<UserPartialData> GetUserPartialData(long userId);
         Task<byte> UpdateUserAppLanguageAsync(long userId, AppLanguage appLanguage);
         Task UpdateUserAsync (UpdateUserProfile model);
-        Task<List<GetUserData>> GetUsersAsync(long userId, bool isRepeated=false, bool isFreeSearch = false);
+        Task<SearchResponse> GetUsersAsync(long userId, bool isRepeated=false, bool isFreeSearch = false);
         Task<bool> CheckUserExists(long id);
         Task<int> GetUserAppLanguage(long id);
         Task<long> RegisterUserAsync(UserRegistrationModel model, bool wasRegistered=false);
@@ -114,7 +114,7 @@ namespace WebApi.Interfaces
         Task<bool> RegisterTestPassingAsync(TestPayload model, int testResult);
         Task<bool> UpdateTags(UpdateTags model);
         Task<List<UserTag>> GetTags(long userId);
-        Task<GetUserData> GetUserListByTagsAsync(GetUserByTags model);
+        Task<SearchResponse> GetUserByTagsAsync(GetUserByTags model);
         Task<bool> CheckEncounteredUserIsInBlackList(long userId, long encounteredUser);
         Task<string> RetreiveCommonLanguagesAsync(long user1Iq, long user2Id, int localisationId);
         Task<bool> SetAutoReplyTextAsync(long userId, string text);

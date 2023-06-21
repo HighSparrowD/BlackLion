@@ -135,6 +135,12 @@
   <data name="CommunicationPreference_Online" xml:space="preserve">
     <value>Онлайн</value>
   </data>
+  <data name="Familiator_OutOfTags" xml:space="preserve">
+    <value>Извините, на сегодня у вас закончился поиск по тегам.\nВы все еще можете использовать Card Deck Mini или Card Deck Premium для пополнения просмотров, купить премиум и тем самым удвоить количество просмотров, или подождать до завтра :)</value>
+  </data>
+  <data name="Familiator_OutOfViews" xml:space="preserve">
+    <value>Извините, на сегодняшний день у вас закончились просмотры анкет.\nВы все еще можете использовать Card Deck Mini или Card Deck Premium для пополнения просмотров, купить премиум и тем самым удвоить количество просмотров, или подождать до завтра :)</value>
+  </data>
   <data name="FeedbackReason_Test" xml:space="preserve">
     <value />
   </data>
@@ -155,6 +161,9 @@
   </data>
   <data name="ReportReason_TestReason" xml:space="preserve">
     <value>Просто тестирую</value>
+  </data>
+  <data name="UsageReason_Communication" xml:space="preserve">
+    <value>Общение</value>
   </data>
   <data name="UsageReason_Friendship" xml:space="preserve">
     <value>Дружба</value>

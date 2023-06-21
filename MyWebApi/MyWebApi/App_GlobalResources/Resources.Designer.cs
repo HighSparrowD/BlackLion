@@ -115,6 +115,24 @@ namespace WebApi.App_GlobalResources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Sorry, you have run out of tag searches for today.\nYou can still use Card Deck Mini or Card Deck Premium to replenish your views, buy premium and thus double your view count, or wait until tomorrow :).
+        /// </summary>
+        public static string Familiator_OutOfTags {
+            get {
+                return ResourceManager.GetString("Familiator_OutOfTags", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Sorry, you have run out of profile searches for today.\nYou can still use Card Deck Mini or Card Deck Premium to replenish your views, buy premium and thus double your view count, or wait until tomorrow :).
+        /// </summary>
+        public static string Familiator_OutOfViews {
+            get {
+                return ResourceManager.GetString("Familiator_OutOfViews", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Test.
         /// </summary>
         public static string FeedbackReason_Test {
@@ -174,6 +192,15 @@ namespace WebApi.App_GlobalResources {
         public static string ReportReason_TestReason {
             get {
                 return ResourceManager.GetString("ReportReason_TestReason", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Communication.
+        /// </summary>
+        public static string UsageReason_Communication {
+            get {
+                return ResourceManager.GetString("UsageReason_Communication", resourceCulture);
             }
         }
         
