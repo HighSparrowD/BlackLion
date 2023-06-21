@@ -197,7 +197,7 @@ namespace WebApi.Repositories
             var returnData = new List<GetUserData>();
 
             if (currentUser.ProfileViewsCount >= currentUser.MaxProfileViewsCount)
-                return new SearchResponse(Resources.ResourceManager.GetString("Familiator_OutOfViews"));
+                return new SearchResponse();
 
             var profileCount = currentUser.MaxProfileViewsCount - currentUser.ProfileViewsCount;
 
@@ -2735,8 +2735,8 @@ namespace WebApi.Repositories
             await CheckUserHasPremiumAsync(model.UserId);
 
             //User has already reached his limit;
-            if (currentUser.TagSearchesCount > currentUser.MaxTagSearchCount)
-                return new SearchResponse(Resources.ResourceManager.GetString("Familiator_OutOfTags"));
+            if (currentUser.TagSearchesCount >= currentUser.MaxTagSearchCount)
+                return new SearchResponse();
 
             var query = _contx.Users
                     .Where(u => u.Id != currentUser.Id)

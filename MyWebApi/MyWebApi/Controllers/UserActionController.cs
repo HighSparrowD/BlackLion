@@ -555,7 +555,7 @@ namespace WebApi.Controllers
         }
 
         [HttpPost("/GetUserByTags")]
-        public async Task<GetUserData> GetUserByTags(GetUserByTags model)
+        public async Task<SearchResponse> GetUserByTags(GetUserByTags model)
         {
             return await _repository.GetUserByTagsAsync(model);
         }

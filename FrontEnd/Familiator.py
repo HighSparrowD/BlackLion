@@ -113,7 +113,8 @@ class Familiator:
         self.start(msg)
 
     def normal_search_handler(self, message):
-        self.people = Helpers.get_user_list(self.current_user)
+        response = Helpers.get_user_list(self.current_user)
+        self.people = response["users"]
         if self.people:
             if self.set_active_person():
                 self.show_person(message)
@@ -138,20 +139,21 @@ class Familiator:
                     "tags": tags
                 }
 
-                person = Helpers.get_user_list_by_tags(data)
-                if not person:
+                response = Helpers.get_user_list_by_tags(data)
+                self.people = response["users"]
+                if not self.people:
                     self.bot.send_message(self.current_user, "No users matches your request yet. Try again with another tag list :)")
                     self.bot.register_next_step_handler(message, self.search_by_tags, acceptMode=True, chat_id=self.current_user)
                     return
 
-                self.people.append(person)
                 self.proceed()
             else:
                 self.bot.send_message(self.current_user, f"Invalid tag count")
                 self.bot.register_next_step_handler(message, self.search_by_tags, acceptMode=True, chat_id=self.current_user)
 
     def free_search(self):
-        Helpers.get_free_user_list(self.current_user)
+        response = Helpers.get_free_user_list(self.current_user)
+        self.people = response["users"]
         self.proceed()
 
     #TODO: remove
