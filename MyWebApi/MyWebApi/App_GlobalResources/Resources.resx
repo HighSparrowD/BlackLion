@@ -135,6 +135,12 @@
   <data name="CommunicationPreference_Online" xml:space="preserve">
     <value>Online</value>
   </data>
+  <data name="Familiator_OutOfTags" xml:space="preserve">
+    <value>Sorry, you have run out of tag searches for today.\nYou can still use Card Deck Mini or Card Deck Premium to replenish your views, buy premium and thus double your view count, or wait until tomorrow :)</value>
+  </data>
+  <data name="Familiator_OutOfViews" xml:space="preserve">
+    <value>Sorry, you have run out of profile searches for today.\nYou can still use Card Deck Mini or Card Deck Premium to replenish your views, buy premium and thus double your view count, or wait until tomorrow :)</value>
+  </data>
   <data name="FeedbackReason_Test" xml:space="preserve">
     <value>Test</value>
   </data>
@@ -155,6 +161,9 @@
   </data>
   <data name="ReportReason_TestReason" xml:space="preserve">
     <value>Just testing out</value>
+  </data>
+  <data name="UsageReason_Communication" xml:space="preserve">
+    <value>Communication</value>
   </data>
   <data name="UsageReason_Friendship" xml:space="preserve">
     <value>Friendship</value>

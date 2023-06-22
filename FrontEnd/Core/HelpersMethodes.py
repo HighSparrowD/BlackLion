@@ -296,14 +296,14 @@ def get_user_list(userId):
 
 def get_user_list_turnOffPersonality(userId):
     try:
-        return json.loads(requests.get(f"{api_address}//GetUserList/TurnOffP/{userId}", verify=False).text)
+        return json.loads(requests.get(f"{api_address}/GetUserList/TurnOffP/{userId}", verify=False).text)
     except:
         return None
 
 
 def get_free_user_list(userId):
     try:
-        return json.loads(requests.get(f"{api_address}//GetUserList/FreeSearch/{userId}", verify=False).text)
+        return json.loads(requests.get(f"{api_address}/GetUserList/FreeSearch/{userId}", verify=False).text)
     except:
         return None
 

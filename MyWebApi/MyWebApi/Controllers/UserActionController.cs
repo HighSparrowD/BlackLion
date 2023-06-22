@@ -100,13 +100,13 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/GetUserList")]
-        public async Task<List<GetUserData>> GetUserList(long userId)
+        public async Task<SearchResponse> GetUserList(long userId)
         {
             return await _repository.GetUsersAsync(userId);
         }
 
         [HttpGet("/GetUserList/FreeSearch/{userId}")]
-        public async Task<List<GetUserData>> GetUserList3(long userId)
+        public async Task<SearchResponse> GetUserList3(long userId)
         {
             return await _repository.GetUsersAsync(userId, isFreeSearch: true);
         }
@@ -555,9 +555,9 @@ namespace WebApi.Controllers
         }
 
         [HttpPost("/GetUserByTags")]
-        public async Task<GetUserData> GetUserByTags(GetUserByTags model)
+        public async Task<SearchResponse> GetUserByTags(GetUserByTags model)
         {
-            return await _repository.GetUserListByTagsAsync(model);
+            return await _repository.GetUserByTagsAsync(model);
         }
 
         [HttpGet("/CheckUserUsesPersonality/{userId}")]
