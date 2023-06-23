@@ -1194,34 +1194,41 @@ namespace WebApi.Repositories
 
         public async Task<bool> CheckUsersAreCombinableRT(long user1, long user2)
         {
-            var userInfo1 = await GetUserInfoAsync(user1);
-            var userInfo2 = await GetUserInfoAsync(user2);
+            var userInfo1 = await _contx.Users.Where(u => u.Id == user1)
+                .Include(u => u.Data)
+                .Include(u => u.Location)
+                .Include(u => u.Settings)
+                .Include(u => u.BlackList)
+                .Include(u => u.Encounters)
+                .FirstOrDefaultAsync();
 
-            var user1Encounters = await GetUserEncounters(user1, Section.RT);
+            var userInfo2 = await _contx.Users.Where(u => u.Id == user1)
+                .Include(u => u.Data)
+                .Include(u => u.Location)
+                .Include(u => u.Settings)
+                .Include(u => u.BlackList)
+                .Include(u => u.Encounters)
+                .FirstOrDefaultAsync();
 
             //Check if users are not in each others blacklists
-            var usersAreNotInBlackList =
-                (await _contx.UserBlacklists.Where(l => l.UserId == user1 && l.BannedUserId == user2).FirstOrDefaultAsync()) == null
+            var usersAreNotInBlackList = !userInfo1.BlackList.Any(u => u.UserId == user2) 
                 &&
-                (await _contx.UserBlacklists.Where(l => l.UserId == user2 && l.BannedUserId == user1).FirstOrDefaultAsync()) == null;
+                !userInfo2.BlackList.Any(u => u.UserId == user1);
 
             if (usersAreNotInBlackList)
             {
                 //Check if user1 has encountered user2
                 //In that case, checking 1 encounter is enough
-                if (user1Encounters.Where(e => e.EncounteredUserId == user2).SingleOrDefault() == null)
+                if (!userInfo1.Encounters.Any(e => e.UserId == user2))
                 {   
                     //If both consider having the same languages
                     if(userInfo1.Settings.ShouldConsiderLanguages && userInfo2.Settings.ShouldConsiderLanguages)
                     {
                         await AddUserTrustProgressAsync(user1, 0.000005 * (double)userInfo1.BonusIndex);
                         await AddUserTrustProgressAsync(user2, 0.000005 * (double)userInfo2.BonusIndex);
-                        
-                        var result = (await _contx.Users
-                            .Where(u => u.Id == user2)
-                            .Where(u => userInfo1.Data.UserLanguages.Any(l => u.Data.LanguagePreferences.Contains(l)))
-                            .Where(u => u.Data.UserLanguages.Any(l => userInfo1.Data.LanguagePreferences.Contains(l)))
-                            .SingleOrDefaultAsync()) != null;
+
+                        var result = userInfo1.Data.UserLanguages.Any(l => userInfo2.Data.LanguagePreferences.Contains(l))
+                            && userInfo2.Data.UserLanguages.Any(l => userInfo1.Data.LanguagePreferences.Contains(l));
 
                         if (result)
                         {
@@ -1237,10 +1244,7 @@ namespace WebApi.Repositories
                         await AddUserTrustProgressAsync(user1, 0.000005 * (double)userInfo1.BonusIndex);
                         await AddUserTrustProgressAsync(user2, 0.000005 * (double)userInfo2.BonusIndex);
 
-                        var result = (await _contx.Users
-                            .Where(u => u.Id == user2)
-                            .Where(u => u.Data.UserLanguages.Any(l => userInfo1.Data.LanguagePreferences.Contains(l)))
-                            .SingleOrDefaultAsync()) != null;
+                        var result = userInfo2.Data.UserLanguages.Any(l => userInfo1.Data.LanguagePreferences.Contains(l));
 
                         if (result)
                         {
@@ -1256,10 +1260,7 @@ namespace WebApi.Repositories
                         await AddUserTrustProgressAsync(user1, 0.000005 * (double)userInfo1.BonusIndex);
                         await AddUserTrustProgressAsync(user2, 0.000005 * (double)userInfo2.BonusIndex);
 
-                        var result = (await _contx.Users
-                            .Where(u => u.Id == user2)
-                            .Where(u => userInfo1.Data.UserLanguages.Any(l => u.Data.LanguagePreferences.Contains(l)))
-                            .SingleOrDefaultAsync()) != null; ;
+                        var result = userInfo1.Data.UserLanguages.Any(l => userInfo2.Data.LanguagePreferences.Contains(l));
 
                         if (result)
                         {
