@@ -1196,7 +1196,6 @@ namespace WebApi.Repositories
         {
             var userInfo1 = await _contx.Users.Where(u => u.Id == user1)
                 .Include(u => u.Data)
-                .Include(u => u.Location)
                 .Include(u => u.Settings)
                 .Include(u => u.BlackList)
                 .Include(u => u.Encounters)
@@ -1204,7 +1203,6 @@ namespace WebApi.Repositories
 
             var userInfo2 = await _contx.Users.Where(u => u.Id == user1)
                 .Include(u => u.Data)
-                .Include(u => u.Location)
                 .Include(u => u.Settings)
                 .Include(u => u.BlackList)
                 .Include(u => u.Encounters)
