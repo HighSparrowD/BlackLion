@@ -1232,8 +1232,8 @@ namespace WebApi.Repositories
 
                         if (result)
                         {
-                            await RegisterUserEncounter(new Encounter { UserId = user1, EncounteredUserId = user2 });
-                            await RegisterUserEncounter(new Encounter { UserId = user2, EncounteredUserId = user1 });
+                            await RegisterUserEncounter(new Encounter { UserId = user1, EncounteredUserId = user2, Section = Section.RT });
+                            await RegisterUserEncounter(new Encounter { UserId = user2, EncounteredUserId = user1, Section = Section.RT });
                         }
 
                         return result;
@@ -1248,8 +1248,8 @@ namespace WebApi.Repositories
 
                         if (result)
                         {
-                            await RegisterUserEncounter(new Encounter { UserId = user1, EncounteredUserId = user2 });
-                            await RegisterUserEncounter(new Encounter { UserId = user2, EncounteredUserId = user1 });
+                            await RegisterUserEncounter(new Encounter { UserId = user1, EncounteredUserId = user2, Section = Section.RT});
+                            await RegisterUserEncounter(new Encounter { UserId = user2, EncounteredUserId = user1, Section = Section.RT });
                         }
 
                         return result;
@@ -1264,8 +1264,8 @@ namespace WebApi.Repositories
 
                         if (result)
                         {
-                            await RegisterUserEncounter(new Encounter { UserId = user1, EncounteredUserId = user2 });
-                            await RegisterUserEncounter(new Encounter { UserId = user2, EncounteredUserId = user1 });
+                            await RegisterUserEncounter(new Encounter { UserId = user1, EncounteredUserId = user2, Section = Section.RT});
+                            await RegisterUserEncounter(new Encounter { UserId = user2, EncounteredUserId = user1, Section = Section.RT });
                         }
 
                         return result;
@@ -1274,8 +1274,8 @@ namespace WebApi.Repositories
                     await AddUserTrustProgressAsync(user1, 0.000005 * (double)userInfo1.BonusIndex);
                     await AddUserTrustProgressAsync(user2, 0.000005 * (double)userInfo2.BonusIndex);
 
-                    await RegisterUserEncounter(new Encounter { UserId = user1, EncounteredUserId = user2 });
-                    await RegisterUserEncounter(new Encounter { UserId = user2, EncounteredUserId = user1 });
+                    await RegisterUserEncounter(new Encounter { UserId = user1, EncounteredUserId = user2, Section = Section.RT });
+                    await RegisterUserEncounter(new Encounter { UserId = user2, EncounteredUserId = user1, Section = Section.RT });
 
                     //If neither considers having the same languages
                     return true;
