@@ -125,6 +125,9 @@ namespace WebApi.Services.Background
 
             //Remove old transactions
             await backgroundRepo.DeleteOldTransactionsAsync();
+
+            //Remove old encounters
+            await backgroundRepo.DeleteOldEncountersAsync();
         }
     }
 }
