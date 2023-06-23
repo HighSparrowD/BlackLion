@@ -88,7 +88,6 @@ class RandomTalker:
     def start(self, user):
         self.user2_base = user
         self.user2 = user.current_user
-        Helpers.register_user_encounter_rt(self.current_user, self.user2)
         self.bot.send_message(self.current_user, "We have found someone for you!\nYou can start chatting!", reply_markup=self.user_action_markup)
         self.rh = self.bot.register_message_handler(self.random_handler, user_id=self.current_user)
         self.isConversing = True
