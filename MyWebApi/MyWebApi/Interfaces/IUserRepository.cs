@@ -176,6 +176,7 @@ namespace WebApi.Interfaces
         Task<List<Adventure>> GetUsersSubscribedAdventuresAsync(long userId);
         Task<List<GetAdventure>> GetUserAdventuresAsync(long userId);
         Task<ManageAdventure> GetAdventureAsync(long id);
+        Task<AdventureSearchResponse> GetAdventuresAsync(long userId);
         Task<bool> SaveAdventureTemplateAsync(ManageTemplate model);
         Task<DeleteResult> DeleteAdventureTemplateAsync(long templateId);
         Task<DeleteResult> DeleteAdventureAttendeeAsync(long adventureId, long attendeeId);

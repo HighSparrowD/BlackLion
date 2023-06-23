@@ -16,8 +16,8 @@ class Adventurer:
         self.user_info = Helpers.get_user_info(self.current_user)
         self.hasVisited = hasVisited
         self.hasPremium = self.user_info["hasPremium"]
-        self.isIdentityConfirmed = self.user_info["identityType"] != 0
-        self.user_localization = self.user_info["userDataInfo"]["languageId"]
+        self.isIdentityConfirmed = self.user_info["identityType"] != "None"
+        self.user_localization = self.user_info["data"]["language"]
 
         #Indicates whether if user is managing his own adventures (1), subscribed adventures (2), a template (3), create from template (4)
         self.manageMode = 1
@@ -44,9 +44,14 @@ class Adventurer:
         self.doesExist = False
         self.editMode = False
         self.isCreatedFromTemplate = False
+
         #User's location
-        self.country = self.user_info["userDataInfo"]["location"]["countryId"]
-        self.city = self.user_info["userDataInfo"]["location"]["cityId"]
+        self.country = None
+        self.city = None
+
+        if self.user_info["location"]:
+            self.country = self.user_info["location"]["countryId"]
+            self.city = self.user_info["location"]["cityId"]
 
         #Used for template management
         self.current_template = 0
@@ -127,19 +132,19 @@ class Adventurer:
         self.subscribed_adventuresMarkup = InlineKeyboardMarkup()
 
         self.starting_message = "It's time for adventures!\n The Adventures feature allows users to create and join various adventures with other users.\n Creating adventures is simple: the user selects the desired activity, date and location, and then invites other users to join.\n When other users confirm their participation, they can start chatting and plan the details of the adventure in chat.\n You can offer anything, but only what is legal in your country"
-        self.verification_message = "For comfortable and safe use of this module, we have added a system of organizer verification.\nIt is designed for users to be sure that you are who you say you are and won't use this module with malicious intent\nVerifying your identity will give you more credibility. Users will be more motivated by your adventure.\n\n Would you like to do verification now or later?"
+        self.verification_message = "For comfortable and safe usege of this module, we have added a system of organizer verification.\nIt is designed for users to be sure that you are who you say you are and won't use this module with malicious intent\nVerifying your identity will give you more credibility. Users will be more motivated by your adventure.\n\n Would you like to do verification now or later?"
         self.location_message = "Where will the adventure be shown?"
 
         self.statusDict = {
-            1: "❓", # New
-            2: "❓", # Changed
-            3: "✅", # Accepted
-            4: "❌", # Declined
+            "New": "❓", # New
+            "Changed": "❓", # Changed
+            "Accepted": "✅", # Accepted
+            "Deleted": "❌", # Deleted
         }
 
         self.attendee_statusDict = {
-            1: "❓", # New
-            2: "✅" # Accepted
+            "New": "❓", # New
+            "Accepted": "✅" # Accepted
         }
 
         self.active_location_markup = None
@@ -1165,7 +1170,7 @@ class Adventurer:
         self.manageMode = 3
         self.previous_section = self.start
         self.assemble_my_templates_markup()
-        self.send_active_message("<b><i>Please, select markup you want to manage</i></b>", markup=self.my_templatesMarkup)
+        self.send_active_message("<b><i>Please, select a template you want to manage</i></b>", markup=self.my_templatesMarkup)
 
     def manage_single_template(self, templateId):
         self.current_template = templateId

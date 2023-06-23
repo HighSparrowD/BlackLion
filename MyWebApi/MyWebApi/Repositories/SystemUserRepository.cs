@@ -18,9 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using static WebApi.Enums.SystemEnums;
 using WebApi.Entities;
-using WebApi.App_GlobalResources;
 
 namespace WebApi.Repositories
 {
@@ -74,7 +72,7 @@ namespace WebApi.Repositories
                 IsMediaPhoto = model.IsMediaPhoto,
                 CommunicationPrefs = model.CommunicationPrefs,
                 LanguagePreferences = model.LanguagePreferences,
-                LocationPreferences = model.LocationPreferences,
+                LocationPreferences = model.UserLocationPreferences,
                 UserName = model.UserName,
                 UserRawDescription = model.Description,
                 UserRealName = model.RealName,
@@ -1142,7 +1140,7 @@ namespace WebApi.Repositories
                     Media = sData.UserMedia,
                     LanguagePreferences = sData.LanguagePreferences,
                     Languages = sData.UserLanguages,
-                    LocationPreferences = sData.LocationPreferences,
+                    UserLocationPreferences = sData.LocationPreferences,
                     Reason = sData.Reason,
                     ShouldUserPersonalityFunc = sSettings.ShouldUsePersonalityFunc,
                 });
@@ -1850,7 +1848,7 @@ namespace WebApi.Repositories
                     await TopUpUserWalletPointsBalance(user.Id, 22, "User viewed 50 profiles");
             }
             else if (model.Section == Section.RT)
-                user.MaxRTViewsCount++;
+                user.RTViewsCount++;
 
             await _contx.Encounters.AddAsync(model);
             await _contx.SaveChangesAsync();
@@ -3139,7 +3137,7 @@ namespace WebApi.Repositories
             try
             {
                 var effect = await _contx.ActiveEffects.Where(e => e.UserId == userId && e.Id == activeEffectId)
-                    .SingleOrDefaultAsync();
+                    .FirstOrDefaultAsync();
 
                 if (effect == null)
                     return false;
@@ -3154,7 +3152,7 @@ namespace WebApi.Repositories
         private async Task<int> AddMaxUserProfileViewCountAsync(long userId, int profileCount)
         {
             var userInfo = await _contx.Users.FindAsync(userId);
-            userInfo.ProfileViewsCount -= profileCount;
+            userInfo.MaxProfileViewsCount += profileCount;
             await _contx.SaveChangesAsync();
 
             return userInfo.MaxProfileViewsCount;
@@ -3163,7 +3161,7 @@ namespace WebApi.Repositories
         private async Task<int> AddMaxRTProfileViewCountAsync(long userId, int increment)
         {
             var userInfo = await _contx.Users.FindAsync(userId);
-            userInfo.RTViewsCount -= increment;
+            userInfo.MaxRTViewsCount += increment;
             await _contx.SaveChangesAsync();
 
             return userInfo.MaxProfileViewsCount;
@@ -3986,7 +3984,7 @@ namespace WebApi.Repositories
                 ActualTagViews = u.TagSearchesCount,
                 ActualProfileViews = u.ProfileViewsCount,
                 ActualRtViews = u.RTViewsCount
-            }).SingleOrDefaultAsync();
+            }).FirstOrDefaultAsync();
 
             if (limitations != null)
                 return limitations;
@@ -4286,6 +4284,47 @@ namespace WebApi.Repositories
             user.DeleteDate = null;
 
             return RestoreResult.Success;
+        }
+
+        public async Task<AdventureSearchResponse> GetAdventuresAsync(long userId)
+        {
+            var user = await _contx.Users.Where(u => u.Id == userId)
+                .Include(u => u.Data)
+                .Include(u => u.Location)
+                .FirstOrDefaultAsync();
+
+            if (user.AdventureSearchCount >= user.MaxAdventureSearchCount)
+                return new AdventureSearchResponse();
+
+            var adventuresCount = user.MaxAdventureSearchCount - user.AdventureSearchCount;
+
+            var query = _contx.Adventures.Where(q => q.Status != AdventureStatus.Deleted && q.UserId != userId);
+
+            if (user.Location != null)
+                query = query.Where(q => user.Data.LocationPreferences.Contains((int)q.CountryId));
+
+            if (user.Data.CommunicationPrefs == CommunicationPreference.Online)
+                query = query.Where(q => !q.IsOffline);
+
+            else if (user.Data.CommunicationPrefs == CommunicationPreference.Offline)
+                query = query.Where(q => q.IsOffline);
+
+
+            query = query.Where(q => q.Creator.Data.LanguagePreferences.Any(l => user.Data.LanguagePreferences.Contains(l)));
+
+            query = query.Take(adventuresCount);
+
+            var adventures = await query.Select(q => new GetAdventureSearch
+            {
+                Id = q.Id,
+                Description = GetAdventureSearch.GenerateDescription(q),
+                Media = q.Media,
+                IsMediaPhoto = q.IsMediaPhoto,
+                AutoReply = q.AutoReply,
+                IsAutoReplyText = q.IsAutoReplyText
+            }).ToListAsync();
+
+            return new AdventureSearchResponse(adventures);
         }
     }
 }

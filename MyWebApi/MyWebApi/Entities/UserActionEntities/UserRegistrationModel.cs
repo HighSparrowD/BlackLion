@@ -38,8 +38,8 @@ namespace WebApi.Entities.UserActionEntities
         public Gender Gender { get; set; }
         [JsonPropertyName("userLanguagePreferences")]
         public List<int>? LanguagePreferences { get; set; }
-        [JsonPropertyName("locationPreferences")]
-        public List<int>? LocationPreferences { get; set; }
+        [JsonPropertyName("userlocationPreferences")]
+        public List<int>? UserLocationPreferences { get; set; }
         [JsonPropertyName("agePrefs")]
         public List<int>? AgePrefs { get; set; }
         [JsonPropertyName("communicationPrefs")]

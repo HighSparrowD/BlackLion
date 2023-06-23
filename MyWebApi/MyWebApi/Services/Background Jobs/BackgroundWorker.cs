@@ -70,11 +70,13 @@ namespace WebApi.Services.Background
                     user.ProfileViewsCount = 0;
                     user.RTViewsCount = 0;
                     user.TagSearchesCount = 0;
+                    user.AdventureSearchCount = 0;
 
                     //TODO: consider if has premium
                     user.MaxProfileViewsCount = 50;
                     user.MaxRTViewsCount = 25;
                     user.MaxTagSearchCount = 3;
+                    user.MaxAdventureSearchCount = 15;
 
                     user.Settings.IsFree = null;
 

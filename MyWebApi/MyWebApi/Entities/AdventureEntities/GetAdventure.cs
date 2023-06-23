@@ -1,5 +1,4 @@
 ﻿using WebApi.Enums;
-using System;
 using System.Text.Json.Serialization;
 
 namespace WebApi.Entities.AdventureEntities
