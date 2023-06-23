@@ -4338,7 +4338,8 @@ namespace WebApi.Repositories
 
             var adventuresCount = user.MaxAdventureSearchCount - user.AdventureSearchCount;
 
-            var query = _contx.Adventures.Where(q => q.Status != AdventureStatus.Deleted && q.UserId != userId);
+            var query = _contx.Adventures.Where(q => q.Status != AdventureStatus.Deleted && q.UserId != userId)
+                .AsNoTracking();
 
             if (user.Location != null)
                 query = query.Where(q => user.Data.LocationPreferences.Contains((int)q.CountryId));
