@@ -32,7 +32,7 @@ namespace WebApi.Entities.UserInfoEntities
         public short? PremiumDuration { get; set; }
         public IdentityConfirmationType IdentityType { get; set; }
         public bool ShouldEnhance { get; set; }
-        public short ReportCount { get; set; } //Daily report count
+        public short ReportCount { get; set; } // How many times this user was reported today
         public short DailyRewardPoint { get; set; } 
         public double BonusIndex { get; set; }
         public int InvitedUsersCount { get; set; }
@@ -41,9 +41,11 @@ namespace WebApi.Entities.UserInfoEntities
         public long? ParentId { get; set; }
         public int ProfileViewsCount { get; set; }
         public int RTViewsCount { get; set; }
+        public int AdventureSearchCount { get; set; }
         public int MaxProfileViewsCount { get; set; }
         public int MaxRTViewsCount { get; set; }
         public int MaxTagSearchCount { get; set; }
+        public int MaxAdventureSearchCount { get; set; }
         public int TagSearchesCount { get; set; }
         public string? EnteredPromoCodes { get; set; }
         public bool IsUpdated { get; set; }
@@ -86,10 +88,12 @@ namespace WebApi.Entities.UserInfoEntities
             ProfileViewsCount = 0;
             RTViewsCount = 0;
             TagSearchesCount = 0;
+            AdventureSearchCount = 0;
 
             MaxProfileViewsCount = 50;
             MaxRTViewsCount = 25;
             MaxTagSearchCount = 3;
+            MaxAdventureSearchCount = 15;
 
             IsUpdated = true;
 

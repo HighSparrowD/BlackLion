@@ -939,15 +939,21 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/delete-user")]
-        public async Task<DeleteResult> DeleteUser(long userId)
+        public async Task<DeleteResult> DeleteUser([FromQuery] long userId)
         {
             return await _repository.DeleteUserAsync(userId);
         }
 
         [HttpGet("/restore-user")]
-        public async Task<RestoreResult> RestoreUser(long userId)
+        public async Task<RestoreResult> RestoreUser([FromQuery] long userId)
         {
             return await _repository.RestoreUserAsync(userId);
+        }
+
+        [HttpGet("/get-adventures")]
+        public async Task<AdventureSearchResponse> GetAdventures([FromQuery] long userId)
+        {
+            return await _repository.GetAdventuresAsync(userId);
         }
     }
 }
