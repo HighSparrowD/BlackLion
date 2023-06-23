@@ -278,13 +278,13 @@ namespace WebApi.Controllers
         [HttpGet("/TopUpUserWalletBalance/{userId}/{points}/{description}")]
         public async Task<int> GetActiveUserWalletBalance(long userId, int points, string description)
         {
-            return await _repository.TopUpUserWalletPointsBalance(userId, points, description);
+            return await _repository.TopUpPointBalance(userId, points, description);
         }
 
         [HttpGet("/TopUpUserWalletPPBalance/{userId}/{points}/{description}")]
         public async Task<int> TopUpUserWalletPPBalance(long userId, int points, string description)
         {
-            return await _repository.TopUpUserWalletPPBalance(userId, points, description);
+            return await _repository.TopUpOPBalance(userId, points, description);
         }
 
         [HttpGet("/CheckUserHasPremium/{userId}")]

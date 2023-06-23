@@ -122,6 +122,9 @@ namespace WebApi.Services.Background
                     await backgroundRepo.SaveBatchChanges(batch);
                 }
             }
+
+            //Remove old transactions
+            await backgroundRepo.DeleteOldTransactionsAsync();
         }
     }
 }

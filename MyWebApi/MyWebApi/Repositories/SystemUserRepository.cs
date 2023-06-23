@@ -89,7 +89,7 @@ namespace WebApi.Repositories
             await _contx.SaveChangesAsync();
 
             await GenerateUserAchievementList(user.Id, uData.Language, wasRegistered);
-            await TopUpUserWalletPointsBalance(model.Id, 180, "Starting Pack"); //180 is a starting user point pack
+            await TopUpPointBalance(model.Id, 180, "Starting Pack"); //180 is a starting user point pack
             await AddUserTrustLevel(model.Id);
             await AddUserTrustProgressAsync(model.Id, 0.000012);
 
@@ -114,20 +114,20 @@ namespace WebApi.Repositories
 
                 if (invitor.InvitedUsersCount == 1)
                 {
-                    await TopUpUserWalletPointsBalance(invitor.Id, 250 * multiplier, $"User {invitor.Id} has invited his firs user");
+                    await TopUpPointBalance(invitor.Id, 250 * multiplier, $"User {invitor.Id} has invited his firs user");
                     await GrantPremiumToUser(invitor.Id, 0, 1, Currency.Points);
                 }
                 else if (invitor.InvitedUsersCount == 3 || invitor.InvitedUsersCount % 3 == 0)
                 {
                     if (multiplier == 1)
                         invitor.InvitedUsersBonus = 0.15 + bonus;
-                    await TopUpUserWalletPointsBalance(invitor.Id, 1199 * multiplier, $"User {invitor.Id} has invited 3 users");
+                    await TopUpPointBalance(invitor.Id, 1199 * multiplier, $"User {invitor.Id} has invited 3 users");
                 }
                 else if (invitor.InvitedUsersCount == 7 || invitor.InvitedUsersCount % 7 == 0)
                 {
                     if (multiplier == 1)
                         invitor.InvitedUsersBonus = 0.35 + bonus;
-                    await TopUpUserWalletPointsBalance(invitor.Id, 1499 * multiplier, $"User {invitor.Id} has invited 7 users");
+                    await TopUpPointBalance(invitor.Id, 1499 * multiplier, $"User {invitor.Id} has invited 7 users");
                 }
                 else if (invitor.InvitedUsersCount == 10 || invitor.InvitedUsersCount % 10 == 0)
                 {
@@ -135,18 +135,18 @@ namespace WebApi.Repositories
                     {
                         invitor.InvitedUsersBonus = 0.5 + bonus;
                         // 1499 will then turn into 1999 due to premium purchase reward
-                        await TopUpUserWalletPointsBalance(invitor.Id, 1499, $"User {invitor.Id} has invited 10 users");
+                        await TopUpPointBalance(invitor.Id, 1499, $"User {invitor.Id} has invited 10 users");
                         //Adds + 10 random effects to users inventory
                         var effecId = new Random().Next(5, 10);
                         await PurchaseEffectAsync(invitor.Id, effecId, 0, Currency.Points, 10);
                         await GrantPremiumToUser(invitor.Id, 0, 30, Currency.Points);
                     }
                     else
-                        await TopUpUserWalletPointsBalance(invitor.Id, 1999 * multiplier, $"User {invitor.Id} has invited more than 10 users");
+                        await TopUpPointBalance(invitor.Id, 1999 * multiplier, $"User {invitor.Id} has invited more than 10 users");
                 }
                 else
                 {
-                    await TopUpUserWalletPointsBalance(invitor.Id, (int)(200 + (200 * bonus) * multiplier), $"User {model.Id} was invited by user {invitor.Id}");
+                    await TopUpPointBalance(invitor.Id, (int)(200 + (200 * bonus) * multiplier), $"User {model.Id} was invited by user {invitor.Id}");
                 }
 
                 user.BonusIndex = 1.5;
@@ -980,7 +980,7 @@ namespace WebApi.Repositories
 
             achievement.IsAcquired = true;
 
-            await TopUpUserWalletPointsBalance(userId, achievement.Achievement.Value, "Achievement acquiering");
+            await TopUpPointBalance(userId, achievement.Achievement.Value, "Achievement acquiering");
 
             await AddUserNotificationAsync(new UserNotification
             {
@@ -1291,7 +1291,7 @@ namespace WebApi.Repositories
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<int> TopUpUserWalletPointsBalance(long userId, int points, string description = "")
+        public async Task<int> TopUpPointBalance(long userId, int points, string description = "")
         {
             var time = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
             var userBalance = await GetUserWalletBalance(userId);
@@ -1325,11 +1325,11 @@ namespace WebApi.Repositories
                 var parent = await GetUserInfoAsync((long)userParentId);
 
                 if (parent != null)
-                    await TopUpUserWalletPointsBalance((long)userParentId, (int)(points + points * parent.InvitedUsersBonus), $"Referential reward for user's {userId} action");
+                    await TopUpPointBalance((long)userParentId, (int)(points + points * parent.InvitedUsersBonus), $"Referential reward for user's {userId} action");
             }
 
             await _contx.SaveChangesAsync();
-            await RegisterUserWalletPurchaseInPoints(userId, points, description); //Registers info regarding amount of points decremented / incremented
+            await RegisterUserPurchaseInPoints(userId, points, description); //Registers info regarding amount of points decremented / incremented
 
             return userBalance.Points;
         }
@@ -1342,7 +1342,7 @@ namespace WebApi.Repositories
             await _contx.SaveChangesAsync();
         }
 
-        public async Task<int> TopUpUserWalletPPBalance(long userId, int points, string description = "")
+        public async Task<int> TopUpOPBalance(long userId, int points, string description = "")
         {
             var time = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
             var userBalance = await GetUserWalletBalance(userId);
@@ -1371,36 +1371,36 @@ namespace WebApi.Repositories
                 .FirstOrDefaultAsync();
 
             if (userParentId != null && userParentId > 0)
-                await TopUpUserWalletPointsBalance((long)userParentId, 1, $"Referential reward for user's {userParentId} action");
+                await TopUpPointBalance((long)userParentId, 1, $"Referential reward for user's {userParentId} action");
 
             await _contx.SaveChangesAsync();
-            await RegisterUserWalletPurchaseInPP(userId, points, description); //Registers info about amount of points decremented / incremented
+            await RegisterUserPurchaseInPP(userId, points, description); //Registers info about amount of points decremented / incremented
 
             return userBalance.PersonalityPoints;
         }
 
-        private async Task<bool> RegisterUserWalletPurchaseInPoints(long userId, int points, string description)
+        private async Task<bool> RegisterUserPurchaseInPoints(long userId, int points, string description)
         {
-            return await RegisterUserWalletPurchase(userId, points, description, Currency.Points);
+            return await RegisterUserPurchase(userId, points, description, Currency.Points);
         }
 
-        private async Task<bool> RegisterUserWalletPurchaseInPP(long userId, int points, string description)
+        private async Task<bool> RegisterUserPurchaseInPP(long userId, int points, string description)
         {
-            return await RegisterUserWalletPurchase(userId, points, description, Currency.PersonalityPoints);
+            return await RegisterUserPurchase(userId, points, description, Currency.OceanPoints);
         }
 
-        private async Task<bool> RegisterUserWalletPurchaseInRealMoney(long userId, int points, string description, Currency currency)
+        private async Task<bool> RegisterPurchaseInRealMoney(long userId, int points, string description, Currency currency)
         {
-            return await RegisterUserWalletPurchase(userId, points, description, currency);
+            return await RegisterUserPurchase(userId, points, description, currency);
         }
 
-        private async Task<bool> RegisterUserWalletPurchase(long userId, int points, string description, Currency currency)
+        private async Task<bool> RegisterUserPurchase(long userId, int amount, string description, Currency currency)
         {
             var purchase = new Transaction
             {
                 UserId = userId,
                 PointInTime = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc),
-                Amount = points,
+                Amount = amount,
                 Description = description,
                 Currency = currency
             };
@@ -1478,23 +1478,25 @@ namespace WebApi.Repositories
 
             //If transaction was made for points
             if (currency == Currency.Points)
-                await TopUpUserWalletPointsBalance(userId, -cost, $"Purchase premium for {dayDuration} days");
+                await TopUpPointBalance(userId, -cost, $"Purchase premium for {dayDuration} days");
             //If transaction was made for real money
             else if (currency == Currency.RealMoney)
-                await RegisterUserWalletPurchaseInRealMoney(userId, cost, $"Purchase premium for {dayDuration} days", (Currency)balance.Currency);
+                await RegisterPurchaseInRealMoney(userId, cost, $"Purchase premium for {dayDuration} days", (Currency)balance.Currency);
 
             //Reward for premium purchase
-            await TopUpUserWalletPointsBalance(userId, 500);
+            await TopUpPointBalance(userId, 500, "Points received for premium purchase");
 
-            //PP Reward for purchasing long-term premium
+            //OP Reward for purchasing long-term premium
             //TODO: Think if the amount is properly set...
             if (dayDuration >= 30)
-                await TopUpUserWalletPPBalance(userId, 5);
+                await TopUpOPBalance(userId, 5, "Ocean+ points received for premium purchase");
 
             if (user.PremiumExpirationDate < timeNow || user.PremiumExpirationDate == null)
                 user.PremiumExpirationDate = premiumFutureExpirationDate;
             else
                 user.PremiumExpirationDate = user.PremiumExpirationDate.Value.AddDays(dayDuration);
+
+            await RegisterUserPurchase(userId, dayDuration, "Premium received", Currency.Premium);
 
             _contx.Update(user);
             await _contx.SaveChangesAsync();
@@ -1841,11 +1843,11 @@ namespace WebApi.Repositories
                 user.ProfileViewsCount++;
 
                 if (user.ProfileViewsCount == 15)
-                    await TopUpUserWalletPointsBalance(user.Id, 9, "User viewed 15 profiles");
+                    await TopUpPointBalance(user.Id, 9, "User viewed 15 profiles");
                 else if (user.ProfileViewsCount == 30)
-                    await TopUpUserWalletPointsBalance(user.Id, 15, "User viewed 30 profiles");
+                    await TopUpPointBalance(user.Id, 15, "User viewed 30 profiles");
                 else if (user.ProfileViewsCount == 50)
-                    await TopUpUserWalletPointsBalance(user.Id, 22, "User viewed 50 profiles");
+                    await TopUpPointBalance(user.Id, 22, "User viewed 50 profiles");
             }
             else if (model.Section == Section.RT)
                 user.RTViewsCount++;
@@ -1970,7 +1972,7 @@ namespace WebApi.Repositories
                     .Select(r => r.PointReward)
                     .FirstOrDefaultAsync();
 
-                await TopUpUserWalletPointsBalance(userId, reward * (short)user.BonusIndex, "Daily reward");
+                await TopUpPointBalance(userId, reward * (short)user.BonusIndex, "Daily reward");
                 user.HadReceivedReward = true;
                 user.DailyRewardPoint += 1;
 
@@ -3491,44 +3493,80 @@ namespace WebApi.Repositories
                     case 5:
                         balance.SecondChances += count;
                         if (currency == Currency.Points)
-                            await RegisterUserWalletPurchaseInPoints(userId, points, $"User purchase of {count} Second Chance effect for point amount {points}");
+                        {
+                            await RegisterUserPurchaseInPoints(userId, points, $"User purchase of {count} Second Chance effect for point amount {points}");
+                            await RegisterUserPurchase(userId, count, "Effects are received", (Currency)effectId);
+                        }
                         else
-                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Second Chance effect for real money amount {points}", (Currency)balance.Currency);
+                        {
+                            await RegisterPurchaseInRealMoney(userId, points, $"User purchase of {count} Second Chance effect for real money amount {points}", (Currency)balance.Currency);
+                            await RegisterUserPurchase(userId, count, "Effects are received", (Currency)effectId);
+                        }
                         break;
                     case 6:
                         balance.Valentines += count;
                         if (currency == Currency.Points)
-                            await RegisterUserWalletPurchaseInPoints(userId, points, $"User purchase of {count} Valentine effect for point amount {points}");
+                        {
+                            await RegisterUserPurchaseInPoints(userId, points, $"User purchase of {count} Valentine effect for point amount {points}");
+                            await RegisterUserPurchase(userId, count, "Effects are received", (Currency)effectId);
+                        }
                         else
-                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Valentine effect for real money amount {points}", (Currency)balance.Currency);
+                        {
+                            await RegisterPurchaseInRealMoney(userId, points, $"User purchase of {count} Valentine effect for real money amount {points}", (Currency)balance.Currency);
+                            await RegisterUserPurchase(userId, count, "Effects are received", (Currency)effectId);
+                        }
                         break;
                     case 7:
                         balance.Detectors += count;
                         if (currency == Currency.Points)
-                            await RegisterUserWalletPurchaseInPoints(userId, points, $"User purchase of {count} Detector effect for point amount {points}");
+                        {
+                            await RegisterUserPurchaseInPoints(userId, points, $"User purchase of {count} Detector effect for point amount {points}");
+                            await RegisterUserPurchase(userId, count, "Effects are received", (Currency)effectId);
+                        }
                         else
-                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Detector effect for real money amount {points}", (Currency)balance.Currency);
+                        {
+                            await RegisterPurchaseInRealMoney(userId, points, $"User purchase of {count} Detector effect for real money amount {points}", (Currency)balance.Currency);
+                            await RegisterUserPurchase(userId, count, "Effects are received", (Currency)effectId);
+                        }
                         break;
                     case 8:
                         balance.Nullifiers += count;
                         if (currency == Currency.Points)
-                            await RegisterUserWalletPurchaseInPoints(userId, points, $"User purchase of {count} Nullifier effect for point amount {points}");
+                        {
+                            await RegisterUserPurchaseInPoints(userId, points, $"User purchase of {count} Nullifier effect for point amount {points}");
+                            await RegisterUserPurchase(userId, count, "Effects are received", (Currency)effectId);
+                        }
                         else
-                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Nullifier effect for real money amount {points}", (Currency)balance.Currency);
+                        {
+                            await RegisterPurchaseInRealMoney(userId, points, $"User purchase of {count} Nullifier effect for real money amount {points}", (Currency)balance.Currency);
+                            await RegisterUserPurchase(userId, count, "Effects are received", (Currency)effectId);
+                        }
                         break;
                     case 9:
                         balance.CardDecksMini += count;
                         if (currency == Currency.Points)
-                            await RegisterUserWalletPurchaseInPoints(userId, points, $"User purchase of {count} Card Deck Mini effect for point amount {points}");
+                        {
+                            await RegisterUserPurchaseInPoints(userId, points, $"User purchase of {count} Card Deck Mini effect for point amount {points}");
+                            await RegisterUserPurchase(userId, count, "Effects are received", (Currency)effectId);
+                        }
                         else
-                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Second Card Deck Mini for real money amount {points}", (Currency)balance.Currency);
+                        {
+                            await RegisterPurchaseInRealMoney(userId, points, $"User purchase of {count} Second Card Deck Mini for real money amount {points}", (Currency)balance.Currency);
+                            await RegisterUserPurchase(userId, count, "Effects are received", (Currency)effectId);
+                        }
                         break;
                     case 10:
                         balance.CardDecksPlatinum += count;
                         if (currency == Currency.Points)
-                            await RegisterUserWalletPurchaseInPoints(userId, points, $"User purchase of {count} Card Deck Platinum effect for point amount {points}");
+                        {
+                            await RegisterUserPurchaseInPoints(userId, points, $"User purchase of {count} Card Deck Platinum effect for point amount {points}");
+                            await RegisterUserPurchase(userId, count, "Effects are received", (Currency)effectId);
+                        }
                         else
-                            await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Card Deck Platinum effect for real money amount {points}", (Currency)balance.Currency);
+                        {
+                            await RegisterPurchaseInRealMoney(userId, points, $"User purchase of {count} Card Deck Platinum effect for real money amount {points}", (Currency)balance.Currency);
+                            await RegisterUserPurchase(userId, count, "Effects are received", (Currency)effectId);
+                        }
                         break;
                     default:
                         break;
@@ -3562,7 +3600,7 @@ namespace WebApi.Repositories
             return new GetUserData(sender, bonus);
         }
 
-        public async Task<bool> PurchasePersonalityPointsAsync(long userId, int points, Currency currency, short count = 1)
+        public async Task<bool> PurchasePersonalityPointsAsync(long userId, int amount, Currency currency, short count = 1)
         {
             try
             {
@@ -3570,15 +3608,17 @@ namespace WebApi.Repositories
 
                 if (currency == Currency.Points)
                 {
-                    balance.Points -= points;
-                    points *= -1;
+                    balance.Points -= amount;
+                    amount *= -1;
                     balance.PersonalityPoints += count;
-                    await RegisterUserWalletPurchaseInPoints(userId, points, $"User purchase of {count} Personality Points effect for point amount {points}");
+                    await RegisterUserPurchaseInPoints(userId, amount, $"User purchase of {count} Ocean+ Points effect for point amount {amount}");
+                    await RegisterUserPurchase(userId, amount, "OP are received", Currency.OceanPoints);
                 }
                 else
                 {
                     balance.PersonalityPoints += count;
-                    await RegisterUserWalletPurchaseInRealMoney(userId, points, $"User purchase of {count} Personality Points effect for real money amount {points}", (Currency)balance.Currency);
+                    await RegisterPurchaseInRealMoney(userId, amount, $"User purchase of {count} Ocean+ Points for real money amount {amount}", (Currency)balance.Currency);
+                    await RegisterUserPurchase(userId, amount, "OP are received", Currency.OceanPoints);
                 }
                 await _contx.SaveChangesAsync();
                 return true;
@@ -4298,7 +4338,8 @@ namespace WebApi.Repositories
 
             var adventuresCount = user.MaxAdventureSearchCount - user.AdventureSearchCount;
 
-            var query = _contx.Adventures.Where(q => q.Status != AdventureStatus.Deleted && q.UserId != userId);
+            var query = _contx.Adventures.Where(q => q.Status != AdventureStatus.Deleted && q.UserId != userId)
+                .AsNoTracking();
 
             if (user.Location != null)
                 query = query.Where(q => user.Data.LocationPreferences.Contains((int)q.CountryId));
