@@ -4,7 +4,7 @@
 public enum Currency : short
 {
     Points = 1,
-    PersonalityPoints = 2,
+    OceanPoints = 2,
     Premium = 3, // Maybe remove in the future
     RealMoney = 4,
     SecondChance = 5,
