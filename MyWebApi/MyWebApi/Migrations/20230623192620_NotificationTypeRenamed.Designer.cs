@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WebApi.Data;
@@ -12,9 +13,11 @@ using WebApi.Data;
 namespace WebApi.Migrations
 {
     [DbContext(typeof(UserContext))]
-    partial class UserContextModelSnapshot : ModelSnapshot
+    [Migration("20230623192620_NotificationTypeRenamed")]
+    partial class NotificationTypeRenamed
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -265,8 +268,8 @@ namespace WebApi.Migrations
                     b.Property<long>("AdventureId")
                         .HasColumnType("bigint");
 
-                    b.Property<short>("Status")
-                        .HasColumnType("smallint");
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Username")
                         .HasColumnType("text");
@@ -993,9 +996,11 @@ namespace WebApi.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("InvitedUserId");
+
                     b.HasIndex("InviterCredentialsId");
 
-                    b.ToTable("invitations", (string)null);
+                    b.ToTable("invitation", (string)null);
                 });
 
             modelBuilder.Entity("WebApi.Entities.UserActionEntities.UserNotification", b =>
@@ -1659,7 +1664,7 @@ namespace WebApi.Migrations
             modelBuilder.Entity("WebApi.Entities.AdventureEntities.AdventureAttendee", b =>
                 {
                     b.HasOne("WebApi.Entities.AdventureEntities.Adventure", "Adventure")
-                        .WithMany("Attendees")
+                        .WithMany()
                         .HasForeignKey("AdventureId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1815,11 +1820,19 @@ namespace WebApi.Migrations
 
             modelBuilder.Entity("WebApi.Entities.UserActionEntities.Invitation", b =>
                 {
+                    b.HasOne("WebApi.Entities.UserInfoEntities.User", "InvitedUser")
+                        .WithMany()
+                        .HasForeignKey("InvitedUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("WebApi.Entities.UserInfoEntities.InvitationCredentials", "InviterCredentials")
                         .WithMany()
                         .HasForeignKey("InviterCredentialsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("InvitedUser");
 
                     b.Navigation("InviterCredentials");
                 });
@@ -1933,11 +1946,6 @@ namespace WebApi.Migrations
                     b.Navigation("Test");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("WebApi.Entities.AdventureEntities.Adventure", b =>
-                {
-                    b.Navigation("Attendees");
                 });
 
             modelBuilder.Entity("WebApi.Entities.LocationEntities.Country", b =>

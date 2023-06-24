@@ -27,7 +27,7 @@ namespace WebApi.Interfaces
         Task<List<UserNotification>> GetUserRequests(long userId);
         Task<UserNotification> GetUserRequest(long requestId);
         bool CheckRequestExists(long senderId, long recieverId);
-        Task<string> RegisterUserRequestAsync(UserNotification request);
+        Task<string> RegisterUserRequestAsync(AddNotification request);
         Task<string> DeclineRequestAsync(long user1, long user2);
         Task<byte> DeleteUserRequests(long userId);
         Task<byte> DeleteUserRequest(long requestId);
@@ -146,7 +146,7 @@ namespace WebApi.Interfaces
         Task<PersonalityCaps> GetUserPersonalityCapsAsync(long userId);
         Task<bool> GetUserRTLanguageConsiderationAsync(long userId);
         Task SetUserCurrencyAsync(long userId, Currency currency);
-        Task<GetUserData> GetRequestSenderAsync(long requestId);
+        Task<GetUserData> GetRequestSenderAsync(long senderId);
         Task<bool> CheckPromoIsCorrectAsync(long userId, string promoText, bool isActivatedBeforeRegistration);
         Task<bool> GetUserIncreasedFamiliarityAsync(long userId);
         Task<bool> SwitchIncreasedFamiliarityAsync(long userId);
@@ -167,7 +167,7 @@ namespace WebApi.Interfaces
         Task<string> RegisterAdventureAsync(ManageAdventure model);
         Task ChangeAdventureAsync(ManageAdventure model);
         Task<bool> DeleteAdventureAsync(Guid adventureId, long userId);
-        Task<ParticipationRequestStatus> SendAdventureRequestAsync(long adventureId, long userId);
+        Task<ParticipationRequestStatus> SendAdventureRequestAsync(long adventureId, long userId, AdventureAttendeeStatus status = AdventureAttendeeStatus.New, NotificationType notificationType = NotificationType.AdventureParticipation);
         Task<ParticipationRequestStatus> SendAdventureRequestByCodeAsync(ParticipationRequest request);
         Task<List<GetTemplateShort>> GetAdventureTemplatesAsync(long userId);
         Task<ManageTemplate> GetAdventureTemplateAsync(long id);

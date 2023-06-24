@@ -13,5 +13,10 @@ namespace WebApi.Entities.UserInfoEntities
         public string Link { get; set; }
         public string QRCode { get; set; }
         public virtual User Inviter { get; set; }
+
+        public InvitationCredentials()
+        {
+
+        }
     }
 }

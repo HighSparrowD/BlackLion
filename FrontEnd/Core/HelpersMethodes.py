@@ -329,8 +329,8 @@ def user_invitation_link(invitationId, userId):
 def register_user_request(senderId, receiverId, isLikedBack, description=""):
     try:
         data = {
-            "userId": senderId,
-            "userId1": receiverId,
+            "senderId": senderId,
+            "userId": receiverId,
             "isLikedBack": isLikedBack,
             "description": description
         }

@@ -348,7 +348,7 @@ namespace WebApi.Controllers
         }
 
         [HttpPost("/RegisterUserRequest")]
-        public async Task<string> RegisterUserRequest(UserNotification request)
+        public async Task<string> RegisterUserRequest(AddNotification request)
         {
             return await _repository.RegisterUserRequestAsync(request);
         }
@@ -835,8 +835,8 @@ namespace WebApi.Controllers
             return await _repository.DeleteAdventureAsync(id, userId);
         }
 
-        [HttpGet("/SubscribeOnAdventure/{id}/{userId}")]
-        public async Task<ParticipationRequestStatus> SubscribeOnAdventure(long id, long userId)
+        [HttpGet("/SendAdventureRequest")]
+        public async Task<ParticipationRequestStatus> SendAdventureRequest([FromQuery] long id, [FromQuery] long userId)
         {
             return await _repository.SendAdventureRequestAsync(id, userId);
         }
