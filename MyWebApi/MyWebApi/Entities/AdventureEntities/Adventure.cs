@@ -3,6 +3,7 @@ using WebApi.Enums;
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Collections.Generic;
 
 namespace WebApi.Entities.AdventureEntities
 {
@@ -38,6 +39,7 @@ namespace WebApi.Entities.AdventureEntities
         public AdventureStatus Status { get; set; }
 
         public virtual User Creator { get; set; }
+        public virtual List<AdventureAttendee> Attendees { get; set; }
     }
 
 }

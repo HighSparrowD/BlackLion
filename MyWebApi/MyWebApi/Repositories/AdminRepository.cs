@@ -373,7 +373,7 @@ namespace WebApi.Repositories
                 {
                     Description = $"Your identity confirmation had been accepted :)\n{model.Comment}",
                     UserId = request.UserId,
-                    Severity = Severity.Urgent,
+                    Type = NotificationType.TickRequest,
                     Section = Section.Neutral,
                 });
             else
@@ -381,7 +381,7 @@ namespace WebApi.Repositories
                 {
                     Description = $"Sorry, your identity confirmation request had been denied.\n{model.Comment}",
                     UserId = request.UserId,
-                    Severity = Severity.Urgent,
+                    Type = NotificationType.TickRequest,
                     Section = Section.Neutral,
                 });
 

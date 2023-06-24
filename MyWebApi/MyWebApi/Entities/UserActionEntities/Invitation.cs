@@ -11,10 +11,8 @@ namespace WebApi.Entities.UserActionEntities
         public long Id { get; set; }
         [ForeignKey("InviterCredentials")]
         public Guid InviterCredentialsId { get; set; }
-        [ForeignKey("InvitedUser")]
         public long InvitedUserId { get; set; }
         public DateTime InvitationTime { get; set; }
         public virtual InvitationCredentials InviterCredentials { get; set; }
-        public virtual User InvitedUser { get; set; }
     }
 }

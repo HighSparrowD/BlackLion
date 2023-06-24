@@ -103,7 +103,10 @@ namespace WebApi.Repositories
 
             if(invitation != null)
             {
-                var invitor = invitation.InviterCredentials.Inviter;
+                var invitor = await _contx.Users.Where(u => u.Id == invitation.InviterCredentials.UserId)
+                    .Include(u => u.Settings)
+                    .FirstOrDefaultAsync();
+
                 invitor.InvitedUsersCount++;
 
                 var bonus = invitor.HasPremium ? 0.05 : 0;
@@ -980,14 +983,14 @@ namespace WebApi.Repositories
 
             achievement.IsAcquired = true;
 
-            await TopUpPointBalance(userId, achievement.Achievement.Value, "Achievement acquiering");
+            await TopUpPointBalance(userId, achievement.Achievement.Value, "Achievement acquiring");
 
             await AddUserNotificationAsync(new UserNotification
             {
                 UserId = userId,
                 IsLikedBack = false,
                 Section = (Section)achievement.Achievement.SectionId,
-                Severity = Severity.Minor,
+                Type = NotificationType.Other,
                 Description = achievement.AcquireMessage
             });
 
@@ -1500,7 +1503,7 @@ namespace WebApi.Repositories
             _contx.Update(user);
             await _contx.SaveChangesAsync();
 
-            await AddUserNotificationAsync(new UserNotification { UserId = user.Id, IsLikedBack = false, Severity = Severity.Moderate, Section = Section.Neutral, Description = $"You have been granted premium access. Enjoy your benefits :)\nPremium expiration {user.PremiumExpirationDate.Value.ToString("dd.MM.yyyy")}" });
+            await AddUserNotificationAsync(new UserNotification { UserId = user.Id, IsLikedBack = false, Type = NotificationType.PremiumAcquire, Section = Section.Neutral, Description = $"You have been granted premium access. Enjoy your benefits :)\nPremium expiration {user.PremiumExpirationDate.Value.ToString("dd.MM.yyyy")}" });
 
             return user.PremiumExpirationDate.Value;
         }
@@ -1679,12 +1682,11 @@ namespace WebApi.Repositories
 
         public async Task<List<UserNotification>> GetUserRequests(long userId)
         {
-
             return await _contx.Notifications
-                .Where(r => r.UserId == userId && r.SenderId != null)
-                .Where(r => r.Section == Section.Familiator || r.Section == Section.Requester)
+                .Where(r => r.UserId == userId)
+                .Where(r => r.Type == NotificationType.Like || r.Type == NotificationType.LikeNotification)
+                .OrderByDescending(r => r.Type)
                 .ToListAsync();
-
         }
 
         public async Task<UserNotification> GetUserRequest(long requestId)
@@ -1695,9 +1697,22 @@ namespace WebApi.Repositories
                     .FirstOrDefaultAsync();
         }
 
-        public async Task<string> RegisterUserRequestAsync(UserNotification request)
+        public async Task<string> RegisterUserRequestAsync(AddNotification model)
         {
-            request.Severity = Severity.Moderate;
+            return await RegisterUserRequestAsync(new UserNotification
+            {
+                Section = model.Section,
+                SenderId = model.SenderId,
+                Description = model.Description,
+                IsLikedBack = model.IsLikedBack,
+                Type = model.Type,
+                UserId = model.UserId
+            });
+        }
+
+        private async Task<string> RegisterUserRequestAsync(UserNotification request)
+        {
+            request.Type = NotificationType.Like;
             var returnMessage = "";
 
             if (request.IsLikedBack)
@@ -1713,12 +1728,12 @@ namespace WebApi.Repositories
                     //Delete request, user had just responded to
                     var requestId = await _contx.Notifications.Where(n => n.SenderId == request.UserId && n.UserId == request.SenderId)
                         .Select(n => n.Id)
-                        .SingleOrDefaultAsync();
+                        .FirstOrDefaultAsync();
 
                     await DeleteUserRequest(requestId);
 
                     //TODO: Get message from localizer based on users`s localization 
-                    request.Description = $"Hey! I have got a match for you. This person was notified about it, but he did not receive your username, thus he cannot write you first everything is in your hands, do not miss your chance!\n\n@{senderUserName}";
+                    request.Description = $"Hey! I have got a match for you. This person was notified about it, but did not receive your username, thus he / she cannot write you first everything is in your hands, do not miss your chance!\n\n@{senderUserName}";
                     returnMessage = "Hey! I have a match for you. Right now this person is deciding whether or not to write you Just wait for it!\n\n";
                 }
                 else
@@ -1743,12 +1758,37 @@ namespace WebApi.Repositories
             else
                 request.Section = Section.Familiator;
 
+
             await RegisterUserEncounter(new Encounter { UserId = (long)request.SenderId, EncounteredUserId = request.UserId, Section = Section.Requester });
 
-            var id = await AddUserNotificationAsync(request);
+            //Register request
+            await AddUserNotificationAsync(request);
+
+            var requestsCount = await _contx.Notifications.Where(n => n.Type == NotificationType.Like)
+                .AsNoTracking()
+                .CountAsync();
+
+            var model = new UserNotification
+            {
+                Section = request.Section,
+                SenderId = request.SenderId,
+                Description = "Someone had liked your profile",
+                IsLikedBack = request.IsLikedBack,
+                UserId = request.UserId,
+                Type = NotificationType.LikeNotification
+            };
+
+            if (requestsCount > 3 && requestsCount < 7)
+                model.Description = "Your profile got some attention! See who has shown interest in you!";
+            else if (requestsCount > 7 && requestsCount < 10)
+                model.Description = "Your attractiveness has not gone unnoticed! See who's interested in you";
+            else if (requestsCount > 10)
+                model.Description = "Your profile is the center of attention! Check out who's showing interest in you!";
+
+            //Register notification
+            await AddUserNotificationAsync(model);
 
             return returnMessage;
-            
         }
 
         //TODO: Make more informative and interesting
@@ -2027,8 +2067,9 @@ namespace WebApi.Repositories
                     Id = id,
                     UserId = userId,
                     Link = linkBase + id,
-                    QRCode = await GetQRCode(userId)
                 };
+
+                invitationCreds.QRCode = GenerateQrCode(invitationCreds.Link);
 
                 await _contx.InvitationCredentials.AddAsync(invitationCreds);
                 await _contx.SaveChangesAsync();
@@ -2043,20 +2084,14 @@ namespace WebApi.Repositories
             string data;
 
             var creds = await _contx.InvitationCredentials.Where(c => c.UserId == userId)
-                .SingleOrDefaultAsync();
+                .FirstOrDefaultAsync();
 
             if (creds != null)
             {
                 if (creds.QRCode != null)
                     return creds.QRCode;
 
-                string link = creds.Link.Replace("%2F", "/");
-
-                var generator = new QRCodeGenerator();
-                var d = generator.CreateQrCode(link, QRCodeGenerator.ECCLevel.Q);
-                var code = new PngByteQRCode(d).GetGraphic(5);
-
-                data = Convert.ToBase64String(code);
+                data = GenerateQrCode(creds.Link);
 
                 creds.QRCode = data;
                 await _contx.SaveChangesAsync();
@@ -2071,6 +2106,19 @@ namespace WebApi.Repositories
                 return await GetQRCode(userId);
             }
             return "";
+        }
+
+        private string GenerateQrCode(string link)
+        {
+            link = link.Replace("%2F", "/");
+
+            var generator = new QRCodeGenerator();
+            var d = generator.CreateQrCode(link, QRCodeGenerator.ECCLevel.Q);
+            var code = new PngByteQRCode(d).GetGraphic(5);
+
+            var data = Convert.ToBase64String(code);
+
+            return data;
         }
 
         public async Task<InvitationCredentials> GetInvitationCredentialsByUserIdAsync(long userId)
@@ -2153,7 +2201,7 @@ namespace WebApi.Repositories
                     IsLikedBack = false,
                     Description = $"Hey! new user had been registered via your link. Thanks for helping us grow!\nSo far, you have invited: {invitedUsersCount} people. \nYou receive 1p for every action they are maiking ;-)",
                     Section = Section.Registration,
-                    Severity = Severity.Moderate
+                    Type = NotificationType.ReferentialRegistration
                 });
 
                 return true;
@@ -2167,7 +2215,7 @@ namespace WebApi.Repositories
         {
             try
             {
-                await AddUserNotificationAsync(new UserNotification {UserId=userId, Severity=Severity.Urgent, Section=Section.Neutral, Description="Your premium access has expired"});
+                await AddUserNotificationAsync(new UserNotification {UserId=userId, Type=NotificationType.PremiumEnd, Section=Section.Neutral, Description="Your premium access has expired"});
                 return true;
             }
             catch
@@ -2180,15 +2228,79 @@ namespace WebApi.Repositories
         {
             try
             {
-                await _contx.Notifications.AddAsync(model);
-                await _contx.SaveChangesAsync();
+                if (model.Type == NotificationType.PremiumAcquire ||
+                    model.Type == NotificationType.TickRequest || 
+                    model.Type == NotificationType.PremiumEnd ||
+                    model.Type == NotificationType.LikeNotification ||
+                    model.Type == NotificationType.ReferentialRegistration)
+                {
+                    var notification = await _contx.Notifications.Where(n => n.Type == model.Type)
+                        .FirstOrDefaultAsync();
+
+                    if (notification != null)
+                        notification.Description = model.Description;
+                    else
+                        await _contx.Notifications.AddAsync(model);
+
+                    await _contx.SaveChangesAsync();
+                }
+
+                else if (model.Type == NotificationType.AdventureParticipation)
+                {
+                    var notification = await _contx.Notifications.Where(n => n.Type == model.Type)
+                        .FirstOrDefaultAsync();
+
+                    if (notification != null)
+                    {
+                        var attendeesCount = await _contx.Adventures.Where(a => a.UserId == model.UserId)
+                            .SelectMany(a => a.Attendees.Where(at => at.Status == AdventureAttendeeStatus.New))
+                            .CountAsync();
+
+                        // +1 existing one
+                        notification.Description = $"{attendeesCount +1} people had requested participation in your adventure";
+                    }
+                    else
+                    {
+                        await _contx.Notifications.AddAsync(model);
+                    }
+
+                    await _contx.SaveChangesAsync();
+                }
+
+                else if (model.Type == NotificationType.AdventureParticipationByCode)
+                {
+                    var notification = await _contx.Notifications.Where(n => n.Type == model.Type)
+                        .FirstOrDefaultAsync();
+
+                    if (notification != null)
+                    {
+                        var attendeesCount = await _contx.Adventures.Where(a => a.UserId == model.UserId)
+                            .SelectMany(a => a.Attendees.Where(at => at.Status == AdventureAttendeeStatus.NewByCode))
+                            .CountAsync();
+
+                        // +1 existing one
+                        notification.Description = $"{attendeesCount +1} people had requested participation in your adventure by unique code";
+                    }
+                    else
+                    {
+                        await _contx.Notifications.AddAsync(model);
+                    }
+
+                    await _contx.SaveChangesAsync();
+                }
+
+                else
+                {
+                    await _contx.Notifications.AddAsync(model);
+                    await _contx.SaveChangesAsync();
+                }
 
                 if (model.SenderId != null)
                     await AddUserTrustProgressAsync((long)model.SenderId, 0.000002);
 
                 return model.Id;
             }
-            catch { throw new Exception("Something went wrong when adding notification"); }
+            catch { throw new Exception("Something went wrong while adding notification"); }
         }
 
         public async Task<int> GetInvitedUsersCountAsync(long userId)
@@ -3048,7 +3160,7 @@ namespace WebApi.Repositories
                                 IsLikedBack = false,
                                 Description = description,
                                 Section = Section.Familiator,
-                                Severity = Severity.Moderate
+                                Type = NotificationType.Like
                             });
                             _contx.Update(userBalance);
                             await _contx.SaveChangesAsync();
@@ -3801,9 +3913,10 @@ namespace WebApi.Repositories
             if (adventure == null)
                 return ParticipationRequestStatus.AdventureNotFound;
 
-            return await SendAdventureRequestAsync(adventure.Id, request.UserId);
+            return await SendAdventureRequestAsync(adventure.Id, request.UserId, AdventureAttendeeStatus.NewByCode, NotificationType.AdventureParticipationByCode);
         }
-        public async Task<ParticipationRequestStatus> SendAdventureRequestAsync(long adventureId, long userId)
+
+        public async Task<ParticipationRequestStatus> SendAdventureRequestAsync(long adventureId, long userId, AdventureAttendeeStatus status = AdventureAttendeeStatus.New, NotificationType notificationType = NotificationType.AdventureParticipation)
         {
             var adventure = await _contx.Adventures.Where(a => a.Id == adventureId)
                 .FirstOrDefaultAsync();
@@ -3818,25 +3931,30 @@ namespace WebApi.Repositories
                 .Where(a => a.AdventureId == adventure.Id && a.UserId == userId)
                 .FirstOrDefaultAsync();
 
-            if (existingAttendee != null)
-                return ParticipationRequestStatus.AlreadyParticipating;
+            //if (existingAttendee != null)
+            //    return ParticipationRequestStatus.AlreadyParticipating;
 
             var userName = await _contx.UserData.Where(u => u.Id == userId)
                 .Select(u => u.UserName)
                 .FirstOrDefaultAsync();
 
+            var description = "Someone had requested participation in your adventure";
+
+            if (notificationType == NotificationType.AdventureParticipationByCode)
+                description = "Someone had requested participation in your adventure by a unique code";
+
             await AddUserNotificationAsync(new UserNotification
             {
                 Section = Section.Adventurer,
-                Severity = Severity.Urgent,
-                Description = "Someone had requested participation in your adventure", //TODO: Perhaps clarify if actions had been done with use of unique code
+                Type = notificationType,
+                Description = description,
                 SenderId = userId,
                 UserId = adventure.UserId
             });
 
             var newAttendee = new AdventureAttendee
             {
-                Status = AdventureAttendeeStatus.New,
+                Status = status,
                 AdventureId = adventure.Id,
                 UserId = userId,
                 Username = userName
@@ -3878,7 +3996,7 @@ namespace WebApi.Repositories
                 {
                     UserId = userId,
                     Section = Section.Adventurer,
-                    Severity = Severity.Moderate,
+                    Type = NotificationType.Other,
                     Description = $"Your request to join adventure {adventure.Name} had been accepted.\n{contact}"
                 });
             }
@@ -4258,7 +4376,7 @@ namespace WebApi.Repositories
             {
                 UserId = attendee.UserId,
                 Section = Section.Adventurer,
-                Severity = Severity.Urgent,
+                Type = NotificationType.Other,
                 Description = "You have been removed from one of the adventures" // TODO: More precise ?
             });
 

@@ -1,5 +1,4 @@
 ﻿using WebApi.Enums;
-using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace WebApi.Entities.AdventureEntities
