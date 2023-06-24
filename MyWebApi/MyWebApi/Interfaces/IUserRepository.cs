@@ -146,7 +146,7 @@ namespace WebApi.Interfaces
         Task<PersonalityCaps> GetUserPersonalityCapsAsync(long userId);
         Task<bool> GetUserRTLanguageConsiderationAsync(long userId);
         Task SetUserCurrencyAsync(long userId, Currency currency);
-        Task<GetUserData> GetRequestSenderAsync(long requestId);
+        Task<GetUserData> GetRequestSenderAsync(long senderId);
         Task<bool> CheckPromoIsCorrectAsync(long userId, string promoText, bool isActivatedBeforeRegistration);
         Task<bool> GetUserIncreasedFamiliarityAsync(long userId);
         Task<bool> SwitchIncreasedFamiliarityAsync(long userId);

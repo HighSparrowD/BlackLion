@@ -16,6 +16,8 @@ class Requester:
 
         self.current_managed_user = None
         self.current_managed_user_id = None
+        self.current_request_id = None
+        self.comment = None
 
         self.active_section = None
 
@@ -33,9 +35,11 @@ class Requester:
         self.actions_markup = InlineKeyboardMarkup().add(InlineKeyboardButton("⚠ Report ⚠", callback_data=self.active_user_id)) \
             .add(InlineKeyboardButton("🔖 Help 🔖", callback_data="11"))
 
-        self.match_message = "You have got a match!\n"
         self.start_message = "Some people have liked you!"
-        self.m = "<b>Someone liked you\n</b>"
+
+        if len(self.request_list) > 1:
+            self.start_message = self.request_list[0]["description"]
+            self.request_list.pop(0)
 
         self.menu_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True) \
             .add(KeyboardButton("/search"),
@@ -74,7 +78,7 @@ class Requester:
                 if self.current_request["isLikedBack"]:
                     # self.bot.send_photo(self.current_user, self.current_managed_user["userMedia"], f"<b>{self.current_request['description']}</b>\n\n{self.current_managed_user['userDescription']}", reply_markup=self.markup, parse_mode=telegram.ParseMode.HTML)
                     self.send_user_media(True)
-                    Helpers.delete_user_request(self.active_user_id)
+                    Helpers.delete_user_request(self.current_request_id)
                     self.request_list.pop(0)
                     self.process_request(message)
                     # self.bot.register_next_step_handler(message, self.process_request, acceptMode=True, chat_id=self.current_user)
@@ -125,14 +129,15 @@ class Requester:
         if sadMessage:
             self.bot.send_message(self.current_user, sadMessage)
 
-        Helpers.delete_user_request(self.active_user_id)
+        Helpers.delete_user_request(self.current_request_id)
         self.request_list.pop(0)
         self.process_request(message)
 
     def set_current_request(self):
         if len(self.request_list) > 0:
             self.current_request = self.request_list[0]
-            self.active_user_id = self.current_request["id"]
+            self.active_user_id = self.current_request["senderId"]
+            self.current_request_id = self.current_request["id"]
             return True
         return False
 
@@ -153,10 +158,14 @@ class Requester:
 
         self.bot.send_message(self.current_user, "Additional Actions:", reply_markup=self.actions_markup)
 
+        if self.comment:
+            self.bot.send_message(self.current_user, self.comment)
+
     def get_request_sender_data(self):
-        user = Helpers.get_request_sender(self.active_user_id)
-        self.current_managed_user_id = user["userId"]
-        self.current_managed_user = user["userBaseInfo"]
+        response = Helpers.get_request_sender(self.active_user_id)
+        self.current_managed_user_id = response["userId"]
+        self.current_managed_user = response["userDataInfo"]
+        self.comment = response["comment"]
 
     def help_handler(self, message):
         self.reactToCallback = False

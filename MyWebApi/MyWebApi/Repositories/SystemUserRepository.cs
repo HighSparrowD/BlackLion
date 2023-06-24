@@ -1682,19 +1682,28 @@ namespace WebApi.Repositories
 
         public async Task<List<UserNotification>> GetUserRequests(long userId)
         {
-            return await _contx.Notifications
+            var requests = await _contx.Notifications
                 .Where(r => r.UserId == userId)
                 .Where(r => r.Type == NotificationType.Like || r.Type == NotificationType.LikeNotification)
                 .OrderByDescending(r => r.Type)
                 .ToListAsync();
+
+            if (requests.Count > 1)
+            {
+                //Remove intoduction message
+                _contx.Notifications.Remove(requests[0]);
+                await _contx.SaveChangesAsync();
+            }
+
+            return requests;
         }
 
         public async Task<UserNotification> GetUserRequest(long requestId)
         {
-                return await _contx.Notifications
-                    .Where(r => r.Id == requestId)
-                    .Where(r => r.Section == Section.Familiator || r.Section == Section.Requester)
-                    .FirstOrDefaultAsync();
+            return await _contx.Notifications
+                .Where(r => r.Id == requestId)
+                .Where(r => r.Section == Section.Familiator || r.Section == Section.Requester)
+                .FirstOrDefaultAsync();
         }
 
         public async Task<string> RegisterUserRequestAsync(AddNotification model)
@@ -1719,7 +1728,7 @@ namespace WebApi.Repositories
             {
                 request.Section = Section.Requester;
 
-                if ((byte)new Random().Next(0, 2) == 0)
+                if (new Random().Next(0, 2) == 0)
                 {
                     var senderUserName = await _contx.UserData.Where(d => d.Id == request.SenderId)
                         .Select(d => d.UserName)
@@ -1727,6 +1736,7 @@ namespace WebApi.Repositories
 
                     //Delete request, user had just responded to
                     var requestId = await _contx.Notifications.Where(n => n.SenderId == request.UserId && n.UserId == request.SenderId)
+                        .AsNoTracking()
                         .Select(n => n.Id)
                         .FirstOrDefaultAsync();
 
@@ -1740,11 +1750,13 @@ namespace WebApi.Repositories
                 {
                     var receiverUserName = await _contx.UserData
                         .Where(d => d.Id == request.UserId)
+                        .AsNoTracking()
                         .Select(d => d.UserName)
                         .FirstOrDefaultAsync();
 
                     //Delete request, user had just answered
                     var requestId = await _contx.Notifications.Where(n => n.SenderId == request.UserId && n.UserId == request.SenderId)
+                        .AsNoTracking()
                         .Select(n => n.Id)
                         .FirstOrDefaultAsync();
 
@@ -1838,12 +1850,16 @@ namespace WebApi.Repositories
             var request = await _contx.Notifications
                 .Where(r => r.Id == requestId)
                 .Where(r => r.Section == Section.Familiator || r.Section == Section.Requester)
-                .SingleOrDefaultAsync();
+                .FirstOrDefaultAsync();
 
-            _contx.Remove(request);
-            await _contx.SaveChangesAsync();
+            if (request != null)
+            {
+                _contx.Remove(request);
+                await _contx.SaveChangesAsync();
+                return 1;
+            }
 
-            return 1;
+            return 0;
         }
 
         public async Task<bool> CheckUserHasRequests(long userId)
@@ -2321,6 +2337,7 @@ namespace WebApi.Repositories
         {
             return await _contx.Notifications
                 .Where(n => n.UserId == userId)
+                .Where(n => n.Type != NotificationType.Like && n.Type != NotificationType.LikeNotification)
                 .ToListAsync();
         }
 
@@ -3689,14 +3706,12 @@ namespace WebApi.Repositories
             return false;
         }
 
-        public async Task<GetUserData> GetRequestSenderAsync(long requestId)
+        public async Task<GetUserData> GetRequestSenderAsync(long senderId)
         {
-            var senderId = await _contx.Notifications.Where(r => r.Id == requestId).Select(r => r.SenderId)
-                .SingleOrDefaultAsync();
-
             var sender = await _contx.Users.Where(u => u.Id == senderId)
+                .Include(s => s.Data)
                 .AsNoTracking()
-                .SingleOrDefaultAsync();
+                .FirstOrDefaultAsync();
 
             var bonus = "";
 
