@@ -176,7 +176,7 @@ namespace WebApi.Data
             builder.Entity<UserTrustLevel>().ToTable("trust_levels");
             builder.Entity<DailyReward>().ToTable("daily_rewards");
             builder.Entity<InvitationCredentials>().ToTable("invitation_credentials");
-            builder.Entity<Invitation>().ToTable("invitation");
+            builder.Entity<Invitation>().ToTable("invitations");
             //builder.Entity<DailyTask>().ToTable("daily_tasks");
             builder.Entity<UserPersonalityStats>().ToTable("personality_stats");
             builder.Entity<UserPersonalityPoints>().ToTable("personality_points");
