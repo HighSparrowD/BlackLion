@@ -699,13 +699,12 @@ namespace WebApi.Repositories
             return c;
         }
 
-        public async Task<long> AddFeedbackAsync(Feedback report)
+        public async Task<long> AddFeedbackAsync(Feedback feedback)
         {
-            report.Id = await _contx.Feedbacks.CountAsync() + 1;
-            await _contx.Feedbacks.AddAsync(report);
+            await _contx.Feedbacks.AddAsync(feedback);
             await _contx.SaveChangesAsync();
 
-            return report.Id;
+            return feedback.Id;
         }
 
         private double ApplyMaxDeviation(double value, double deviation)
@@ -4430,16 +4429,24 @@ namespace WebApi.Repositories
             return genders;
         }
 
-        public async Task<DeleteResult> DeleteUserAsync(long userId)
+        public async Task<DeleteResult> DeleteUserAsync(DeleteUserRequest request)
         {
-            var user = await _contx.Users.Where(u => u.Id == userId)
+            var user = await _contx.Users.Where(u => u.Id == request.UserId)
                 .FirstOrDefaultAsync();
 
             if (user == null)
                 return DeleteResult.DoesNotExist;
 
             user.IsDeleted = true;
-            user.DeleteDate = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
+            user.DeleteDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
+
+            await AddFeedbackAsync(new Feedback
+            {
+                InsertedUtc = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc),
+                Reason = FeedbackReason.Suggestion,
+                UserId = request.UserId,
+                Text = request.Message
+            });
 
             return DeleteResult.Success;
         }

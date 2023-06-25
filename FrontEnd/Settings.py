@@ -188,7 +188,8 @@ class Settings:
 
         self.settingAdditionalActionsMarkup = InlineKeyboardMarkup() \
             .add(InlineKeyboardButton("Invitation Creds", callback_data="220")) \
-            .add(InlineKeyboardButton("Increased Familiarity", callback_data="321"), self.increased_familiarityIndicator)
+            .add(InlineKeyboardButton("Increased Familiarity", callback_data="321"), self.increased_familiarityIndicator) \
+            .add(InlineKeyboardButton("Delete profile", callback_data="250"))
 
         self.settingConfirmationRequestMarkup = InlineKeyboardMarkup()\
             .add(InlineKeyboardButton("Partial", callback_data="240"), InlineKeyboardButton("ℹ", callback_data="340"))\
@@ -217,6 +218,7 @@ class Settings:
         self.buy_effectMarkup = InlineKeyboardMarkup().add(InlineKeyboardButton("💥Buy💥", callback_data="-5"))
 
         self.YNMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("yes", "no")
+        self.skipMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("Skip", "Go Back")
         self.abortMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("Go Back")
         self.doneMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("Done")
         self.currency_choiceMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4", "5", "6", "7")
@@ -430,7 +432,7 @@ class Settings:
 
         if self.has_Premium:
             if showDescription:
-                description = "When this filter is turned on, you will encounter only people with the real photos in their profiles"
+                description = "When this filter is turned on, you will encounter only people with a verified profile"
 
                 self.send_secondary_message(description)
             else:
@@ -443,6 +445,29 @@ class Settings:
                     self.send_secondary_message("Something went wrong. Please, contact the administration")
         else:
             self.send_secondary_message("Sorry, only users with premium can activate that filter")
+
+    def delete_profile(self, message, acceptMode=False):
+        if not acceptMode:
+            self.previous_section = self.additional_actions_settings_choice
+            self.send_secondary_message("Are you sure, you want to delete your profile ?", self.YNMarkup)
+            self.bot.register_next_step_handler(message, self.delete_profile, acceptMode=True, chat_id=self.current_user)
+        else:
+            if message.text == "yes":
+                self.delete_profile_checkout(message)
+            else:
+                self.proceed()
+
+    def delete_profile_checkout(self, message, acceptMode=False):
+        if not acceptMode:
+            self.send_secondary_message("We want to improve and make your service suitable and comfortable for everyone.\nPlease, tell us why have you decided to delete your profile", self.skipMarkup)
+            self.bot.register_next_step_handler(message, self.delete_profile_checkout, acceptMode=True, chat_id=self.current_user)
+        else:
+            if message.text == "Go Back":
+                self.proceed(message)
+            else:
+                Helpers.delete_user_profile(self.current_user, message.text)
+                self.bot.send_message(self.current_user, "Done! Your profile had been deleted successfully.\nYou may restore all your data during 30 days by hitting /registration in the main menu")
+                self.destruct()
 
     def my_statistics_settings_choice(self, message):
         self.previous_section = self.setting_choice
@@ -1175,6 +1200,8 @@ class Settings:
                     self.send_confirmation_request(call.message)
             elif call.data == "242":
                 self.hints_status_manager()
+            elif call.data == "250":
+                self.delete_profile(call.message)
             elif call.data == "342":
                 self.hints_status_manager(True)
             elif call.data == "243":
@@ -1743,7 +1770,7 @@ class Settings:
             return -1
         return 1
 
-    def destruct(self, message=None):
+    def destruct(self, msg=None):
         if self.current_callback_handler:
             self.bot.callback_query_handlers.remove(self.current_callback_handler)
         self.bot.message_handlers.remove(self.helpHandler)
