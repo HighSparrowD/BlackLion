@@ -10,5 +10,6 @@ namespace WebApi.Interfaces
         Task<List<User>> GetBatchToUpdate(int batchSize);
         Task DeleteOldTransactionsAsync();
         Task DeleteOldEncountersAsync();
+        Task DeleteOldUsersAsync();
     }
 }

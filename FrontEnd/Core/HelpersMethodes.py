@@ -619,9 +619,22 @@ def delete_attendee(adventureId, attendeeId):
 
 def get_report_reasons(language):
     try:
-        langHeader = languages[language]
         return json.loads(
-            requests.get(f"{api_address}/report-reasons", headers={"Accept-Language": langHeader},
+            requests.get(f"{api_address}/report-reasons", headers={"Accept-Language": language},
                          verify=False).text)
+    except:
+        return None
+
+
+def delete_user_profile(userId, message):
+    try:
+        d = json.dumps({
+            "userId": userId,
+            "message": message
+        })
+
+        return requests.post(f"{api_address}/delete-user", d,
+                             headers={"Content-Type": "application/json"},
+                             verify=False).status_code
     except:
         return None

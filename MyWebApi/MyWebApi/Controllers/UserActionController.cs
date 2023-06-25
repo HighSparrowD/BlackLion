@@ -938,10 +938,10 @@ namespace WebApi.Controllers
             return _repository.GetGenders();
         }
 
-        [HttpGet("/delete-user")]
-        public async Task<DeleteResult> DeleteUser([FromQuery] long userId)
+        [HttpPost("/delete-user")]
+        public async Task<DeleteResult> DeleteUser([FromBody] DeleteUserRequest request)
         {
-            return await _repository.DeleteUserAsync(userId);
+            return await _repository.DeleteUserAsync(request);
         }
 
         [HttpGet("/restore-user")]

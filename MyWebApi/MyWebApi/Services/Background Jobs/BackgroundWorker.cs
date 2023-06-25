@@ -128,6 +128,9 @@ namespace WebApi.Services.Background
 
             //Remove old encounters
             await backgroundRepo.DeleteOldEncountersAsync();
+            
+            //Remove old users
+            await backgroundRepo.DeleteOldUsersAsync();
         }
     }
 }
