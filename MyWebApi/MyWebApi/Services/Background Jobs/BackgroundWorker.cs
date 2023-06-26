@@ -128,6 +128,12 @@ namespace WebApi.Services.Background
 
             //Remove old encounters
             await backgroundRepo.DeleteOldEncountersAsync();
+
+            //Remove old feedbacks
+            await backgroundRepo.DeleteOldFeedbacksAsync();
+
+            //Remove old reports
+            await backgroundRepo.DeleteOldReportsAsync();
             
             //Remove old users
             await backgroundRepo.DeleteOldUsersAsync();

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WebApi.Data;
@@ -12,9 +13,11 @@ using WebApi.Data;
 namespace WebApi.Migrations
 {
     [DbContext(typeof(UserContext))]
-    partial class UserContextModelSnapshot : ModelSnapshot
+    [Migration("20230626075635_AdminIds")]
+    partial class AdminIds
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -494,7 +497,7 @@ namespace WebApi.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<long>("Id"), "feedbacks_hilo");
 
-                    b.Property<long?>("AdminId")
+                    b.Property<long>("AdminId")
                         .HasColumnType("bigint");
 
                     b.Property<DateTime>("InsertedUtc")
@@ -524,7 +527,7 @@ namespace WebApi.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<long>("Id"), "reports_hilo");
 
-                    b.Property<long?>("AdminId")
+                    b.Property<long>("AdminId")
                         .HasColumnType("bigint");
 
                     b.Property<DateTime>("InsertedUtc")

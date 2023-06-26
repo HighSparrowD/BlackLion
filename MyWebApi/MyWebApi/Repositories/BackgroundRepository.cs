@@ -12,9 +12,11 @@ namespace WebApi.Repositories
     public class BackgroundRepository : IBackgroundRepository
     {
         private readonly UserContext _context;
-        private const int _oldTransactionSpan = 30;
-        private const int _oldEncountersSpan = 3;
-        private const int _oldUsersSpan = 30;
+        private const short _oldTransactionSpan = 30;
+        private const short _oldEncountersSpan = 3;
+        private const short _oldFeedbacksSpan = 30;
+        private const short _oldReportsSpan = 30;
+        private const short _oldUsersSpan = 30;
 
         public BackgroundRepository(UserContext context)
         {
@@ -44,6 +46,18 @@ namespace WebApi.Repositories
         public async Task DeleteOldEncountersAsync()
         {
             var sql = $"DELETE FROM \"encounters\" WHERE EXTRACT(DAY FROM (NOW() - \"EncounterDate\")) >= {_oldEncountersSpan}";
+            await _context.Database.ExecuteSqlRawAsync(sql);
+        }
+
+        public async Task DeleteOldFeedbacksAsync()
+        {
+            var sql = $"DELETE FROM \"feedbacks\" WHERE EXTRACT(DAY FROM (NOW() - \"InsertedUtc\")) >= {_oldFeedbacksSpan} AND \"AdminId\" IS NOT NULL";
+            await _context.Database.ExecuteSqlRawAsync(sql);
+        }
+
+        public async Task DeleteOldReportsAsync()
+        {
+            var sql = $"DELETE FROM \"user_reports\" WHERE EXTRACT(DAY FROM (NOW() - \"InsertedUtc\")) >= {_oldReportsSpan} AND \"AdminId\" IS NOT NULL";
             await _context.Database.ExecuteSqlRawAsync(sql);
         }
 

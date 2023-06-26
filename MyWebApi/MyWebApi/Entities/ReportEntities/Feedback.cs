@@ -12,6 +12,7 @@ namespace WebApi.Entities.ReportEntities
         public long Id { get; set; }
         [ForeignKey("User")]
         public long UserId { get; set; }
+        public long? AdminId { get; set; }
         public string Text { get; set; }
         public DateTime InsertedUtc { get; set; }
         public FeedbackReason Reason { get; set; }
