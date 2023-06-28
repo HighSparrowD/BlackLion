@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WebApi.Data;
@@ -12,9 +13,11 @@ using WebApi.Data;
 namespace WebApi.Migrations
 {
     [DbContext(typeof(UserContext))]
-    partial class UserContextModelSnapshot : ModelSnapshot
+    [Migration("20230628111437_AdventureReport")]
+    partial class AdventureReport
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -190,17 +193,11 @@ namespace WebApi.Migrations
                     b.Property<string>("AutoReply")
                         .HasColumnType("text");
 
-                    b.Property<byte?>("CityCountryLang")
-                        .HasColumnType("smallint");
-
                     b.Property<int?>("CityId")
                         .HasColumnType("integer");
 
                     b.Property<int?>("CountryId")
                         .HasColumnType("integer");
-
-                    b.Property<byte?>("CountryLang")
-                        .HasColumnType("smallint");
 
                     b.Property<string>("Date")
                         .HasColumnType("text");
@@ -259,10 +256,6 @@ namespace WebApi.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("UserId");
-
-                    b.HasIndex("CityId", "CityCountryLang");
-
-                    b.HasIndex("CountryId", "CountryLang");
 
                     b.ToTable("adventures", (string)null);
                 });
@@ -1667,18 +1660,6 @@ namespace WebApi.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("WebApi.Entities.LocationEntities.City", "City")
-                        .WithMany()
-                        .HasForeignKey("CityId", "CityCountryLang");
-
-                    b.HasOne("WebApi.Entities.LocationEntities.Country", "Country")
-                        .WithMany()
-                        .HasForeignKey("CountryId", "CountryLang");
-
-                    b.Navigation("City");
-
-                    b.Navigation("Country");
 
                     b.Navigation("Creator");
                 });

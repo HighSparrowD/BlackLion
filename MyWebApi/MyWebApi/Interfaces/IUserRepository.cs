@@ -38,12 +38,13 @@ namespace WebApi.Interfaces
         Task UpdateUserAsync (UpdateUserProfile model);
         Task<SearchResponse> GetUsersAsync(long userId, bool isRepeated=false, bool isFreeSearch = false);
         Task<bool> CheckUserExists(long id);
-        Task<int> GetUserAppLanguage(long id);
+        Task<AppLanguage> GetUserAppLanguage(long id);
         Task<long> RegisterUserAsync(UserRegistrationModel model, bool wasRegistered=false);
         Task<Country> GetCountryAsync(long id);
         //Task<List<ReportReason>> GetReportReasonsAsync(int localisationId);
         Task<long> AddFeedbackAsync(Feedback report);
         Task<long> AddUserReportAsync(SendUserReport report);
+        Task<long> AddAdventureReportAsync(SendAdventureReport report);
         Task<List<Report>> GetMostRecentReports();
         Task<Report> GetSingleUserReportByIdAsync(long id);
         Task<List<Report>> GetAllReportsOnUserAsync(long userId);
@@ -73,7 +74,7 @@ namespace WebApi.Interfaces
         Task<bool> CheckBalanceIsSufficient(long userId, int cost);
         Task<DateTime> GetPremiumExpirationDate(long userId);
         Task<DateTime> GrantPremiumToUser(long userId, int cost, int dayDuration, Currency currency);
-        Task<long?> RegisterUserEncounter(Encounter model);
+        Task RegisterUserEncounter(RegisterEncounter model);
         Task<Encounter> GetUserEncounter(long encounterId);
         Task<List<Encounter>> GetUserEncounters(long userId, Section section);
         Task<int> AddUserTrustProgressAsync(long userId, double progress);

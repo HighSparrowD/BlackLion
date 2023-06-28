@@ -69,7 +69,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/GetUserAppLanguage/{userId}")]
-        public async Task<int> GetUserLanguagePrefs(long userId)
+        public async Task<AppLanguage> GetUserLanguagePrefs(long userId)
         {
             return await _repository.GetUserAppLanguage(userId);
         }
@@ -100,7 +100,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/GetUserList")]
-        public async Task<SearchResponse> GetUserList(long userId)
+        public async Task<SearchResponse> GetUserList([FromQuery] long userId)
         {
             return await _repository.GetUsersAsync(userId);
         }
@@ -138,14 +138,19 @@ namespace WebApi.Controllers
         [HttpPost("/AddFeedback")]
         public async Task<long> AddFeedback(Feedback report)
         {
-            report.InsertedUtc = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
             return await _repository.AddFeedbackAsync(report);
         }
 
-        [HttpPost("/AddUserReport")]
+        [HttpPost("/report-user")]
         public async Task<long> AddUserReport([FromBody] SendUserReport report)
         {
             return await _repository.AddUserReportAsync(report);
+        }
+
+        [HttpPost("/report-adventure")]
+        public async Task<long> ReportAdventure([FromBody] SendAdventureReport report)
+        {
+            return await _repository.AddAdventureReportAsync(report);
         }
 
         [HttpGet("/basic-info/{userId}")]
@@ -372,9 +377,9 @@ namespace WebApi.Controllers
         }
 
         [HttpPost("/RegisterUserEncounter")]
-        public async Task<long?> RegisterUserEncounter(Encounter model)
+        public async Task RegisterUserEncounter(RegisterEncounter model)
         {
-            return await _repository.RegisterUserEncounter(model);
+            await _repository.RegisterUserEncounter(model);
         }
 
         [HttpGet("/profile-encounters/{userId}")]
@@ -835,7 +840,7 @@ namespace WebApi.Controllers
             return await _repository.DeleteAdventureAsync(id, userId);
         }
 
-        [HttpGet("/SendAdventureRequest")]
+        [HttpGet("/adventure-request")]
         public async Task<ParticipationRequestStatus> SendAdventureRequest([FromQuery] long id, [FromQuery] long userId)
         {
             return await _repository.SendAdventureRequestAsync(id, userId);

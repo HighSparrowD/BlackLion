@@ -1,9 +1,8 @@
 import copy
-import json
 
 import requests
 import telegram
-from telebot.types import ReplyKeyboardMarkup, KeyboardButton
+from telebot.types import ReplyKeyboardMarkup
 
 from Core import HelpersMethodes as Helpers
 from Helper import Helper
@@ -11,13 +10,14 @@ from Helper import Helper
 
 class ReportModule:
     #return_method represents a certain method, that will be called upon reporter destruction. Thus allowing user to proceed in his bot usage
-    def __init__(self, bot, msg, active_user, return_method, dontAddToBlackList=False):
+    def __init__(self, bot, msg, active_user, return_method, dontAddToBlackList=False, isAdventure=False):
         self.bot = bot
         self.message = msg
         self.current_user = msg.from_user.id
         self.return_method = return_method
 
         self.dontAddToBlackList = dontAddToBlackList
+        self.isAdventure = isAdventure
 
         self.current_section = None
         self.edit_mode = False
@@ -29,9 +29,6 @@ class ReportModule:
         self.active_user = active_user
 
         self.report_data = {}
-
-        # self.reasons = json.loads(requests.get(f"https://localhost:44381/GetFeedbackReasons/{self.user_language}", verify=False).text)
-        # self.reas = []
 
         self.markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
         self.checkoutMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("1", "2", "3", "4")
@@ -77,14 +74,14 @@ class ReportModule:
                 return
 
             elif message.text in self.report_reasons.values():
-                self.report_data = {"Sender": self.current_user,
-                                    "ReportedUser": self.active_user,
-                                    "Reason": self.reason_converter(message.text),
+                self.report_data = {"sender": self.current_user,
+                                    "adventure" if self.isAdventure else "reportedUser": self.active_user,
+                                    "reason": self.reason_converter(message.text),
                                     }
 
                 if not editMode:
                     self.edit_mode = None
-                    self.report_user(message)
+                    self.report_description(message)
                 else:
                     self.edit_mode = None
                     self.report_user_final(message)
@@ -93,17 +90,17 @@ class ReportModule:
                 self.bot.send_message(self.current_user, "No such option", reply_markup=self.reasons_markup)
                 self.bot.register_next_step_handler(message, self.report_step1, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
 
-    def report_user(self, message, acceptMode=False, editMode=False):
+    def report_description(self, message, acceptMode=False, editMode=False):
         # Set params to smoothly go back from Helper Module
-        self.current_section = self.report_user
+        self.current_section = self.report_description
         self.edit_mode = copy.copy(editMode)
 
         if not acceptMode:
             self.bot.send_message(self.current_user, "Please, enter a brief description of your report", reply_markup=self.ASmarkup)
-            self.bot.register_next_step_handler(message, self.report_user, acceptMode=True, editMode=editMode, chat_id=self.current_user)
+            self.bot.register_next_step_handler(message, self.report_description, acceptMode=True, editMode=editMode, chat_id=self.current_user)
         else:
             if message.text == "/abort":
-                self.abort_checkout(message, stage=self.report_user, editMode=editMode)
+                self.abort_checkout(message, stage=self.report_description, editMode=editMode)
                 self.edit_mode = None
                 return
             elif message.text != "/skip":
@@ -125,10 +122,10 @@ class ReportModule:
             if message.text == "1":
                 self.report_step1(message, editMode=True)
             elif message.text == "2":
-                self.report_user(message, editMode=True)
+                self.report_description(message, editMode=True)
             elif message.text == "3":
-                self.bot.send_message(self.current_user, "Thank you for your report. We will process it as soon as possible\n\n<b>Personality Administration</b>", parse_mode=telegram.ParseMode.HTML)
                 self.send_report()
+                self.bot.send_message(self.current_user, "Thank you for your report. We will process it as soon as possible\n\n<b>Personality Administration</b>", parse_mode=telegram.ParseMode.HTML)
                 if not self.dontAddToBlackList:
                     self.add_user_to_blacklist_step(message)
                 else:
@@ -196,10 +193,10 @@ class ReportModule:
                 return reas
 
     def send_report(self):
-        d = json.dumps(self.report_data)
-
-        requests.post(f"https://localhost:44381/AddUserReport", d, headers={
-            "Content-Type": "application/json"}, verify=False)
+        if self.isAdventure:
+            Helpers.report_adventure(self.report_data)
+            return
+        Helpers.report_user(self.report_data)
 
     def add_user_to_blacklist(self):
         return requests.get(f"https://localhost:44381/AddUserToBlackList/{self.current_user}/{self.active_user}", verify=False).text

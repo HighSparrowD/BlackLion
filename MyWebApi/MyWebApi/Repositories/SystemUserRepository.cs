@@ -683,6 +683,18 @@ namespace WebApi.Repositories
 
             var bonus = "";
 
+            //Add comment if user wants to see them
+            if (currentUser.Settings.ShouldComment)
+                returnUser.Comment = await GetRandomHintAsync(currentUser.Data.Language, HintType.Search);
+
+            if (managedUser.HasPremium && managedUser.Nickname != "")
+                bonus += $"<b>{managedUser.Nickname}</b>\n";
+
+            if (managedUser.IdentityType == IdentityConfirmationType.Partial)
+                bonus += $"☑️☑️☑️\n\n";
+            else if (managedUser.IdentityType == IdentityConfirmationType.Full)
+                bonus += $"✅✅✅\n\n";
+
             if (userHasDetectorOn)
                 bonus += $"<b>PERSONALITY match!</b>\n<b>{matchedBy}</b>";
             else
@@ -695,12 +707,13 @@ namespace WebApi.Repositories
 
         public async Task<Country> GetCountryAsync(long id)
         {
-            var c = await _contx.Countries.Include(c => c.Cities).SingleAsync(c => c.Id == id);
+            var c = await _contx.Countries.Include(c => c.Cities).FirstOrDefaultAsync(c => c.Id == id);
             return c;
         }
 
         public async Task<long> AddFeedbackAsync(Feedback feedback)
         {
+            feedback.InsertedUtc = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
             await _contx.Feedbacks.AddAsync(feedback);
             await _contx.SaveChangesAsync();
 
@@ -734,12 +747,13 @@ namespace WebApi.Repositories
             return true;
         }
 
-        public async Task<int> GetUserAppLanguage(long id)
+        public async Task<AppLanguage> GetUserAppLanguage(long id)
         {
-            var data = await _contx.UserData.Where(u => u.Id == id)
+            var language = await _contx.UserData.Where(u => u.Id == id)
+                .Select(u => u.Language)
                 .FirstOrDefaultAsync();
 
-            return (byte)data.Language;
+            return language;
         }
 
         public async Task<bool> CheckUserIsRegistered(long userId)
@@ -781,7 +795,7 @@ namespace WebApi.Repositories
 
         public async Task<List<Feedback>> GetMostRecentFeedbacks()
         {
-            var pointInTime = DateTime.SpecifyKind(DateTime.Now.AddDays(-2), DateTimeKind.Utc);
+            var pointInTime = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(-2), DateTimeKind.Utc);
             return await _contx.Feedbacks
                 .Where(f => f.InsertedUtc >= pointInTime)
                 .Include(f => f.User)
@@ -790,7 +804,7 @@ namespace WebApi.Repositories
 
         public async Task<List<Feedback>> GetMostRecentFeedbacksByUserId(long userId)
         {
-            var pointInTime = DateTime.SpecifyKind(DateTime.Now.AddDays(-2), DateTimeKind.Utc);
+            var pointInTime = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(-2), DateTimeKind.Utc);
             return await _contx.Feedbacks
                 .Where(f => f.InsertedUtc >= pointInTime && f.UserId == userId)
                 .Include(f => f.User)
@@ -820,7 +834,7 @@ namespace WebApi.Repositories
                 if (reportedUser.ReportCount >= 5)
                 {
                     reportedUser.IsBanned = true;
-                    reportedUser.BanDate = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
+                    reportedUser.BanDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
                 }
 
                 var report = new Report
@@ -829,7 +843,7 @@ namespace WebApi.Repositories
                     UserId = request.ReportedUser,
                     Text = request.Text,
                     Reason = request.Reason,
-                    InsertedUtc = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc)
+                    InsertedUtc = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc)
                 };
 
                 await _contx.UserReports.AddAsync(report);
@@ -841,9 +855,44 @@ namespace WebApi.Repositories
             catch {return 0;}
         }
 
+        public async Task<long> AddAdventureReportAsync(SendAdventureReport request)
+        {
+            try
+            {
+                var reportedUser = await _contx.Adventures.Where(u => u.Id == request.Adventure)
+                    .Select(a => a.Creator)
+                    .FirstOrDefaultAsync();
+
+                reportedUser.ReportCount++;
+
+                //Ban user if dailly report count is too high
+                if (reportedUser.ReportCount >= 5)
+                {
+                    reportedUser.IsBanned = true;
+                    reportedUser.BanDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
+                }
+
+                var report = new Report
+                {
+                    SenderId = request.Sender,
+                    AdventureId = request.Adventure,
+                    Text = request.Text,
+                    Reason = request.Reason,
+                    InsertedUtc = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc)
+                };
+
+                await _contx.UserReports.AddAsync(report);
+
+                await _contx.SaveChangesAsync();
+
+                return report.Id;
+            }
+            catch { return 0; }
+        }
+
         public async Task<List<Report>> GetMostRecentReports()
         {
-            var pointInTime = DateTime.SpecifyKind(DateTime.Now.AddDays(-1), DateTimeKind.Utc);
+            var pointInTime = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(-1), DateTimeKind.Utc);
             return await _contx.UserReports.Where(r => r.InsertedUtc > pointInTime).ToListAsync();
         }
 
@@ -1232,8 +1281,8 @@ namespace WebApi.Repositories
 
                         if (result)
                         {
-                            await RegisterUserEncounter(new Encounter { UserId = user1, EncounteredUserId = user2, Section = Section.RT });
-                            await RegisterUserEncounter(new Encounter { UserId = user2, EncounteredUserId = user1, Section = Section.RT });
+                            await RegisterUserEncounter(new RegisterEncounter { UserId = user1, EncounteredUserId = user2, Section = Section.RT });
+                            await RegisterUserEncounter(new RegisterEncounter { UserId = user2, EncounteredUserId = user1, Section = Section.RT });
                         }
 
                         return result;
@@ -1248,8 +1297,8 @@ namespace WebApi.Repositories
 
                         if (result)
                         {
-                            await RegisterUserEncounter(new Encounter { UserId = user1, EncounteredUserId = user2, Section = Section.RT});
-                            await RegisterUserEncounter(new Encounter { UserId = user2, EncounteredUserId = user1, Section = Section.RT });
+                            await RegisterUserEncounter(new RegisterEncounter { UserId = user1, EncounteredUserId = user2, Section = Section.RT});
+                            await RegisterUserEncounter(new RegisterEncounter { UserId = user2, EncounteredUserId = user1, Section = Section.RT });
                         }
 
                         return result;
@@ -1264,8 +1313,8 @@ namespace WebApi.Repositories
 
                         if (result)
                         {
-                            await RegisterUserEncounter(new Encounter { UserId = user1, EncounteredUserId = user2, Section = Section.RT});
-                            await RegisterUserEncounter(new Encounter { UserId = user2, EncounteredUserId = user1, Section = Section.RT });
+                            await RegisterUserEncounter(new RegisterEncounter { UserId = user1, EncounteredUserId = user2, Section = Section.RT});
+                            await RegisterUserEncounter(new RegisterEncounter { UserId = user2, EncounteredUserId = user1, Section = Section.RT });
                         }
 
                         return result;
@@ -1274,8 +1323,8 @@ namespace WebApi.Repositories
                     await AddUserTrustProgressAsync(user1, 0.000005 * (double)userInfo1.BonusIndex);
                     await AddUserTrustProgressAsync(user2, 0.000005 * (double)userInfo2.BonusIndex);
 
-                    await RegisterUserEncounter(new Encounter { UserId = user1, EncounteredUserId = user2, Section = Section.RT });
-                    await RegisterUserEncounter(new Encounter { UserId = user2, EncounteredUserId = user1, Section = Section.RT });
+                    await RegisterUserEncounter(new RegisterEncounter { UserId = user1, EncounteredUserId = user2, Section = Section.RT });
+                    await RegisterUserEncounter(new RegisterEncounter { UserId = user2, EncounteredUserId = user1, Section = Section.RT });
 
                     //If neither considers having the same languages
                     return true;
@@ -1294,7 +1343,7 @@ namespace WebApi.Repositories
 
         public async Task<int> TopUpPointBalance(long userId, int points, string description = "")
         {
-            var time = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
+            var time = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
             var userBalance = await GetUserWalletBalance(userId);
 
             if (userBalance != null)
@@ -1345,7 +1394,7 @@ namespace WebApi.Repositories
 
         public async Task<int> TopUpOPBalance(long userId, int points, string description = "")
         {
-            var time = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
+            var time = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
             var userBalance = await GetUserWalletBalance(userId);
 
             if (userBalance != null)
@@ -1400,7 +1449,7 @@ namespace WebApi.Repositories
             var purchase = new Transaction
             {
                 UserId = userId,
-                PointInTime = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc),
+                PointInTime = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc),
                 Amount = amount,
                 Description = description,
                 Currency = currency
@@ -1414,7 +1463,7 @@ namespace WebApi.Repositories
 
         public async Task<bool> CheckUserHasPremiumAsync(long userId)
         {
-            var timeNow = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
+            var timeNow = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
 
             var user = await _contx.Users.Where(u => u.Id == userId)
                 .FirstOrDefaultAsync();
@@ -1441,7 +1490,7 @@ namespace WebApi.Repositories
         public async Task<DateTime> GetPremiumExpirationDate(long userId)
         {
 
-            var timeNow = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
+            var timeNow = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
             var user = await GetUserWithPremium(userId, timeNow);
 
             if (user != null)
@@ -1456,8 +1505,8 @@ namespace WebApi.Repositories
 
         public async Task<DateTime> GrantPremiumToUser(long userId, int cost, int dayDuration, Currency currency)
         {
-            var timeNow = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
-            var premiumFutureExpirationDate = DateTime.SpecifyKind(DateTime.Now.AddDays(dayDuration), DateTimeKind.Utc);
+            var timeNow = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
+            var premiumFutureExpirationDate = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(dayDuration), DateTimeKind.Utc);
 
             var user = await _contx.Users
                 .Where(u => u.Id == userId)
@@ -1770,7 +1819,7 @@ namespace WebApi.Repositories
                 request.Section = Section.Familiator;
 
 
-            await RegisterUserEncounter(new Encounter { UserId = (long)request.SenderId, EncounteredUserId = request.UserId, Section = Section.Requester });
+            await RegisterUserEncounter(new RegisterEncounter { UserId = (long)request.SenderId, EncounteredUserId = request.UserId, Section = Section.Requester });
 
             //Register request
             await AddUserNotificationAsync(request);
@@ -1808,12 +1857,11 @@ namespace WebApi.Repositories
             var sim = await GetSimilarityBetweenUsersAsync(user1, user2);
 
             //Encounter is not registered anywhere but here in that case
-            await RegisterUserEncounter(new Encounter
+            await RegisterUserEncounter(new RegisterEncounter
             {
                 UserId = user1,
                 EncounteredUserId = user2,
-                Section = Section.Familiator,
-                EncounterDate = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc),
+                Section = Section.Familiator
             });
 
             switch (sim.SimilarBy.Count)
@@ -1827,8 +1875,6 @@ namespace WebApi.Repositories
                 default:
                     return null;
             }
-
-
         }
 
         public async Task<byte> DeleteUserRequests(long userId)
@@ -1886,10 +1932,8 @@ namespace WebApi.Repositories
             return true;
         }
 
-        public async Task<long?> RegisterUserEncounter(Encounter model)
+        public async Task RegisterUserEncounter(RegisterEncounter model)
         {
-            model.EncounterDate = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
-
             var user = await _contx.Users.FindAsync(model.UserId);
 
             if (model.Section == Section.Familiator || model.Section == Section.Requester)
@@ -1906,10 +1950,9 @@ namespace WebApi.Repositories
             else if (model.Section == Section.RT)
                 user.RTViewsCount++;
 
-            await _contx.Encounters.AddAsync(model);
+            await _contx.Encounters.AddAsync(new Encounter(model));
+            
             await _contx.SaveChangesAsync();
-
-            return model.Id;
         }
 
         public async Task<Encounter> GetUserEncounter(long encounterId)
@@ -2184,7 +2227,7 @@ namespace WebApi.Repositories
                 {
                     InviterCredentialsId = invitationCreds.Id,
                     InvitedUserId = userId,
-                    InvitationTime = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc)
+                    InvitationTime = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc)
                 };
 
                 await _contx.Invitations.AddAsync(invitation);
@@ -2809,7 +2852,7 @@ namespace WebApi.Repositories
                     await _contx.SaveChangesAsync();
                 }
 
-                userTest.PassedOn = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
+                userTest.PassedOn = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
                 userTest.Result = testResult;
                 userTest.Tags = model.Tags;
 
@@ -3092,7 +3135,7 @@ namespace WebApi.Repositories
                     return value;
                 }
 
-                await CreateUserBalance(userId, 0, DateTime.Now);
+                await CreateUserBalance(userId, 0, DateTime.UtcNow);
                 return false;
             }
             catch { return false; }
@@ -3427,11 +3470,11 @@ namespace WebApi.Repositories
                 return 0;
 
             //Every test has its own passing range. If date of passing is out of it => Test can be passed again
-            if ((DateTime.Now - test.PassedOn).Value.Days > test.Test.CanBePassedInDays)
+            if ((DateTime.UtcNow - test.PassedOn).Value.Days > test.Test.CanBePassedInDays)
                 return 0;
 
             //Get number of days in which this test can be passed again
-            var result = (test.Test.CanBePassedInDays - (DateTime.Now - test.PassedOn).Value.Days);
+            var result = (test.Test.CanBePassedInDays - (DateTime.UtcNow - test.PassedOn).Value.Days);
             return result;
         }
 
@@ -3856,6 +3899,10 @@ namespace WebApi.Repositories
 
         public async Task<string> RegisterAdventureAsync(ManageAdventure model)
         {
+            var userLang = await _contx.UserData.Where(u => u.Id == model.UserId)
+                .Select(u => u.Language)
+                .FirstOrDefaultAsync();
+
             var adventure = new Adventure
             {
                 UserId = model.UserId,
@@ -3863,8 +3910,10 @@ namespace WebApi.Repositories
                 Address = model.Address,
                 Application = model.Application,
                 AttendeesDescription = model.AttendeesDescription,
-                CityId = model.CityId,
                 CountryId = model.CountryId,
+                CityId = model.CityId,
+                CountryLang = userLang,
+                CityCountryLang = userLang,
                 Date = model.Date,
                 Time = model.Time,
                 Description = model.Description,
@@ -4174,18 +4223,19 @@ namespace WebApi.Repositories
 
         public async Task<string> GetRandomHintAsync(AppLanguage localisation, HintType? type)
         {
+            //25% chance to send a hint
+            //if (new Random().Next(1, 4) != 1)
+            //    return null;
+
             if (type == null)
             {
+
                 return await _contx.Hints.Where(h => h.Localization == localisation && h.Type != HintType.Search)
                     .OrderBy(r => EF.Functions.Random()).Take(1)
                     .Select(h => h.Text)
                     .AsNoTracking()
                     .FirstOrDefaultAsync();
             }
-
-            //25% chance to send a hint
-            if (new Random().Next(1, 4) != 1)
-                return null;
 
             return await _contx.Hints.Where(h => h.Localization == localisation && h.Type == type)
                     .OrderBy(r => EF.Functions.Random())
@@ -4480,6 +4530,8 @@ namespace WebApi.Repositories
             var query = _contx.Adventures.Where(q => q.Status != AdventureStatus.Deleted && q.UserId != userId)
                 .AsNoTracking();
 
+            query = query.Where(q => q.Attendees.All(at => at.UserId != user.Id));
+
             if (user.Location != null)
                 query = query.Where(q => user.Data.LocationPreferences.Contains((int)q.CountryId));
 
@@ -4491,6 +4543,8 @@ namespace WebApi.Repositories
 
 
             query = query.Where(q => q.Creator.Data.LanguagePreferences.Any(l => user.Data.LanguagePreferences.Contains(l)));
+
+            query = query.Include(q => q.Country).Include(q => q.City);
 
             query = query.Take(adventuresCount);
 

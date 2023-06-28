@@ -19,7 +19,7 @@ namespace WebApi.Entities.AdventureEntities
 
         public static string GenerateDescription(Adventure adventure)
         {
-            return $"{adventure.Name}\n{adventure.CountryId} {adventure.CityId}\n\n{adventure.Description}\n{adventure.Experience}\n{adventure.AttendeesDescription}\n{adventure.UnwantedAttendeesDescription}\n{adventure.Gratitude}\n{adventure.Date} {adventure.Time}\n{adventure.Duration}\n{adventure.Application}{adventure.Address}".Replace("\n\n\n","");
+            return $"{adventure.Name}\n{adventure.Country.CountryName} {adventure.City.CityName}\n\n{adventure.Description}\n{adventure.Experience}\n{adventure.AttendeesDescription}\n{adventure.UnwantedAttendeesDescription}\n{adventure.Gratitude}\n{adventure.Date} {adventure.Time}\n{adventure.Duration}\n{adventure.Application}{adventure.Address}".Replace("\n\n\n","");
         }
     }
 }

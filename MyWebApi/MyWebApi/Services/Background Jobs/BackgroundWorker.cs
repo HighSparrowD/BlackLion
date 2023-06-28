@@ -40,6 +40,7 @@ namespace WebApi.Services.Background
 
             var timespan = new TimeSpan(differenceHours, differenceMinutes, differenceSeconds);
 
+            Console.WriteLine($"UTC Time now is {now}");
             Console.WriteLine($"Correcting by timespan: {timespan}");
             await Task.Delay(timespan);
         }

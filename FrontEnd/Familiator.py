@@ -115,9 +115,8 @@ class Familiator:
     def normal_search_handler(self, message):
         response = Helpers.get_user_list(self.current_user)
         self.people = response["users"]
-        if self.people:
-            if self.set_active_person():
-                self.show_person(message)
+        if self.set_active_person():
+            self.show_person(message)
         else:
             #TODO: Remove
             self.personalityOff_handler(message)
@@ -183,8 +182,8 @@ class Familiator:
     def set_active_person(self, msg=None):
         if self.people:
             self.active_user = self.people[0]
-            Helpers.register_user_encounter_familiator(self.current_user, self.active_user_id)
             self.active_user_id = self.active_user["userId"]
+            Helpers.register_user_encounter_familiator(self.current_user, self.active_user_id)
             self.people.pop(0)
 
             self.set_report_button_value()
@@ -193,10 +192,7 @@ class Familiator:
 
     def show_person(self, message, acceptMode=False):
         if not acceptMode:
-            user = self.active_user["userBaseInfo"]
-
-            if self.active_user["comment"]:
-                self.bot.send_message(self.current_user, self.active_user["comment"])
+            user = self.active_user["userDataInfo"]
 
             if user["isMediaPhoto"]:
                 self.bot.send_photo(self.current_user, user["userMedia"], user["userDescription"], reply_markup=self.markup)
@@ -204,6 +200,10 @@ class Familiator:
                 self.bot.send_video(self.current_user, video=user["userMedia"], caption=user["userDescription"], reply_markup=self.markup)
 
             self.bot.send_message(self.current_user, "Additional Actions:", reply_markup=self.actions_markup)
+
+            if self.active_user["comment"]:
+                self.bot.send_message(self.current_user, self.active_user["comment"])
+
             self.bot.register_next_step_handler(message, self.show_person, acceptMode=True, chat_id=self.current_user)
         else:
             if not self.reactToCallback:
