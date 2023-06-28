@@ -121,9 +121,15 @@ namespace WebApi.Data
             builder.Entity<Achievement>().HasKey(g => new { g.Id, g.Language });
             builder.Entity<UserAchievement>().HasKey(g => new { g.UserId, g.AchievementId });
             builder.Entity<BlackList>().HasKey(g => new { g.Id, g.UserId });
-            builder.Entity<AdventureAttendee>().HasKey(t => new { t.UserId, t.AdventureId });
             builder.Entity<UserTag>().HasKey(t => new { t.UserId, t.Tag });
             builder.Entity<Hint>().HasKey(t => new { t.Id, t.Localization });
+
+
+            builder.Entity<Adventure>().HasOne(a => a.City);
+            builder.Entity<Adventure>().HasOne(a => a.Country);
+            builder.Entity<Adventure>().HasOne(a => a.Creator);
+            builder.Entity<Adventure>().HasMany(a => a.Attendees);
+            builder.Entity<AdventureAttendee>().HasKey(t => new { t.UserId, t.AdventureId });
 
             builder.Entity<Sponsor>().HasMany(s => s.SponsorLanguages);
             builder.Entity<SponsorLanguage>().HasOne(s => s.Language);

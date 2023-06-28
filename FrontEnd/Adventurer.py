@@ -5,6 +5,8 @@ import requests
 import json
 
 from Common.Menues import go_back_to_main_menu
+from Helper import Helper
+from ReportModule import ReportModule
 from Settings import Settings
 
 
@@ -35,6 +37,8 @@ class Adventurer:
         self.active_message = None
         self.secondary_message = None
 
+        self.next_handler = None
+
         self.previous_section = None
         self.current_registration_step = None
 
@@ -43,6 +47,7 @@ class Adventurer:
         self.isOffline = False
         self.doesExist = False
         self.editMode = False
+        self.reactToCallback = True
         self.isCreatedFromTemplate = False
 
         #User's location
@@ -52,6 +57,10 @@ class Adventurer:
         if self.user_info["location"]:
             self.country = self.user_info["location"]["countryId"]
             self.city = self.user_info["location"]["cityId"]
+
+        #Used for adventure search
+        self.adventures = None
+        self.current_adventure_data = None
 
         #Used for template management
         self.current_template = 0
@@ -114,6 +123,9 @@ class Adventurer:
             .add(InlineKeyboardButton("Accept", callback_data="10")) \
             .add(InlineKeyboardButton("Decline", callback_data="11")) \
             .add(InlineKeyboardButton("Go Back", callback_data="-20"))
+
+        self.actions_markup = InlineKeyboardMarkup().add(InlineKeyboardButton("⚠ Report ⚠", callback_data=self.current_adventure)) \
+            .add(InlineKeyboardButton("🔖 Help 🔖", callback_data="11"))
 
         self.okMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Ok")
         self.YNMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Yes", "No")
@@ -1125,7 +1137,7 @@ class Adventurer:
         self.previous_section = self.start
 
         self.manageMode = 2
-        if len(self.subscribed_adventuresMarkup) > 1:
+        if len(self.subscribed_adventuresMarkup.keyboard) > 1:
             self.send_active_message("<b><i>Here are all adventures, you are subscribed on</i></b>", markup=self.subscribed_adventuresMarkup)
 
         self.send_active_message("<b><i>You are not subscribed on any adventures!\nTry finding them :)</b></i>", markup=self.search_markup)
@@ -1137,8 +1149,61 @@ class Adventurer:
     def recurring_adventure_search(self):
         self.delete_active_message()
         self.delete_secondary_message()
+        self.subscribe_callback_handler(self.search_adventures_callback_handler)
         self.previous_section = self.search_choice
-        #TODO: finish up
+
+        if self.set_active_adventure():
+            self.show_adventure(self.message)
+        else:
+            self.send_secondary_message("No adventures were found")
+            self.subscribe_callback_handler(self.start_callback_handler)
+            self.search_choice()
+
+    def set_active_adventure(self):
+        response = Helpers.get_adventures(self.current_user)
+        self.adventures = response["adventures"]
+
+        if self.adventures:
+            self.current_adventure_data = self.adventures[0]
+            self.current_adventure = self.current_adventure_data["id"]
+            self.adventures.pop(0)
+
+            self.set_report_button_value()
+            return True
+        return False
+
+    def show_adventure(self, message, acceptMode=False):
+        if not acceptMode:
+            if self.current_adventure_data["isMediaPhoto"]:
+                self.send_active_message_with_photo(self.current_adventure_data["description"], self.current_adventure_data["media"], self.YNMarkup)
+            else:
+                self.send_active_message_with_video(self.current_adventure_data["description"], self.current_adventure_data["media"], self.YNMarkup)
+
+            self.send_secondary_message("Additional actions", self.actions_markup)
+            self.next_handler = self.bot.register_next_step_handler(self.message, self.show_adventure, acceptMode=True, chat_id=self.current_user)
+        else:
+            if message.text == "Yes":
+                if self.current_adventure_data["isAutoReplyText"] is not None:
+                    if self.current_adventure_data["isAutoReplyText"]:
+                        self.bot.send_message(self.current_user, f"⬆This user has a message for you ;-)⬆\n\n{self.current_adventure_data['autoReply']}")
+                    else:
+                        self.bot.send_voice(self.current_user, self.current_adventure_data["autoReply"], "⬆ This user has a message for you ;-) ⬆")
+
+                Helpers.send_adventure_request(self.current_adventure, self.current_user)
+                self.bot.send_message(self.current_user, "Done! Your request had been sent to the adventure's creator")
+                self.proceed()
+            else:
+                self.proceed()
+
+    # Proceed with search
+    def proceed(self):
+        if self.set_active_adventure():
+            self.show_adventure(self.message)
+        else:
+            self.bot.send_message(self.current_user, "That is all for now")
+            # Go back to start
+            self.subscribe_callback_handler(self.start_callback_handler)
+            self.search_choice()
 
     def join_by_code(self, message, acceptMode=False):
         if not acceptMode:
@@ -1327,9 +1392,9 @@ class Adventurer:
             self.register_checkout(call.message)
         elif call.data == "4":
             pass
-        elif call.data == "6": # Get Attendee's username
+        elif call.data == "6":# Get Attendee's username
             self.get_attendee_contact()
-        elif call.data == "7": # Remove attendee
+        elif call.data == "7":# Remove attendee
             self.remove_attendee(call.message)
         elif call.data == "10":
             self.resolve_participation_request(2)
@@ -1341,6 +1406,25 @@ class Adventurer:
         else:
             self.current_attendee = call.data
             self.manage_adventure_attendee()
+
+    def search_adventures_callback_handler(self, call):
+        if call.data == "11":
+            self.open_helper(call.message, self.proceed)
+        else:
+            self.open_report_module(call.data)
+
+    def open_helper(self, message, section):
+        self.reactToCallback = False
+        self.previous_section = section
+        Helper(self.bot, message, self.return_from_helper, activeMessageId=self.active_message, secondaryMessageId=self.secondary_message)
+
+    def open_report_module(self, adventureId):
+        self.bot.remove_next_step_handler(self.current_user, self.next_handler)
+        ReportModule(self.bot, self.message, adventureId, self.proceed, dontAddToBlackList=True, isAdventure=True)
+
+    def return_from_helper(self):
+        self.reactToCallback = True
+        self.previous_section()
 
     def get_attendee_contact(self):
         username = self.current_attendee_data["userBaseInfo"]["userName"]
@@ -1508,6 +1592,9 @@ class Adventurer:
 
             for city in cities:
                 self.cities[city["id"]] = city["cityName"].lower()
+
+    def set_report_button_value(self):
+        self.actions_markup.keyboard[0][0].callback_data = self.current_adventure
 
     def destruct(self):
         if self.current_callback_handler:

@@ -170,8 +170,7 @@ def get_user_basic_info(userId):
 
 def get_user_app_language(userId):
     try:
-        return int(
-            json.loads(requests.get(f"{api_address}/GetUserAppLanguage/{userId}", verify=False).text))
+        return requests.get(f"{api_address}/GetUserAppLanguage/{userId}", verify=False).text
     except:
         return None
 
@@ -289,7 +288,7 @@ def get_request_sender(requestId):
 
 def get_user_list(userId):
     try:
-        return json.loads(requests.get(f"{api_address}/GetUserList/{userId}", verify=False).text)
+        return json.loads(requests.get(f"{api_address}/GetUserList?userId={userId}", verify=False).text)
     except:
         return None
 
@@ -354,10 +353,9 @@ def decline_user_request(user1, user2):
 def register_user_encounter(current_user_id, user_id, section_id):
     try:
         data = {
-            "id": 0,
             "userId": current_user_id,
-            "userId1": user_id,
-            "sectionId": section_id,
+            "encounteredUserId": user_id,
+            "section": section_id,
         }
 
         d = json.dumps(data)
@@ -548,9 +546,23 @@ def set_adventure_group_link(request):
         return None
 
 
-def get_adventure(adventureId):
+def get_adventure_template(adventureId):
     try:
         return json.loads(requests.get(f"{api_address}/adventure-template/{adventureId}", verify=False).text)
+    except:
+        return None
+
+
+def get_adventures(userId):
+    try:
+        return json.loads(requests.get(f"{api_address}/get-adventures?userId={userId}", verify=False).text)
+    except:
+        return None
+
+
+def send_adventure_request(adventureId, userId):
+    try:
+        return int(requests.get(f"{api_address}/adventure-request?id={adventureId}&userId={userId}", verify=False).text)
     except:
         return None
 
@@ -624,6 +636,20 @@ def get_report_reasons(language):
                          verify=False).text)
     except:
         return None
+
+
+def report_user(report_data):
+    d = json.dumps(report_data)
+
+    requests.post(f"https://localhost:44381/report-user", d, headers={
+        "Content-Type": "application/json"}, verify=False)
+
+
+def report_adventure(report_data):
+    d = json.dumps(report_data)
+
+    requests.post(f"https://localhost:44381/report-adventure", d, headers={
+        "Content-Type": "application/json"}, verify=False)
 
 
 def delete_user_profile(userId, message):

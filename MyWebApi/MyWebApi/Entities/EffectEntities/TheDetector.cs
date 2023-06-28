@@ -9,7 +9,7 @@ namespace WebApi.Entities.EffectEntities
         {
             EffectId = Currency.TheDetector;
             Name = "TheDetector";
-            ExpirationTime = DateTime.SpecifyKind(DateTime.Now.AddHours(1), DateTimeKind.Utc);
+            ExpirationTime = DateTime.SpecifyKind(DateTime.UtcNow.AddHours(1), DateTimeKind.Utc);
         }
     }
 }
