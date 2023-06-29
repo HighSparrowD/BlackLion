@@ -57,6 +57,7 @@ namespace WebApi.Entities.AdventureEntities
 
         public ManageAdventure(Adventure adventure)
         {
+            Id = adventure.Id;
             UserId = adventure.UserId;
             Name = adventure.Name;
             IsOffline = adventure.IsOffline;
