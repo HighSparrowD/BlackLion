@@ -36,11 +36,13 @@ class Adventurer:
         self.current_callback_handler = None
         self.active_message = None
         self.secondary_message = None
+        self.additional_message = None
 
         self.next_handler = None
 
         self.previous_section = None
-        self.current_registration_step = None
+        self.current_section = None
+        self.registration_steps = []
 
         #Used for registering adventures
         self.data = {}
@@ -127,6 +129,8 @@ class Adventurer:
         self.actions_markup = InlineKeyboardMarkup().add(InlineKeyboardButton("⚠ Report ⚠", callback_data=self.current_adventure)) \
             .add(InlineKeyboardButton("🔖 Help 🔖", callback_data="11"))
 
+        self.goBackInlineMarkup = InlineKeyboardMarkup().add(InlineKeyboardButton("🔙 Go Back", callback_data="-10"))
+
         self.okMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Ok")
         self.YNMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Yes", "No")
         self.goBackMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Go Back")
@@ -200,7 +204,7 @@ class Adventurer:
 
         self.register_checkout(self.message)
 
-    def register_start(self):
+    def register_start(self, shouldInsert=True):
         # if self.createdCount + 1 > self.creation_limit:
         #     self.send_secondary_message(f"You reached the limit. You can create up to {self.creation_limit} adventures. Please, wait until one of your adventures ends, or delete it manually.")
         # else:
@@ -222,19 +226,21 @@ class Adventurer:
         self.isTemplate = True
         self.register_state_step(ignoreVerification=True)
 
-    def register_state_step(self, ignoreVerification=False):
-        self.current_registration_step = self.register_state_step
-
+    def register_state_step(self, ignoreVerification=False, shouldInsert=True):
         if not self.isIdentityConfirmed and not ignoreVerification:
             self.register_verification_step(self.message)
             return
 
+        self.registration_steps.insert(0, self.register_start)
+        self.current_section = self.register_state_step
+
+        # self.registration_steps.insert(0, self.register_state_step)
         self.send_active_message("What kind of adventure will it be?\nPlease note, that this parameter will be impossible to change after it had been chosen", markup=self.adventure_state_markup)
 
     def register_verification_step(self, message, acceptMode=False):
         if not acceptMode:
             self.send_active_message(self.verification_message, markup=self.verificationMarkup)
-            self.bot.register_next_step_handler(message, self.register_verification_step, acceptMode=True, chat_id=self.current_user)
+            self.next_handler = self.bot.register_next_step_handler(message, self.register_verification_step, acceptMode=True, chat_id=self.current_user)
         else:
             self.delete_message(message)
 
@@ -244,7 +250,7 @@ class Adventurer:
                 self.register_state_step(True)
             else:
                 self.send_secondary_message("Empty message")
-                self.bot.register_next_step_handler(message, self.register_verification_step, acceptMode=acceptMode, chat_id=self.current_user)
+                self.next_handler = self.bot.register_next_step_handler(message, self.register_verification_step, acceptMode=acceptMode, chat_id=self.current_user)
 
     def register_online(self):
         self.isOffline = False
@@ -269,21 +275,24 @@ class Adventurer:
         # else:
         #     self.send_secondary_message("<b>Registering offline adventure requires identity confirmation. It is described in user agreement (NUMBER OF PARAGRAPH) Good example of offline adventure is: -------</b>")
 
-    def register_name_step(self, message, acceptMode=False):
-        self.current_registration_step = self.register_name_step
+    def register_name_step(self, message=None, acceptMode=False, shouldInsert=True):
         self.delete_secondary_message()
 
         if not acceptMode:
+            self.configure_registration_step(self.register_name_step, shouldInsert)
+
             if self.isTemplate:
                 self.send_active_message("Please, name your template")
             else:
                 self.send_active_message("Please, name your adventure")
-            self.bot.register_next_step_handler(message, self.register_name_step, acceptMode=True, chat_id=self.current_user)
+
+            self.send_additional_actions_message("Additional actions", self.goBackInlineMarkup)
+            self.next_handler = self.bot.register_next_step_handler(message, self.register_name_step, acceptMode=True, chat_id=self.current_user)
         else:
             self.delete_message(message)
             if not message.text:
                 self.send_secondary_message("Empty message")
-                self.bot.register_next_step_handler(message, self.register_name_step, acceptMode=acceptMode, chat_id=self.current_user)
+                self.next_handler = self.bot.register_next_step_handler(message, self.register_name_step, acceptMode=acceptMode, chat_id=self.current_user)
                 return
 
             self.data["name"] = message.text
@@ -298,19 +307,21 @@ class Adventurer:
 
             self.register_location_step(message)
 
-    def register_location_step(self, message, acceptMode=False):
-        self.current_registration_step = self.register_location_step
+    def register_location_step(self, message=None, acceptMode=False, shouldInsert=True):
         self.delete_secondary_message()
 
         if not acceptMode:
+            self.configure_registration_step(self.register_location_step, shouldInsert)
+
             if self.isOffline:
                 self.active_location_markup = self.locationOfflineMarkup
             else:
                 self.active_location_markup = self.locationOnlineMarkup
 
             self.send_active_message(self.location_message, self.active_location_markup)
-            self.bot.register_next_step_handler(message, self.register_location_step, acceptMode=True,
-                                                chat_id=self.current_user)
+            self.send_additional_actions_message("Additional actions", self.goBackInlineMarkup)
+            self.next_handler = self.bot.register_next_step_handler(message, self.register_location_step, acceptMode=True,
+                                                                    chat_id=self.current_user)
         else:
             self.delete_message(message)
             if message.text == "Use location from my profile":
@@ -323,16 +334,16 @@ class Adventurer:
                 self.register_media_step(message)
             else:
                 self.send_secondary_message("No such option", markup=self.active_location_markup)
-                self.bot.register_next_step_handler(message, self.register_location_step, acceptMode=acceptMode,
+                self.next_handler = self.bot.register_next_step_handler(message, self.register_location_step, acceptMode=acceptMode,
                                                     chat_id=self.current_user)
 
-    def register_country_step(self, message=None, acceptMode=False):
-        self.question_index = 4
-
-        self.current_registration_step = self.register_country_step
+    def register_country_step(self, message=None, acceptMode=False, shouldInsert=True):
         self.delete_secondary_message()
 
         if not acceptMode:
+            self.configure_registration_step(self.register_country_step, shouldInsert)
+
+            self.question_index = 4
             self.load_countries()
 
             reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page,
@@ -349,14 +360,15 @@ class Adventurer:
                 add_tick_to_element(self.bot, self.current_user, self.active_message, self.current_markup_elements, self.markup_page, str(self.data["countryId"]))
 
             self.send_secondary_message("Choose one from above. Or simply type country name to chat", markup=self.okMarkup)
-            self.bot.register_next_step_handler(message, self.register_country_step, acceptMode=True, chat_id=self.current_user)
+            self.send_additional_actions_message("Additional actions", self.goBackInlineMarkup)
+            self.next_handler = self.bot.register_next_step_handler(message, self.register_country_step, acceptMode=True, chat_id=self.current_user)
         else:
             self.delete_message(message)
 
             if not message.text:
                 self.send_secondary_message("Country was not recognized, try finding it in our list above",
                                             markup=self.okMarkup)
-                self.bot.register_next_step_handler(message, self.register_country_step, acceptMode=acceptMode,
+                self.next_handler = self.bot.register_next_step_handler(message, self.register_country_step, acceptMode=acceptMode,
                                                     chat_id=self.current_user)
                 return False
 
@@ -375,12 +387,12 @@ class Adventurer:
 
                     self.data["countryId"] = country
                     self.send_secondary_message("Gotcha", markup=self.okMarkup)
-                    self.bot.register_next_step_handler(message, self.register_country_step, acceptMode=acceptMode,
+                    self.next_handler = self.bot.register_next_step_handler(message, self.register_country_step, acceptMode=acceptMode,
                                                         chat_id=self.current_user)
                     return True
                 else:
                     self.send_secondary_message("Country was not recognized, try finding it in our list above", markup=self.okMarkup)
-                    self.bot.register_next_step_handler(message, self.register_country_step, acceptMode=acceptMode,
+                    self.next_handler = self.bot.register_next_step_handler(message, self.register_country_step, acceptMode=acceptMode,
                                                         chat_id=self.current_user)
                     return False
             else:
@@ -388,13 +400,14 @@ class Adventurer:
                     self.register_city_step(message)
                     return
                 self.send_secondary_message("You haven't chosen a country !", markup=self.okMarkup)
-                self.bot.register_next_step_handler(message, self.register_country_step, acceptMode=acceptMode, chat_id=self.current_user)
+                self.next_handler = self.bot.register_next_step_handler(message, self.register_country_step, acceptMode=acceptMode, chat_id=self.current_user)
 
-    def register_city_step(self, message=None, acceptMode=False):
-        self.current_registration_step = self.register_city_step
+    def register_city_step(self, message=None, acceptMode=False, shouldInsert=True):
         self.delete_secondary_message()
 
         if not acceptMode:
+            self.configure_registration_step(self.register_city_step, shouldInsert)
+
             self.question_index = 5
             self.markup_page = 1
 
@@ -413,15 +426,16 @@ class Adventurer:
                 add_tick_to_element(self.bot, self.current_user, self.active_message, self.current_markup_elements, self.markup_page, str(self.data["cityId"]))
 
             self.send_secondary_message("Chose one from above, or simply type to chat", markup=self.okMarkup)
-            self.bot.register_next_step_handler(message, self.register_city_step, acceptMode=True, chat_id=self.current_user)
+            self.send_additional_actions_message("Additional actions", self.goBackInlineMarkup)
+            self.next_handler = self.bot.register_next_step_handler(message, self.register_city_step, acceptMode=True, chat_id=self.current_user)
         else:
             self.delete_message(message)
 
             if not message.text:
                 self.send_secondary_message("City was not recognized, try finding it in our list above",
                                             markup=self.okMarkup)
-                self.bot.register_next_step_handler(message, self.register_city_step, acceptMode=acceptMode,
-                                                    chat_id=self.current_user)
+                self.next_handler = self.bot.register_next_step_handler(message, self.register_city_step, acceptMode=acceptMode,
+                                                                        chat_id=self.current_user)
                 return False
 
             msg_text = message.text.lower().strip()
@@ -438,11 +452,11 @@ class Adventurer:
                                         self.markup_page, str(city))
                     self.data["cityId"] = city
                     self.send_secondary_message("Gotcha", markup=self.okMarkup)
-                    self.bot.register_next_step_handler(message, self.register_city_step, acceptMode=acceptMode, chat_id=self.current_user)
+                    self.next_handler = self.bot.register_next_step_handler(message, self.register_city_step, acceptMode=acceptMode, chat_id=self.current_user)
                     return True
                 else:
                     self.send_secondary_message("City was not recognized, try finding it in our list above", markup=self.okMarkup)
-                    self.bot.register_next_step_handler(message, self.register_city_step, acceptMode=acceptMode, chat_id=self.current_user)
+                    self.next_handler = self.bot.register_next_step_handler(message, self.register_city_step, acceptMode=acceptMode, chat_id=self.current_user)
                     return False
 
             if self.data["cityId"] or self.data["cityId"] == 0:
@@ -460,15 +474,17 @@ class Adventurer:
 
             else:
                 self.send_secondary_message("You haven't chosen a city !", markup=self.okMarkup)
-                self.bot.register_next_step_handler(message, self.register_city_step, acceptMode=acceptMode, chat_id=self.current_user)
+                self.next_handler = self.bot.register_next_step_handler(message, self.register_city_step, acceptMode=acceptMode, chat_id=self.current_user)
 
-    def register_media_step(self, message, acceptMode=False):
-        self.current_registration_step = self.register_media_step
+    def register_media_step(self, message=None, acceptMode=False, shouldInsert=True):
         self.delete_secondary_message()
 
         if not acceptMode:
+            self.configure_registration_step(self.register_media_step, shouldInsert)
+
             self.send_active_message("Send a photo or video (1 minute max), that describes your adventure")
-            self.bot.register_next_step_handler(message, self.register_media_step, acceptMode=True, chat_id=self.current_user)
+            self.send_additional_actions_message("Additional actions", self.goBackInlineMarkup)
+            self.next_handler = self.bot.register_next_step_handler(message, self.register_media_step, acceptMode=True, chat_id=self.current_user)
         else:
             self.delete_message(message)
             if message.photo:
@@ -477,14 +493,14 @@ class Adventurer:
             elif message.video:
                 if message.video.duration > 80:
                     self.send_secondary_message("Video is to long")
-                    self.bot.register_next_step_handler(message, self.register_media_step, acceptMode=acceptMode, chat_id=self.current_user)
+                    self.next_handler = self.bot.register_next_step_handler(message, self.register_media_step, acceptMode=acceptMode, chat_id=self.current_user)
                     return
 
                 self.data["media"] = message.video.file_id
                 self.data["isMediaPhoto"] = False
             else:
                 self.send_secondary_message("Unsupported media type")
-                self.bot.register_next_step_handler(message, self.register_media_step, acceptMode=acceptMode, chat_id=self.current_user)
+                self.next_handler = self.bot.register_next_step_handler(message, self.register_media_step, acceptMode=acceptMode, chat_id=self.current_user)
                 return
 
             if self.editMode:
@@ -497,18 +513,20 @@ class Adventurer:
 
             self.register_description_step(message)
 
-    def register_description_step(self, message=None, acceptMode=False):
-        self.current_registration_step = self.register_description_step
+    def register_description_step(self, message=None, acceptMode=False, shouldInsert=True):
         self.delete_secondary_message()
 
         if not acceptMode:
+            self.configure_registration_step(self.register_description_step, shouldInsert)
+
             self.send_active_message("What do you propose to do? \nDescribe the activity, the place, what does other users have to have")
-            self.bot.register_next_step_handler(message, self.register_description_step, acceptMode=True, chat_id=self.current_user)
+            self.send_additional_actions_message("Additional actions", self.goBackInlineMarkup)
+            self.next_handler = self.bot.register_next_step_handler(message, self.register_description_step, acceptMode=True, chat_id=self.current_user)
         else:
             self.delete_message(message)
             if not message.text:
                 self.send_secondary_message("Empty message")
-                self.bot.register_next_step_handler(message, self.register_description_step, acceptMode=acceptMode, chat_id=self.current_user)
+                self.next_handler = self.bot.register_next_step_handler(message, self.register_description_step, acceptMode=acceptMode, chat_id=self.current_user)
                 return
 
             self.data["description"] = message.text
@@ -523,18 +541,20 @@ class Adventurer:
 
             self.register_experience_step(message)
 
-    def register_experience_step(self, message, acceptMode=False):
-        self.current_registration_step = self.register_experience_step
+    def register_experience_step(self, message=None, acceptMode=False, shouldInsert=True):
         self.delete_secondary_message()
 
         if not acceptMode:
+            self.configure_registration_step(self.register_experience_step, shouldInsert)
+
             self.send_active_message("How are you connected to what you are proposing to do, and are you connected at all?\nHow long have you been doing this activity?\nHave you ever done it before?\nIs this your first time doing it?", self.skipMarkup)
-            self.bot.register_next_step_handler(message, self.register_experience_step, acceptMode=True, chat_id=self.current_user)
+            self.send_additional_actions_message("Additional actions", self.goBackInlineMarkup)
+            self.next_handler = self.bot.register_next_step_handler(message, self.register_experience_step, acceptMode=True, chat_id=self.current_user)
         else:
             self.delete_message(message)
             if not message.text:
                 self.send_secondary_message("Empty message", self.skipMarkup)
-                self.bot.register_next_step_handler(message, self.register_experience_step, acceptMode=acceptMode, chat_id=self.current_user)
+                self.next_handler = self.bot.register_next_step_handler(message, self.register_experience_step, acceptMode=acceptMode, chat_id=self.current_user)
                 return
 
             elif not message.text or message.text == "Skip":
@@ -554,18 +574,20 @@ class Adventurer:
 
             self.register_attendees_step(message)
 
-    def register_attendees_step(self, message, acceptMode=False):
-        self.current_registration_step = self.register_attendees_step
+    def register_attendees_step(self, message=None, acceptMode=False, shouldInsert=True):
         self.delete_secondary_message()
 
         if not acceptMode:
+            self.configure_registration_step(self.register_attendees_step, shouldInsert)
+
             self.send_active_message("Who would you like to see?\nDescribe the person you would like to see. Gender, age, hobbies.\nWhy should this person come?\nHow many people would you like to gather?", self.skipMarkup)
-            self.bot.register_next_step_handler(message, self.register_attendees_step, acceptMode=True, chat_id=self.current_user)
+            self.send_additional_actions_message("Additional actions", self.goBackInlineMarkup)
+            self.next_handler = self.bot.register_next_step_handler(message, self.register_attendees_step, acceptMode=True, chat_id=self.current_user)
         else:
             self.delete_message(message)
             if not message.text:
                 self.send_secondary_message("Empty message", self.skipMarkup)
-                self.bot.register_next_step_handler(message, self.register_attendees_step, acceptMode=acceptMode, chat_id=self.current_user)
+                self.next_handler = self.bot.register_next_step_handler(message, self.register_attendees_step, acceptMode=acceptMode, chat_id=self.current_user)
                 return
 
             elif not message.text or message.text == "Skip":
@@ -585,18 +607,20 @@ class Adventurer:
 
             self.register_unwanted_attendees_step(message)
 
-    def register_unwanted_attendees_step(self, message, acceptMode=False):
-        self.current_registration_step = self.register_unwanted_attendees_step
+    def register_unwanted_attendees_step(self, message=None, acceptMode=False, shouldInsert=True):
         self.delete_secondary_message()
 
         if not acceptMode:
+            self.configure_registration_step(self.register_unwanted_attendees_step, shouldInsert)
+
             self.send_active_message("Who would you NOT wish to see?\nDescribe the person you would NOT wish to see.", self.skipMarkup)
-            self.bot.register_next_step_handler(message, self.register_unwanted_attendees_step, acceptMode=True, chat_id=self.current_user)
+            self.send_additional_actions_message("Additional actions", self.goBackInlineMarkup)
+            self.next_handler = self.bot.register_next_step_handler(message, self.register_unwanted_attendees_step, acceptMode=True, chat_id=self.current_user)
         else:
             self.delete_message(message)
             if not message.text:
                 self.send_secondary_message("Empty message", self.skipMarkup)
-                self.bot.register_next_step_handler(message, self.register_unwanted_attendees_step, acceptMode=acceptMode, chat_id=self.current_user)
+                self.next_handler = self.bot.register_next_step_handler(message, self.register_unwanted_attendees_step, acceptMode=acceptMode, chat_id=self.current_user)
                 return
 
             elif not message.text or message.text == "Skip":
@@ -616,13 +640,15 @@ class Adventurer:
 
             self.register_gratitude_step(message)
 
-    def register_gratitude_step(self, message, acceptMode=False):
-        self.current_registration_step = self.register_gratitude_step
+    def register_gratitude_step(self, message=None, acceptMode=False, shouldInsert=True):
         self.delete_secondary_message()
 
         if not acceptMode:
+            self.configure_registration_step(self.register_gratitude_step, shouldInsert)
+
             self.send_active_message("What kind of thanks would you like to receive from attendees for organizing the adventure?\n*It could be a social media review, a donation, or just a simple 'thank you'", markup=self.skipMarkup)
-            self.bot.register_next_step_handler(message, self.register_gratitude_step, acceptMode=True, chat_id=self.current_user)
+            self.send_additional_actions_message("Additional actions", self.goBackInlineMarkup)
+            self.next_handler = self.bot.register_next_step_handler(message, self.register_gratitude_step, acceptMode=True, chat_id=self.current_user)
         else:
             self.delete_message(message)
             if not message.text or message.text == "Skip":
@@ -642,18 +668,20 @@ class Adventurer:
 
             self.register_date_step(message)
 
-    def register_date_step(self, message, acceptMode=False):
-        self.current_registration_step = self.register_date_step
+    def register_date_step(self, message=None, acceptMode=False, shouldInsert=True):
         self.delete_secondary_message()
 
         if not acceptMode:
+            self.configure_registration_step(self.register_date_step, shouldInsert)
+
             self.send_active_message("State the exact date of the adventure.\n\nExample: 10.08.2024\n\n*Do not include time, it is gonna be the next step :)")
-            self.bot.register_next_step_handler(message, self.register_date_step, acceptMode=True, chat_id=self.current_user)
+            self.send_additional_actions_message("Additional actions", self.goBackInlineMarkup)
+            self.next_handler = self.bot.register_next_step_handler(message, self.register_date_step, acceptMode=True, chat_id=self.current_user)
         else:
             self.delete_message(message)
             if not message.text:
                 self.send_secondary_message("Empty message")
-                self.bot.register_next_step_handler(message, self.register_date_step, acceptMode=acceptMode, chat_id=self.current_user)
+                self.next_handler = self.bot.register_next_step_handler(message, self.register_date_step, acceptMode=acceptMode, chat_id=self.current_user)
                 return
 
             self.data["date"] = message.text
@@ -668,18 +696,20 @@ class Adventurer:
 
             self.register_time_step(message)
 
-    def register_time_step(self, message, acceptMode=False):
-        self.current_registration_step = self.register_time_step
+    def register_time_step(self, message=None, acceptMode=False, shouldInsert=True):
         self.delete_secondary_message()
 
         if not acceptMode:
+            self.configure_registration_step(self.register_time_step, shouldInsert)
+
             self.send_active_message("State the time of the adventure.\n\nExample:\nWe gather at 11:00 a.m.\nWe start at 11:20")
-            self.bot.register_next_step_handler(message, self.register_time_step, acceptMode=True, chat_id=self.current_user)
+            self.send_additional_actions_message("Additional actions", self.goBackInlineMarkup)
+            self.next_handler = self.bot.register_next_step_handler(message, self.register_time_step, acceptMode=True, chat_id=self.current_user)
         else:
             self.delete_message(message)
             if not message.text:
                 self.send_secondary_message("Empty message")
-                self.bot.register_next_step_handler(message, self.register_time_step, acceptMode=acceptMode, chat_id=self.current_user)
+                self.next_handler = self.bot.register_next_step_handler(message, self.register_time_step, acceptMode=acceptMode, chat_id=self.current_user)
                 return
 
             self.data["time"] = message.text
@@ -694,18 +724,20 @@ class Adventurer:
 
             self.register_duration_step(message)
 
-    def register_duration_step(self, message, acceptMode=False):
-        self.current_registration_step = self.register_duration_step
+    def register_duration_step(self, message=None, acceptMode=False, shouldInsert=True):
         self.delete_secondary_message()
 
         if not acceptMode:
+            self.configure_registration_step(self.register_duration_step, shouldInsert)
+
             self.send_active_message("How long is your adventure going to last?\n\nExample:\n'The event will last 4 hours'\nOR\n'The adventure will last from 2:00 p.m. to 7:00 p.m.'")
-            self.bot.register_next_step_handler(message, self.register_duration_step, acceptMode=True, chat_id=self.current_user)
+            self.send_additional_actions_message("Additional actions", self.goBackInlineMarkup)
+            self.next_handler = self.bot.register_next_step_handler(message, self.register_duration_step, acceptMode=True, chat_id=self.current_user)
         else:
             self.delete_message(message)
             if not message.text:
                 self.send_secondary_message("Empty message")
-                self.bot.register_next_step_handler(message, self.register_duration_step, acceptMode=acceptMode, chat_id=self.current_user)
+                self.next_handler = self.bot.register_next_step_handler(message, self.register_duration_step, acceptMode=acceptMode, chat_id=self.current_user)
                 return
 
             self.data["duration"] = message.text
@@ -723,18 +755,20 @@ class Adventurer:
             else:
                 self.register_application_step(message)
 
-    def register_application_step(self, message, acceptMode=False):
-        self.current_registration_step = self.register_application_step
+    def register_application_step(self, message=None, acceptMode=False, shouldInsert=True):
         self.delete_secondary_message()
 
         if not acceptMode:
+            self.configure_registration_step(self.register_application_step, shouldInsert)
+
             self.send_active_message("What app will you use to communicate?")
-            self.bot.register_next_step_handler(message, self.register_application_step, acceptMode=True, chat_id=self.current_user)
+            self.send_additional_actions_message("Additional actions", self.goBackInlineMarkup)
+            self.next_handler = self.bot.register_next_step_handler(message, self.register_application_step, acceptMode=True, chat_id=self.current_user)
         else:
             self.delete_message(message)
             if not message.text:
                 self.send_secondary_message("Empty message")
-                self.bot.register_next_step_handler(message, self.register_application_step, acceptMode=acceptMode, chat_id=self.current_user)
+                self.next_handler = self.bot.register_next_step_handler(message, self.register_application_step, acceptMode=acceptMode, chat_id=self.current_user)
                 return
 
             self.data["address"] = ""
@@ -750,18 +784,20 @@ class Adventurer:
 
             self.register_group_step(message)
 
-    def register_address_step(self, message, acceptMode=False):
-        self.current_registration_step = self.register_address_step
+    def register_address_step(self, message=None, acceptMode=False, shouldInsert=True):
         self.delete_secondary_message()
 
         if not acceptMode:
+            self.configure_registration_step(self.register_address_step, shouldInsert)
+
             self.send_active_message("State the address where you will meet")
-            self.bot.register_next_step_handler(message, self.register_address_step, acceptMode=True, chat_id=self.current_user)
+            self.send_additional_actions_message("Additional actions", self.goBackInlineMarkup)
+            self.next_handler = self.bot.register_next_step_handler(message, self.register_address_step, acceptMode=True, chat_id=self.current_user)
         else:
             self.delete_message(message)
             if not message.text:
                 self.send_secondary_message("Empty message")
-                self.bot.register_next_step_handler(message, self.register_address_step, acceptMode=acceptMode, chat_id=self.current_user)
+                self.next_handler = self.bot.register_next_step_handler(message, self.register_address_step, acceptMode=acceptMode, chat_id=self.current_user)
                 return
 
             self.data["application"] = ""
@@ -781,11 +817,13 @@ class Adventurer:
 
             self.register_group_step(message)
 
-    def register_group_step(self, message, acceptMode=False):
+    def register_group_step(self, message=None, acceptMode=False, shouldInsert=True):
         if not acceptMode:
+            self.configure_registration_step(self.register_group_step, shouldInsert)
+
             #TODO: Think how else can the bot be helpful in group chats
             self.send_active_message("Would you like to use group management ?\n\n <b>This feature allows the me to manage your adventure's chat. When you accept new attendees, I will invite them to your group, if you decide to remove them from your adventure, I will remove them from the group</b>", markup=self.YNMarkup)
-            self.bot.register_next_step_handler(message, self.register_group_step, acceptMode=True, chat_id=self.current_user)
+            self.next_handler = self.bot.register_next_step_handler(message, self.register_group_step, acceptMode=True, chat_id=self.current_user)
         else:
             if message.text == "Yes":
                 self.data["isAwaiting"] = True
@@ -796,13 +834,14 @@ class Adventurer:
 
             self.register_auto_reply_step(message)
 
-    def register_auto_reply_step(self, message, acceptMode=False):
-        self.current_registration_step = self.register_auto_reply_step
+    def register_auto_reply_step(self, message=None, acceptMode=False, shouldInsert=True):
         self.delete_secondary_message()
 
         if not acceptMode:
+            self.configure_registration_step(self.register_auto_reply_step, shouldInsert)
+
             self.send_active_message("You can leave an auto reply for those who will like your adventure\nJust send a voice/text message or hit skip in case you don't want to add auto reply", self.skipMarkup)
-            self.bot.register_next_step_handler(message, self.register_auto_reply_step, acceptMode=True, chat_id=self.current_user)
+            self.next_handler = self.bot.register_next_step_handler(message, self.register_auto_reply_step, acceptMode=True, chat_id=self.current_user)
         else:
             self.delete_message(message)
             if message.text == "Skip":
@@ -823,10 +862,10 @@ class Adventurer:
                 self.register_branch_move_next(message)
             else:
                 self.send_secondary_message("Empty message", self.skipMarkup)
-                self.bot.register_next_step_handler(message, self.register_auto_reply_step, acceptMode=acceptMode, chat_id=self.current_user)
+                self.next_handler = self.bot.register_next_step_handler(message, self.register_auto_reply_step, acceptMode=acceptMode, chat_id=self.current_user)
 
     #Used to define, which way should registration go after auto reply step
-    def register_branch_move_next(self, message):
+    def register_branch_move_next(self, message=None):
         if self.editMode:
             if self.isTemplate:
                 self.register_template_checkout(message)
@@ -846,20 +885,24 @@ class Adventurer:
         self.register_checkout(message)
 
     #TODO: Implement, Check formatting
-    def registration_tags_step(self, message, acceptMode=False):
-        self.current_registration_step = self.registration_tags_step
+    def registration_tags_step(self, message=None, acceptMode=False, shouldInsert=True):
         self.delete_secondary_message()
 
         if not acceptMode:
+            self.configure_registration_step(self.registration_tags_step, shouldInsert)
+
             self.send_active_message("Send us keywords (tags), associated with your adventure. It will help us to display it to those, more interested in it", markup=self.skipMarkup)
-            self.bot.register_next_step_handler(message, self.registration_tags_step, acceptMode=True, chat_id=self.current_user)
+            self.send_additional_actions_message("Additional actions", self.goBackInlineMarkup)
+            self.next_handler = self.bot.register_next_step_handler(message, self.registration_tags_step, acceptMode=True, chat_id=self.current_user)
         else:
             if message.text == "Skip":
                 self.register_checkout(message)
                 return
 
-    def register_checkout(self, message, acceptMode=False):
+    def register_checkout(self, message=None, acceptMode=False, shouldInsert=True):
         if not acceptMode:
+            self.configure_registration_step(self.register_checkout, shouldInsert)
+
             addition1 = "Change Address"
             addition2 = "✨Create Adventure✨"
 
@@ -879,7 +922,7 @@ class Adventurer:
             # self.send_active_message(self.assemble_adventure_checkout_message(), markup=self.registerCheckoutMarkup)
             self.send_secondary_message(msg, markup=self.registerCheckoutMarkup_E)
 
-            self.bot.register_next_step_handler(message, self.register_checkout, acceptMode=True, chat_id=self.current_user)
+            self.next_handler = self.bot.register_next_step_handler(message, self.register_checkout, acceptMode=True, chat_id=self.current_user)
         else:
             self.editMode = True
 
@@ -947,8 +990,10 @@ class Adventurer:
                 self.delete_message(message)
                 self.bot.register_next_step_handler(message, self.register_checkout, acceptMode=acceptMode, chat_id=self.current_user)
 
-    def register_template_checkout(self, message, acceptMode=False):
+    def register_template_checkout(self, message=None, acceptMode=False, shouldInsert=True):
         if not acceptMode:
+            self.configure_registration_step(self.register_template_checkout, shouldInsert)
+
             addition1 = "Change Address"
             addition2 = "✨Create Template✨"
 
@@ -1026,7 +1071,7 @@ class Adventurer:
                 self.delete_message(message)
                 self.bot.register_next_step_handler(message, self.register_checkout, acceptMode=acceptMode, chat_id=self.current_user)
 
-    def registration_template_step(self, message, acceptMode=False):
+    def registration_template_step(self, message=None, acceptMode=False):
         if not acceptMode:
             self.send_active_message("Would you like to save adventure as a template?\nBy doing that, you will be able to create the same adventure with a few clicks without going through all registration steps again", self.YNMarkup)
             self.bot.register_next_step_handler(message, self.registration_template_step, acceptMode=True, chat_id=self.current_user)
@@ -1038,15 +1083,15 @@ class Adventurer:
                 else:
                     self.send_secondary_message("Something went wrong ! Please, contact the administration")
                 self.subscribe_callback_handler(self.start_callback_handler)
-                self.previous_section()
+                self.my_adventures_manager()
             elif message.text == "No":
                 self.subscribe_callback_handler(self.start_callback_handler)
-                self.previous_section()
+                self.my_adventures_manager()
             else:
                 self.send_active_message("No such option", self.YNMarkup)
                 self.bot.register_next_step_handler(message, self.registration_template_step, acceptMode=acceptMode, chat_id=self.current_user)
 
-    def registration_discard_changes(self, message, acceptMode=False):
+    def registration_discard_changes(self, message=None, acceptMode=False):
         if not acceptMode:
             self.send_secondary_message("Are you sure, you want to discard changes?", self.YNMarkup)
             self.bot.register_next_step_handler(message, self.registration_discard_changes, acceptMode=True, chat_id=self.current_user)
@@ -1065,7 +1110,7 @@ class Adventurer:
                 else:
                     self.register_checkout(message)
 
-    def registration_abandon(self, message, acceptMode=False):
+    def registration_abandon(self, message=None, acceptMode=False):
         if not acceptMode:
             self.send_active_message("Are you sure, you want to leave? All changes will be lost", markup=self.YNMarkup)
             self.bot.register_next_step_handler(message, self.registration_abandon, acceptMode=True, chat_id=self.current_user)
@@ -1074,7 +1119,12 @@ class Adventurer:
                 self.subscribe_callback_handler(self.start_callback_handler)
                 self.previous_section()
             else:
-                self.current_registration_step(message)
+                self.registration_steps[0](message)
+
+    def configure_registration_step(self, step, shouldInsert):
+        if shouldInsert:
+            self.registration_steps.insert(0, self.current_section)
+        self.current_section = step
 
     def my_adventures_manager(self):
         self.subscribe_callback_handler(self.start_callback_handler)
@@ -1350,6 +1400,8 @@ class Adventurer:
             self.register_online()
         elif call.data == "5":
             self.register_offline()
+        elif call.data == "-10":
+            self.go_back_to_previous_registration_step()
         elif call.data == "-20":
             self.registration_abandon(call.message)
         #TODO: add description handlers (304, 305)
@@ -1413,6 +1465,18 @@ class Adventurer:
         else:
             self.open_report_module(call.data)
 
+    def go_back_to_previous_registration_step(self):
+        try:
+            self.bot.remove_next_step_handler(self.current_user, self.next_handler)
+        except:
+            pass
+
+        self.delete_additional_message()
+
+        self.previous_section = self.registration_steps[0]
+        self.registration_steps.pop(0)
+        self.previous_section(shouldInsert=False)
+
     def open_helper(self, message, section):
         self.reactToCallback = False
         self.previous_section = section
@@ -1464,6 +1528,10 @@ class Adventurer:
             self.delete_secondary_message()
             self.send_secondary_message(text, markup)
 
+    def send_additional_actions_message(self, text, markup=None):
+        self.delete_additional_message()
+        self.additional_message = self.bot.send_message(self.current_user, text, reply_markup=markup).id
+
     def send_simple_message(self, text, markup=None):
         self.bot.send_message(self.current_user, text, reply_markup=markup)
 
@@ -1491,8 +1559,19 @@ class Adventurer:
             self.bot.delete_message(self.current_user, self.secondary_message)
             self.secondary_message = None
 
+    def delete_additional_message(self):
+        try:
+            if self.additional_message:
+                self.bot.delete_message(self.current_user, self.additional_message)
+                self.additional_message = None
+        except:
+            pass
+
     def delete_message(self, message):
-        self.bot.delete_message(self.current_user, message.id)
+        try:
+            self.bot.delete_message(self.current_user, message.id)
+        except:
+            pass
 
     def assemble_my_adventures_markup(self):
         adventures = json.loads(requests.get(f"https://localhost:44381/GetUserAdventures/{self.current_user}", verify=False).text)
