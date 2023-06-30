@@ -6,7 +6,7 @@ from Core import HelpersMethodes as Helpers
 from Common.Menues import count_pages, assemble_markup, reset_pages, add_tick_to_element, add_tick_to_elements, remove_tick_from_element, remove_tick_from_elements, index_converter
 import requests
 import json
-
+from Core.Localization import Localization
 from Common.Menues import go_back_to_main_menu
 from TestModule import TestModule
 
@@ -20,13 +20,12 @@ class Registrator:
         self.current_inline_message_id = 0 #Represents current message with inline markup
         self.current_user = msg.from_user.id
         self.hasVisited = hasVisited
-        self.okMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(KeyboardButton("Ok"))
-        self.YNmarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Yes", "No")
+        self.localization = Localization.get_registrator_localization(localizationIndex)
+        self.okMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(KeyboardButton(self.localization['OkButton']))
+        self.YNmarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(self.localization['YesButton'], self.localization['NoButton'])
         self.chCode = self.bot.register_callback_query_handler("", self.callback_handler, user_id=self.current_user)
-        #TODO: Replace with another method
 
-        # self.localisation = json.loads(requests.get("https://localhost:44381/GetLocalisation/0", verify=False).text)
-        self.lang_limit = Helpers.get_user_language_limit(self.current_user)
+        self.premium_limit = Helpers.get_user_language_limit(self.current_user)
 
         self.promo = promoCode
 
@@ -48,10 +47,11 @@ class Registrator:
         self.reason_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
         self.communication_pref_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
         self.age_pref_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-        self.skip_markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("skip")
-        self.go_backMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("Go Back")
+        self.skip_markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add(self.localization['SkipMessage'])
+        self.go_backMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add(self.localization['GoBackButton'])
 
         self.app_language = localizationIndex
+
 
         self.data = {}
         self.current_user_data = None
@@ -161,7 +161,7 @@ class Registrator:
                 self.data["userAppLanguageId"] = self.app_language
 
             else:
-                self.bot.send_message(self.current_user, "There is no such language. Try again", reply_markup=self.app_languages_markup)
+                self.bot.send_message(self.current_user, self.localization['LanguageNotRecognizedErrorMessage'], reply_markup=self.app_languages_markup)
                 self.bot.register_next_step_handler(msg, self.app_language_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
 
     def spoken_language_step(self, msg, acceptMode=False, editMode=False):
@@ -174,48 +174,46 @@ class Registrator:
             markup = assemble_markup(self.markup_page, self.current_markup_elements, 0)
             self.markup_page = 1
 
-            self.current_inline_message_id = self.bot.send_message(self.msg.chat.id, "Please state all languages you speak", reply_markup=markup).json['message_id']
+            self.current_inline_message_id = self.bot.send_message(self.msg.chat.id, self.localization['SateLanguagesMessage'], reply_markup=markup).json['message_id']
 
             #Add ticks if in edit mode
             if editMode:
                 for l in self.chosen_langs:
                     add_tick_to_element(self.bot, self.current_user, self.current_inline_message_id, self.current_markup_elements, self.markup_page, str(l))
 
-            self.bot.send_message(self.msg.chat.id, "Choose few from above, or simply write language to chat :-)",
-                                  reply_markup=self.okMarkup)
+            self.bot.send_message(self.msg.chat.id, self.localization['ChooseLanguageMessage'], reply_markup=self.okMarkup)
             self.bot.register_next_step_handler(msg, self.spoken_language_step, acceptMode=True, editMode=editMode, chat_id=self.current_user)
         else:
             if not msg.text:
                 self.bot.send_message(self.current_user,
-                                      "Language was not recognized, try finding it in our list above")
+                                      self.localization['LanguageNotRecognizedErrorMessage'])
                 self.bot.register_next_step_handler(msg, self.spoken_language_step, acceptMode=acceptMode,
                                                     editMode=editMode, chat_id=self.current_user)
                 return False
 
             msg_text = msg.text.lower().strip()
-            if msg_text != "ok":
+            if msg_text != self.localization['OkButton']:
                 lang = self.spoken_languages_convertor(msg_text)
                 if lang:  # TODO: Get string, separate by , and process it
                     if lang not in self.chosen_langs:
-                        if len(self.chosen_langs) + 1 > self.lang_limit:
-                            self.bot.send_message(self.current_user, f"Sorry, users without premium can chose only up to {self.lang_limit} languages", reply_markup=self.okMarkup)
+                        if len(self.chosen_langs) + 1 > self.premium_limit:
+                            self.bot.send_message(self.current_user, self.localization['LanguagesPremiumErrorMessage'].format(self.premium_limit), reply_markup=self.okMarkup)
                         else:
                             self.chosen_langs.append(lang)
                             add_tick_to_element(self.bot, self.current_user, self.current_inline_message_id,
                                                 self.current_markup_elements,
                                                 self.markup_page, str(lang))
-                            self.bot.send_message(self.current_user, "Added", reply_markup=self.okMarkup)
+                            self.bot.send_message(self.current_user, self.localization['AddedMessage'], reply_markup=self.okMarkup)
                     else:
                         self.chosen_langs.remove(lang)
                         remove_tick_from_element(self.bot, self.current_user, self.current_inline_message_id,
                                                  self.current_markup_elements,
                                                  self.markup_page, str(lang))
-                        self.bot.send_message(self.current_user, "Removed", reply_markup=self.okMarkup)
+                        self.bot.send_message(self.current_user, self.localization['RemovedMessage'], reply_markup=self.okMarkup)
                     self.bot.register_next_step_handler(msg, self.spoken_language_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
                     return True
                 else:
-                    self.bot.send_message(self.current_user, "Language was not recognized, try finding it in our list above")
-                    self.suggest_languages(msg_text)
+                    self.bot.send_message(self.current_user, self.localization['LanguageNotRecognizedErrorMessage'])
                     self.bot.register_next_step_handler(msg, self.spoken_language_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
                     return False
 
@@ -234,7 +232,7 @@ class Registrator:
                     self.checkout_step(msg)
 
             else:
-                self.bot.send_message(self.current_user, "You haven't chosen any languages !",
+                self.bot.send_message(self.current_user, self.localization['NoLanguagesMessage'],
                                       reply_markup=self.okMarkup)
                 self.bot.register_next_step_handler(msg, self.spoken_language_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
 
@@ -250,7 +248,7 @@ class Registrator:
             for g in genders.keys():
                 self.gender_markup.row().add(KeyboardButton(self.genders[g]))
 
-            self.bot.send_message(self.msg.chat.id, "What is your gender?", reply_markup=self.gender_markup)
+            self.bot.send_message(self.msg.chat.id, self.localization['GenderQuestionMessage'], reply_markup=self.gender_markup)
             self.bot.register_next_step_handler(msg, self.gender_step, acceptMode=True, editMode=editMode, chat_id=self.current_user)
         else:
             gender = self.gender_converter(msg.text)
@@ -263,7 +261,7 @@ class Registrator:
                     self.checkout_step(msg)
 
             else:
-                self.bot.send_message(self.current_user, "Please choose only ones in a given list !",
+                self.bot.send_message(self.current_user, self.localization['ChooseExistingMessage'],
                                       reply_markup=self.gender_markup)
                 self.bot.register_next_step_handler(msg, self.gender_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
 
@@ -275,7 +273,7 @@ class Registrator:
 
             for reason in self.reasons.values():
                 self.reason_markup.add(KeyboardButton(reason))
-            self.bot.send_message(msg.chat.id, "What are you searching for?", reply_markup=self.reason_markup)
+            self.bot.send_message(msg.chat.id, self.localization['SearchQuestionMessage'], reply_markup=self.reason_markup)
             self.bot.register_next_step_handler(msg, self.reason_step, acceptMode=True, editMode=editMode, chat_id=self.current_user)
         else:
             reason = self.reason_convertor(msg.text)
@@ -288,7 +286,7 @@ class Registrator:
                     self.checkout_step(msg)
 
             else:
-                self.bot.send_message(msg.chat.id, "No-no, you can't search for something else here ;-)",
+                self.bot.send_message(msg.chat.id, self.localization['InvalidReasonErrorMessage'],
                                       reply_markup=self.reason_markup)
                 self.bot.register_next_step_handler(msg, self.reason_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
 
@@ -302,7 +300,7 @@ class Registrator:
             for pref in self.communication_pref:
                 self.communication_pref_markup.add(self.communication_pref[pref])
 
-            self.bot.send_message(msg.chat.id, "How would you like to communicate?", reply_markup=self.communication_pref_markup)
+            self.bot.send_message(msg.chat.id, self.localization['CommunicationQuestionMessage'], reply_markup=self.communication_pref_markup)
 
             self.bot.register_next_step_handler(msg, self.communication_preferences_step, acceptMode=True, editMode=editMode, chat_id=self.current_user)
         else:
@@ -321,7 +319,7 @@ class Registrator:
                         self.checkout_step(msg)
 
             else:
-                self.bot.send_message(self.current_user, "Please, choose only ones in the list !",
+                self.bot.send_message(self.current_user, self.localization['NoSuchOptionMessage'],
                                       reply_markup=self.communication_pref_markup)
                 self.bot.register_next_step_handler(msg, self.communication_preferences_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
 
@@ -340,8 +338,8 @@ class Registrator:
             self.previous_item = ''
 
             self.current_inline_message_id = \
-                self.bot.send_message(self.msg.chat.id, "Which country do you live in?", reply_markup=markup).id#.json[
-                    #'message_id']
+                self.bot.send_message(self.msg.chat.id, self.localization['CountryQuestionMessage'], reply_markup=markup).id#.json[
+            #'message_id']
 
             if editMode:
                 self.previous_item = str(self.country)
@@ -350,22 +348,22 @@ class Registrator:
 
             #Allow skipping location part if user prefers to communicate online
             if self.data["communicationPrefs"] == 1:
-                m = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Does not matter", row_width=2).add("ok", row_width=1)
-                self.bot.send_message(self.current_user, "Choose one from above Or Press 'Does not matter' button if you want to skip location part", reply_markup=m)
+                m = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(self.localization['NoMatterButton'], row_width=2).add(self.localization['OkButton'], row_width=1)
+                self.bot.send_message(self.current_user, self.localization['ChooseOrSkipMessage'], reply_markup=m)
             else:
-                self.bot.send_message(self.current_user, "Choose one from above. Or simply type country name to chat", reply_markup=self.okMarkup)
+                self.bot.send_message(self.current_user, self.localization['ChooseCountryMessage'], reply_markup=self.okMarkup)
 
             self.bot.register_next_step_handler(msg, self.location_step, acceptMode=True, editMode=editMode, chat_id=self.current_user)
         else:
             if not msg.text:
                 self.bot.send_message(self.current_user,
-                                      "Country was not recognized, try finding it in our list above")
+                                      self.localization['CountyNotRecognizedErrorMessage'])
                 self.bot.register_next_step_handler(msg, self.location_step, acceptMode=acceptMode,
                                                     editMode=editMode, chat_id=self.current_user)
                 return False
 
             msg_text = msg.text.lower().strip()
-            if msg_text != "ok":
+            if msg_text != self.localization['OkButton']:
                 country = self.country_convertor(msg_text)
                 if country:
                     if self.previous_item:
@@ -377,10 +375,10 @@ class Registrator:
                                         self.current_markup_elements,
                                         self.markup_page, str(country))
                     self.country = country
-                    self.bot.send_message(self.current_user, "Gotcha", reply_markup=self.okMarkup)
+                    self.bot.send_message(self.current_user, self.localization['GotchaMessage'], reply_markup=self.okMarkup)
                     self.bot.register_next_step_handler(msg, self.location_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
                     return True
-                elif msg_text == "does not matter" and self.data["communicationPrefs"] == 1:
+                elif msg_text == self.localization['NoMatterButton'] and self.data["communicationPrefs"] == 1:
                     if self.data["communicationPrefs"] == 1:
 
                         #In case user had chosen a country before pressing 'Does not matter' button
@@ -393,16 +391,16 @@ class Registrator:
 
                         if not editMode:
                             self.bot.send_message(self.current_user,
-                                                  "Gotcha. Please note, that you won't be able to choose city or location preferences until you choose the country")
+                                                  self.localization['RestrictLocationMessage'])
                             self.name_step(msg)
                             return False
                         else:
                             self.checkout_step(msg)
                             self.bot.send_message(self.current_user,
-                                                  "Gotcha. Parameters: Country, City, and Location Preferences were reset")
+                                                  self.localization['LocationResetMessage'])
                             return False
                 else:
-                    self.bot.send_message(self.current_user, "Country was not recognized, try finding it in our list above")
+                    self.bot.send_message(self.current_user, self.localization['CountyNotRecognizedErrorMessage'])
                     self.suggest_countries(msg_text)
                     self.bot.register_next_step_handler(msg, self.location_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
                     return False
@@ -417,14 +415,14 @@ class Registrator:
 
                 self.city_step(msg, editMode=editMode)
             else:
-                self.bot.send_message(self.current_user, "You haven't chosen a country !", reply_markup=self.okMarkup)
+                self.bot.send_message(self.current_user, self.localization['CountryErrorMessage'], reply_markup=self.okMarkup)
                 self.bot.register_next_step_handler(msg, self.location_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
 
     def city_step(self, msg, acceptMode=False, editMode=False):
         if not self.country:
             self.checkout_step(msg)
             self.bot.send_message(self.current_user,
-                                  "You cannot choose the city because the country was not chosen. Please choose the country first")
+                                  self.localization['CityErrorMessage1'])
             return False
 
         if not acceptMode:
@@ -444,25 +442,25 @@ class Registrator:
             count_pages(self.cities, self.current_markup_elements, self.markup_pages_count)
             markup = assemble_markup(self.markup_page, self.current_markup_elements, 0)
 
-            self.current_inline_message_id = self.bot.send_message(self.msg.chat.id, "Which city do you live in?", reply_markup=markup).json['message_id']
+            self.current_inline_message_id = self.bot.send_message(self.msg.chat.id, self.localization['ChooseCityMessage'], reply_markup=markup).json['message_id']
 
             if editMode:
                 self.previous_item = str(self.city)
                 add_tick_to_element(self.bot, self.current_user, self.current_inline_message_id,
                                     self.current_markup_elements, self.markup_page, str(self.city))
 
-            self.bot.send_message(self.msg.chat.id, "Chose one from above, or simply type to chat", reply_markup=self.okMarkup)
+            self.bot.send_message(self.msg.chat.id, self.localization['ChoosMessage'], reply_markup=self.okMarkup)
             self.bot.register_next_step_handler(msg, self.city_step, acceptMode=True, editMode=editMode, chat_id=self.current_user)
         else:
             if not msg.text:
                 self.bot.send_message(self.current_user,
-                                      "City was not recognized, try finding it in our list above")
+                                      self.localization['CityNotRecognizedErrorMessage'])
                 self.bot.register_next_step_handler(msg, self.spoken_language_step, acceptMode=acceptMode,
                                                     editMode=editMode, chat_id=self.current_user)
                 return False
 
             msg_text = msg.text.lower().strip()
-            if msg_text != "ok":
+            if msg_text != self.localization['OkButton']:
                 city = self.city_convertor(msg_text)
                 if city:
                     if self.previous_item:
@@ -474,11 +472,11 @@ class Registrator:
                                         self.current_markup_elements,
                                         self.markup_page, str(city))
                     self.city = city
-                    self.bot.send_message(self.current_user, "Gotcha", reply_markup=self.okMarkup)
+                    self.bot.send_message(self.current_user, self.localization['GotchaMessage'], reply_markup=self.okMarkup)
                     self.bot.register_next_step_handler(msg, self.city_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
                     return True
                 else:
-                    self.bot.send_message(self.current_user, "City was not recognized, try finding it in our list above")
+                    self.bot.send_message(self.current_user, self.localization['CityNotRecognizedErrorMessage'])
                     self.suggest_cities(msg_text)
                     self.bot.register_next_step_handler(msg, self.city_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
                     return False
@@ -495,21 +493,21 @@ class Registrator:
 
                 # self.data["userCity"] = self.cities[self.country][self.city]
             else:
-                self.bot.send_message(self.current_user, "You haven't chosen a city !", reply_markup=self.okMarkup)
+                self.bot.send_message(self.current_user, self.localization['CityErrorMessage2'], reply_markup=self.okMarkup)
                 self.bot.register_next_step_handler(msg, self.city_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
 
     def name_step(self, msg, acceptMode=False, editMode=False):
         if not acceptMode:
             self.question_index = 6
 
-            self.bot.send_message(msg.chat.id, "What is your name?")
+            self.bot.send_message(msg.chat.id, self.localization['NameQuestionMessage'])
             self.bot.register_next_step_handler(msg, self.name_step, acceptMode=True, editMode=editMode, chat_id=self.current_user)
         else:
             if msg.text:
                 self.data["userRealName"] = msg.text
 
                 if len(msg.text) > 50:
-                    self.bot.send_message(self.current_user, "Name cannot be longer than 50 characters")
+                    self.bot.send_message(self.current_user, self.localization['LongNameErrorMessage'])
                     self.bot.register_next_step_handler(msg, self.name_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
                     return
 
@@ -519,7 +517,7 @@ class Registrator:
                     self.checkout_step(msg)
 
             else:
-                self.bot.send_message(self.current_user, "Name cannot be empty !")
+                self.bot.send_message(self.current_user, self.localization['EmptyNameErrorMessage'])
                 self.bot.register_next_step_handler(msg, self.name_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
 
 
@@ -527,17 +525,17 @@ class Registrator:
         if not acceptMode:
             self.question_index = 7
 
-            self.bot.send_message(msg.chat.id, "How old are you?")
+            self.bot.send_message(msg.chat.id, self.localization['AgeQuestionMessage'])
             self.bot.register_next_step_handler(msg, self.age_step, acceptMode=True, editMode=editMode, chat_id=self.current_user)
         else:
             try:
                 age = int(msg.text)
                 if age > 100:
-                    self.bot.send_message(msg.chat.id, "Age cannot be grater than 100 :)")
+                    self.bot.send_message(msg.chat.id, self.localization['HighAgeErrorMessage'])
                     self.bot.register_next_step_handler(msg, self.age_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
                     return
-                elif age < 12:
-                    self.bot.send_message(msg.chat.id, "Minimal age is 12 :)")
+                elif age < 14:
+                    self.bot.send_message(msg.chat.id, self.localization['UnderagedErrorMessage'])
                     self.bot.register_next_step_handler(msg, self.age_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
                     return
 
@@ -549,19 +547,19 @@ class Registrator:
                     self.checkout_step(msg)
 
             except:
-                self.bot.send_message(msg.chat.id, "Age please, only numbers")
+                self.bot.send_message(msg.chat.id, self.localization['DigitalAgeErrorMessage'])
                 self.bot.register_next_step_handler(msg, self.age_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
 
     def description_step(self, msg, acceptMode=False, editMode=False):
         if not acceptMode:
             self.question_index = 8
 
-            self.bot.send_message(msg.chat.id, "Tell something about yourself !", reply_markup=self.skip_markup)
+            self.bot.send_message(msg.chat.id, self.localization['DescritpionQuestionMessage'], reply_markup=self.skip_markup)
             self.bot.register_next_step_handler(msg, self.description_step, acceptMode=True, editMode=editMode, chat_id=self.current_user)
         else:
-            if msg.text == "skip":
+            if msg.text == self.localization['SkipMessage']:
                 self.data["userDescription"] = ""
-                self.bot.send_message(self.current_user, "No profile description, huh ?\nI highly don't recommend it, but it is you call :)")
+                self.bot.send_message(self.current_user, self.localization['DescriptionAdviseMessage'])
 
                 if not editMode:
                     self.photo_step(msg)
@@ -570,7 +568,7 @@ class Registrator:
 
             elif msg.text:
                 if len(msg.text) > 1000:
-                    self.bot.send_message(self.current_user, "Description cannot contain more than 1000 characters")
+                    self.bot.send_message(self.current_user, self.localization['LargeDescriptionErrorMessage'])
                     self.bot.register_next_step_handler(msg, self.description_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
 
                 self.data["userDescription"] = msg.text
@@ -581,18 +579,18 @@ class Registrator:
                     self.checkout_step(msg)
             else:
                 self.bot.send_message(msg.chat.id,
-                                      "Description cannot be empty. Just  describe yourself in a few words ;-)")
+                                      self.localization['EmptyDescriptionErrorMessage'])
                 self.bot.register_next_step_handler(msg, self.description_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
 
     def photo_step(self, msg, acceptMode=False, editMode=False):
         if not acceptMode:
             self.question_index = 10
 
-            self.bot.send_message(msg.chat.id, "Send your photo or video (15 seconds max)")
+            self.bot.send_message(msg.chat.id, self.localization['MediaQuestionMessage'])
 
             #Warn user about the consequences of changing media
             if self.hasVisited:
-                self.bot.send_message(self.current_user, "Note, that changing your media will temporarily re-open your identity confirmation request and thus remove tick from your profile", reply_markup=self.go_backMarkup)
+                self.bot.send_message(self.current_user, self.localization['ChangeMediaWarningMessage'], reply_markup=self.go_backMarkup)
 
             self.bot.register_next_step_handler(msg, self.photo_step, acceptMode=True, editMode=editMode, chat_id=self.current_user)
         else:
@@ -602,17 +600,17 @@ class Registrator:
                 self.gender_preferences_step(msg, editMode=editMode)
             elif msg.video:
                 if msg.video.duration > 15:
-                    self.bot.send_message(self.current_user, "Video cannot be longer than 15 seconds")
+                    self.bot.send_message(self.current_user, self.localization['LongVideoErrorMessage'])
                     self.bot.register_next_step_handler(msg, self.photo_step, acceptMode=acceptMode, editMode=editMode,chat_id=self.current_user)
                     return
 
                 self.data["userMedia"] = msg.video.file_id
                 self.data["isMediaPhoto"] = False
                 self.gender_preferences_step(msg, editMode=editMode)
-            elif msg.text == "Go Back" and self.hasVisited:
+            elif msg.text == self.localization('GoBackButton') and self.hasVisited:
                 self.checkout_step(msg)
             else:
-                self.bot.send_message(self.current_user, "I can't find any media in this message")
+                self.bot.send_message(self.current_user, self.localization['IncorrectMediaErrorMessage'])
                 self.bot.register_next_step_handler(msg, self.photo_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
 
     def gender_preferences_step(self, msg, acceptMode=False, editMode=False):
@@ -624,7 +622,7 @@ class Registrator:
             for g in self.genders.keys():
                 self.gender_markup.row().add(KeyboardButton(self.genders[g]))
 
-            self.bot.send_message(self.msg.chat.id, "Who are you searching for", reply_markup=self.gender_markup)
+            self.bot.send_message(self.msg.chat.id, self.localization['GenderQuestionMessage'], reply_markup=self.gender_markup)
             self.bot.register_next_step_handler(msg, self.gender_preferences_step, acceptMode=True, editMode=editMode, chat_id=self.current_user)
         else:
             gender = self.gender_converter(msg.text)
@@ -637,7 +635,7 @@ class Registrator:
                     self.checkout_step(msg)
 
             else:
-                self.bot.send_message(self.current_user, "Please chose only ones in the list",
+                self.bot.send_message(self.current_user, self.localization['NoSuchOptionMessage'],
                                       reply_markup=self.gender_markup)
                 self.bot.register_next_step_handler(msg, self.gender_preferences_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
 
@@ -652,7 +650,7 @@ class Registrator:
             markup = assemble_markup(self.markup_page, self.current_markup_elements, 0)
 
             self.current_inline_message_id = \
-                self.bot.send_message(msg.chat.id, "What languages are you willing to speak with people?",
+                self.bot.send_message(msg.chat.id, self.localization['LanguagesQuestionMessage'],
                                       reply_markup=markup, parse_mode=telegram.ParseMode.HTML).id
 
             if editMode:
@@ -660,41 +658,41 @@ class Registrator:
                     add_tick_to_element(self.bot, self.current_user, self.current_inline_message_id,
                                         self.current_markup_elements, self.markup_page, str(l))
 
-            self.bot.send_message(self.msg.chat.id, "Choose few from above, or simply type to chat",
+            self.bot.send_message(self.msg.chat.id, self.localization['ChoosMessage'],
                                   reply_markup=self.okMarkup)
             self.bot.register_next_step_handler(msg, self.language_preferences_step, acceptMode=True, editMode=editMode, chat_id=self.current_user)
         else:
             if not msg.text:
                 self.bot.send_message(self.current_user,
-                                      "Language was not recognized, try finding it in our list above")
+                                      self.localization['LanguageNotRecognizedErrorMessage'])
                 self.bot.register_next_step_handler(msg, self.spoken_language_step, acceptMode=acceptMode,
                                                     editMode=editMode, chat_id=self.current_user)
                 return False
 
             msg_text = msg.text.lower().strip()
-            if msg_text != "ok":
+            if msg_text != self.localization['OkButton']:
                 lang = self.spoken_languages_convertor(msg_text)
                 if lang:  # TODO: Get string, separate by , and process it
                     if lang not in self.pref_langs:
-                        if len(self.pref_langs) + 1 > self.lang_limit:
-                            self.bot.send_message(self.current_user, f"Sorry, users without premium can choose only up to {self.lang_limit} languages", reply_markup=self.okMarkup)
+                        if len(self.pref_langs) + 1 > self.premium_limit:
+                            self.bot.send_message(self.current_user, self.localization['LanguagesPremiumErrorMessage'].format(self.premium_limit), reply_markup=self.okMarkup)
                         else:
                             self.pref_langs.append(lang)
                             add_tick_to_element(self.bot, self.current_user, self.current_inline_message_id,
                                                 self.current_markup_elements,
                                                 self.markup_page, str(lang))
-                            self.bot.send_message(self.current_user, "Added", reply_markup=self.okMarkup)
+                            self.bot.send_message(self.current_user, self.localization['AddedMessage'], reply_markup=self.okMarkup)
                     else:
                         self.pref_langs.remove(lang)
                         remove_tick_from_element(self.bot, self.current_user, self.current_inline_message_id,
                                                  self.current_markup_elements,
                                                  self.markup_page, str(lang))
-                        self.bot.send_message(self.current_user, "Removed", reply_markup=self.okMarkup)
+                        self.bot.send_message(self.current_user, self.localization['RemovedMessage'], reply_markup=self.okMarkup)
                     self.bot.register_next_step_handler(msg, self.language_preferences_step, acceptMode=acceptMode, editMode=editMode,
                                                         chat_id=self.current_user)
                     return True
                 else:
-                    self.bot.send_message(self.current_user, "Language was not recognized, try finding it in our list above")
+                    self.bot.send_message(self.current_user, self.localization['LanguageNotRecognizedErrorMessage'])
                     self.suggest_languages(msg_text)
                     self.bot.register_next_step_handler(msg, self.language_preferences_step, acceptMode=acceptMode, editMode=editMode,
                                                         chat_id=self.current_user)
@@ -713,14 +711,14 @@ class Registrator:
                     self.checkout_step(msg)
 
             else:
-                self.bot.send_message(self.current_user, "You haven't chosen any languages !")
+                self.bot.send_message(self.current_user, self.localization['NoLanguagesMessage'])
                 self.bot.register_next_step_handler(msg, self.language_preferences_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
 
     def location_preferences_step(self, msg, acceptMode=False, editMode=False):
         if not self.country:
             self.checkout_step(msg)
             self.bot.send_message(self.current_user,
-                                  "You cannot set country preferences, because you did not choose the country you live in. Please choose the country first")
+                                  self.localization['LocationPrefsErrorMessage'])
             return False
 
         if not acceptMode:
@@ -733,7 +731,7 @@ class Registrator:
             markup = assemble_markup(self.markup_page, self.current_markup_elements, 0)
 
             self.current_inline_message_id = self.bot.send_message(self.msg.chat.id,
-                                                                   "People from which countries would you like to communicate with?",
+                                                                   self.localization['LocationPrefsQuestionMessage'],
                                                                    reply_markup=markup).id
 
             if editMode:
@@ -741,40 +739,40 @@ class Registrator:
                     add_tick_to_element(self.bot, self.current_user, self.current_inline_message_id,
                                         self.current_markup_elements, self.markup_page, str(c))
 
-            self.bot.send_message(self.msg.chat.id, "Choose few from above or simply type to chat ;-)",
+            self.bot.send_message(self.msg.chat.id, self.localization['ChoosMessage'],
                                   reply_markup=self.okMarkup)
             self.bot.register_next_step_handler(msg, self.location_preferences_step, acceptMode=True, editMode=editMode, chat_id=self.current_user)
         else:
             if not msg.text:
                 self.bot.send_message(self.current_user,
-                                      "Country was not recognized, try finding it in our list above")
+                                      self.localization['CountyNotRecognizedErrorMessage'])
                 self.bot.register_next_step_handler(msg, self.spoken_language_step, acceptMode=acceptMode,
                                                     editMode=editMode, chat_id=self.current_user)
                 return False
 
             msg_text = msg.text.lower().strip()
-            if msg_text != "ok":
+            if msg_text != self.localization['OkButton']:
                 country = self.country_convertor(msg_text)
                 if country:  # TODO: Get string, separate by , and process it
                     if country not in self.pref_countries:
-                        if len(self.chosen_langs) + 1 > self.lang_limit:
-                            self.bot.send_message(self.current_user, f"Sorry, users without premium can choose only up to {self.lang_limit} countries", reply_markup=self.okMarkup)
+                        if len(self.pref_countries) + 1 > self.premium_limit:
+                            self.bot.send_message(self.current_user, self.localization['CountriesPremiumErrorMessage'].format(self.premium_limit), reply_markup=self.okMarkup)
                         else:
                             self.pref_countries.append(country)
                             add_tick_to_element(self.bot, self.current_user, self.current_inline_message_id,
                                                 self.current_markup_elements,
                                                 self.markup_page, str(country))
-                            self.bot.send_message(self.current_user, "Added", reply_markup=self.okMarkup)
+                            self.bot.send_message(self.current_user, self.localization['AddedMessage'], reply_markup=self.okMarkup)
                     else:
                         self.pref_countries.remove(country)
                         remove_tick_from_element(self.bot, self.current_user, self.current_inline_message_id,
                                                  self.current_markup_elements,
                                                  self.markup_page, str(country))
-                        self.bot.send_message(self.current_user, "Removed", reply_markup=self.okMarkup)
+                        self.bot.send_message(self.current_user, self.localization['RemovedMessage'], reply_markup=self.okMarkup)
                     self.bot.register_next_step_handler(msg, self.location_preferences_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
                     return True
                 else:
-                    self.bot.send_message(self.current_user, "Country was not recognized, try finding it in our list above")
+                    self.bot.send_message(self.current_user, self.localization['ChoosMessage'])
                     self.suggest_countries(msg_text)
                     self.bot.register_next_step_handler(msg, self.location_preferences_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
                     return False
@@ -789,7 +787,7 @@ class Registrator:
                     self.checkout_step(msg)
 
             else:
-                self.bot.send_message(self.current_user, "You haven't chosen any countries !")
+                self.bot.send_message(self.current_user, self.localization['CountryErrorMessage'])
                 self.bot.register_next_step_handler(msg, self.location_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
 
 
@@ -797,7 +795,7 @@ class Registrator:
         if not acceptMode:
             self.question_index = 15
             age_range = self.generate_personal_age_range()
-            self.bot.send_message(msg.chat.id, f"What age would you like your companion to be? Please, send a range of numbers\nExample: {age_range}")
+            self.bot.send_message(msg.chat.id, self.localization['AgePrefsQuestionMessage'].format(age_range))
             self.bot.register_next_step_handler(msg, self.age_pref_step, acceptMode=True, editMode=editMode, chat_id=self.current_user)
         else:
             try:
@@ -816,21 +814,21 @@ class Registrator:
                     self.checkout_step(msg)
 
             except:
-                self.bot.send_message(self.current_user, "Single number or a Range of numbers please :)", reply_markup=self.age_pref_markup)
+                self.bot.send_message(self.current_user, self.localization['AgePrefsErrorMessage'], reply_markup=self.age_pref_markup)
                 self.bot.register_next_step_handler(msg, self.age_pref_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
 
     def tags_step(self, msg, acceptMode=False, editMode=False):
         if not acceptMode:
 
             if not self.hasVisited:
-                self.bot.send_message(self.current_user, "Ok, now to the, final part. To be able to search people by tags you have to have your own as well.\nHow it works: -----------\nIf you want to use that functionality: type a few tags (up to 25) that describe you, your interests etc... Please, don't use more than two words in your tag. For instance: if you want to type #ILoveTea rather just use #tea tag :)\n<b>Note that using tags which go against our policies can lead your account to be banned ---------</b>\nIf you dont want to use that functionality: just hit 'skip' :-)", reply_markup=self.skip_markup)
+                self.bot.send_message(self.current_user, self.localization['TagsDescritpionMessage'], reply_markup=self.skip_markup)
             else:
-                self.bot.send_message(self.current_user, "Type a few tags (up to 25) that describe you, your interests etc...Please, don't use more than two words in your tag. For instance: if you want to type #ILoveTea rather just use #tea tag :)\n<b>Note that using tags which go against our policies can lead your account to be permanently banned.</b> \nYour previous tag list will be overwritten", reply_markup=self.skip_markup)
+                self.bot.send_message(self.current_user, self.localization['TagsQuestionMessage'], reply_markup=self.skip_markup)
 
             self.bot.register_next_step_handler(msg, self.tags_step, acceptMode=True, editMode=editMode, chat_id=self.current_user)
         else:
-            if msg.text == "skip":
-                self.bot.send_message(self.current_user, "Gotcha")
+            if msg.text == self.localization['SkipMessage']:
+                self.bot.send_message(self.current_user, self.localization['GotchaMessage'])
                 if not editMode:
                     self.auto_reply_step(msg)
                 else:
@@ -846,21 +844,21 @@ class Registrator:
                             else:
                                 self.checkout_step(msg)
                         else:
-                            self.bot.send_message(self.current_user, f"You cannot use more than {self.maxTagCount} tags", reply_markup=self.skip_markup)
+                            self.bot.send_message(self.current_user, self.localization['ToManyTagsErrorMessage'].format(self.maxTagCount), reply_markup=self.skip_markup)
                             self.bot.register_next_step_handler(msg, self.tags_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
                     except:
-                        self.bot.send_message(self.current_user, "Please, dont use any special characters apart from #", reply_markup=self.skip_markup)
+                        self.bot.send_message(self.current_user, self.localization['TagsErrorMessage'], reply_markup=self.skip_markup)
                         self.bot.register_next_step_handler(msg, self.tags_step, acceptMode=acceptMode,
                                                             editMode=editMode, chat_id=self.current_user)
 
                 else:
-                    self.bot.send_message(self.current_user, "Empty Message", reply_markup=self.skip_markup)
+                    self.bot.send_message(self.current_user, self.localization['EmptyErrorMessage'], reply_markup=self.skip_markup)
                     self.bot.register_next_step_handler(msg, self.tags_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
 
     def auto_reply_step(self, message, acceptMode=False, editMode=False):
         if not acceptMode:
             description_message = "---Functionality description---\n"
-            question_message = "Would you like to use auto reply functionality? Send me a text message (up to 300 characters) or a ⭐Voice message (Up to 15 seconds)⭐ that will be sent to every user who likes your profile"
+            question_message = self.localization['AutoreplyDescriptionMessage']
 
             if not self.hasVisited:
                 question_message = description_message + question_message
@@ -868,8 +866,8 @@ class Registrator:
             self.bot.send_message(self.current_user, question_message, reply_markup=self.skip_markup)
             self.bot.register_next_step_handler(message, self.auto_reply_step, acceptMode=True, editMode=editMode, chat_id=self.current_user)
         else:
-            if message.text == "skip":
-                self.bot.send_message(self.current_user, "Gotcha")
+            if message.text == self.localization['SkipMessage']:
+                self.bot.send_message(self.current_user, self.localization['GotchaMessage'])
                 if not editMode:
                     self.change_something_step(message)
                     return
@@ -884,10 +882,10 @@ class Registrator:
                             return
                         self.checkout_step(message)
                     else:
-                        self.bot.send_message(self.current_user, "Up to 15 seconds, my friend", reply_markup=self.skip_markup)
+                        self.bot.send_message(self.current_user, self.localization['LongVideoErrorMessage'], reply_markup=self.skip_markup)
                         self.bot.register_next_step_handler(message, self.auto_reply_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
                 else:
-                    self.bot.send_message(self.current_user, "Sorry, only users with premium access can perform that action", reply_markup=self.skip_markup)
+                    self.bot.send_message(self.current_user, self.localization['PremiumErrorMessage'], reply_markup=self.skip_markup)
                     self.bot.register_next_step_handler(message, self.auto_reply_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
 
             elif message.text:
@@ -898,48 +896,48 @@ class Registrator:
                         return
                     self.checkout_step(message)
                 else:
-                    self.bot.send_message(self.current_user, "Up to 300 characters please", reply_markup=self.skip_markup)
+                    self.bot.send_message(self.current_user, self.localization['ToLongErrorMessage'], reply_markup=self.skip_markup)
                     self.bot.register_next_step_handler(message, self.auto_reply_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
             else:
-                self.bot.send_message(self.current_user, "Empty message :(", reply_markup=self.skip_markup)
+                self.bot.send_message(self.current_user, self.localization['EmptyErrorMessage'], reply_markup=self.skip_markup)
                 self.bot.register_next_step_handler(message, self.auto_reply_step, acceptMode=acceptMode, editMode=editMode, chat_id=self.current_user)
 
     def change_something_step(self, message, acceptMode=False):
         if not acceptMode:
             if self.data["isMediaPhoto"]:
-                self.bot.send_photo(self.current_user, self.data["userMedia"], f"That is how you profile will look like:\n<i><b>*Some parameters such as tags will be hidden*</b></i>\n\n{self.profile_constructor()}")
+                self.bot.send_photo(self.current_user, self.data["userMedia"], self.localization['CheckoutMessage'].format(self.profile_constructor()))
             else:
-                self.bot.send_video(self.current_user, video=self.data["userMedia"], caption=f"That is how you profile will look like:\n<i><b>*Some parameters such as tags will be hidden*</b></i>\n\n{self.profile_constructor()}")
-            self.bot.send_message(self.current_user, "Would you like to change something?", reply_markup=self.YNmarkup)
+                self.bot.send_video(self.current_user, video=self.data["userMedia"], caption=self.localization['CheckoutMessage'].format(self.profile_constructor()))
+            self.bot.send_message(self.current_user, self.localization['CheckoutQuestionMessage'], reply_markup=self.YNmarkup)
             self.bot.register_next_step_handler(message, self.change_something_step, acceptMode=True, chat_id=self.current_user)
         else:
-            if message.text == "Yes":
+            if message.text == self.localization['YesButton']:
                 self.checkout_step(message, firstTime=True)
-            elif message.text == "No":
+            elif message.text == self.localization['NoButton']:
                 self.tests_step(message)
             else:
-                self.bot.send_message(self.current_user, "No such option", reply_markup=self.YNmarkup)
+                self.bot.send_message(self.current_user, self.localization['NoSuchOptionMessage'], reply_markup=self.YNmarkup)
                 self.bot.register_next_step_handler(message, self.change_something_step, acceptMode=acceptMode, chat_id=self.current_user)
 
     def checkout_step(self, msg, acceptMode=False, firstTime=False):
         change_markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18")
-        final_msg = "18. ✨Finish the registration✨"
+        final_msg = self.localization['FinishRegistrationButton']
 
         if self.hasVisited:
-            final_msg = "18. ✨Save changes✨"
+            final_msg = self.localization['SaveChangesButton']
 
-        change_text = f"1. Change app language\n2. Change name\n3. Change description\n4. Add or remove languages you speak\n5. Change country\n6. Change city\n7. Change reason for using the bot\n8. Change age\n9. Change your gender\n10. Change profile photo\n11. Languages the encountered users speak\n12. Country the encountered users are located\n13. Encountered users age\n14. Preferred gender\n15. Communication preferences\n16. Change tags\n17. Change Auto-reply message\n{final_msg}"
+        change_text = self.localization['CheckoutMenuMessage'].format(final_msg)
 
         #Add discard changes button if user exists
         if self.hasVisited:
-            change_text += "\n19. ✨Discard changes✨"
+            change_text += self.localization['DiscardChangesButton']
 
         if not acceptMode:
             if not firstTime:
                 if self.data["isMediaPhoto"]:
-                    self.bot.send_photo(self.current_user, self.data["userMedia"], f"That is how you profile will look like:\n<i><b>*Some parameters such as tags will be hidden*</b></i>\n\n{self.profile_constructor()}")
+                    self.bot.send_photo(self.current_user, self.data["userMedia"], self.localization['CheckoutMessage'].format(self.profile_constructor()))
                 else:
-                    self.bot.send_video(self.current_user, video=self.data["userMedia"], caption=f"That is how you profile will look like:\n<i><b>*Some parameters such as tags will be hidden*</b></i>\n\n{self.profile_constructor()}")
+                    self.bot.send_video(self.current_user, video=self.data["userMedia"], caption=self.localization['CheckoutMessage'].format(self.profile_constructor()))
             self.bot.send_message(self.current_user, change_text, reply_markup=change_markup)
             self.bot.register_next_step_handler(msg, self.checkout_step, acceptMode=True, chat_id=self.current_user)
         else:
@@ -999,11 +997,10 @@ class Registrator:
             elif self.hasVisited and msg.text == "19":
                 self.destruct()
             else:
-                self.bot.send_message(self.current_user, "No such option", reply_markup=change_markup)
+                self.bot.send_message(self.current_user, self.localization['NoSuchOptionMessage'], reply_markup=change_markup)
                 self.bot.register_next_step_handler(msg, self.checkout_step, acceptMode=acceptMode, chat_id=self.current_user)
 
     def tests_step(self, msg, acceptMode=False, editMode=False):
-        YNmarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("yes", "no")
         if not acceptMode:
             d = json.dumps(self.data)
             response = None
@@ -1032,22 +1029,22 @@ class Registrator:
 
             if self.hasVisited:
                 if response.text == "1":
-                    self.bot.send_message(self.current_user, "Changes saved successfully !")
+                    self.bot.send_message(self.current_user, self.localization['ChangesSavedMessage'])
                     self.destruct()
                     return False
-                self.bot.send_message(self.current_user, "Something went wrong during the attempt of saving changes!")
+                self.bot.send_message(self.current_user, self.localization['ChangesErrorMessage'])
                 self.destruct()
                 return False
 
-            self.bot.send_message(self.current_user, "Would you like to use PERSONALITY functionality?\n---Functionality Description---", reply_markup=YNmarkup)
+            self.bot.send_message(self.current_user, self.localization['OceanDescriptionMessage'], reply_markup=self.YNmarkup)
             self.bot.register_next_step_handler(msg, self.tests_step, acceptMode=True, editMode=editMode, chat_id=self.current_user)
 
         else:
-            if msg.text == "yes":
-                self.bot.send_message(self.current_user, "You can call /help command at any time to get a hint about our functionality :)")
+            if msg.text == self.localization('YesButton'):
+                self.bot.send_message(self.current_user, self.localization['HelperDescriptionMessage'])
                 TestModule(self.bot, self.msg, isActivatedFromShop=False)
                 self.destruct()
-            elif msg.text == "no":
+            elif msg.text == self.localization('NoButton'):
                 self.destruct()
 
     def profile_constructor(self):
@@ -1128,39 +1125,39 @@ class Registrator:
             elif self.question_index == 2:
                 if int(call.data) not in self.chosen_langs:
                     #Notify user if limit had been exceeded
-                    if len(self.chosen_langs) + 1 > self.lang_limit:
-                        self.bot.send_message(self.current_user, f"Sorry, users without premium can choose only up to {self.lang_limit} languages")
+                    if len(self.chosen_langs) + 1 > self.premium_limit:
+                        self.bot.send_message(self.current_user, self.localization['LanguagesPremiumErrorMessage'].format(self.premium_limit))
                         return False
                     else:
                         # self.bot.send_message(chatId, call.data)
                         self.chosen_langs.append(int(call.data))
-                        self.bot.answer_callback_query(call.id, "Added")
+                        self.bot.answer_callback_query(call.id, self.localization['AddedMessage'])
                         add_tick_to_element(self.bot, self.current_user, call.message.id, self.current_markup_elements,
                                             self.markup_page, call.data)
 
                 else:
                     self.chosen_langs.remove(int(call.data))
-                    self.bot.answer_callback_query(call.id, "Removed")
+                    self.bot.answer_callback_query(call.id, self.localization['RemovedMessage'])
                     remove_tick_from_element(self.bot, self.current_user, call.message.id, self.current_markup_elements,
-                                        self.markup_page, call.data)
+                                             self.markup_page, call.data)
 
             elif self.question_index == 4:
                 if int(call.data) in self.countries.keys():
                     self.country = int(call.data)
-                    self.bot.answer_callback_query(call.id, "Gotcha")
+                    self.bot.answer_callback_query(call.id, self.localization['GotchaMessage'])
                     if self.previous_item:
                         remove_tick_from_element(self.bot, self.current_user, call.message.id, self.current_markup_elements,
-                                            self.markup_page, self.previous_item)
+                                                 self.markup_page, self.previous_item)
                     add_tick_to_element(self.bot, self.current_user, call.message.id, self.current_markup_elements,
                                         self.markup_page, call.data)
                     self.previous_item = call.data
                 else:
-                    self.bot.send_message(call.message.chat.id, "Incorrect country code")
+                    self.bot.send_message(call.message.chat.id, self.localization['CountyNotRecognizedErrorMessage'])
 
             elif self.question_index == 5:
                 if int(call.data) in self.cities.keys():
                     self.city = int(call.data)
-                    self.bot.answer_callback_query(call.id, "Gotcha")
+                    self.bot.answer_callback_query(call.id, self.localization['GotchaMessage'])
                     if self.previous_item:
                         remove_tick_from_element(self.bot, self.current_user, call.message.id,
                                                  self.current_markup_elements,
@@ -1169,7 +1166,7 @@ class Registrator:
                                         self.markup_page, call.data)
                     self.previous_item = call.data
                 else:
-                    self.bot.answer_callback_query(call.id, "Incorrect city code")
+                    self.bot.answer_callback_query(call.id, self.localization['CountyNotRecognizedErrorMessage'])
 
             elif self.question_index == 12:
                 if int(call.data) == -5:
@@ -1180,25 +1177,25 @@ class Registrator:
                         if l not in self.pref_langs:
                             add_tick_to_element(self.bot, self.current_user, self.current_inline_message_id, self.current_markup_elements, self.markup_page, str(l))
                             self.pref_langs.append(l)
-                    self.bot.answer_callback_query(call.id, "Added")
+                    self.bot.answer_callback_query(call.id, self.localization['AddedMessage'])
                     self.bot.send_message(self.current_user,
-                                          "Got it! Press OK to move to the next step or add more languages if you want ;-)",
+                                          self.localization['SameAsMineMessage'],
                                           reply_markup=self.okMarkup)
 
                 elif int(call.data) not in self.pref_langs:
-                    if len(self.pref_langs) + 1 > self.lang_limit:
-                        self.bot.send_message(self.current_user, f"Sorry, users without premium can choose only up to {self.lang_limit} languages")
+                    if len(self.pref_langs) + 1 > self.premium_limit:
+                        self.bot.send_message(self.current_user, self.localization['LanguagesPremiumErrorMessage'].format(self.premium_limit))
                         return False
                     else:
                         self.pref_langs.append(int(call.data))
-                        self.bot.answer_callback_query(call.id, "Added")
+                        self.bot.answer_callback_query(call.id, self.localization['AddedMessage'])
                         add_tick_to_element(self.bot, self.current_user, call.message.id, self.current_markup_elements,
                                             self.markup_page, call.data)
                 else:
                     self.pref_langs.remove(int(call.data))
-                    self.bot.answer_callback_query(call.id, "Removed")
+                    self.bot.answer_callback_query(call.id, self.localization['RemovedMessage'])
                     remove_tick_from_element(self.bot, self.current_user, call.message.id, self.current_markup_elements,
-                                        self.markup_page, call.data)
+                                             self.markup_page, call.data)
 
             elif self.question_index == 14:
                 if int(call.data) == -5:
@@ -1206,26 +1203,26 @@ class Registrator:
                         remove_tick_from_elements(self.bot, self.current_user, call.message.id, self.current_markup_elements, self.markup_page, self.pref_countries)
                         self.pref_countries.append(self.country)
                         self.bot.send_message(self.current_user,
-                                              "Got it! Press OK to move to the next step or add more countries if you want ;-)",
+                                              self.localization['SameAsMineMessage'],
                                               reply_markup=self.okMarkup)
-                        self.bot.answer_callback_query(call.id, "Added")
+                        self.bot.answer_callback_query(call.id, self.localization['AddedMessage'])
 
                         add_tick_to_element(self.bot, self.current_user, self.current_inline_message_id, self.current_markup_elements, self.markup_page, str(self.country))
 
                 elif int(call.data) not in self.pref_countries:
-                    if len(self.pref_countries) + 1 > self.lang_limit:
-                        self.bot.send_message(self.current_user, f"Sorry, users without premium can choose only up to {self.lang_limit} languages")
+                    if len(self.pref_countries) + 1 > self.premium_limit:
+                        self.bot.send_message(self.current_user, self.localization['LanguagesPremiumErrorMessage'].format(self.premium_limit))
                         return False
                     else:
                         self.pref_countries.append(int(call.data))
-                        self.bot.answer_callback_query(call.id, "Added")
+                        self.bot.answer_callback_query(call.id, self.localization['AddedMessage'])
                         add_tick_to_element(self.bot, self.current_user, call.message.id, self.current_markup_elements,
                                             self.markup_page, call.data)
                 else:
                     self.pref_countries.remove(int(call.data))
-                    self.bot.answer_callback_query(call.id, "Removed")
+                    self.bot.answer_callback_query(call.id, self.localization['RemovedMessage'])
                     remove_tick_from_element(self.bot, self.current_user, call.message.id, self.current_markup_elements,
-                                        self.markup_page, call.data)
+                                             self.markup_page, call.data)
 
     def generate_personal_age_range(self):
         min_value = self.data["userAge"] - 3
@@ -1266,19 +1263,19 @@ class Registrator:
         languages = Helpers.suggest_languages(language)
 
         if languages:
-            self.bot.send_message(self.current_user, f"Maybe you've meant: {', '.join(languages)}")
+            self.bot.send_message(self.current_user, self.localization['ClarifyingQuestionMessage'].format(', '.join(languages)))
 
     def suggest_countries(self, country):
         countries = Helpers.suggest_countries(country)
 
         if countries:
-            self.bot.send_message(self.current_user, f"Maybe you've meant: {', '.join(countries)}")
+            self.bot.send_message(self.current_user, self.localization['ClarifyingQuestionMessage'].format(', '.join(countries)))
 
     def suggest_cities(self, city):
         cities = Helpers.suggest_cities(city)
 
         if cities:
-            self.bot.send_message(self.current_user, f"Maybe you've meant: {', '.join(cities)}")
+            self.bot.send_message(self.current_user, self.localization['ClarifyingQuestionMessage'].format(', '.join(cities)))
 
     def destruct(self):
         self.bot.callback_query_handlers.remove(self.chCode)
