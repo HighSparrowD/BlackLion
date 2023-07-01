@@ -560,6 +560,13 @@ def get_adventures(userId):
         return None
 
 
+def get_my_adventures(userId):
+    try:
+        return json.loads(requests.get(f"https://localhost:44381/user-adventures?userId={userId}", verify=False).text)
+    except:
+        return None
+
+
 def send_adventure_request(adventureId, userId):
     try:
         return int(requests.get(f"{api_address}/adventure-request?id={adventureId}&userId={userId}", verify=False).text)
@@ -625,6 +632,13 @@ def delete_attendee(adventureId, attendeeId):
     try:
         return int(
             requests.delete(f"{api_address}/delete-attendee/{adventureId}/{attendeeId}", verify=False).text)
+    except:
+        return None
+
+
+def delete_adventure(adventureId, userId):
+    try:
+        return requests.delete(f"{api_address}/adventure?id={adventureId}&userId={userId}", verify=False).text
     except:
         return None
 

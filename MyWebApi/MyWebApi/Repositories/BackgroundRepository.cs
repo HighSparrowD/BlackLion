@@ -17,6 +17,7 @@ namespace WebApi.Repositories
         private const short _oldFeedbacksSpan = 30;
         private const short _oldReportsSpan = 30;
         private const short _oldUsersSpan = 30;
+        private const short _oldAdventuresSpan = 15;
 
         public BackgroundRepository(UserContext context)
         {
@@ -114,6 +115,23 @@ namespace WebApi.Repositories
             sql += $"DELETE FROM \"user_tags\" WHERE \"UserId\" IN ({formattedIds});";
             sql += $"DELETE FROM \"user_tests\" WHERE \"UserId\" IN ({formattedIds});";
             sql += $"DELETE FROM \"user_visits\" WHERE \"UserId\" IN ({formattedIds});";
+
+            await _context.Database.ExecuteSqlRawAsync(sql);
+        }
+
+        public async Task DeleteOldAdventuresWithReportsAsync()
+        {
+            var oldAdventureIds = await _context.Adventures.Where(a => (a.DeleteDate - DateTime.UtcNow).Value.Days >= _oldAdventuresSpan)
+                .Select(u => u.Id)
+                .ToListAsync();
+
+            if (oldAdventureIds.Count == 0)
+                return;
+
+            var formattedIds = string.Join(", ", oldAdventureIds);
+
+            var sql = $"DELETE FROM \"user_reports\" WHERE \"AdventureId\" IN ({formattedIds});";
+            sql += $"DELETE FROM \"adventures\" WHERE EXTRACT(DAY FROM (NOW() - \"DeleteDate\")) >= {_oldAdventuresSpan}";
 
             await _context.Database.ExecuteSqlRawAsync(sql);
         }

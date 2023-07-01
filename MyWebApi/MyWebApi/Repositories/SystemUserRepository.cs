@@ -4029,8 +4029,33 @@ namespace WebApi.Repositories
             return ParticipationRequestStatus.Ok;
         }
 
-        public async Task<bool> DeleteAdventureAsync(Guid adventureId, long userId)
+        public async Task<bool> DeleteAdventureAsync(long adventureId, long userId)
         {
+            var attendees = await _contx.AdventureAttendees.Where(a => a.AdventureId == adventureId)
+                .Include(a => a.Adventure)
+                .ToListAsync();
+
+            var adventure = await _contx.Adventures.Where(a => a.Id == adventureId)
+                .FirstOrDefaultAsync();
+
+            foreach (var attendee in attendees)
+            {
+                await AddUserNotificationAsync(new UserNotification
+                {
+                    Section = Section.Adventurer,
+                    UserId = attendee.UserId,
+                    IsLikedBack = false,
+                    Type = NotificationType.Other,
+                    Description = $"We are very sorry. Adventure {attendee.Adventure.Name} had been deleted. Please, contact creator if the reason is unknown to you"
+                });
+            }
+
+            adventure.Status = AdventureStatus.Deleted;
+            adventure.DeleteDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
+
+            _contx.AdventureAttendees.RemoveRange(attendees);
+            await _contx.SaveChangesAsync();
+
             return true;
         }
 
@@ -4092,6 +4117,7 @@ namespace WebApi.Repositories
         public async Task<List<GetAdventure>> GetUserAdventuresAsync(long userId)
         {
             return await _contx.Adventures.Where(a => a.UserId == userId)
+                .Where(a => a.Status != AdventureStatus.Deleted)
                 .Select(a => new GetAdventure
                 {
                     Id = a.Id,
@@ -4119,14 +4145,14 @@ namespace WebApi.Repositories
         private async Task ReactivateTickRequest(long userId)
         {
             var tickRequest = await _contx.TickRequests.Where(r => r.UserId == userId)
-                .SingleOrDefaultAsync();
+                .FirstOrDefaultAsync();
 
             //Return if tick request does not exists, because not all users has tick request
             if (tickRequest == null)
                 return;
 
             var user = await _contx.Users.Where(u => u.Id == userId)
-                .SingleOrDefaultAsync();
+                .FirstOrDefaultAsync();
 
             //Throw if user does not exist, because that method should not be called by not existing user
             if (user == null)
