@@ -46,9 +46,15 @@ def Start(message):
         Menus.go_back_to_main_menu(bot, message.from_user.id, message)
 
 
-@bot.message_handler(commands=["registration"], func=lambda message: message.chat.type == 'private', is_multihandler=True)
-def Greet(message):
-    create_registrator(message)
+@bot.message_handler(commands=["registration"], func=lambda message: message.chat.type == 'private')
+def restore_user(message):
+    result = Helpers.restore_user_profile(message.from_user.id)
+
+    if result == "Success":
+        bot.send_message(message.from_user.id, "Done! Your profile is successfully restored!")
+        Menus.go_back_to_main_menu(bot, message.from_user.id, message)
+    elif result == "DoesNotExist":
+        bot.send_message(message.from_user.id, "You are not registered in the bot. Note, that profiles are completely removed from bot after a month (30 days) since they had been deleted\nPlease hìt /start to register your profile and meet THE person ;)")
 
 
 @bot.message_handler(commands=["random"], func=lambda message: message.chat.type == 'private')
@@ -173,7 +179,7 @@ def create_familiator(message, userId):
     elif status == "DoesNotExist":  # Does not exist
         send_registration_warning(userId)
     elif status == "IsDeleted":  # Is deleted
-        bot.send_message(message.from_user.id, "Hey! your account had been deleted recently. Would you like to pass a quick registration and save all your lost data?\n Then hit /register !")
+        bot.send_message(message.from_user.id, "Hey! your account had been deleted recently. Would you like to restore it?\n Then hit /registration !")
 
 
 def create_random_talker(message, userId):
@@ -187,7 +193,7 @@ def create_random_talker(message, userId):
     elif status == "DoesNotExist":  # Does not exist
         send_registration_warning(userId)
     elif status == "IsDeleted":  # Is deleted
-        bot.send_message(userId, "Hey! your account had been deleted recently. Would you like to pass a quick registration and save all your lost data?\n Then hit /register !")
+        bot.send_message(userId, "Hey! your account had been deleted recently. Would you like to restore it?\n Then hit /registration !")
     elif status == "IsBanned":  # Is banned
         bot.send_message(userId, "Your reputation is to low. Please contact the administration to resolve that", reply_markup=Menus.menu_markup)
 
@@ -203,7 +209,7 @@ def create_shop(message, userId):
     elif status == "DoesNotExist":  # Does not exist
         send_registration_warning(userId)
     elif status == "IsDeleted":  # Is deleted
-        bot.send_message(userId, "Hey! your account had been deleted recently. Would you like to pass a quick registration and save all your lost data?\n Then hit /register !")
+        bot.send_message(userId, "Hey! your account had been deleted recently. Would you like to restore it?\n Then hit /registration !")
     elif status == "IsBanned":  # Is banned
         bot.send_message(userId, "Your reputation is to low. Please contact the administration to resolve that", reply_markup=Menus.menu_markup)
 
@@ -219,7 +225,7 @@ def create_settings(message, userId):
     elif status == "DoesNotExist":  # Does not exist
         send_registration_warning(userId)
     elif status == "IsDeleted":  # Is deleted
-        bot.send_message(userId, "Hey! your account had been deleted recently. Would you like to pass a quick registration and save all your lost data?\n Then hit /register !")
+        bot.send_message(userId, "Hey! your account had been deleted recently. Would you like to restore it?\n Then hit /registration !")
 
 
 def create_reporter(message, userId):
@@ -233,7 +239,7 @@ def create_reporter(message, userId):
     elif status == "DoesNotExist":  # Does not exist
         send_registration_warning(userId)
     elif status == "IsDeleted":  # Is deleted
-        bot.send_message(userId, "Hey! your account had been deleted recently. Would you like to pass a quick registration and save all your lost data?\n Then hit /register !")
+        bot.send_message(userId, "Hey! your account had been deleted recently. Would you like to restore it?\n Then hit /registration !")
 
 
 def create_adventurer(message, userId):
@@ -247,7 +253,7 @@ def create_adventurer(message, userId):
     elif status == "DoesNotExist":  # Does not exist
         send_registration_warning(userId)
     elif status == "IsDeleted":  # Is deleted
-        bot.send_message(userId, "Hey! your account had been deleted recently. Would you like to pass a quick registration and save all your lost data?\n Then hit /register !")
+        bot.send_message(userId, "Hey! your account had been deleted recently. Would you like to restore it?\n Then hit /registration !")
 
 
 #TODO: Finish up using new functionality (viz another create methods)
