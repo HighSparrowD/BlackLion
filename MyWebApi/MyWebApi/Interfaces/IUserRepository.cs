@@ -167,7 +167,7 @@ namespace WebApi.Interfaces
         //Adventures
         Task<string> RegisterAdventureAsync(ManageAdventure model);
         Task ChangeAdventureAsync(ManageAdventure model);
-        Task<bool> DeleteAdventureAsync(Guid adventureId, long userId);
+        Task<bool> DeleteAdventureAsync(long adventureId, long userId);
         Task<ParticipationRequestStatus> SendAdventureRequestAsync(long adventureId, long userId, AdventureAttendeeStatus status = AdventureAttendeeStatus.New, NotificationType notificationType = NotificationType.AdventureParticipation);
         Task<ParticipationRequestStatus> SendAdventureRequestByCodeAsync(ParticipationRequest request);
         Task<List<GetTemplateShort>> GetAdventureTemplatesAsync(long userId);

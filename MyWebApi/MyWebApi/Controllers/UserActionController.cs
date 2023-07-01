@@ -834,8 +834,8 @@ namespace WebApi.Controllers
             return await _repository.SendAdventureRequestByCodeAsync(model);
         }
 
-        [HttpDelete("/DeleteAdventure/{id}/{userId}")]
-        public async Task<bool> DeleteAdventure(Guid id, long userId)
+        [HttpDelete("/adventure")]
+        public async Task<bool> DeleteAdventure([FromQuery] long id, [FromQuery] long userId)
         {
             return await _repository.DeleteAdventureAsync(id, userId);
         }
@@ -859,8 +859,8 @@ namespace WebApi.Controllers
             return await _repository.GetAdventureAttendeesAsync(id);
         }
 
-        [HttpGet("/GetUserAdventures/{userId}")]
-        public async Task<List<GetAdventure>> GetUsersAdventures(long userId)
+        [HttpGet("/user-adventures")]
+        public async Task<List<GetAdventure>> GetUsersAdventures([FromQuery] long userId)
         {
             return await _repository.GetUserAdventuresAsync(userId);
         }

@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Collections.Generic;
 using WebApi.Entities.LocationEntities;
+using System;
 
 #nullable enable
 namespace WebApi.Entities.AdventureEntities
@@ -37,6 +38,7 @@ namespace WebApi.Entities.AdventureEntities
         public string? UniqueLink { get; set; }
         //Indicates, whether if adventure awaits for the group id
         public bool IsAwaiting { get; set; }
+        public DateTime? DeleteDate { get; set; }
         public string? GroupLink { get; set; }
         public long? GroupId { get; set; }
         public AdventureStatus Status { get; set; }

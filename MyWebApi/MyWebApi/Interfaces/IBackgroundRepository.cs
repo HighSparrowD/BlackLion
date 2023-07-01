@@ -13,5 +13,6 @@ namespace WebApi.Interfaces
         Task DeleteOldFeedbacksAsync();
         Task DeleteOldReportsAsync();
         Task DeleteOldUsersAsync();
+        Task DeleteOldAdventuresWithReportsAsync();
     }
 }

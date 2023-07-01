@@ -1173,8 +1173,17 @@ class Adventurer:
         self.delete_secondary_message()
         self.previous_section()
 
-    def delete_adventure(self):
-        pass
+    def delete_adventure(self, message=None, acceptMode=False):
+        if not acceptMode:
+            self.send_secondary_message("Are you sure, you want to delete adventure", self.YNMarkup)
+            self.bot.register_next_step_handler(message, self.delete_adventure, acceptMode=True, chat_id=self.current_user)
+        else:
+            if message.text == "Yes":
+                Helpers.delete_adventure(self.current_adventure, self.current_user)
+                self.send_simple_message("Done! Adventure have been deleted. All attendees are notified")
+                self.my_adventures_manager()
+                return
+            self.previous_section()
 
     def change_adventure(self):
         self.previous_section = self.manage_adventure
@@ -1443,7 +1452,7 @@ class Adventurer:
             self.load_adventure_data(self.current_adventure)
             self.register_checkout(call.message)
         elif call.data == "4":
-            pass
+            self.delete_adventure()
         elif call.data == "6":# Get Attendee's username
             self.get_attendee_contact()
         elif call.data == "7":# Remove attendee
@@ -1491,7 +1500,7 @@ class Adventurer:
         self.previous_section()
 
     def get_attendee_contact(self):
-        username = self.current_attendee_data["userBaseInfo"]["userName"]
+        username = self.current_attendee_data["data"]["userName"]
 
         if username:
             self.send_secondary_message("User does not have a username :(")
@@ -1499,7 +1508,7 @@ class Adventurer:
         self.send_secondary_message(f"{username}")
 
     def display_current_attendee_data(self):
-        base = self.current_attendee_data["userBaseInfo"]
+        base = self.current_attendee_data["data"]
 
         if base["isMediaPhoto"]:
             self.send_active_message_with_photo(base["userDescription"], base["userMedia"])
@@ -1574,7 +1583,7 @@ class Adventurer:
             pass
 
     def assemble_my_adventures_markup(self):
-        adventures = json.loads(requests.get(f"https://localhost:44381/GetUserAdventures/{self.current_user}", verify=False).text)
+        adventures = Helpers.get_my_adventures(self.current_user)
         self.my_adventuresMarkup.clear()
 
         for adventure in adventures:
