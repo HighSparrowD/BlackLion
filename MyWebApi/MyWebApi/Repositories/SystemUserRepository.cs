@@ -4535,8 +4535,14 @@ namespace WebApi.Repositories
             if (user == null)
                 return RestoreResult.DoesNotExist;
 
+            // No need to restore a user, who is not deleted :)
+            if (!user.IsDeleted)
+                return RestoreResult.Error;
+
             user.IsDeleted = false;
             user.DeleteDate = null;
+
+            await _contx.SaveChangesAsync();
 
             return RestoreResult.Success;
         }
@@ -4558,6 +4564,7 @@ namespace WebApi.Repositories
 
             query = query.Where(q => q.Attendees.All(at => at.UserId != user.Id));
 
+            //TODO: Preferences or actual location ?
             if (user.Location != null)
                 query = query.Where(q => user.Data.LocationPreferences.Contains((int)q.CountryId));
 

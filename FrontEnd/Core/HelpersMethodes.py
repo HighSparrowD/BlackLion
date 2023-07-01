@@ -678,3 +678,12 @@ def delete_user_profile(userId, message):
                              verify=False).status_code
     except:
         return None
+
+
+def restore_user_profile(userId):
+    try:
+        return json.loads(
+            requests.get(f"{api_address}/restore-user",
+                         verify=False, params={"userId": userId}).text)
+    except:
+        return None
