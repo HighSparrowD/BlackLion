@@ -607,7 +607,7 @@ class Registrator:
                 self.data["userMedia"] = msg.video.file_id
                 self.data["isMediaPhoto"] = False
                 self.gender_preferences_step(msg, editMode=editMode)
-            elif msg.text == self.localization('GoBackButton') and self.hasVisited:
+            elif msg.text == self.localization['GoBackButton'] and self.hasVisited:
                 self.checkout_step(msg)
             else:
                 self.bot.send_message(self.current_user, self.localization['IncorrectMediaErrorMessage'])
@@ -1040,11 +1040,11 @@ class Registrator:
             self.bot.register_next_step_handler(msg, self.tests_step, acceptMode=True, editMode=editMode, chat_id=self.current_user)
 
         else:
-            if msg.text == self.localization('YesButton'):
+            if msg.text == self.localization['YesButton']:
                 self.bot.send_message(self.current_user, self.localization['HelperDescriptionMessage'])
                 TestModule(self.bot, self.msg, isActivatedFromShop=False)
                 self.destruct()
-            elif msg.text == self.localization('NoButton'):
+            elif msg.text == self.localization['NoButton']:
                 self.destruct()
 
     def profile_constructor(self):
