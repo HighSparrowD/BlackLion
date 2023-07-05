@@ -82,52 +82,52 @@ class Adventurer:
         self.register_template_checkout_message = "1.Change name\n2.Change country\n3.Change city\n4.Change media\n5.Change description\n6.Change experience description\n7.Change attendees description \n8.Describe unwanted people\n9.Describe reward\n10.Change Date\n11.Change Time\n12.Change duration\n13.{commOption}\n14.Change Auto Reply\n15.{action}\n16. Abort"
 
         self.start_markup = InlineKeyboardMarkup() \
-            .add(InlineKeyboardButton("My adventures", callback_data="1")) \
-            .add(InlineKeyboardButton("Adventures I have joined", callback_data="2")) \
-            .add(InlineKeyboardButton("Find Adventures", callback_data="3")) \
-            .add(InlineKeyboardButton("My Templates", callback_data="6")) \
+            .add(InlineKeyboardButton("My adventures", callback_data="1a")) \
+            .add(InlineKeyboardButton("Adventures I have joined", callback_data="2a")) \
+            .add(InlineKeyboardButton("Find Adventures", callback_data="3a")) \
+            .add(InlineKeyboardButton("My Templates", callback_data="6a")) \
             .add(InlineKeyboardButton("Go Back", callback_data="-20"))
 
         self.pre_register_markup = InlineKeyboardMarkup() \
-            .add(InlineKeyboardButton("Create manually", callback_data="160")) \
-            .add(InlineKeyboardButton("Create from template", callback_data="161")) \
+            .add(InlineKeyboardButton("Create manually", callback_data="160a")) \
+            .add(InlineKeyboardButton("Create from template", callback_data="161a")) \
             .add(InlineKeyboardButton("Go Back", callback_data="-20"))
 
         self.search_markup = InlineKeyboardMarkup() \
-            .add(InlineKeyboardButton("➕ Search ➕", callback_data="4")) \
-            .add(InlineKeyboardButton("Join using code", callback_data="5")) \
+            .add(InlineKeyboardButton("➕ Search ➕", callback_data="4a")) \
+            .add(InlineKeyboardButton("Join using code", callback_data="5a")) \
             .add(InlineKeyboardButton("Go Back", callback_data="-20"))
 
         self.adventure_state_markup = InlineKeyboardMarkup() \
-            .add(InlineKeyboardButton("Online", callback_data="4"), InlineKeyboardButton("❓", callback_data="304")) \
-            .add(InlineKeyboardButton("Offline", callback_data="5"), InlineKeyboardButton("❓", callback_data="305")) \
+            .add(InlineKeyboardButton("Online", callback_data="4b"), InlineKeyboardButton("❓", callback_data="304b")) \
+            .add(InlineKeyboardButton("Offline", callback_data="5b"), InlineKeyboardButton("❓", callback_data="305b")) \
             .add(InlineKeyboardButton("Go Back", callback_data="-20"))
 
         self.manage_template_markup = InlineKeyboardMarkup() \
-            .add(InlineKeyboardButton("Change", callback_data="7")) \
-            .add(InlineKeyboardButton("Delete", callback_data="8")) \
+            .add(InlineKeyboardButton("Change", callback_data="7a")) \
+            .add(InlineKeyboardButton("Delete", callback_data="8a")) \
             .add(InlineKeyboardButton("Go Back", callback_data="-20"))
 
         self.manage_adventure_markup = InlineKeyboardMarkup() \
             .add(InlineKeyboardButton("Status", callback_data="-1"), InlineKeyboardButton("", callback_data="1")) \
-            .add(InlineKeyboardButton("Attendees", callback_data="2")) \
-            .add(InlineKeyboardButton("Change", callback_data="3")) \
-            .add(InlineKeyboardButton("Delete", callback_data="4")) \
+            .add(InlineKeyboardButton("Attendees", callback_data="2c")) \
+            .add(InlineKeyboardButton("Change", callback_data="3c")) \
+            .add(InlineKeyboardButton("Delete", callback_data="4c")) \
             .add(InlineKeyboardButton("Go Back", callback_data="-20"))
 
         self.manage_adventure_attendee_markup = InlineKeyboardMarkup() \
             .add(InlineKeyboardButton("Status", callback_data="-5"), InlineKeyboardButton("✅", callback_data="-5")) \
-            .add(InlineKeyboardButton("Contact", callback_data="6")) \
-            .add(InlineKeyboardButton("Remove", callback_data="7")) \
+            .add(InlineKeyboardButton("Contact", callback_data="6c")) \
+            .add(InlineKeyboardButton("Remove", callback_data="7c")) \
             .add(InlineKeyboardButton("Go Back", callback_data="-20"))
 
         self.set_attendee_status_markup = InlineKeyboardMarkup() \
-            .add(InlineKeyboardButton("Accept", callback_data="10")) \
-            .add(InlineKeyboardButton("Decline", callback_data="11")) \
+            .add(InlineKeyboardButton("Accept", callback_data="10c")) \
+            .add(InlineKeyboardButton("Decline", callback_data="11c")) \
             .add(InlineKeyboardButton("Go Back", callback_data="-20"))
 
         self.actions_markup = InlineKeyboardMarkup().add(InlineKeyboardButton("⚠ Report ⚠", callback_data=self.current_adventure)) \
-            .add(InlineKeyboardButton("🔖 Help 🔖", callback_data="11"))
+            .add(InlineKeyboardButton("🔖 Help 🔖", callback_data="11x"))
 
         self.goBackInlineMarkup = InlineKeyboardMarkup().add(InlineKeyboardButton("🔙 Go Back", callback_data="-10"))
 
@@ -1350,31 +1350,31 @@ class Adventurer:
                 self.manage_adventure_attendee()
 
     def start_callback_handler(self, call):
-        if call.data == "1":
+        if call.data == "1a":
             self.my_adventures_manager()
-        elif call.data == "2":
+        elif call.data == "2a":
             self.subscribed_adventures_manager()
-        elif call.data == "3":
+        elif call.data == "3a":
             self.search_choice()
-        elif call.data == "4":
+        elif call.data == "4a":
             self.recurring_adventure_search()
-        elif call.data == "5":
+        elif call.data == "5a":
             self.join_by_code(call.message)
-        elif call.data == "6":
+        elif call.data == "6a":
             self.manage_templates()
-        elif call.data == "7":
+        elif call.data == "7a":
             self.change_current_template()
-        elif call.data == "8":
+        elif call.data == "8a":
             self.delete_current_template(call.message)
-        elif call.data == "150":
+        elif call.data == "150a":
             self.register_pre_register()
-        elif call.data == "160":
+        elif call.data == "160a":
             self.isCreatedFromTemplate = False
             self.register_start()
-        elif call.data == "161":
+        elif call.data == "161a":
             self.isCreatedFromTemplate = True
             self.choose_template()
-        elif call.data == "151":
+        elif call.data == "151a":
             self.register_template_start()
         elif call.data == "-20":
             self.previous_section()
@@ -1405,9 +1405,9 @@ class Adventurer:
                 pass
 
         # Registering adventures
-        elif call.data == "4":
+        elif call.data == "4b":
             self.register_online()
-        elif call.data == "5":
+        elif call.data == "5b":
             self.register_offline()
         elif call.data == "-10":
             self.go_back_to_previous_registration_step()
@@ -1446,20 +1446,20 @@ class Adventurer:
     def manage_adventure_callback_handler(self, call):
         if call.data == "1":
             pass
-        elif call.data == "2":
+        elif call.data == "2c":
             self.manage_adventure_attendees()
-        elif call.data == "3":
+        elif call.data == "3c":
             self.load_adventure_data(self.current_adventure)
             self.register_checkout(call.message)
-        elif call.data == "4":
+        elif call.data == "4c":
             self.delete_adventure()
-        elif call.data == "6":# Get Attendee's username
+        elif call.data == "6c":# Get Attendee's username
             self.get_attendee_contact()
-        elif call.data == "7":# Remove attendee
+        elif call.data == "7c":# Remove attendee
             self.remove_attendee(call.message)
-        elif call.data == "10":
+        elif call.data == "10c":
             self.resolve_participation_request(2)
-        elif call.data == "11":
+        elif call.data == "11c":
             self.resolve_participation_request(3)
         elif call.data == "-20":
             self.delete_secondary_message() #TODO: reconsider usefulness
@@ -1469,7 +1469,7 @@ class Adventurer:
             self.manage_adventure_attendee()
 
     def search_adventures_callback_handler(self, call):
-        if call.data == "11":
+        if call.data == "11x":
             self.open_helper(call.message, self.proceed)
         else:
             self.open_report_module(call.data)
@@ -1591,7 +1591,7 @@ class Adventurer:
             self.my_adventuresMarkup.add(InlineKeyboardButton(f"{status} {adventure['name']} {status}", callback_data=adventure["id"]))
 
         if len(adventures) + 1 <= self.creation_limit:
-            self.my_adventuresMarkup.add(InlineKeyboardButton("➕ Add ➕", callback_data="150"))
+            self.my_adventuresMarkup.add(InlineKeyboardButton("➕ Add ➕", callback_data="150a"))
 
         self.my_adventuresMarkup.add(InlineKeyboardButton("Go Back", callback_data="-20"))
 
@@ -1627,7 +1627,7 @@ class Adventurer:
 
         #TODO: Create its own separate limit
         if addNewButton and len(templates) + 1 <= self.creation_limit:
-            self.my_templatesMarkup.add(InlineKeyboardButton("➕ Add ➕", callback_data="151"))
+            self.my_templatesMarkup.add(InlineKeyboardButton("➕ Add ➕", callback_data="151a"))
 
         self.my_templatesMarkup.add(InlineKeyboardButton("Go Back", callback_data="-20"))
 
