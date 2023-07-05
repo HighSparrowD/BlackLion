@@ -141,8 +141,11 @@
   <data name="Familiator_OutOfViews" xml:space="preserve">
     <value>Извините, на сегодняшний день у вас закончились просмотры анкет.\nВы все еще можете использовать Card Deck Mini или Card Deck Premium для пополнения просмотров, купить премиум и тем самым удвоить количество просмотров, или подождать до завтра :)</value>
   </data>
-  <data name="FeedbackReason_Test" xml:space="preserve">
-    <value />
+  <data name="FeedbackReason_SuggestHints" xml:space="preserve">
+    <value>Предложить "подсказки"</value>
+  </data>
+  <data name="FeedbackReason_Suggestion" xml:space="preserve">
+    <value>Дать совет</value>
   </data>
   <data name="Gender_Female" xml:space="preserve">
     <value>Женщина</value>

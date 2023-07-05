@@ -141,8 +141,11 @@
   <data name="Familiator_OutOfViews" xml:space="preserve">
     <value>Sorry, you have run out of profile searches for today.\nYou can still use Card Deck Mini or Card Deck Premium to replenish your views, buy premium and thus double your view count, or wait until tomorrow :)</value>
   </data>
-  <data name="FeedbackReason_Test" xml:space="preserve">
-    <value>Test</value>
+  <data name="FeedbackReason_SuggestHints" xml:space="preserve">
+    <value>Suggest "Hints"</value>
+  </data>
+  <data name="FeedbackReason_Suggestion" xml:space="preserve">
+    <value>Give Suggestion</value>
   </data>
   <data name="Gender_Female" xml:space="preserve">
     <value>Female</value>
