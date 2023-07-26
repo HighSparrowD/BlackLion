@@ -8,6 +8,7 @@ from Common.Menues import go_back_to_main_menu
 from Helper import Helper
 from ReportModule import ReportModule
 from Settings import Settings
+from Enums.AttendeeStatus import AttendeeStatus
 
 
 class Adventurer:
@@ -74,6 +75,7 @@ class Adventurer:
         self.current_attendee_data = None
         self.isNewAttendee = True
         self.current_attendees_statuses = {}
+        self.attendees = {}
 
         self.countries = {}
         self.cities = {}
@@ -149,7 +151,7 @@ class Adventurer:
         self.subscribed_adventuresMarkup = InlineKeyboardMarkup()
 
         self.starting_message = "It's time for adventures!\n The Adventures feature allows users to create and join various adventures with other users.\n Creating adventures is simple: the user selects the desired activity, date and location, and then invites other users to join.\n When other users confirm their participation, they can start chatting and plan the details of the adventure in chat.\n You can offer anything, but only what is legal in your country"
-        self.verification_message = "For comfortable and safe usege of this module, we have added a system of organizer verification.\nIt is designed for users to be sure that you are who you say you are and won't use this module with malicious intent\nVerifying your identity will give you more credibility. Users will be more motivated by your adventure.\n\n Would you like to do verification now or later?"
+        self.verification_message = "For comfortable and safe usage of this module, we have added a system of organizer verification.\nIt is designed for users to be sure that you are who you say you are and won't use this module with malicious intent\nVerifying your identity will give you more credibility. Users will be more motivated by your adventure.\n\n Would you like to do verification now or later?"
         self.location_message = "Where will the adventure be shown?"
 
         self.statusDict = {
@@ -1168,7 +1170,7 @@ class Adventurer:
         self.current_attendee_data = Helpers.get_user_info(self.current_attendee)
 
         #If is new attendee
-        if self.current_attendees_statuses[self.current_attendee] == 1:
+        if self.current_attendees_statuses[self.current_attendee] == AttendeeStatus.New:
             self.display_current_attendee_data()
             self.send_secondary_message("<i><b>🔝You have new participation request🔝</b></i>", markup=self.set_attendee_status_markup)
             return
@@ -1457,6 +1459,20 @@ class Adventurer:
                     self.bot.answer_callback_query(call.id, "Incorrect city code")
 
     def manage_adventure_callback_handler(self, call):
+        # Paging
+        if call.data == "-1" or call.data == "-2":
+            try:
+                index = index_converter(call.data)
+                if self.markup_page + index <= self.markup_pages_count or self.markup_page + index >= 1:
+                    markup = assemble_markup(self.markup_page, self.current_markup_elements, index)
+                    self.bot.edit_message_reply_markup(chat_id=call.message.chat.id, reply_markup=markup,
+                                                       message_id=call.message.id)
+                    self.markup_page += index
+            except:
+                pass
+
+            return
+
         if call.data == "1":
             pass
         elif call.data == "2c":
@@ -1623,9 +1639,12 @@ class Adventurer:
         for attendee in attendees:
             status = self.attendee_statusDict[attendee["status"]]
             self.current_attendees_statuses[str(attendee["userId"])] = attendee["status"]
-            self.my_adventures_attendeesMarkup.add(InlineKeyboardButton(f"{status} {attendee['username']} {status}", callback_data=attendee["userId"]))
+            self.attendees[attendee["userId"]] = f"{status} {attendee['username']} {status}"
+            # self.my_adventures_attendeesMarkup.add(InlineKeyboardButton(f"{status} {attendee['username']} {status}", callback_data=attendee["userId"]))
 
-        self.my_adventures_attendeesMarkup.add(InlineKeyboardButton("Go Back", callback_data="-20"))
+        reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page, self.markup_pages_count)
+        count_pages(self.attendees, self.current_markup_elements, self.markup_pages_count, additionalButton=True, buttonText="Go Back", buttonData="-20")
+        self.my_adventures_attendeesMarkup = assemble_markup(self.markup_page, self.current_markup_elements, 0)
 
     def assemble_subscribed_adventures_markup(self):
         adventures = json.loads(requests.get(f"https://localhost:44381/GetUsersSubscribedAdventures/{self.current_user}", verify=False).text)
