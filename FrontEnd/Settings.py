@@ -844,7 +844,6 @@ class Settings:
                 self.send_error_message(f"Incorrect status length", markup=self.abortMarkup)
                 self.bot.register_next_step_handler(message, self.set_profile_status, acceptMode=acceptMode, chat_id=self.current_user)
 
-
     def black_list_callback_handler(self, call):
         if call.message.id not in self.old_queries:
             self.current_query = call.message.id
@@ -871,7 +870,12 @@ class Settings:
 
     def choose_confirmation_request(self, message):
         self.previous_section = self.additional_actions_settings_choice
+
+        if self.verificationOnly:
+            self.previous_section = self.destruct
+
         self.active_section = self.choose_confirmation_request
+        self.subscribe_callback_handler(self.menu_callback_handler)
 
         self.send_active_message("Please choose type of identity confirmation", markup=self.settingConfirmationRequestMarkup)
 
@@ -938,9 +942,6 @@ class Settings:
 
                     if bool(json.loads(requests.post(f"https://localhost:44381/SendTickRequest", d, headers={"Content-Type": "application/json"}, verify=False).text)):
                         self.send_message_with_confirmation("Done! Please wait until administration resolves your request.\nIf you have any questions, please contact @Admin")
-
-                        if self.verificationOnly:
-                            self.destruct()
                         return
 
             self.send_error_message("This type of data cannot be accepted as your identity confirmation")
@@ -1669,7 +1670,8 @@ class Settings:
                 return
             self.active_message = self.bot.send_message(self.current_user, text, reply_markup=markup).id
         except:
-            pass
+            self.delete_active_message()
+            self.send_active_message(text, markup)
 
     def send_active_message_with_photo(self, text, markup, photo):
         if self.active_message:
@@ -1771,14 +1773,13 @@ class Settings:
         return 1
 
     def destruct(self, msg=None):
-        if self.current_callback_handler:
-            self.bot.callback_query_handlers.remove(self.current_callback_handler)
+        self.clear_callback_handler()
         self.bot.message_handlers.remove(self.helpHandler)
 
         self.delete_active_message()
 
         if self.verificationOnly:
-            self.return_method(True)
+            self.return_method(True, True)
             return
 
         go_back_to_main_menu(self.bot, self.current_user, self.message)

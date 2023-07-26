@@ -117,20 +117,21 @@ namespace WebApi.Repositories
 
                 if (invitor.InvitedUsersCount == 1)
                 {
-                    await TopUpPointBalance(invitor.Id, 250 * multiplier, $"User {invitor.Id} has invited his firs user");
-                    await GrantPremiumToUser(invitor.Id, 0, 1, Currency.Points);
+                    await TopUpPointBalance(invitor.Id, 250 * multiplier, $"User {invitor.Id} has invited his first user");
+                    var effecId = new Random().Next(5, 10);
+                    await PurchaseEffectAsync(invitor.Id, effecId, 0, Currency.Points);
                 }
                 else if (invitor.InvitedUsersCount == 3 || invitor.InvitedUsersCount % 3 == 0)
                 {
                     if (multiplier == 1)
                         invitor.InvitedUsersBonus = 0.15 + bonus;
-                    await TopUpPointBalance(invitor.Id, 1199 * multiplier, $"User {invitor.Id} has invited 3 users");
+                    await TopUpPointBalance(invitor.Id, 1199 * multiplier, $"User {invitor.Id} has invited % 3 users");
                 }
                 else if (invitor.InvitedUsersCount == 7 || invitor.InvitedUsersCount % 7 == 0)
                 {
                     if (multiplier == 1)
                         invitor.InvitedUsersBonus = 0.35 + bonus;
-                    await TopUpPointBalance(invitor.Id, 1499 * multiplier, $"User {invitor.Id} has invited 7 users");
+                    await TopUpPointBalance(invitor.Id, 1499 * multiplier, $"User {invitor.Id} has invited % 7 users");
                 }
                 else if (invitor.InvitedUsersCount == 10 || invitor.InvitedUsersCount % 10 == 0)
                 {
@@ -138,7 +139,7 @@ namespace WebApi.Repositories
                     {
                         invitor.InvitedUsersBonus = 0.5 + bonus;
                         // 1499 will then turn into 1999 due to premium purchase reward
-                        await TopUpPointBalance(invitor.Id, 1499, $"User {invitor.Id} has invited 10 users");
+                        await TopUpPointBalance(invitor.Id, 1499, $"User {invitor.Id} has invited % 10 users");
                         //Adds + 10 random effects to users inventory
                         var effecId = new Random().Next(5, 10);
                         await PurchaseEffectAsync(invitor.Id, effecId, 0, Currency.Points, 10);
@@ -3356,9 +3357,9 @@ namespace WebApi.Repositories
                 if (request == null)
                     throw new NullReferenceException("Request is null");
 
-
                 var existingRequest = await _contx.TickRequests.Where(r => r.UserId == request.UserId)
-                    .SingleOrDefaultAsync();
+                    .Include(r => r.User)
+                    .FirstOrDefaultAsync();
 
                 //Update existing request if one already exists
                 if (existingRequest != null)
@@ -3369,11 +3370,18 @@ namespace WebApi.Repositories
                     existingRequest.Gesture = request.Gesture;
                     existingRequest.Type = request.Type;
                     existingRequest.State = TickRequestStatus.Changed;
+                    existingRequest.User.IdentityType = IdentityConfirmationType.Awaiting;
 
                     _contx.TickRequests.Update(existingRequest);
+                    _contx.Users.Update(existingRequest.User);
                     await _contx.SaveChangesAsync();
                     return true;
                 }
+
+                var user = await _contx.Users.Where(u => u.Id == request.UserId)
+                    .FirstOrDefaultAsync();
+
+                user.IdentityType = IdentityConfirmationType.Awaiting;
 
                 var model = new TickRequest
                 {
@@ -3388,6 +3396,7 @@ namespace WebApi.Repositories
                 };
 
                 await _contx.TickRequests.AddAsync(model);
+                _contx.Users.Update(user);
                 await _contx.SaveChangesAsync();
 
                 return true;

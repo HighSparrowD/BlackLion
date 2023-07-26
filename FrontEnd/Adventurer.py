@@ -133,6 +133,7 @@ class Adventurer:
 
         self.okMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Ok")
         self.YNMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Yes", "No")
+        self.SearchMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Yes", "No", "Exit")
         self.goBackMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Go Back")
         self.skipMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Skip")
         self.verificationMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Now", "Later")
@@ -176,11 +177,12 @@ class Adventurer:
         if not self.hasVisited:
             self.bot.send_message(self.current_user, self.starting_message)
 
-        self.subscribe_callback_handler(self.start_callback_handler)
         self.start()
 
     def start(self):
         self.previous_section = self.destruct
+        self.subscribe_callback_handler(self.start_callback_handler)
+
         self.send_active_message("<b><i>Please, select an option</i></b>", markup=self.start_markup)
 
     def register_pre_register(self):
@@ -204,10 +206,15 @@ class Adventurer:
 
         self.register_checkout(self.message)
 
-    def register_start(self, shouldInsert=True):
+    def register_start(self, shouldInsert=True, identityConfirmed=False):
         # if self.createdCount + 1 > self.creation_limit:
         #     self.send_secondary_message(f"You reached the limit. You can create up to {self.creation_limit} adventures. Please, wait until one of your adventures ends, or delete it manually.")
         # else:
+
+        # If user has just sent a tick request - it will also count as isIdentityConfirmed flag set to true
+        if identityConfirmed:
+            self.isIdentityConfirmed = True
+
         self.data.clear()
         self.editMode = False
         self.isTemplate = False
@@ -231,7 +238,7 @@ class Adventurer:
             self.register_verification_step(self.message)
             return
 
-        self.registration_steps.insert(0, self.register_start)
+        self.registration_steps.insert(0, self.my_adventures_manager)
         self.current_section = self.register_state_step
 
         # self.registration_steps.insert(0, self.register_state_step)
@@ -245,12 +252,15 @@ class Adventurer:
             self.delete_message(message)
 
             if message.text == "Now":
-                Settings(self.bot, message, verificationOnly=True, activeMessage=self.active_message, returnMethod=self.register_state_step)
-            elif message.text == "Later":
-                self.register_state_step(True)
+                self.remove_current_callback_handler()
+                self.delete_active_message()
+                self.delete_secondary_message()
+                Settings(self.bot, message, verificationOnly=True, returnMethod=self.register_start)
             else:
-                self.send_secondary_message("Empty message")
-                self.next_handler = self.bot.register_next_step_handler(message, self.register_verification_step, acceptMode=acceptMode, chat_id=self.current_user)
+                self.register_state_step(True)
+            # else:
+            #     self.send_secondary_message("Empty message")
+            #     self.next_handler = self.bot.register_next_step_handler(message, self.register_verification_step, acceptMode=acceptMode, chat_id=self.current_user)
 
     def register_online(self):
         self.isOffline = False
@@ -1116,8 +1126,7 @@ class Adventurer:
             self.bot.register_next_step_handler(message, self.registration_abandon, acceptMode=True, chat_id=self.current_user)
         else:
             if message.text == "Yes":
-                self.subscribe_callback_handler(self.start_callback_handler)
-                self.previous_section()
+                self.my_adventures_manager()
             else:
                 self.registration_steps[0](message)
 
@@ -1234,9 +1243,9 @@ class Adventurer:
     def show_adventure(self, message, acceptMode=False):
         if not acceptMode:
             if self.current_adventure_data["isMediaPhoto"]:
-                self.send_active_message_with_photo(self.current_adventure_data["description"], self.current_adventure_data["media"], self.YNMarkup)
+                self.send_active_message_with_photo(self.current_adventure_data["description"], self.current_adventure_data["media"], self.SearchMarkup)
             else:
-                self.send_active_message_with_video(self.current_adventure_data["description"], self.current_adventure_data["media"], self.YNMarkup)
+                self.send_active_message_with_video(self.current_adventure_data["description"], self.current_adventure_data["media"], self.SearchMarkup)
 
             self.send_secondary_message("Additional actions", self.actions_markup)
             self.next_handler = self.bot.register_next_step_handler(self.message, self.show_adventure, acceptMode=True, chat_id=self.current_user)
@@ -1244,13 +1253,17 @@ class Adventurer:
             if message.text == "Yes":
                 if self.current_adventure_data["isAutoReplyText"] is not None:
                     if self.current_adventure_data["isAutoReplyText"]:
-                        self.bot.send_message(self.current_user, f"⬆This user has a message for you ;-)⬆\n\n{self.current_adventure_data['autoReply']}")
+                        self.bot.send_message(self.current_user, f"<b><l>⬆This adventure's creator has a message for you ;-)⬆</l></b>\n\n{self.current_adventure_data['autoReply']}")
                     else:
-                        self.bot.send_voice(self.current_user, self.current_adventure_data["autoReply"], "⬆ This user has a message for you ;-) ⬆")
+                        self.bot.send_voice(self.current_user, self.current_adventure_data["autoReply"], "<b><l>⬆This adventure's creator has a message for you ;-)⬆</l></b>")
 
                 Helpers.send_adventure_request(self.current_adventure, self.current_user)
                 self.bot.send_message(self.current_user, "Done! Your request had been sent to the adventure's creator")
                 self.proceed()
+            elif message.text == "Exit":
+                self.delete_active_message()
+                self.delete_secondary_message()
+                self.start()
             else:
                 self.proceed()
 
@@ -1475,10 +1488,7 @@ class Adventurer:
             self.open_report_module(call.data)
 
     def go_back_to_previous_registration_step(self):
-        try:
-            self.bot.remove_next_step_handler(self.current_user, self.next_handler)
-        except:
-            pass
+        self.remove_registration_handler()
 
         self.delete_additional_message()
 
@@ -1492,7 +1502,7 @@ class Adventurer:
         Helper(self.bot, message, self.return_from_helper, activeMessageId=self.active_message, secondaryMessageId=self.secondary_message)
 
     def open_report_module(self, adventureId):
-        self.bot.remove_next_step_handler(self.current_user, self.next_handler)
+        self.remove_registration_handler()
         ReportModule(self.bot, self.message, adventureId, self.proceed, dontAddToBlackList=True, isAdventure=True)
 
     def return_from_helper(self):
@@ -1554,9 +1564,13 @@ class Adventurer:
 
     def subscribe_callback_handler(self, handler):
         if self.current_callback_handler:
-            self.bot.callback_query_handlers.remove(self.current_callback_handler)
+            self.remove_current_callback_handler()
 
         self.current_callback_handler = self.bot.register_callback_query_handler("", handler, user_id=self.current_user)
+
+    def remove_current_callback_handler(self):
+        self.bot.callback_query_handlers.remove(self.current_callback_handler)
+        self.current_callback_handler = None
 
     def delete_active_message(self):
         if self.active_message:
@@ -1579,6 +1593,12 @@ class Adventurer:
     def delete_message(self, message):
         try:
             self.bot.delete_message(self.current_user, message.id)
+        except:
+            pass
+
+    def remove_registration_handler(self):
+        try:
+            self.bot.remove_next_step_handler(self.current_user, self.next_handler)
         except:
             pass
 
