@@ -67,7 +67,7 @@ def Search(message):
     create_familiator(message, message.from_user.id)
 
 
-@bot.message_handler(commands=["feedback"], func=lambda message: message.chat.type == 'private', is_multihandler=True)
+@bot.message_handler(commands=["feedback"], func=lambda message: message.chat.type == 'private')
 def Report(message):
     create_reporter(message, message.from_user.id)
 

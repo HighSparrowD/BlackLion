@@ -17,9 +17,6 @@ class FeedbackModule:
 
         self.data = {}
 
-        #TODO: REMOVE
-        language = int(requests.get(f"https://localhost:44381/GetUserAppLanguage/{msg.from_user.id}", verify=False).text)
-
         self.reasons = json.loads(requests.get(f"https://localhost:44381/feedback-reasons", verify=False).text)
         self.reas = []
 
@@ -27,8 +24,8 @@ class FeedbackModule:
         self.exitMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("/exit")
 
         for reason in self.reasons:
-            self.reas.append(reason["description"])
-            self.markup.add(KeyboardButton(reason["description"]))
+            self.reas.append(reason["name"])
+            self.markup.add(KeyboardButton(reason["name"]))
 
         self.markup.add(KeyboardButton("/exit"))
 
@@ -85,7 +82,7 @@ class FeedbackModule:
 
     def reason_converter(self, reas):
         for reason in self.reasons:
-            if reason["description"] == reas:
+            if reason["name"] == reas:
                 return int(reason["id"])
 
     def destruct(self):

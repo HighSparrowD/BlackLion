@@ -397,7 +397,7 @@ class Settings:
         self.active_section = self.free_status_manager
 
         if showDescription:
-            description = ""
+            description = "Personality bot can make its own comments of profiles you encounter in any kind of search. Try it out!"
 
             self.send_secondary_message(description)
         else:
@@ -413,7 +413,7 @@ class Settings:
         self.active_section = self.free_status_manager
 
         if showDescription:
-            description = ""
+            description = "Hints are informative or funny phrases. They are sent when you travel between bot's modules"
 
             self.send_secondary_message(description)
         else:

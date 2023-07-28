@@ -76,6 +76,7 @@ class Adventurer:
         self.isNewAttendee = True
         self.current_attendees_statuses = {}
         self.attendees = {}
+        self.subscribed_adventures = {}
 
         self.countries = {}
         self.cities = {}
@@ -494,7 +495,7 @@ class Adventurer:
         if not acceptMode:
             self.configure_registration_step(self.register_media_step, shouldInsert)
 
-            self.send_active_message("Send a photo or video (1 minute max), that describes your adventure")
+            self.send_active_message("Send a photo or video (up to 3 minutes), that describes your adventure")
             self.send_additional_actions_message("Additional actions", self.goBackInlineMarkup)
             self.next_handler = self.bot.register_next_step_handler(message, self.register_media_step, acceptMode=True, chat_id=self.current_user)
         else:
@@ -503,7 +504,7 @@ class Adventurer:
                 self.data["media"] = message.photo[len(message.photo) - 1].file_id
                 self.data["isMediaPhoto"] = True
             elif message.video:
-                if message.video.duration > 80:
+                if message.video.duration > 180:
                     self.send_secondary_message("Video is to long")
                     self.next_handler = self.bot.register_next_step_handler(message, self.register_media_step, acceptMode=acceptMode, chat_id=self.current_user)
                     return
@@ -1151,12 +1152,11 @@ class Adventurer:
         self.load_adventure_data(self.current_adventure)
         self.send_active_message("Please, choose an option", markup=self.manage_adventure_markup)
 
-    #TODO: Add paging
     def manage_adventure_attendees(self):
         self.previous_section = self.manage_adventure
         self.assemble_my_adventure_attendees_markup()
 
-        if len(self.my_adventures_attendeesMarkup.keyboard) == 1:
+        if len(self.my_adventures_attendeesMarkup.keyboard) < 1:
             self.send_secondary_message("No attendees yet!")
             self.previous_section()
             return
@@ -1169,8 +1169,8 @@ class Adventurer:
         #TODO: Use another method / Remake it to be more suitable -> THUS shown description will look better
         self.current_attendee_data = Helpers.get_user_info(self.current_attendee)
 
-        #If is new attendee
-        if self.current_attendees_statuses[self.current_attendee] == AttendeeStatus.New:
+        #If it is new attendee
+        if self.current_attendees_statuses[self.current_attendee] == AttendeeStatus.New.name:
             self.display_current_attendee_data()
             self.send_secondary_message("<i><b>🔝You have new participation request🔝</b></i>", markup=self.set_attendee_status_markup)
             return
@@ -1182,7 +1182,8 @@ class Adventurer:
         Helpers.process_participation_request(self.current_adventure, self.current_attendee, status)
 
         self.delete_secondary_message()
-        self.previous_section()
+        self.current_attendees_statuses[self.current_attendee] = status
+        self.manage_adventure_attendee()
 
     def delete_adventure(self, message=None, acceptMode=False):
         if not acceptMode:
@@ -1206,11 +1207,16 @@ class Adventurer:
     def subscribed_adventures_manager(self):
         self.previous_section = self.start
 
+        self.subscribe_callback_handler(self.manage_adventure_callback_handler)
+
+        self.assemble_subscribed_adventures_markup()
+
         self.manageMode = 2
         if len(self.subscribed_adventuresMarkup.keyboard) > 1:
             self.send_active_message("<b><i>Here are all adventures, you are subscribed on</i></b>", markup=self.subscribed_adventuresMarkup)
+            return
 
-        self.send_active_message("<b><i>You are not subscribed on any adventures!\nTry finding them :)</b></i>", markup=self.search_markup)
+        self.send_active_message("<b><i>You are not subscribed on any adventures!\nTry finding them :)</i></b>", markup=self.search_markup)
 
     def search_choice(self):
         self.previous_section = self.start
@@ -1365,6 +1371,8 @@ class Adventurer:
                 self.manage_adventure_attendee()
 
     def start_callback_handler(self, call):
+        self.bot.answer_callback_query(call.id, "")
+
         if call.data == "1a":
             self.my_adventures_manager()
         elif call.data == "2a":
@@ -1408,6 +1416,9 @@ class Adventurer:
                 self.register_from_template()
 
     def registration_callback_handler(self, call):
+        self.bot.answer_callback_query(call.id, "")
+
+        # Paging
         if call.data == "-1" or call.data == "-2":
             try:
                 index = index_converter(call.data)
@@ -1418,6 +1429,10 @@ class Adventurer:
                     self.markup_page += index
             except:
                 pass
+            return
+
+        elif call.data == "-3":
+            return
 
         # Registering adventures
         elif call.data == "4b":
@@ -1459,6 +1474,8 @@ class Adventurer:
                     self.bot.answer_callback_query(call.id, "Incorrect city code")
 
     def manage_adventure_callback_handler(self, call):
+        self.bot.answer_callback_query(call.id, "")
+
         # Paging
         if call.data == "-1" or call.data == "-2":
             try:
@@ -1470,7 +1487,9 @@ class Adventurer:
                     self.markup_page += index
             except:
                 pass
+            return
 
+        elif call.data == "-3":
             return
 
         if call.data == "1":
@@ -1487,9 +1506,13 @@ class Adventurer:
         elif call.data == "7c":# Remove attendee
             self.remove_attendee(call.message)
         elif call.data == "10c":
-            self.resolve_participation_request(2)
+            self.resolve_participation_request(AttendeeStatus.Accepted.name)
         elif call.data == "11c":
-            self.resolve_participation_request(3)
+            self.resolve_participation_request(AttendeeStatus.Declined.name)
+        elif call.data == "4a":
+            self.recurring_adventure_search()
+        elif call.data == "5a":
+            self.join_by_code(call.message)
         elif call.data == "-20":
             self.delete_secondary_message() #TODO: reconsider usefulness
             self.previous_section()
@@ -1498,6 +1521,8 @@ class Adventurer:
             self.manage_adventure_attendee()
 
     def search_adventures_callback_handler(self, call):
+        self.bot.answer_callback_query(call.id, "")
+
         if call.data == "11x":
             self.open_helper(call.message, self.proceed)
         else:
@@ -1548,7 +1573,7 @@ class Adventurer:
                 return
 
             self.active_message = self.bot.send_message(self.current_user, text, reply_markup=markup).id
-        except:
+        except Exception as ex:
             self.delete_active_message()
             self.send_active_message(text, markup)
 
@@ -1633,6 +1658,7 @@ class Adventurer:
 
     def assemble_my_adventure_attendees_markup(self):
         attendees = json.loads(requests.get(f"https://localhost:44381/adventure-attendees/{self.current_adventure}", verify=False).text)
+
         self.my_adventures_attendeesMarkup.clear()
         self.current_attendees_statuses.clear()
 
@@ -1642,19 +1668,25 @@ class Adventurer:
             self.attendees[attendee["userId"]] = f"{status} {attendee['username']} {status}"
             # self.my_adventures_attendeesMarkup.add(InlineKeyboardButton(f"{status} {attendee['username']} {status}", callback_data=attendee["userId"]))
 
-        reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page, self.markup_pages_count)
-        count_pages(self.attendees, self.current_markup_elements, self.markup_pages_count, additionalButton=True, buttonText="Go Back", buttonData="-20")
-        self.my_adventures_attendeesMarkup = assemble_markup(self.markup_page, self.current_markup_elements, 0)
+        if self.attendees:
+            reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page, self.markup_pages_count)
+            count_pages(self.attendees, self.current_markup_elements, self.markup_pages_count, additionalButton=True, buttonText="Go Back", buttonData="-20")
+            self.my_adventures_attendeesMarkup = assemble_markup(self.markup_page, self.current_markup_elements, 0)
 
     def assemble_subscribed_adventures_markup(self):
         adventures = json.loads(requests.get(f"https://localhost:44381/GetUsersSubscribedAdventures/{self.current_user}", verify=False).text)
 
         self.subscribed_adventuresMarkup.clear()
+        self.subscribed_adventures.clear()
 
         for adventure in adventures:
-            self.subscribed_adventuresMarkup.add(InlineKeyboardButton(adventure["name"], callback_data=adventure["id"]))
+            self.subscribed_adventures[adventure["id"]] = adventure["name"]
+            # self.subscribed_adventuresMarkup.add(InlineKeyboardButton(adventure["name"], callback_data=adventure["id"]))
 
-        self.subscribed_adventuresMarkup.add(InlineKeyboardButton("Go Back", callback_data="-20"))
+        if self.subscribed_adventures:
+            reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page, self.markup_pages_count)
+            count_pages(self.subscribed_adventures, self.current_markup_elements, self.markup_pages_count, additionalButton=True, buttonText="Go Back", buttonData="-20")
+            self.subscribed_adventuresMarkup = assemble_markup(self.markup_page, self.current_markup_elements, 0)
 
     def assemble_my_templates_markup(self, addNewButton=True):
         templates = Helpers.get_templates(self.current_user)

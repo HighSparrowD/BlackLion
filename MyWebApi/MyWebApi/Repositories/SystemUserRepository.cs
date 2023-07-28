@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using WebApi.Entities;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace WebApi.Repositories
 {
@@ -3240,8 +3241,7 @@ namespace WebApi.Repositories
                         if (userBalance.CardDecksMini > 0)
                         {
                             userBalance.CardDecksMini--;
-                            await AddMaxUserProfileViewCountAsync(userId, 20);
-                            await AddMaxRTProfileViewCountAsync(userId, 20);
+                            await AddLimitationsAsync(userId, 15, 10, 5, 15);
                             _contx.Update(userBalance);
                             await _contx.SaveChangesAsync();
                             return true;
@@ -3251,8 +3251,7 @@ namespace WebApi.Repositories
                         if (userBalance.CardDecksPlatinum > 0)
                         {
                             userBalance.CardDecksPlatinum--;
-                            await AddMaxUserProfileViewCountAsync(userId, 50);
-                            await AddMaxRTProfileViewCountAsync(userId, 50);
+                            await AddLimitationsAsync(userId, 35, 15, 10, 20);
                             _contx.Update(userBalance);
                             await _contx.SaveChangesAsync();
                             return true;
@@ -3322,22 +3321,17 @@ namespace WebApi.Repositories
             catch { return false; }
         }
 
-        private async Task<int> AddMaxUserProfileViewCountAsync(long userId, int profileCount)
+        private async Task AddLimitationsAsync(long userId, int normalSearch, int rtSearch, int tagSearch, int adventureSearch)
         {
-            var userInfo = await _contx.Users.FindAsync(userId);
-            userInfo.MaxProfileViewsCount += profileCount;
+            var userInfo = await _contx.Users.Where(u => u.Id == userId)
+                                .FirstOrDefaultAsync();
+
+            userInfo.MaxProfileViewsCount += normalSearch;
+            userInfo.MaxRTViewsCount += rtSearch;
+            userInfo.MaxTagSearchCount += tagSearch;
+            userInfo.MaxAdventureSearchCount += adventureSearch;
+
             await _contx.SaveChangesAsync();
-
-            return userInfo.MaxProfileViewsCount;
-        }
-
-        private async Task<int> AddMaxRTProfileViewCountAsync(long userId, int increment)
-        {
-            var userInfo = await _contx.Users.FindAsync(userId);
-            userInfo.MaxRTViewsCount += increment;
-            await _contx.SaveChangesAsync();
-
-            return userInfo.MaxProfileViewsCount;
         }
 
         public async Task<bool> CheckEffectIsActiveAsync(long userId, Currency effectId)
@@ -4104,7 +4098,7 @@ namespace WebApi.Repositories
 
         public async Task<List<AttendeeInfo>> GetAdventureAttendeesAsync(long adventureId)
         {
-            return await _contx.AdventureAttendees.Where(a => a.AdventureId == adventureId && (a.Status == AdventureAttendeeStatus.New || a.Status == AdventureAttendeeStatus.Accepted))
+            return await _contx.AdventureAttendees.Where(a => a.AdventureId == adventureId && (a.Status == AdventureAttendeeStatus.New || a.Status == AdventureAttendeeStatus.NewByCode || a.Status == AdventureAttendeeStatus.Accepted))
             .Select(a => new AttendeeInfo
             {
                 UserId = a.UserId,
