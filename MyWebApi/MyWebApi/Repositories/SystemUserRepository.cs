@@ -713,9 +713,16 @@ namespace WebApi.Repositories
             return c;
         }
 
-        public async Task<long> AddFeedbackAsync(Feedback feedback)
+        public async Task<long> AddFeedbackAsync(AddFeedback request)
         {
-            feedback.InsertedUtc = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
+            var feedback = new Feedback
+            {
+                UserId = request.UserId,
+                Reason = request.Reason,
+                Text = request.Text,
+                InsertedUtc = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc)
+            };
+
             await _contx.Feedbacks.AddAsync(feedback);
             await _contx.SaveChangesAsync();
 
@@ -4519,9 +4526,8 @@ namespace WebApi.Repositories
             user.IsDeleted = true;
             user.DeleteDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
 
-            await AddFeedbackAsync(new Feedback
+            await AddFeedbackAsync(new AddFeedback
             {
-                InsertedUtc = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc),
                 Reason = FeedbackReason.Suggestion,
                 UserId = request.UserId,
                 Text = request.Message

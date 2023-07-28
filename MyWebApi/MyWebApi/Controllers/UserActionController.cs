@@ -135,10 +135,10 @@ namespace WebApi.Controllers
         }
 
 
-        [HttpPost("/AddFeedback")]
-        public async Task<long> AddFeedback(Feedback report)
+        [HttpPost("/feedback")]
+        public async Task<long> AddFeedback([FromBody] AddFeedback request)
         {
-            return await _repository.AddFeedbackAsync(report);
+            return await _repository.AddFeedbackAsync(request);
         }
 
         [HttpPost("/report-user")]
