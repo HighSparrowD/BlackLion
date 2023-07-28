@@ -141,8 +141,11 @@
   <data name="Familiator_OutOfViews" xml:space="preserve">
     <value>Вибачте, на сьогодні у вас закінчилися пошукові запити за профілем.\nВи все ще можете скористатися Card Deck Mini або Card Deck Premium, щоб поповнити кількість переглядів, купити преміум і таким чином подвоїти кількість переглядів, або почекати до завтрашнього дня :)</value>
   </data>
-  <data name="FeedbackReason_Test" xml:space="preserve">
-    <value />
+  <data name="FeedbackReason_SuggestHints" xml:space="preserve">
+    <value>Запропонувати "підказки"</value>
+  </data>
+  <data name="FeedbackReason_Suggestion" xml:space="preserve">
+    <value>Дати пораду</value>
   </data>
   <data name="Gender_Female" xml:space="preserve">
     <value>Жінка</value>

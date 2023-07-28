@@ -84,7 +84,8 @@ def count_pages(section_elements, current_markup_elements, markup_pages_count, p
 
             i += 1
             markup.add(InlineKeyboardButton("<", callback_data="-1"),
-                       InlineKeyboardButton(f"{i} / {count}", callback_data=f"{i} / {count}"),
+                       # InlineKeyboardButton(f"{i} / {count}", callback_data=f"{i} / {count}"),
+                       InlineKeyboardButton(f"{i} / {count}", callback_data=f"-3"),
                        InlineKeyboardButton(">", callback_data="-2"))
 
             if additionalButton:

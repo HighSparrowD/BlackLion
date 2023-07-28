@@ -133,11 +133,20 @@ namespace WebApi.App_GlobalResources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Test.
+        ///   Looks up a localized string similar to Suggest &quot;Hints&quot;.
         /// </summary>
-        public static string FeedbackReason_Test {
+        public static string FeedbackReason_SuggestHints {
             get {
-                return ResourceManager.GetString("FeedbackReason_Test", resourceCulture);
+                return ResourceManager.GetString("FeedbackReason_SuggestHints", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Give Suggestion.
+        /// </summary>
+        public static string FeedbackReason_Suggestion {
+            get {
+                return ResourceManager.GetString("FeedbackReason_Suggestion", resourceCulture);
             }
         }
         

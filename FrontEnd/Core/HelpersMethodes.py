@@ -687,3 +687,12 @@ def restore_user_profile(userId):
                          verify=False, params={"userId": userId}).text)
     except:
         return None
+
+def send_feedback(payload: dict):
+    try:
+        d = json.dumps(payload)
+        requests.post("https://localhost:44381/feedback", d, headers={
+            "Content-Type": "application/json"}, verify=False)
+
+    except:
+        return None

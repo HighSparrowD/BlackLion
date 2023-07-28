@@ -6,7 +6,7 @@ namespace WebApi.Entities.AdventureEntities
     public class AdventureAttendee
     {
         [Key]
-        public long UserId{ get; set; }
+        public long UserId { get; set; }
         [Key]
         public long AdventureId { get; set; }
         public string Username { get; set; }

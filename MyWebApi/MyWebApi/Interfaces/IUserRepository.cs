@@ -42,7 +42,7 @@ namespace WebApi.Interfaces
         Task<long> RegisterUserAsync(UserRegistrationModel model, bool wasRegistered=false);
         Task<Country> GetCountryAsync(long id);
         //Task<List<ReportReason>> GetReportReasonsAsync(int localisationId);
-        Task<long> AddFeedbackAsync(Feedback report);
+        Task<long> AddFeedbackAsync(AddFeedback report);
         Task<long> AddUserReportAsync(SendUserReport report);
         Task<long> AddAdventureReportAsync(SendAdventureReport report);
         Task<List<Report>> GetMostRecentReports();

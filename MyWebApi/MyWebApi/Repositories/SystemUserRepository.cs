@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using WebApi.Entities;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace WebApi.Repositories
 {
@@ -117,20 +118,21 @@ namespace WebApi.Repositories
 
                 if (invitor.InvitedUsersCount == 1)
                 {
-                    await TopUpPointBalance(invitor.Id, 250 * multiplier, $"User {invitor.Id} has invited his firs user");
-                    await GrantPremiumToUser(invitor.Id, 0, 1, Currency.Points);
+                    await TopUpPointBalance(invitor.Id, 250 * multiplier, $"User {invitor.Id} has invited his first user");
+                    var effecId = new Random().Next(5, 10);
+                    await PurchaseEffectAsync(invitor.Id, effecId, 0, Currency.Points);
                 }
                 else if (invitor.InvitedUsersCount == 3 || invitor.InvitedUsersCount % 3 == 0)
                 {
                     if (multiplier == 1)
                         invitor.InvitedUsersBonus = 0.15 + bonus;
-                    await TopUpPointBalance(invitor.Id, 1199 * multiplier, $"User {invitor.Id} has invited 3 users");
+                    await TopUpPointBalance(invitor.Id, 1199 * multiplier, $"User {invitor.Id} has invited % 3 users");
                 }
                 else if (invitor.InvitedUsersCount == 7 || invitor.InvitedUsersCount % 7 == 0)
                 {
                     if (multiplier == 1)
                         invitor.InvitedUsersBonus = 0.35 + bonus;
-                    await TopUpPointBalance(invitor.Id, 1499 * multiplier, $"User {invitor.Id} has invited 7 users");
+                    await TopUpPointBalance(invitor.Id, 1499 * multiplier, $"User {invitor.Id} has invited % 7 users");
                 }
                 else if (invitor.InvitedUsersCount == 10 || invitor.InvitedUsersCount % 10 == 0)
                 {
@@ -138,7 +140,7 @@ namespace WebApi.Repositories
                     {
                         invitor.InvitedUsersBonus = 0.5 + bonus;
                         // 1499 will then turn into 1999 due to premium purchase reward
-                        await TopUpPointBalance(invitor.Id, 1499, $"User {invitor.Id} has invited 10 users");
+                        await TopUpPointBalance(invitor.Id, 1499, $"User {invitor.Id} has invited % 10 users");
                         //Adds + 10 random effects to users inventory
                         var effecId = new Random().Next(5, 10);
                         await PurchaseEffectAsync(invitor.Id, effecId, 0, Currency.Points, 10);
@@ -711,9 +713,16 @@ namespace WebApi.Repositories
             return c;
         }
 
-        public async Task<long> AddFeedbackAsync(Feedback feedback)
+        public async Task<long> AddFeedbackAsync(AddFeedback request)
         {
-            feedback.InsertedUtc = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
+            var feedback = new Feedback
+            {
+                UserId = request.UserId,
+                Reason = request.Reason,
+                Text = request.Text,
+                InsertedUtc = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc)
+            };
+
             await _contx.Feedbacks.AddAsync(feedback);
             await _contx.SaveChangesAsync();
 
@@ -3239,8 +3248,7 @@ namespace WebApi.Repositories
                         if (userBalance.CardDecksMini > 0)
                         {
                             userBalance.CardDecksMini--;
-                            await AddMaxUserProfileViewCountAsync(userId, 20);
-                            await AddMaxRTProfileViewCountAsync(userId, 20);
+                            await AddLimitationsAsync(userId, 15, 10, 5, 15);
                             _contx.Update(userBalance);
                             await _contx.SaveChangesAsync();
                             return true;
@@ -3250,8 +3258,7 @@ namespace WebApi.Repositories
                         if (userBalance.CardDecksPlatinum > 0)
                         {
                             userBalance.CardDecksPlatinum--;
-                            await AddMaxUserProfileViewCountAsync(userId, 50);
-                            await AddMaxRTProfileViewCountAsync(userId, 50);
+                            await AddLimitationsAsync(userId, 35, 15, 10, 20);
                             _contx.Update(userBalance);
                             await _contx.SaveChangesAsync();
                             return true;
@@ -3321,22 +3328,17 @@ namespace WebApi.Repositories
             catch { return false; }
         }
 
-        private async Task<int> AddMaxUserProfileViewCountAsync(long userId, int profileCount)
+        private async Task AddLimitationsAsync(long userId, int normalSearch, int rtSearch, int tagSearch, int adventureSearch)
         {
-            var userInfo = await _contx.Users.FindAsync(userId);
-            userInfo.MaxProfileViewsCount += profileCount;
+            var userInfo = await _contx.Users.Where(u => u.Id == userId)
+                                .FirstOrDefaultAsync();
+
+            userInfo.MaxProfileViewsCount += normalSearch;
+            userInfo.MaxRTViewsCount += rtSearch;
+            userInfo.MaxTagSearchCount += tagSearch;
+            userInfo.MaxAdventureSearchCount += adventureSearch;
+
             await _contx.SaveChangesAsync();
-
-            return userInfo.MaxProfileViewsCount;
-        }
-
-        private async Task<int> AddMaxRTProfileViewCountAsync(long userId, int increment)
-        {
-            var userInfo = await _contx.Users.FindAsync(userId);
-            userInfo.MaxRTViewsCount += increment;
-            await _contx.SaveChangesAsync();
-
-            return userInfo.MaxProfileViewsCount;
         }
 
         public async Task<bool> CheckEffectIsActiveAsync(long userId, Currency effectId)
@@ -3356,9 +3358,9 @@ namespace WebApi.Repositories
                 if (request == null)
                     throw new NullReferenceException("Request is null");
 
-
                 var existingRequest = await _contx.TickRequests.Where(r => r.UserId == request.UserId)
-                    .SingleOrDefaultAsync();
+                    .Include(r => r.User)
+                    .FirstOrDefaultAsync();
 
                 //Update existing request if one already exists
                 if (existingRequest != null)
@@ -3369,11 +3371,18 @@ namespace WebApi.Repositories
                     existingRequest.Gesture = request.Gesture;
                     existingRequest.Type = request.Type;
                     existingRequest.State = TickRequestStatus.Changed;
+                    existingRequest.User.IdentityType = IdentityConfirmationType.Awaiting;
 
                     _contx.TickRequests.Update(existingRequest);
+                    _contx.Users.Update(existingRequest.User);
                     await _contx.SaveChangesAsync();
                     return true;
                 }
+
+                var user = await _contx.Users.Where(u => u.Id == request.UserId)
+                    .FirstOrDefaultAsync();
+
+                user.IdentityType = IdentityConfirmationType.Awaiting;
 
                 var model = new TickRequest
                 {
@@ -3388,6 +3397,7 @@ namespace WebApi.Repositories
                 };
 
                 await _contx.TickRequests.AddAsync(model);
+                _contx.Users.Update(user);
                 await _contx.SaveChangesAsync();
 
                 return true;
@@ -4095,7 +4105,7 @@ namespace WebApi.Repositories
 
         public async Task<List<AttendeeInfo>> GetAdventureAttendeesAsync(long adventureId)
         {
-            return await _contx.AdventureAttendees.Where(a => a.AdventureId == adventureId && (a.Status == AdventureAttendeeStatus.New || a.Status == AdventureAttendeeStatus.Accepted))
+            return await _contx.AdventureAttendees.Where(a => a.AdventureId == adventureId && (a.Status == AdventureAttendeeStatus.New || a.Status == AdventureAttendeeStatus.NewByCode || a.Status == AdventureAttendeeStatus.Accepted))
             .Select(a => new AttendeeInfo
             {
                 UserId = a.UserId,
@@ -4516,9 +4526,8 @@ namespace WebApi.Repositories
             user.IsDeleted = true;
             user.DeleteDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
 
-            await AddFeedbackAsync(new Feedback
+            await AddFeedbackAsync(new AddFeedback
             {
-                InsertedUtc = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc),
                 Reason = FeedbackReason.Suggestion,
                 UserId = request.UserId,
                 Text = request.Message
