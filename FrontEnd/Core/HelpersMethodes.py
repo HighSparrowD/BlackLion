@@ -408,11 +408,6 @@ def check_user_balance_is_sufficient(userId, cost):
         requests.get(f"{api_address}/CheckBalanceIsSufficient/{userId}/{cost}", verify=False).text))
 
 
-def check_user_have_chosen_free_search(userId):
-    return bool(json.loads(
-        requests.get(f"{api_address}/CheckUserHaveChosenFreeParam/{userId}", verify=False).text))
-
-
 def check_should_turnOf_personality(userId):
     return bool(json.loads(
         requests.get(f"{api_address}/CheckShouldTurnOffPersonality/{userId}", verify=False).text))

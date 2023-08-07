@@ -20,6 +20,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using WebApi.Entities;
 using Microsoft.Extensions.DependencyInjection;
+using WebApi.Entities.SponsorEntities;
 
 namespace WebApi.Repositories
 {
@@ -47,10 +48,12 @@ namespace WebApi.Repositories
 
                 country = await _contx.Countries.Where(c => c.Id == model.CountryCode && c.Lang == model.AppLanguage)
                     .Select(c => c.CountryName)
+                    .AsNoTracking()
                     .FirstOrDefaultAsync();
 
                 city = await _contx.Cities.Where(c => c.Id == model.CityCode && c.CountryLang == model.AppLanguage)
                     .Select(c => c.CityName)
+                    .AsNoTracking()
                     .FirstOrDefaultAsync();
             }
             else
@@ -191,6 +194,7 @@ namespace WebApi.Repositories
                 .Include(u => u.Data)
                 .Include(u => u.Location)
                 .Include(u => u.Settings)
+                .AsNoTracking()
                 .FirstOrDefaultAsync();
         }
 
@@ -254,7 +258,10 @@ namespace WebApi.Repositories
             //TODO: Check current user's blacklist
             //query = query.Where(u => currentUser.BlackList.All(l => l.BannedUserId != u.Id)); 
 
-            var data = await query.ToListAsync();
+            var data = await query.OrderBy(q => EF.Functions.Random())
+                .Select(u => new GetUserData(u, ""))
+                .Take(profileCount)
+                .ToListAsync();
 
             //If user uses PERSONALITY functionality
             if (currentUser.Settings.ShouldUsePersonalityFunc)
@@ -301,28 +308,27 @@ namespace WebApi.Repositories
             return new SearchResponse(returnData);
         }
 
-        private async Task<GetUserData> AssembleProfileAsync(User currentUser, User foundUser)
+        private async Task<GetUserData> AssembleProfileAsync(User currentUser, GetUserData outputUser)
         {
-            var outputUser = new GetUserData(foundUser);
             var bonus = "";
 
             //Add comment if user wants to see them
             if (currentUser.Settings.ShouldComment)
                 outputUser.Comment = await GetRandomHintAsync(currentUser.Data.Language, HintType.Search);
 
-            if (foundUser.HasPremium && foundUser.Nickname != "")
-                bonus += $"<b>{foundUser.Nickname}</b>\n";
+            if (outputUser.HasPremium && outputUser.Nickname != "")
+                bonus += $"<b>{outputUser.Nickname}</b>\n";
 
-            if (foundUser.IdentityType == IdentityConfirmationType.Partial)
+            if (outputUser.IdentityType == IdentityConfirmationType.Partial)
                 bonus += $"☑️☑️☑️\n\n";
-            else if (foundUser.IdentityType == IdentityConfirmationType.Full)
+            else if (outputUser.IdentityType == IdentityConfirmationType.Full)
                 bonus += $"✅✅✅\n\n";
 
-            outputUser.AddDescriptionBonus(bonus);
+            outputUser.AddDescriptionUpwards(bonus);
             return outputUser;
         }
 
-        private async Task<GetUserData> GetPersonalityMatchResult(long userId, User currentUser, User managedUser, bool isRepeated)
+        private async Task<GetUserData> GetPersonalityMatchResult(long userId, User currentUser, GetUserData managedUser, bool isRepeated)
         {
             var returnUser = await AssembleProfileAsync(currentUser, managedUser);
 
@@ -337,7 +343,7 @@ namespace WebApi.Repositories
 
             var importantMatches = 0;
             var secondaryMatches = 0;
-            var matchedBy = "";
+            var bonus = "";
 
             var hasActiveValentine = userActiveEffects.Where(e => e.EffectId == Currency.TheValentine).SingleOrDefault() != null;
 
@@ -354,11 +360,11 @@ namespace WebApi.Repositories
 
             var userPoints = await _contx.PersonalityPoints.Where(p => p.UserId == currentUser.Id)
                 .AsNoTracking()
-                .SingleOrDefaultAsync();
+                .FirstOrDefaultAsync();
 
             var userStats = await _contx.PersonalityStats.Where(s => s.UserId == currentUser.Id)
                 .AsNoTracking()
-                .SingleOrDefaultAsync();
+                .FirstOrDefaultAsync();
 
             //Enhanse users PP if condition is met
             if(currentUser.ShouldEnhance)
@@ -379,14 +385,14 @@ namespace WebApi.Repositories
             var important = await userPoints.GetImportantParams();
 
             //Pass if user does not use personality
-            if (!managedUser.Settings.ShouldUsePersonalityFunc)
+            if (!managedUser.UsesOcean)
                 return returnUser;
 
-            var user2Points = await _contx.PersonalityPoints.Where(p => p.UserId == managedUser.Id)
+            var user2Points = await _contx.PersonalityPoints.Where(p => p.UserId == managedUser.UserId)
                 .AsNoTracking()
                 .FirstOrDefaultAsync();
 
-            var user2Stats = await _contx.PersonalityStats.Where(s => s.UserId == managedUser.Id)
+            var user2Stats = await _contx.PersonalityStats.Where(s => s.UserId == managedUser.UserId)
                 .AsNoTracking()
                 .FirstOrDefaultAsync();
 
@@ -408,7 +414,7 @@ namespace WebApi.Repositories
 
                     if (personalitySim <= currentValueMax && personalitySim >= currentValueMin)
                     {
-                        matchedBy += "[P] ";
+                        bonus += "[P] ";
                         if (important.Contains(PersonalityStats.PersonalityType))
                         {
                             importantMatches++;
@@ -434,7 +440,7 @@ namespace WebApi.Repositories
 
                     if (emIntellectSim <= currentValueMax && emIntellectSim >= currentValueMin)
                     {
-                        matchedBy += "[E] ";
+                        bonus += "[E] ";
                         if (important.Contains(PersonalityStats.EmotionalIntellect))
                         {
                             importantMatches++;
@@ -460,7 +466,7 @@ namespace WebApi.Repositories
 
                     if (reliabilitySim <= currentValueMax && reliabilitySim >= currentValueMin)
                     {
-                        matchedBy += "[R] ";
+                        bonus += "[R] ";
                         if (important.Contains(PersonalityStats.Reliability))
                         {
                             importantMatches++;
@@ -486,7 +492,7 @@ namespace WebApi.Repositories
 
                     if (compassionSim <= currentValueMax && compassionSim >= currentValueMin)
                     {
-                        matchedBy += "[S] ";
+                        bonus += "[S] ";
                         if (important.Contains(PersonalityStats.Compassion))
                         {
                             importantMatches++;
@@ -512,7 +518,7 @@ namespace WebApi.Repositories
 
                     if (openMindSim <= currentValueMax && openMindSim >= currentValueMin)
                     {
-                        matchedBy += "[O] ";
+                        bonus += "[O] ";
                         if (important.Contains(PersonalityStats.OpenMindedness))
                         {
                             importantMatches++;
@@ -538,7 +544,7 @@ namespace WebApi.Repositories
 
                     if (agreeablenessSim <= currentValueMax && agreeablenessSim >= currentValueMin)
                     {
-                        matchedBy += "[N] ";
+                        bonus += "[N] ";
                         if (important.Contains(PersonalityStats.Agreeableness))
                         {
                             importantMatches++;
@@ -564,7 +570,7 @@ namespace WebApi.Repositories
 
                     if (selfAwerenessSim <= currentValueMax && selfAwerenessSim >= currentValueMin)
                     {
-                        matchedBy += "[A] ";
+                        bonus += "[A] ";
                         if (important.Contains(PersonalityStats.SelfAwareness))
                         {
                             importantMatches++;
@@ -590,7 +596,7 @@ namespace WebApi.Repositories
 
                     if (levelOfSense <= currentValueMax && levelOfSense >= currentValueMin)
                     {
-                        matchedBy += "[L] ";
+                        bonus += "[L] ";
                         if (important.Contains(PersonalityStats.LevelsOfSense))
                         {
                             importantMatches++;
@@ -616,7 +622,7 @@ namespace WebApi.Repositories
 
                     if (intellectSim <= currentValueMax && intellectSim >= currentValueMin)
                     {
-                        matchedBy += "[I] ";
+                        bonus += "[I] ";
                         if (important.Contains(PersonalityStats.Intellect))
                         {
                             importantMatches++;
@@ -641,7 +647,7 @@ namespace WebApi.Repositories
 
                     if (natureSim <= currentValueMax && natureSim >= currentValueMin)
                     {
-                        matchedBy += "[T] ";
+                        bonus += "[T] ";
                         if (important.Contains(PersonalityStats.Nature))
                         {
                             importantMatches++;
@@ -667,7 +673,7 @@ namespace WebApi.Repositories
 
                     if (creativitySim <= currentValueMax && creativitySim >= currentValueMin)
                     {
-                        matchedBy += "[Y] ";
+                        bonus += "[Y] ";
                         if (important.Contains(PersonalityStats.Creativity))
                         {
                             importantMatches++;
@@ -678,12 +684,11 @@ namespace WebApi.Repositories
                 }
             }
 
+            // Ocean+ match counts only if there are 1 important param match or 3 secondary match
             if (importantMatches < 1 && secondaryMatches < 3)
             {
-                return returnUser;
+                bonus = "";
             };
-
-            var bonus = "";
 
             //Add comment if user wants to see them
             if (currentUser.Settings.ShouldComment)
@@ -698,11 +703,11 @@ namespace WebApi.Repositories
                 bonus += $"✅✅✅\n\n";
 
             if (userHasDetectorOn)
-                bonus += $"<b>PERSONALITY match!</b>\n<b>{matchedBy}</b>";
+                bonus += $"<b>PERSONALITY match!</b>\n<b>{bonus}</b>";
             else
                 bonus += "<b>PERSONALITY match!</b>";
 
-            returnUser.AddDescriptionBonus(bonus);
+            returnUser.AddDescriptionUpwards(bonus);
 
             return returnUser;
         }
@@ -2963,7 +2968,8 @@ namespace WebApi.Repositories
             //Shuffle users randomly
             query = query.OrderBy(u => EF.Functions.Random());
 
-            var user = await query.FirstOrDefaultAsync();
+            var user = await query.Select(u => new GetUserData(u, ""))
+                .FirstOrDefaultAsync();
 
             if (user == null)
                 return null;
@@ -2977,7 +2983,13 @@ namespace WebApi.Repositories
 
             //Show tags if user has detector activated
             if (hasActiveDetector)
-                outputUser.AddDescriptionBonusDownwards(String.Join(" ", user.Tags));
+            {
+                var tags = await _contx.UserTags.Where(t => t.UserId == currentUser.Id && t.TagType == TagType.Tags)
+                    .Select(t => t.Tag)
+                    .ToListAsync();
+
+                outputUser.AddDescriptionBonusDownwards(String.Join(" ", tags));
+            }
 
             return new SearchResponse(outputUser);
         }
@@ -4293,6 +4305,7 @@ namespace WebApi.Repositories
                     HasPremium = u.HasPremium,
                     IsBanned = u.IsBanned,
                     IsBusy = u.IsBusy,
+                    IsFree = u.Settings.IsFree,
                     Limitations = limitations
                 })
                 .AsNoTracking()

@@ -8,6 +8,7 @@ using WebApi.Interfaces;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using WebApi.Entities;
+using WebApi.Entities.LocationEntities;
 
 namespace WebApi.Controllers
 {
@@ -156,6 +157,42 @@ namespace WebApi.Controllers
         public async Task<List<long>> GetBannedUsers()
         {
             return await _repository.GetRecentlyBannedUsersAsync();
+        }
+
+        [HttpGet("/add-decoys")]
+        public async Task AddDecoys([FromQuery] long userId, [FromServices] IUserRepository userRepo)
+        {
+            for (int i = 1; i < 1_000_000; i++)
+            {
+                try
+                {
+                    var initialUser = await userRepo.GetUserInfoAsync(userId);
+                    await userRepo.RegisterUserAsync(new Entities.UserActionEntities.UserRegistrationModel
+                    {
+                        UserName = initialUser.Data.UserName,
+                        Age = initialUser.Data.UserAge,
+                        AgePrefs = initialUser.Data.AgePrefs,
+                        AppLanguage = initialUser.Data.Language,
+                        ShouldUserPersonalityFunc = false,
+                        CityCode = initialUser.Location.CityId,
+                        CountryCode = initialUser.Location.CountryId,
+                        CommunicationPrefs = initialUser.Data.CommunicationPrefs,
+                        Description = initialUser.Data.UserDescription,
+                        Gender = initialUser.Data.UserGender,
+                        GenderPrefs = initialUser.Data.UserGenderPrefs,
+                        IsMediaPhoto = initialUser.Data.IsMediaPhoto,
+                        Id = initialUser.Id + i,
+                        LanguagePreferences = initialUser.Data.LanguagePreferences,
+                        Languages = initialUser.Data.UserLanguages,
+                        Media = initialUser.Data.UserMedia,
+                        RealName = initialUser.Data.UserRealName,
+                        Reason = initialUser.Data.Reason,
+                        UserLocationPreferences = initialUser.Data.LocationPreferences
+                    });
+                    System.Console.WriteLine($"Registered users count: {i}");
+                }
+                catch { }
+            }
         }
     }
 }
