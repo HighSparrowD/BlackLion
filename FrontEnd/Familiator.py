@@ -28,8 +28,8 @@ class Familiator:
 
         self.reactToCallback = True
 
-        self.basic_info = Helpers.get_user_basic_info(self.current_user)
-        self.limitations = self.basic_info["limitations"]
+        self.user_data = Helpers.get_user_basic_info(self.current_user)
+        self.limitations = self.user_data["limitations"]
         self.tagLimit = self.limitations["maxTagsPerSearch"]
 
         self.wasPersonalityTurnedOff = False
@@ -47,7 +47,7 @@ class Familiator:
         # self.helpHandler = self.bot.register_message_handler(self.help_handler, commands=["help"], user_id=self.current_user)
         self.ch = self.bot.register_callback_query_handler("", self.callback_handler, user_id=self.current_user)
 
-        if not Helpers.check_user_have_chosen_free_search(self.current_user):
+        if self.user_data["isFree"] is None:
             self.free_search_switch(msg)
         else:
             self.start(msg)
@@ -80,7 +80,6 @@ class Familiator:
             else:
                 self.bot.send_message(self.current_user, "No such option", reply_markup=self.YNmarkup)
                 self.bot.register_next_step_handler(message, self.free_search_switch, acceptMode=True, chat_id=self.current_user)
-
 
     def start(self, message, acceptMode=False):
         if not acceptMode:
@@ -212,7 +211,7 @@ class Familiator:
                 return
 
             if message.text == self.btnYes:
-                if not self.basic_info["isBanned"]:
+                if not self.user_data["isBanned"]:
                     Helpers.register_user_request(self.current_user, self.active_user_id, False)
 
                 active_reply = Helpers.get_user_active_reply(self.active_user_id)

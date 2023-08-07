@@ -4305,6 +4305,7 @@ namespace WebApi.Repositories
                     HasPremium = u.HasPremium,
                     IsBanned = u.IsBanned,
                     IsBusy = u.IsBusy,
+                    IsFree = u.Settings.IsFree,
                     Limitations = limitations
                 })
                 .AsNoTracking()

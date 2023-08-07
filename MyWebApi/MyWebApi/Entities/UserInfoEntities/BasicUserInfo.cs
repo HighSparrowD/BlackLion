@@ -17,6 +17,8 @@ namespace WebApi.Entities.UserInfoEntities
         public bool IsBusy { get; set; }
         [JsonPropertyName("hasPremium")]
         public bool HasPremium { get; set; }
+        [JsonPropertyName("isFree")]
+        public bool? IsFree { get; set; }
         [JsonPropertyName("limitations")]
         public GetLimitations Limitations { get; set; }
     }

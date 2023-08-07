@@ -66,7 +66,6 @@ namespace WebApi.Services.Background
                     var user = batch[i];
 
                     user.HadReceivedReward = false;
-                    user.Settings.IsFree = false;
                     user.ReportCount = 0;
                     user.ProfileViewsCount = 0;
                     user.RTViewsCount = 0;

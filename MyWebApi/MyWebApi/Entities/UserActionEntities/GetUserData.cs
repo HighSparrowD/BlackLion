@@ -27,6 +27,10 @@ namespace WebApi.Entities.UserActionEntities
         public GetUserData(User userModel, string descriptionBonus = "")
         {
             UserId = userModel.Id;
+            Nickname = userModel.Nickname;
+            HasPremium = userModel.HasPremium;
+            UsesOcean = userModel.Settings!.ShouldUsePersonalityFunc;
+            IdentityType = userModel.IdentityType;
             UserDataInfo = userModel.Data!;
 
             if (userModel.Location != null)
