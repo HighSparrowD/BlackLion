@@ -121,6 +121,13 @@ def help(message):
     Helper(bot, message)
 
 
+@bot.message_handler(commands=["test"], func=lambda message: message.chat.type == 'private', is_multihandler=True)
+def test(message):
+    photos = bot.get_user_profile_photos(message.from_user.id, limit=1)
+    bot.send_photo(message.from_user.id, photos.photos[0][len(photos.photos[0]) -1].file_id, "s")
+    pass
+
+
 # new_chat_member - present even upon changing permissions / adding new users to group
 @bot.my_chat_member_handler(func=lambda message: message.new_chat_member and bot.get_me().id == message.new_chat_member.user.id)
 def set_up_group_management(message):
