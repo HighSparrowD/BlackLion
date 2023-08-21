@@ -112,6 +112,8 @@ namespace WebApi.Repositories
             sql += $"DELETE FROM \"user_locations\" WHERE \"Id\" IN ({formattedIds});";
             sql += $"DELETE FROM \"user_reports\" WHERE \"UserId\" IN ({formattedIds});";
             sql += $"DELETE FROM \"user_reports\" WHERE \"SenderId\" IN ({formattedIds});";
+            //TODO: Fix related error
+            sql += $"DELETE FROM \"user_reports\" WHERE \"AdventureId\" IN (SELECT \"Id\" FROM \"adventures\" WHERE \"UserId\" IN ({string.Join(",", oldUserIds)}))";
             sql += $"DELETE FROM \"user_tags\" WHERE \"UserId\" IN ({formattedIds});";
             sql += $"DELETE FROM \"user_tests\" WHERE \"UserId\" IN ({formattedIds});";
             sql += $"DELETE FROM \"user_visits\" WHERE \"UserId\" IN ({formattedIds});";

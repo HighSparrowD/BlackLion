@@ -8,9 +8,27 @@ languages = {
     2: "uk-UA"
 }
 
-api_address = ""
+api_address = None
+payment_token = None
+stripe_key = None
+
 points = "Points"
 money = "RealMoney"
+
+
+def set_api_address(address):
+    global api_address
+    api_address = address
+
+
+def set_payment_token(token):
+    global payment_token
+    payment_token = token
+
+
+def set_stripe_key(key):
+    global stripe_key
+    stripe_key = key
 
 
 def check_user_exists(userId):
@@ -424,8 +442,8 @@ def grant_premium_for_points(userId, cost, dayDuration):
                                    verify=False).text)
 
 
-def grant_premium_for_real_money(userId, cost, dayDuration):
-    return json.loads(requests.get(f"{api_address}/GrantPremiumToUser/{userId}/{cost}/{dayDuration}/{money}",
+def grant_premium_for_real_money(userId, cost, dayDuration, currency):
+    return json.loads(requests.get(f"{api_address}/GrantPremiumToUser/{userId}/{cost}/{dayDuration}/{currency}",
                                    verify=False).text)
 
 
@@ -440,15 +458,19 @@ def check_user_has_effect(userId, effectId):
 
 
 # TODO: Change called API endpoint
-def purchase_effect_for_real_money(userId, effectId, cost, count=1):
+def purchase_effect_for_real_money(userId, effectId, cost, currency, count=1):
     return json.loads(
-        requests.get(f"{api_address}/PurchaseEffect/{userId}/{effectId}/{cost}/{money}/{count}", verify=False).text)
+        requests.get(f"{api_address}/PurchaseEffect/{userId}/{effectId}/{cost}/{currency}/{count}", verify=False).text)
 
 
 def purchase_PP_for_points(userId, cost, count=1):
     return json.loads(
         requests.get(f"{api_address}/PurchesPPForPoints/{userId}/{cost}/{count}", verify=False).text)
 
+
+def purchase_PP_for_real_money(userId, cost, currency, count=1):
+    return json.loads(
+        requests.get(f"{api_address}/PurchesPPForRealMoney/{userId}/{cost}/{currency}/{count}", verify=False).text)
 
 def switch_admin_status(userId):
     admin_switch_result = {

@@ -280,7 +280,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/TopUpUserWalletBalance/{userId}/{points}/{description}")]
-        public async Task<int> GetActiveUserWalletBalance(long userId, int points, string description)
+        public async Task<int> TopUpUserWalletBalance(long userId, int points, string description)
         {
             return await _repository.TopUpPointBalance(userId, points, description);
         }
@@ -772,10 +772,10 @@ namespace WebApi.Controllers
             return await _repository.PurchasePersonalityPointsAsync(userId, price, Currency.Points, count);
         }
 
-        [HttpGet("/PurchesPPForRealMoney/{userId}/{price}/{count?}")]
-        public async Task<bool> PurchesPPForRealMoney(long userId, int price, short count = 1)
+        [HttpGet("/PurchesPPForRealMoney/{userId}/{price}/{currency}/{count?}")]
+        public async Task<bool> PurchesPPForRealMoney(long userId, int price, Currency currency, short count = 1)
         {
-            return await _repository.PurchasePersonalityPointsAsync(userId, price, Currency.RealMoney, count);
+            return await _repository.PurchasePersonalityPointsAsync(userId, price, currency, count);
         }
 
         [HttpGet("/CheckPromoIsCorrect/{userId}/{promo}/{isActivatedBeforeRegistration}")]

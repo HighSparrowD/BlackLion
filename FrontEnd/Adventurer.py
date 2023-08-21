@@ -1573,7 +1573,7 @@ class Adventurer:
                 return
 
             self.active_message = self.bot.send_message(self.current_user, text, reply_markup=markup).id
-        except Exception as ex:
+        except:
             self.delete_active_message()
             self.send_active_message(text, markup)
 

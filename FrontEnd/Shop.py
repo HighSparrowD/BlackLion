@@ -1,3 +1,4 @@
+import stripe
 from telebot.types import *
 import Core.HelpersMethodes as Helpers
 import Common.Menues as menues
@@ -33,22 +34,11 @@ class Shop:
         self.active_transaction_status_message = None
         self.current_transaction = None
 
+        self.suggested_tips = [5_00, 50_00, 75_00, 100_00]
+
         # TODO: load price lists based on currency selected by user
-        self.start_options_message = "1. Premium\n2. Coins\n3. Effects\n4. Personality Points\n5. Tests\n6. Support Us :)\n7. Exit"
-        self.premium_price_list_message = "1. 3 days: 5,999 Coins - VALUE CURRENCY\n2. 21 days: 12,999 Coins - VALUE CURRENCY\n3. 30 days 20,999 Coins - VALUE CURRENCY\n4. Go Back"
-        self.effects_list_message = "1. 💥Second Chance💥\n2. 💥The Valentine💥\n3. 💥The Detector💥\n4. 💥The Nullifier💥\n5. 💥Card Deck Mini💥\n6. 💥Card Deck Platinum💥\n7. Go Back"
-        self.secondChance_price_list_message = "1. Buy 1: 599 Coins - VALUE CURRENCY\n2. Buy 5: 2,300 Coins - VALUE CURRENCY\n3. Buy 10: 4,000 Coins - VALUE CURRENCY\n4. Go Back"
-        self.theValentine_price_list_message = "1. Buy 1: 599 Coins - VALUE CURRENCY\n2. Buy 5: 2,300 Coins - VALUE CURRENCY\n3. Buy 10: 4,000 Coins - VALUE CURRENCY\n4. Go Back"
-        self.theDetector_price_list_message = "1. Buy 1: 399 Coins - VALUE CURRENCY\n2. Buy 5: 1,600 Coins - VALUE CURRENCY\n3. Buy 10: 2,600 Coins - VALUE CURRENCY\n4. Go Back"
-        self.theNullifier_price_list_message = "1. Buy 1: 499 Coins - VALUE CURRENCY\n2. Buy 5: 2,000 Coins - VALUE CURRENCY\n3. Buy 10: 3,400 Coins - VALUE CURRENCY\n4. Go Back"
-        self.cardDeckMini_price_list_message = "1. Buy 1: 399 Coins - VALUE CURRENCY\n2. Buy 5: 1,600 Coins - VALUE CURRENCY\n3. Buy 10: 2,600 Coins - VALUE CURRENCY\n4. Go Back"
-        self.cardDeckPlatinum_price_list_message = "1. Buy 1: 499 Coins - VALUE CURRENCY\n2. Buy 5: 2,000 Coins - VALUE CURRENCY\n3. Buy 10: 3,400 Coins - VALUE CURRENCY\n4. Go Back"
 
-        self.personalityPoints_price_list = "1. Buy 1: 1,000 Coins - VALUE CURRENCY\n2. Buy 5: 4,000 Coins - VALUE CURRENCY\n3. Buy 10: 7,000 Coins - VALUE CURRENCY\n4. Go Back"
-
-        self.coins_price_list_message = "3 days: VALUE Coins - VALUE CURRENCY\n14 days: VALUE Coins - VALUE CURRENCY\n30 days VALUE Coins - VALUE CURRENCY"
         self.currency_list_message = "1. USD\n2. EUR\n3. UAH\n4. RUB\n5. CZK\n6. PLN"
-        self.currency_purchase_message = "1. By Coins\n2. By Real USER_CURRENCY\n3. Go Back"
 
         self.userBalance = Helpers.get_active_user_balance(self.current_user)
 
@@ -94,12 +84,14 @@ class Shop:
         self.current_section = None
 
         self.ch = self.bot.register_callback_query_handler("", self.callback_handler, user_id=self.current_user)
+        self.mh = self.bot.register_message_handler(self.payment_handler, content_types=['successful_payment'], user_id=self.current_user)
+        self.pre_checkout_h = self.bot.register_pre_checkout_query_handler(self.pre_checkout_handler, func=lambda query: True)
 
         if not hasVisited:
             self.first_time_handler(message)
             return
 
-        self.helpHandler = self.bot.register_message_handler(self.help_handler, commands=["help"], user_id=self.current_user)
+        self.hHandler = self.bot.register_message_handler(self.help_handler, commands=["help"], user_id=self.current_user)
 
         self.start(message)
 
@@ -263,77 +255,90 @@ class Shop:
         TestModule(self.bot, self.message, True, self.proceed, active_message=self.active_message)
         return
 
-    def process_transaction(self, transaction_type, currency):
+    def process_transaction(self, transaction_type, currency, is_final=False):
+        # is_final - True when real money transaction had been confirmed. Used to let the API log it to the DB
+
         result = False
 
-        if (currency == "1" and self.userBalance["points"] >= self.chosen_pack_price) or currency == "2":
+        if (currency == "1" and self.userBalance["points"] >= self.chosen_pack_price) or currency == "2" or currency is None:
             if transaction_type == "1":
                 if currency == "1":
                     result = Helpers.grant_premium_for_points(self.current_user, self.chosen_pack_price, 3)
                 elif currency == "2":
-                    pass
-                    # TODO: Redirect user to real money purchase section
+                    self.send_price_invoice("Premium", "3 days of Premium class benefits", self.chosen_pack_price, "Premium")
+                elif is_final:
+                    result = Helpers.grant_premium_for_real_money(self.current_user, self.chosen_pack_price, 3, self.userBalance["currency"])
             elif transaction_type == "2":
                 if currency == "1":
                     result = Helpers.grant_premium_for_points(self.current_user, self.chosen_pack_price, 21)
                 elif currency == "2":
-                    pass
-                    # TODO: Redirect user to real money purchase section
+                    self.send_price_invoice("Premium", "21 days of Premium class benefits", self.chosen_pack_price, "Premium")
+                elif is_final:
+                    result = Helpers.grant_premium_for_real_money(self.current_user, self.chosen_pack_price, 21, self.userBalance["currency"])
             elif transaction_type == "3":
                 if currency == "1":
                     result = Helpers.grant_premium_for_points(self.current_user, self.chosen_pack_price, 30)
                 elif currency == "2":
-                    pass
-                    #TODO: Redirect user to real money purchase section
+                    self.send_price_invoice("Premium", "30 days of Premium class benefits", self.chosen_pack_price, "Premium")
+                elif is_final:
+                    result = Helpers.grant_premium_for_real_money(self.current_user, self.chosen_pack_price, 30, self.userBalance["currency"])
             elif transaction_type == "5":
                 if currency == "1":
                     result = Helpers.purchase_effect_for_points(self.current_user, "5", self.chosen_pack_price, self.active_pack)
                 elif currency == "2":
-                    pass
-                    #TODO: Redirect user to real money purchase section
+                    self.send_price_invoice("Second Chance", f"{self.active_pack} Second Chance\n\n{self.secondChanceDescription}", self.chosen_pack_price, "Effect")
+                elif is_final:
+                    result = Helpers.purchase_effect_for_real_money(self.current_user, "5", self.chosen_pack_price, self.userBalance["currency"], self.active_pack)
             elif transaction_type == "6":
                 if currency == "1":
                     result = Helpers.purchase_effect_for_points(self.current_user, "6", self.chosen_pack_price, self.active_pack)
                 elif currency == "2":
-                    pass
-                    #TODO: Redirect user to real money purchase section
+                    self.send_price_invoice("The Valentine", f"{self.active_pack} The Valentine\n\n{self.valentineDescription}", self.chosen_pack_price, "Effect")
+                elif is_final:
+                    result = Helpers.purchase_effect_for_real_money(self.current_user, "6", self.chosen_pack_price, self.userBalance["currency"], self.active_pack)
             elif transaction_type == "7":
                 if currency == "1":
                     result = Helpers.purchase_effect_for_points(self.current_user, "7", self.chosen_pack_price, self.active_pack)
                 elif currency == "2":
-                    pass
-                    #TODO: Redirect user to real money purchase section
+                    self.send_price_invoice("The Detector", f"{self.active_pack} The Detector\n\n{self.detectorDescription}", self.chosen_pack_price, "Effect")
+                elif is_final:
+                    result = Helpers.purchase_effect_for_real_money(self.current_user, "7", self.chosen_pack_price, self.userBalance["currency"], self.active_pack)
             elif transaction_type == "8":
                 if currency == "1":
                     result = Helpers.purchase_effect_for_points(self.current_user, "8", self.chosen_pack_price, self.active_pack)
                 elif currency == "2":
-                    pass
-                    #TODO: Redirect user to real money purchase section
+                    self.send_price_invoice("Nullifier", f"{self.active_pack} Nullifier\n\n{self.nullifierDescription}", self.chosen_pack_price, "Effect")
+                elif is_final:
+                    result = Helpers.purchase_effect_for_real_money(self.current_user, "8", self.chosen_pack_price, self.userBalance["currency"], self.active_pack)
             elif transaction_type == "9":
                 if currency == "1":
                     result = Helpers.purchase_effect_for_points(self.current_user, "9", self.chosen_pack_price, self.active_pack)
                 elif currency == "2":
-                    pass
-                    #TODO: Redirect user to real money purchase section
+                    self.send_price_invoice("Card Dec Mini", f"{self.active_pack} Card Dec Mini\n\n{self.cardDeckMiniDescription}", self.chosen_pack_price, "Effect")
+                elif is_final:
+                    result = Helpers.purchase_effect_for_real_money(self.current_user, "9", self.chosen_pack_price, self.userBalance["currency"], self.active_pack)
             elif transaction_type == "10":
                 if currency == "1":
                     result = Helpers.purchase_effect_for_points(self.current_user, "10", self.chosen_pack_price, self.active_pack)
                 elif currency == "2":
-                    pass
-                    #TODO: Redirect user to real money purchase section
+                    self.send_price_invoice("Card Dec Premium", f"{self.active_pack} Card Dec Platinum\n\n{self.cardDeckPlatinumDescription}", self.chosen_pack_price, "Effect")
+                elif is_final:
+                    result = Helpers.purchase_effect_for_real_money(self.current_user, "10", self.chosen_pack_price, self.userBalance["currency"], self.active_pack)
             elif transaction_type == "100":
                 if currency == "1":
                     result = Helpers.purchase_PP_for_points(self.current_user, self.chosen_pack_price, self.active_pack)
                 elif currency == "2":
-                    pass
-                    #TODO: Redirect user to real money purchase section
+                    self.send_price_invoice("OCEAN+ points", f"{self.active_pack} OCEAN+ points", self.chosen_pack_price, "OceanPoints")
+                elif is_final:
+                    result = Helpers.purchase_PP_for_real_money(self.current_user, self.chosen_pack_price, self.userBalance["currency"], self.active_pack)
 
             if result:
-                self.userBalance["points"] -= self.chosen_pack_price
+                if not is_final:
+                    self.userBalance["points"] -= self.chosen_pack_price
                 #self.display_user_balance()
                 self.proceed(self.message)
 
-                self.send_active_transaction_message("Transaction was successful")
+                # self.send_active_transaction_message("Transaction was successful")
 
                 #Return to previous Module if it exists
                 # if self.startingTransaction is not None:
@@ -341,7 +346,8 @@ class Shop:
 
             else:
                 #TODO: tell what had gone wrong
-                self.send_active_transaction_message("Something went wrong")
+                if currency != "2": #TODO: Remove when payment system is fully integrated
+                    self.send_active_transaction_message("Something went wrong")
         else:
             self.send_active_transaction_message("You dont have enough coins to buy this item")
 
@@ -371,20 +377,30 @@ class Shop:
                 elif call.data == "6":
                     pass
                 elif call.data == "9":
+                    # TODO: load prices from a file, set them properly
+                    self.current_transaction = "1"
                     self.chosen_pack_price = 5999
-                    self.process_transaction("1", "1")
+                    self.process_transaction(self.current_transaction, "1")
                 elif call.data == "10":
-                    #TODO: Implement Payment
-                    return
+                    self.current_transaction = "1"
+                    self.chosen_pack_price = 5_99
+                    self.process_transaction(self.current_transaction, "2")
                 elif call.data == "11":
+                    self.current_transaction = "2"
                     self.chosen_pack_price = 12999
-                    self.process_transaction("2", "1")
+                    self.process_transaction(self.current_transaction, "1")
                 elif call.data == "12":
-                    #TODO: Implement Payment
-                    return
+                    self.current_transaction = "2"
+                    self.chosen_pack_price = 7_99
+                    self.process_transaction(self.current_transaction, "2")
                 elif call.data == "13":
+                    self.current_transaction = "3"
                     self.chosen_pack_price = 20999
-                    self.process_transaction("3", "1")
+                    self.process_transaction(self.current_transaction, "1")
+                elif call.data == "14":
+                    self.current_transaction = "3"
+                    self.chosen_pack_price = 11_99
+                    self.process_transaction(self.current_transaction, "2")
                 elif call.data == "16":
                     self.current_effect_pack = "1"
                     self.current_transaction = "5"
@@ -420,13 +436,18 @@ class Shop:
                     self.process_transaction(self.current_transaction, "1")
                 elif call.data == "24":
                     # TODO: Implement Payment
-                    return
+                    self.active_pack = 1
+                    self.chosen_pack_price = 2_99
+                    self.process_transaction(self.current_transaction, "2")
                 elif call.data == "25":
                     self.active_pack = 5
                     self.chosen_pack_price = self.active_second_option_price
                     self.process_transaction(self.current_transaction, "1")
                 elif call.data == "26":
                     # TODO: Implement Payment
+                    self.active_pack = 5
+                    self.chosen_pack_price = 4_99
+                    self.process_transaction(self.current_transaction, "2")
                     return
                 elif call.data == "27":
                     self.active_pack = 10
@@ -434,28 +455,52 @@ class Shop:
                     self.process_transaction(self.current_transaction, "1")
                 elif call.data == "28":
                     # TODO: Implement Payment
-                    return
+                    self.active_pack = 10
+                    self.chosen_pack_price = 7_99
+                    self.process_transaction(self.current_transaction, "2")
                 elif call.data == "30":
                     self.active_pack = 1
                     self.chosen_pack_price = self.active_first_option_price
                     self.process_transaction("100", "1")
                 elif call.data == "31":
                     # TODO: Implement Payment
-                    return
+                    self.active_pack = 1
+                    self.chosen_pack_price = 3_99
+                    self.process_transaction("100", "2")
                 elif call.data == "32":
                     self.active_pack = 5
                     self.chosen_pack_price = self.active_second_option_price
                     self.process_transaction("100", "1")
                 elif call.data == "33":
                     # TODO: Implement Payment
-                    return
+                    self.active_pack = 5
+                    self.chosen_pack_price = 5_99
+                    self.process_transaction("100", "2")
                 elif call.data == "34":
                     self.active_pack = 10
                     self.chosen_pack_price = self.active_third_option_price
                     self.process_transaction("100", "1")
                 elif call.data == "35":
                     # TODO: Implement Payment
-                    return
+                    self.active_pack = 10
+                    self.chosen_pack_price = 7_99
+                    self.process_transaction("100", "2")
+
+    def pre_checkout_handler(self, query):
+        self.bot.answer_pre_checkout_query(query.id, ok=True)
+        # self.bot.register_next_step_handler(None, self.payment_handler, chat_id=self.current_user)
+
+    def payment_handler(self, message):
+        charge_info = stripe.Charge.retrieve(message.successful_payment.provider_payment_charge_id)
+        # intent_info = stripe.PaymentIntent.retrieve(charge_info.payment_intent)
+
+        if charge_info.status == "succeeded":
+            self.delete_price_invoice()
+            self.process_transaction(self.current_transaction, None, is_final=True)
+            self.send_active_transaction_message("Payment was successful!")
+        else:
+            # TODO: Find out what gone wrong ?
+            self.send_active_transaction_message("Payment failed. Please try again or contact the administration")
 
     def construct_active_pack_markup(self):
         self.effect_pack_markup.clear()
@@ -490,6 +535,23 @@ class Shop:
             return
         self.active_message = self.bot.send_message(self.current_user, text, reply_markup=markup).id
 
+    def send_price_invoice(self, title: str, description: str, price: int, invoice_payload: str):
+        priceTag = LabeledPrice("Price", price)
+        self.current_invoice_id = self.bot.send_invoice(chat_id=self.current_user, currency=self.userBalance["currency"],
+                         title=title,
+                         description=description,
+                         need_name=True,
+                         invoice_payload=invoice_payload,
+                         prices=[priceTag],
+                         provider_token=Helpers.payment_token,
+                         need_email=True,
+                         suggested_tip_amounts=self.suggested_tips,
+                         max_tip_amount=100_000_000,
+                         protect_content=True).message_id
+
+    def delete_price_invoice(self):
+        self.bot.delete_message(self.current_user, self.current_invoice_id)
+
     def display_user_balance(self):
         if self.active_message:
             self.bot.edit_message_text(self.get_balance_message(), self.current_user, self.active_message)
@@ -517,9 +579,19 @@ class Shop:
     def destruct(self, message=None):
         self.clear_screen()
 
+        self.bot.callback_query_handlers.remove(self.ch)
+        self.bot.message_handlers.remove(self.mh)
+        self.bot.message_handlers.remove(self.hHandler)
+
+        #TODO: Find out why throws an exception
+        try:
+            self.bot.pre_checkout_query_handlers.remove(self.pre_checkout_h)
+        except:
+            pass
+
         if not self.activatedElsewhere:
             self.bot.delete_message(self.current_user, self.active_message)
-            self.bot.callback_query_handlers.remove(self.ch)
+
             menues.go_back_to_main_menu(self.bot, self.current_user, self.message)
             return
 
