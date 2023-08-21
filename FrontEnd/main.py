@@ -20,8 +20,13 @@ from dotenv import load_dotenv
 
 load_dotenv()
 key = os.getenv("KEY")
-users = os.getenv("DEBUGUSERS").split(",")
-Helpers.api_address = os.getenv("APIADDRESS")
+payment_token = os.getenv("STRIPE_TOKEN")
+
+users = os.getenv("DEBUG_USERS").split(",")
+Helpers.set_api_address(os.getenv("API_ADDRESS"))
+Helpers.set_payment_token(os.getenv("STRIPE_TOKEN"))
+Helpers.set_stripe_key(os.getenv("STRIPE_SECRET_KEY"))
+stripe.api_key = Helpers.stripe_key
 
 bot = TeleBot(key)
 bot.parse_mode = telegram.ParseMode.HTML
@@ -123,8 +128,24 @@ def help(message):
 
 @bot.message_handler(commands=["test"], func=lambda message: message.chat.type == 'private', is_multihandler=True)
 def test(message):
-    photos = bot.get_user_profile_photos(message.from_user.id, limit=1)
-    bot.send_photo(message.from_user.id, photos.photos[0][len(photos.photos[0]) -1].file_id, "s")
+    # price = LabeledPrice("Premium", 300_00)
+    # tax = LabeledPrice("Tax", 5)
+    # prices = [price, tax]
+    # suggested_tips = [5_00, 10_00, 20_00]
+    #
+    # bot.send_invoice(chat_id=message.from_user.id, currency="USD",
+    #                  title="Premium!",
+    #                  description="30 day premium",
+    #                  need_name=True,
+    #                  invoice_payload="Premium",
+    #                  prices=prices,
+    #                  provider_token=payment_token,
+    #                  need_email=True,
+    #                  suggested_tip_amounts=suggested_tips,
+    #                  max_tip_amount=100_000_000,
+    #                  protect_content=True)
+    stripe.api_key = Helpers.stripe_key
+    info = stripe.PaymentIntent.retrieve("pi_3NhcUnAxvQS89BmZ3gtpGTtY")
     pass
 
 
