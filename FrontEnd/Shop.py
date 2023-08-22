@@ -16,7 +16,6 @@ class Shop:
         self.returnMethod = returnMethod
         self.startingTransaction = startingTransaction
         self.shouldGreet = True
-        self.isDeciding = False
         self.shouldStay = False
         self.activatedElsewhere = True
 
@@ -72,18 +71,28 @@ class Shop:
         self.premiumBtn1 = InlineKeyboardButton("0", callback_data="10")
         self.premiumBtn2 = InlineKeyboardButton("0", callback_data="12")
         self.premiumBtn3 = InlineKeyboardButton("0", callback_data="14")
+
         self.OCbutton1 = InlineKeyboardButton("0", callback_data="31")
         self.OCbutton2 = InlineKeyboardButton("0", callback_data="33")
         self.OCbutton3 = InlineKeyboardButton("0", callback_data="35")
 
-        self.buy_premium_markup = InlineKeyboardMarkup().add(InlineKeyboardButton("3 days", callback_data="0"), InlineKeyboardButton("5,999 Coins", callback_data="9"), self.premiumBtn1)\
-                                                        .add(InlineKeyboardButton("21 days", callback_data="0"), InlineKeyboardButton("12,999 Coins", callback_data="11"), self.premiumBtn2)\
-                                                        .add(InlineKeyboardButton("30 days", callback_data="0"), InlineKeyboardButton("20,999 Coins", callback_data="13"), self.premiumBtn3)\
+        self.pointsBtn1 = InlineKeyboardButton("0", callback_data="36")
+        self.pointsBtn2 = InlineKeyboardButton("0", callback_data="37")
+        self.pointsBtn3 = InlineKeyboardButton("0", callback_data="38")
+
+        self.buy_premium_markup = InlineKeyboardMarkup().add(InlineKeyboardButton("3 days", callback_data="0"), InlineKeyboardButton(self.points_prices["Premium7"], callback_data="9"), self.premiumBtn1)\
+                                                        .add(InlineKeyboardButton("21 days", callback_data="0"), InlineKeyboardButton(self.points_prices["Premium21"], callback_data="11"), self.premiumBtn2)\
+                                                        .add(InlineKeyboardButton("30 days", callback_data="0"), InlineKeyboardButton(self.points_prices["Premium30"], callback_data="13"), self.premiumBtn3)\
                                                         .add(InlineKeyboardButton("Go Back", callback_data="-1"))
 
-        self.buyPP_markup = InlineKeyboardMarkup().add(InlineKeyboardButton("Buy 1", callback_data="0"), InlineKeyboardButton("1000 Coins", callback_data="30"), self.OCbutton1) \
-            .add(InlineKeyboardButton("Buy 5", callback_data="0"), InlineKeyboardButton("4000 Coins", callback_data="32"), self.OCbutton2)\
-            .add(InlineKeyboardButton("Buy 10", callback_data="0"), InlineKeyboardButton("7000 Coins", callback_data="34"), self.OCbutton3)\
+        self.buyPP_markup = InlineKeyboardMarkup().add(InlineKeyboardButton("Buy 3", callback_data="0"), InlineKeyboardButton(self.points_prices["OCP3"], callback_data="30"), self.OCbutton1) \
+            .add(InlineKeyboardButton("Buy 7", callback_data="0"), InlineKeyboardButton(self.points_prices["OCP7"], callback_data="32"), self.OCbutton2)\
+            .add(InlineKeyboardButton("Buy 10", callback_data="0"), InlineKeyboardButton(self.points_prices["OCP10"], callback_data="34"), self.OCbutton3)\
+            .add(InlineKeyboardButton("Go Back", callback_data="-1"))
+
+        self.buy_points_markup = InlineKeyboardMarkup().add(InlineKeyboardButton("Buy 150", callback_data="0"), self.pointsBtn1) \
+            .add(InlineKeyboardButton("Buy 500", callback_data="0"), self.pointsBtn2) \
+            .add(InlineKeyboardButton("Buy 2000", callback_data="0"), self.pointsBtn3) \
             .add(InlineKeyboardButton("Go Back", callback_data="-1"))
 
         self.effects_list_markup = InlineKeyboardMarkup().add(InlineKeyboardButton("💥Second Chance💥", callback_data="16"))\
@@ -136,7 +145,7 @@ class Shop:
         self.set_currency_prices()
 
         if self.startingTransaction == 1:
-            self.buy_coins(message)
+            self.choose_pack_points(message)
             return
         elif self.startingTransaction == 2:
             self.choose_effect_to_buy(message)
@@ -160,24 +169,12 @@ class Shop:
             except:
                 pass
 
-    def buy_coins(self, message, acceptMode=False):
-        self.current_section = self.buy_coins
-
-        if not self.activatedElsewhere:
-            self.previous_section = self.start
-        else:
-            self.previous_section = self.destruct
-
-        if not acceptMode:
-            #TODO: Implement
-            self.send_active_transaction_message("Not implemented yet :)")
-            # self.bot.register_next_step_handler(message, self.buy_premium, acceptMode=True, chat_id=self.current_user)
-            self.proceed(message)
-        else:
-            pass
-
     def buy_premium(self, message=None):
         self.current_section = self.buy_premium
+
+        self.premiumBtn1.text = f"{self.currency_prices['Premium7']} {self.user_currency}"
+        self.premiumBtn2.text = f"{self.currency_prices['Premium21']} {self.user_currency}"
+        self.premiumBtn3.text = f"{self.currency_prices['Premium30']} {self.user_currency}"
 
         if not self.activatedElsewhere:
             self.previous_section = self.start
@@ -280,9 +277,31 @@ class Shop:
         self.active_second_option_price = self.points_prices["OCP7"]
         self.active_third_option_price = self.points_prices["OCP10"]
 
+        self.OCbutton1.text = f"{self.currency_prices['OCP3']} {self.user_currency}"
+        self.OCbutton2.text = f"{self.currency_prices['OCP7']} {self.user_currency}"
+        self.OCbutton3.text = f"{self.currency_prices['OCP10']} {self.user_currency}"
+
         self.send_active_message(f"<i><b>Please, select Points pack. Click on the according price to choose currency</b></i>\n{self.get_balance_message()}", markup=self.buyPP_markup)
 
         self.current_section = self.choose_pack_PP
+
+        if not self.activatedElsewhere:
+            self.previous_section = self.start
+        else:
+            self.previous_section = self.destruct
+
+    def choose_pack_points(self, message=None):
+        self.active_first_option_price = self.points_prices["OCP3"]
+        self.active_second_option_price = self.points_prices["OCP7"]
+        self.active_third_option_price = self.points_prices["OCP10"]
+
+        self.pointsBtn1.text = f"{self.currency_prices['Points150']} {self.user_currency}"
+        self.pointsBtn2.text = f"{self.currency_prices['Points500']} {self.user_currency}"
+        self.pointsBtn3.text = f"{self.currency_prices['Points2000']} {self.user_currency}"
+
+        self.send_active_message(f"<i><b>Please, select Points pack. Click on the according price to choose currency</b></i>\n{self.get_balance_message()}", markup=self.buy_points_markup)
+
+        self.current_section = self.choose_pack_points
 
         if not self.activatedElsewhere:
             self.previous_section = self.start
@@ -380,6 +399,11 @@ class Shop:
                     self.send_price_invoice("OCEAN+ points", f"{self.active_pack} OCEAN+ points", self.chosen_pack_price, "OceanPoints")
                 elif is_final:
                     result = Helpers.purchase_PP_for_real_money(self.current_user, self.chosen_pack_price, self.user_currency, self.active_pack)
+            elif transaction_type == "101":
+                if currency == "2":
+                    self.send_price_invoice("Points", f"{self.active_pack} Points", self.chosen_pack_price, "Points")
+                elif is_final:
+                    result = Helpers.purchase_points_for_real_money(self.current_user, self.chosen_pack_price, self.user_currency, self.active_pack)
 
             if result:
                 if not is_final:
@@ -412,121 +436,143 @@ class Shop:
         if call.data == "-1":
             self.proceed(call.message, shouldClearChat=True)
         else:
-            if not self.isDeciding:
-                if call.data == "1":
-                    self.buy_premium(call.message)
-                elif call.data == "2":
-                    self.buy_coins(call.message)
-                elif call.data == "3":
-                    self.choose_effect_to_buy(call.message)
-                elif call.data == "4":
-                    self.choose_pack_PP(call.message)
-                elif call.data == "5":
-                    self.buy_tests()
-                elif call.data == "6":
-                    pass
-                elif call.data == "9":
-                    self.current_transaction = "1"
-                    self.chosen_pack_price = self.points_prices["Premium7"]
-                    self.process_transaction(self.current_transaction, "1")
-                elif call.data == "10":
-                    self.current_transaction = "1"
-                    self.chosen_pack_price = self.currency_prices["Premium7"]
-                    self.process_transaction(self.current_transaction, "2")
-                elif call.data == "11":
-                    self.current_transaction = "2"
-                    self.chosen_pack_price = self.points_prices["Premium21"]
-                    self.process_transaction(self.current_transaction, "1")
-                elif call.data == "12":
-                    self.current_transaction = "2"
-                    self.chosen_pack_price = self.currency_prices["Premium21"]
-                    self.process_transaction(self.current_transaction, "2")
-                elif call.data == "13":
-                    self.current_transaction = "3"
-                    self.chosen_pack_price = self.points_prices["Premium30"]
-                    self.process_transaction(self.current_transaction, "1")
-                elif call.data == "14":
-                    self.current_transaction = "3"
-                    self.chosen_pack_price = self.currency_prices["Premium30"]
-                    self.process_transaction(self.current_transaction, "2")
-                elif call.data == "16":
-                    self.current_effect_pack = "1"
-                    self.current_transaction = "5"
-                    self.active_description_message = self.bot.send_message(self.current_user, self.secondChanceDescription).id
-                    self.choose_effect_pack(call.message)
-                elif call.data == "17":
-                    self.current_effect_pack = "2"
-                    self.active_description_message = self.bot.send_message(self.current_user, self.valentineDescription).id
-                    self.choose_effect_pack(call.message)
-                elif call.data == "18":
-                    self.current_effect_pack = "3"
-                    self.current_transaction = "6"
-                    self.active_description_message = self.bot.send_message(self.current_user, self.detectorDescription).id
-                    self.choose_effect_pack(call.message)
-                elif call.data == "19":
-                    self.current_effect_pack = "4"
-                    self.current_transaction = "7"
-                    self.active_description_message = self.bot.send_message(self.current_user, self.nullifierDescription).id
-                    self.choose_effect_pack(call.message)
-                elif call.data == "20":
-                    self.current_effect_pack = "5"
-                    self.current_transaction = "8"
-                    self.active_description_message = self.bot.send_message(self.current_user, self.cardDeckMiniDescription).id
-                    self.choose_effect_pack(call.message)
-                elif call.data == "21":
-                    self.current_effect_pack = "6"
-                    self.current_transaction = "9"
-                    self.active_description_message = self.bot.send_message(self.current_user, self.cardDeckPlatinumDescription).id
-                    self.choose_effect_pack(call.message)
-                elif call.data == "23":
-                    self.active_pack = 3
-                    self.chosen_pack_price = self.active_first_option_price
-                    self.process_transaction(self.current_transaction, "1")
-                elif call.data == "24":
-                    self.active_pack = 3
-                    self.chosen_pack_price = self.active_currency_first_option_price
-                    self.process_transaction(self.current_transaction, "2")
-                elif call.data == "25":
-                    self.active_pack = 7
-                    self.chosen_pack_price = self.active_second_option_price
-                    self.process_transaction(self.current_transaction, "1")
-                elif call.data == "26":
-                    self.active_pack = 7
-                    self.chosen_pack_price = self.active_currency_second_option_price
-                    self.process_transaction(self.current_transaction, "2")
-                    return
-                elif call.data == "27":
-                    self.active_pack = 10
-                    self.chosen_pack_price = self.active_third_option_price
-                    self.process_transaction(self.current_transaction, "1")
-                elif call.data == "28":
-                    self.active_pack = 10
-                    self.chosen_pack_price = self.active_currency_third_option_price
-                    self.process_transaction(self.current_transaction, "2")
-                elif call.data == "30":
-                    self.active_pack = 3
-                    self.chosen_pack_price = self.active_first_option_price
-                    self.process_transaction("100", "1")
-                elif call.data == "31":
-                    self.active_pack = 3
-                    self.chosen_pack_price = self.currency_prices["OCP3"]
-                    self.process_transaction("100", "2")
-                elif call.data == "32":
-                    self.active_pack = 7
-                    self.chosen_pack_price = self.active_second_option_price
-                    self.process_transaction("100", "1")
-                elif call.data == "33":
-                    self.active_pack = 7
-                    self.chosen_pack_price = self.currency_prices["OCP7"]
-                    self.process_transaction("100", "2")
-                elif call.data == "34":
-                    self.active_pack = 10
-                    self.chosen_pack_price = self.active_third_option_price
-                    self.process_transaction("100", "1")
-                elif call.data == "35":
-                    self.active_pack = 10
-                    self.chosen_pack_price = self.currency_prices["OCP10"]
-                    self.process_transaction("100", "2")
+            if call.data == "1":
+                self.buy_premium(call.message)
+            elif call.data == "2":
+                self.choose_pack_points(call.message)
+            elif call.data == "3":
+                self.choose_effect_to_buy(call.message)
+            elif call.data == "4":
+                self.choose_pack_PP(call.message)
+            elif call.data == "5":
+                self.buy_tests()
+            elif call.data == "6":
+                pass
+            elif call.data == "9":
+                self.current_transaction = "1"
+                self.chosen_pack_price = self.points_prices["Premium7"]
+                self.process_transaction(self.current_transaction, "1")
+            elif call.data == "10":
+                self.current_transaction = "1"
+                self.chosen_pack_price = self.currency_prices["Premium7"]
+                self.process_transaction(self.current_transaction, "2")
+            elif call.data == "11":
+                self.current_transaction = "2"
+                self.chosen_pack_price = self.points_prices["Premium21"]
+                self.process_transaction(self.current_transaction, "1")
+            elif call.data == "12":
+                self.current_transaction = "2"
+                self.chosen_pack_price = self.currency_prices["Premium21"]
+                self.process_transaction(self.current_transaction, "2")
+            elif call.data == "13":
+                self.current_transaction = "3"
+                self.chosen_pack_price = self.points_prices["Premium30"]
+                self.process_transaction(self.current_transaction, "1")
+            elif call.data == "14":
+                self.current_transaction = "3"
+                self.chosen_pack_price = self.currency_prices["Premium30"]
+                self.process_transaction(self.current_transaction, "2")
+            elif call.data == "16":
+                self.current_effect_pack = "1"
+                self.current_transaction = "5"
+                self.active_description_message = self.bot.send_message(self.current_user, self.secondChanceDescription).id
+                self.choose_effect_pack(call.message)
+            elif call.data == "17":
+                self.current_effect_pack = "2"
+                self.active_description_message = self.bot.send_message(self.current_user, self.valentineDescription).id
+                self.choose_effect_pack(call.message)
+            elif call.data == "18":
+                self.current_effect_pack = "3"
+                self.current_transaction = "6"
+                self.active_description_message = self.bot.send_message(self.current_user, self.detectorDescription).id
+                self.choose_effect_pack(call.message)
+            elif call.data == "19":
+                self.current_effect_pack = "4"
+                self.current_transaction = "7"
+                self.active_description_message = self.bot.send_message(self.current_user, self.nullifierDescription).id
+                self.choose_effect_pack(call.message)
+            elif call.data == "20":
+                self.current_effect_pack = "5"
+                self.current_transaction = "8"
+                self.active_description_message = self.bot.send_message(self.current_user, self.cardDeckMiniDescription).id
+                self.choose_effect_pack(call.message)
+            elif call.data == "21":
+                self.current_effect_pack = "6"
+                self.current_transaction = "9"
+                self.active_description_message = self.bot.send_message(self.current_user, self.cardDeckPlatinumDescription).id
+                self.choose_effect_pack(call.message)
+            elif call.data == "23":
+                self.active_pack = 3
+                self.chosen_pack_price = self.active_first_option_price
+                self.process_transaction(self.current_transaction, "1")
+            elif call.data == "24":
+                self.active_pack = 3
+                self.chosen_pack_price = self.active_currency_first_option_price
+                self.process_transaction(self.current_transaction, "2")
+            elif call.data == "25":
+                self.active_pack = 7
+                self.chosen_pack_price = self.active_second_option_price
+                self.process_transaction(self.current_transaction, "1")
+            elif call.data == "26":
+                self.active_pack = 7
+                self.chosen_pack_price = self.active_currency_second_option_price
+                self.process_transaction(self.current_transaction, "2")
+                return
+            elif call.data == "27":
+                self.active_pack = 10
+                self.chosen_pack_price = self.active_third_option_price
+                self.process_transaction(self.current_transaction, "1")
+            elif call.data == "28":
+                self.active_pack = 10
+                self.chosen_pack_price = self.active_currency_third_option_price
+                self.process_transaction(self.current_transaction, "2")
+            # Buy OCEAN+ points
+            elif call.data == "30":
+                self.active_pack = 3
+                self.chosen_pack_price = self.active_first_option_price
+                self.current_transaction = "100"
+                self.process_transaction(self.current_transaction, "1")
+            elif call.data == "31":
+                self.active_pack = 3
+                self.chosen_pack_price = self.currency_prices["OCP3"]
+                self.current_transaction = "100"
+                self.process_transaction(self.current_transaction, "2")
+            elif call.data == "32":
+                self.active_pack = 7
+                self.chosen_pack_price = self.active_second_option_price
+                self.current_transaction = "100"
+                self.process_transaction(self.current_transaction, "1")
+            elif call.data == "33":
+                self.active_pack = 7
+                self.chosen_pack_price = self.currency_prices["OCP7"]
+                self.current_transaction = "100"
+                self.process_transaction(self.current_transaction, "2")
+            elif call.data == "34":
+                self.active_pack = 10
+                self.chosen_pack_price = self.active_third_option_price
+                self.current_transaction = "100"
+                self.process_transaction(self.current_transaction, "1")
+            elif call.data == "35":
+                self.active_pack = 10
+                self.chosen_pack_price = self.currency_prices["OCP10"]
+                self.current_transaction = "100"
+                self.process_transaction(self.current_transaction, "2")
+            # Buy points
+            elif call.data == "36":
+                self.active_pack = 150
+                self.chosen_pack_price = self.currency_prices["Points150"]
+                self.current_transaction = "101"
+                self.process_transaction(self.current_transaction, "2")
+            elif call.data == "37":
+                self.active_pack = 500
+                self.chosen_pack_price = self.currency_prices["Points500"]
+                self.current_transaction = "101"
+                self.process_transaction(self.current_transaction, "2")
+            elif call.data == "38":
+                self.active_pack = 2000
+                self.chosen_pack_price = self.currency_prices["Points2000"]
+                self.current_transaction = "101"
+                self.process_transaction(self.current_transaction, "2")
 
     def pre_checkout_handler(self, query):
         self.bot.answer_pre_checkout_query(query.id, ok=True)
@@ -577,9 +623,10 @@ class Shop:
             return
         self.active_message = self.bot.send_message(self.current_user, text, reply_markup=markup).id
 
-    def send_price_invoice(self, title: str, description: str, price, invoice_payload: str):
+    def send_price_invoice(self, title: str, description: str, price: str, invoice_payload: str):
         # TODO: achieve the same result using another method
-        priceTag = LabeledPrice("Price", int(f"{price}".replace(".", "")))
+        priceTag = LabeledPrice("Price", int(price.replace(",", "")))
+        self.delete_price_invoice()
         self.current_invoice_id = self.bot.send_invoice(chat_id=self.current_user, currency=self.user_currency,
                          title=title,
                          description=description,
@@ -593,7 +640,12 @@ class Shop:
                          protect_content=True).message_id
 
     def delete_price_invoice(self):
-        self.bot.delete_message(self.current_user, self.current_invoice_id)
+        try:
+            if self.current_invoice_id is not None:
+                self.bot.delete_message(self.current_user, self.current_invoice_id)
+                self.current_invoice_id = None
+        except:
+            pass
 
     def display_user_balance(self):
         if self.active_message:
@@ -602,12 +654,6 @@ class Shop:
 
     def set_currency_prices(self):
         self.currency_prices = Resources.get_prices(self.user_currency)
-        self.premiumBtn1.text = f"{self.currency_prices['Premium7']} {self.user_currency}"
-        self.premiumBtn2.text = f"{self.currency_prices['Premium21']} {self.user_currency}"
-        self.premiumBtn3.text = f"{self.currency_prices['Premium30']} {self.user_currency}"
-        self.OCbutton1.text = f"{self.currency_prices['OCP3']} {self.user_currency}"
-        self.OCbutton2.text = f"{self.currency_prices['OCP7']} {self.user_currency}"
-        self.OCbutton3.text = f"{self.currency_prices['OCP10']} {self.user_currency}"
 
     def proceed(self, message, **kwargs):
         #Re-subscribe callback handler upon returning from Tester
@@ -640,6 +686,8 @@ class Shop:
             self.bot.pre_checkout_query_handlers.remove(self.pre_checkout_h)
         except:
             pass
+
+        self.delete_price_invoice()
 
         if not self.activatedElsewhere:
             self.bot.delete_message(self.current_user, self.active_message)

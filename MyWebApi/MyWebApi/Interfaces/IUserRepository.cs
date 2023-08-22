@@ -129,6 +129,7 @@ namespace WebApi.Interfaces
         Task<bool> CheckEffectIsActiveAsync(long userId, Currency effectId);
         Task<bool> PurchaseEffectAsync(long userId, int effectId, int points, Currency currency, short count=1);
         Task<bool> PurchasePersonalityPointsAsync(long userId, int points, Currency currency, short count=1);
+        Task PurchasePointsAsync(long userId, int cost, Currency currency, int amount);
         Task<bool> SendTickRequestAsync(SendTickRequest request);
         Task<bool> SwitchUserFilteringByPhotoAsync(long userId);
         Task<bool> GetUserFilteringByPhotoStatusAsync(long userId);

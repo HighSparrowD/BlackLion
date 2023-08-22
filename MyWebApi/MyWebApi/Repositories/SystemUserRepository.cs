@@ -19,8 +19,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using WebApi.Entities;
-using Microsoft.Extensions.DependencyInjection;
-using WebApi.Entities.SponsorEntities;
 
 namespace WebApi.Repositories
 {
@@ -1545,7 +1543,7 @@ namespace WebApi.Repositories
                 await TopUpPointBalance(userId, -cost, $"Purchase premium for {dayDuration} days");
             //If transaction was made for real money
             else if (currency == Currency.RealMoney)
-                await RegisterPurchaseInRealMoney(userId, cost, $"Purchase premium for {dayDuration} days", (Currency)balance.Currency);
+                await RegisterPurchaseInRealMoney(userId, -cost, $"Purchase premium for {dayDuration} days", (Currency)balance.Currency);
 
             //Reward for premium purchase
             await TopUpPointBalance(userId, 500, "Points received for premium purchase");
@@ -3681,19 +3679,18 @@ namespace WebApi.Repositories
                 if (currency == Currency.Points)
                     balance.Points -= points;
 
-                points *= -1;
                 switch (effectId)
                 {
                     case 5:
                         balance.SecondChances += count;
                         if (currency == Currency.Points)
                         {
-                            await RegisterUserPurchaseInPoints(userId, points, $"User purchase of {count} Second Chance effect for point amount {points}");
+                            await RegisterUserPurchaseInPoints(userId, -points, $"User purchase of {count} Second Chance effect for point amount {points}");
                             await RegisterUserPurchase(userId, count, "Effects are received", (Currency)effectId);
                         }
                         else
                         {
-                            await RegisterPurchaseInRealMoney(userId, points, $"User purchase of {count} Second Chance effect for {currency} amount {points}", (Currency)balance.Currency);
+                            await RegisterPurchaseInRealMoney(userId, -points, $"User purchase of {count} Second Chance effect for {currency} amount {points}", (Currency)balance.Currency);
                             await RegisterUserPurchase(userId, count, "Effects are received", (Currency)effectId);
                         }
                         break;
@@ -3701,12 +3698,12 @@ namespace WebApi.Repositories
                         balance.Valentines += count;
                         if (currency == Currency.Points)
                         {
-                            await RegisterUserPurchaseInPoints(userId, points, $"User purchase of {count} Valentine effect for point amount {points}");
+                            await RegisterUserPurchaseInPoints(userId, -points, $"User purchase of {count} Valentine effect for point amount {points}");
                             await RegisterUserPurchase(userId, count, "Effects are received", (Currency)effectId);
                         }
                         else
                         {
-                            await RegisterPurchaseInRealMoney(userId, points, $"User purchase of {count} Valentine effect for {currency} amount {points}", (Currency)balance.Currency);
+                            await RegisterPurchaseInRealMoney(userId, -points, $"User purchase of {count} Valentine effect for {currency} amount {points}", (Currency)balance.Currency);
                             await RegisterUserPurchase(userId, count, "Effects are received", (Currency)effectId);
                         }
                         break;
@@ -3714,12 +3711,12 @@ namespace WebApi.Repositories
                         balance.Detectors += count;
                         if (currency == Currency.Points)
                         {
-                            await RegisterUserPurchaseInPoints(userId, points, $"User purchase of {count} Detector effect for point amount {points}");
+                            await RegisterUserPurchaseInPoints(userId, -points, $"User purchase of {count} Detector effect for point amount {points}");
                             await RegisterUserPurchase(userId, count, "Effects are received", (Currency)effectId);
                         }
                         else
                         {
-                            await RegisterPurchaseInRealMoney(userId, points, $"User purchase of {count} Detector effect for {currency} amount {points}", (Currency)balance.Currency);
+                            await RegisterPurchaseInRealMoney(userId, -points, $"User purchase of {count} Detector effect for {currency} amount {points}", (Currency)balance.Currency);
                             await RegisterUserPurchase(userId, count, "Effects are received", (Currency)effectId);
                         }
                         break;
@@ -3727,12 +3724,12 @@ namespace WebApi.Repositories
                         balance.Nullifiers += count;
                         if (currency == Currency.Points)
                         {
-                            await RegisterUserPurchaseInPoints(userId, points, $"User purchase of {count} Nullifier effect for point amount {points}");
+                            await RegisterUserPurchaseInPoints(userId, -points, $"User purchase of {count} Nullifier effect for point amount {points}");
                             await RegisterUserPurchase(userId, count, "Effects are received", (Currency)effectId);
                         }
                         else
                         {
-                            await RegisterPurchaseInRealMoney(userId, points, $"User purchase of {count} Nullifier effect for {currency} amount {points}", (Currency)balance.Currency);
+                            await RegisterPurchaseInRealMoney(userId, -points, $"User purchase of {count} Nullifier effect for {currency} amount {points}", (Currency)balance.Currency);
                             await RegisterUserPurchase(userId, count, "Effects are received", (Currency)effectId);
                         }
                         break;
@@ -3740,12 +3737,12 @@ namespace WebApi.Repositories
                         balance.CardDecksMini += count;
                         if (currency == Currency.Points)
                         {
-                            await RegisterUserPurchaseInPoints(userId, points, $"User purchase of {count} Card Deck Mini effect for point amount {points}");
+                            await RegisterUserPurchaseInPoints(userId, -points, $"User purchase of {count} Card Deck Mini effect for point amount {points}");
                             await RegisterUserPurchase(userId, count, "Effects are received", (Currency)effectId);
                         }
                         else
                         {
-                            await RegisterPurchaseInRealMoney(userId, points, $"User purchase of {count} Second Card Deck Mini for {currency} amount {points}", (Currency)balance.Currency);
+                            await RegisterPurchaseInRealMoney(userId, -points, $"User purchase of {count} Second Card Deck Mini for {currency} amount {points}", (Currency)balance.Currency);
                             await RegisterUserPurchase(userId, count, "Effects are received", (Currency)effectId);
                         }
                         break;
@@ -3753,12 +3750,12 @@ namespace WebApi.Repositories
                         balance.CardDecksPlatinum += count;
                         if (currency == Currency.Points)
                         {
-                            await RegisterUserPurchaseInPoints(userId, points, $"User purchase of {count} Card Deck Platinum effect for point amount {points}");
+                            await RegisterUserPurchaseInPoints(userId, -points, $"User purchase of {count} Card Deck Platinum effect for point amount {points}");
                             await RegisterUserPurchase(userId, count, "Effects are received", (Currency)effectId);
                         }
                         else
                         {
-                            await RegisterPurchaseInRealMoney(userId, points, $"User purchase of {count} Card Deck Platinum effect for {currency} amount {points}", (Currency)balance.Currency);
+                            await RegisterPurchaseInRealMoney(userId, -points, $"User purchase of {count} Card Deck Platinum effect for {currency} amount {points}", (Currency)balance.Currency);
                             await RegisterUserPurchase(userId, count, "Effects are received", (Currency)effectId);
                         }
                         break;
@@ -3801,16 +3798,15 @@ namespace WebApi.Repositories
                 if (currency == Currency.Points)
                 {
                     balance.Points -= amount;
-                    amount *= -1;
                     balance.PersonalityPoints += count;
-                    await RegisterUserPurchaseInPoints(userId, amount, $"User purchase of {count} Ocean+ Points effect for point amount {amount}");
-                    await RegisterUserPurchase(userId, amount, "OP are received", Currency.OceanPoints);
+                    await RegisterUserPurchaseInPoints(userId, -amount, $"User purchase of {count} Ocean+ Points effect for point amount {amount}");
+                    await RegisterUserPurchase(userId, count, "OP received", Currency.OceanPoints);
                 }
                 else
                 {
                     balance.PersonalityPoints += count;
-                    await RegisterPurchaseInRealMoney(userId, amount, $"User purchase of {count} Ocean+ Points for {currency} amount {amount}", (Currency)balance.Currency);
-                    await RegisterUserPurchase(userId, amount, "OP are received", Currency.OceanPoints);
+                    await RegisterPurchaseInRealMoney(userId, -amount, $"User purchase of {count} Ocean+ Points for {currency} amount {amount}", (Currency)balance.Currency);
+                    await RegisterUserPurchase(userId, count, "OP received", Currency.OceanPoints);
                 }
                 await _contx.SaveChangesAsync();
                 return true;
@@ -4616,6 +4612,14 @@ namespace WebApi.Repositories
             }).ToListAsync();
 
             return new AdventureSearchResponse(adventures);
+        }
+
+        public async Task PurchasePointsAsync(long userId, int cost, Currency currency, int amount)
+        {
+            var balance = await GetUserWalletBalance(userId);
+            balance.Points += amount;
+            await RegisterPurchaseInRealMoney(userId, -cost, $"User purchase of {amount} Points for {currency} amount {cost}", currency);
+            await RegisterUserPurchase(userId, amount, "Points received", Currency.Points);
         }
     }
 }
