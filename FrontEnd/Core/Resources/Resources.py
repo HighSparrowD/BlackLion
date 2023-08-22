@@ -11,4 +11,9 @@ def get_registrator_localization(lang):
 
 
 def get_prices(currency):
-    pass
+    path = f"Core/Resources/Prices{currency}.csv"
+
+    file = pandas.read_csv(path)
+    resources = file.to_dict(orient='records')
+
+    return resources[0]
