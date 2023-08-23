@@ -12,7 +12,6 @@ RemovedMessage,Removed,Удалено,Видалено
 NoLanguagesMessage,You haven't chosen any languages !,Ты не выбрал/а ни одного языка!,Ти не вибрав/а жодної мови!
 GenderQuestionMessage,What is your gender?,Каков твой пол?,Яка твоя стать?
 ChooseExistingMessage,Please choose only ones in a given list !,"Пожалуйста, выбери только те, которые есть в данном списке!","Будь ласка, вибери тільки ті, які є в цьому списку!"
-SearchQuestionMessage,What are you searching for?,Что ты ищешь?,Що ти шукаєш?
 CommunicationQuestionMessage,How would you like to communicate?,Как бы ты хотел общаться?,Як би ти хотів спілкуватися?
 CountryQuestionMessage,Which country do you live in?,В какой стране ты живешь?,У якій країні ти живеш?
 NoMatterButton,does not matter,не имеет значения,не має значення
@@ -40,7 +39,7 @@ MediaQuestionMessage,Send your photo or video (15 seconds max),Пришлите 
 ChangeMediaWarningMessage,"Note, that changing your media will temporarily re-open your identity confirmation request and thus remove tick from your profile","Обратите внимание, что смена носителя информации приведет к временному повторному запросу на подтверждение личности и, таким образом, снимет галочку с вашего профиля","Зверніть увагу, що зміна носія інформації призведе до тимчасового повторного запиту на підтвердження особи і, таким чином, зніме галочку з вашого профілю"
 LongVideoErrorMessage,Video cannot be longer than 15 seconds,Видео не может быть длиннее 15 секунд,Відео не може бути довшим за 15 секунд
 IncorrectMediaErrorMessage,Please send photo or video,Пожалуйста скиньте фото или видео,"Будь ласка, надішліть фото або відео"
-GenderQuestionMessage,Who are you searching for ?,Кого ты ищешь?,Кого ти шукаєш?
+SearchQuestionMessage,Who are you searching for ?,Кого ты ищешь?,Кого ти шукаєш?
 LanguagesQuestionMessage,What languages are you willing to speak with people?,На каких языках ты готов общаться с людьми?,Якими мовами ти готовий спілкуватися з людьми?
 LocationPrefsErrorMessage,"You cannot set country preferences, because you did not choose the country you live in. Please choose the country first","Ты не можешь установить предпочтения по стране, потому что ты не выбрал локацию. Пожалуйста, сначала выбери страну","Ти не можеш встановити переваги країною, тому що ти не вибрав локацію. Будь ласка, спочатку вибери країну"
 LocationPrefsQuestionMessage,People from which countries would you like to communicate with?,С людьми из каких стран ты бы хотел общаться?,З людьми з яких країн ти хотів би спілкуватися?

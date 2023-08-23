@@ -1131,14 +1131,14 @@ class Adventurer:
             if message.text == "Yes":
                 self.my_adventures_manager()
             else:
-                self.registration_steps[0](message)
+                self.register_name_step()
 
     def configure_registration_step(self, step, shouldInsert):
         if shouldInsert:
             self.registration_steps.insert(0, self.current_section)
         self.current_section = step
 
-    def my_adventures_manager(self):
+    def my_adventures_manager(self, message=None):
         self.subscribe_callback_handler(self.start_callback_handler)
 
         self.previous_section = self.start
