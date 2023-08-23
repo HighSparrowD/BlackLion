@@ -3821,7 +3821,7 @@ namespace WebApi.Repositories
         {
             var promo = await _contx.PromoCodes.Where(p => p.Promo == promoText && p.UsedOnlyInRegistration == isActivatedBeforeRegistration)
                 .AsNoTracking()
-                .SingleOrDefaultAsync();
+                .FirstOrDefaultAsync();
 
             // There is no way the promo can be applied before Registration, due to the absence of user data.
             // Thus we are only checking its presence

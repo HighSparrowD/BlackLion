@@ -757,10 +757,7 @@ namespace WebApi.Controllers
         {
             await _repository.SetUserCurrencyAsync(userId, currency);
 
-            if (ModelState.IsValid)
-                return Ok();
-
-            return BadRequest();
+            return Ok();
         }
 
         [HttpGet("/GetRequestSender/{requestId}")]

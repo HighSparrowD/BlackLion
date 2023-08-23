@@ -247,7 +247,7 @@ def create_settings(message, userId):
     status = response["status"]
 
     if status == "Success":  # Success
-        return Settings(bot, message)
+        return Settings.Settings(bot, message)
     elif status == "Busy":  # Busy
         return
     elif status == "DoesNotExist":  # Does not exist

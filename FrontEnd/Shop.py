@@ -1,14 +1,17 @@
 import stripe
+from telebot import TeleBot
 from telebot.types import *
 import Core.HelpersMethodes as Helpers
 import Common.Menues as menues
+import Settings
 from Core.Resources import Resources
 from Helper import Helper
 from TestModule import TestModule
 
 
 class Shop:
-    def __init__(self, bot, message, hasVisited=False, startingTransaction=None, returnMethod=None, active_message=None):
+    def __init__(self, bot: TeleBot, message: any, hasVisited: bool = False,
+                 startingTransaction: int = None, returnMethod: classmethod = None, active_message: any = None):
         self.bot = bot
         self.message = message
         self.current_user = message.from_user.id
@@ -41,11 +44,9 @@ class Shop:
 
         self.suggested_tips = [5_00, 50_00, 75_00, 100_00]
 
-        self.currency_list_message = "1. USD\n2. EUR\n3. UAH\n4. RUB\n5. CZK\n6. PLN"
+        self.userBalance = None
+        self.user_currency = None
 
-        self.userBalance = Helpers.get_active_user_balance(self.current_user)
-
-        self.user_currency = self.userBalance["currency"]
         self.currency_prices = None
         # Load price list in points
         self.points_prices = Resources.get_prices("Points")
@@ -58,7 +59,6 @@ class Shop:
         self.cardDeckPlatinumDescription = "<i><b>Instantly adds 50 profile views to your daily views</b></i>"
 
         self.YNmarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("yes", "no")
-        self.currency_choiceMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4", "5", "6")
         self.currency_purchaseMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3")
 
         self.start_markup = InlineKeyboardMarkup().add(InlineKeyboardButton("Premium", callback_data="1"))\
@@ -108,34 +108,29 @@ class Shop:
         self.previous_section = self.destruct
         self.current_section = None
 
+        self.ch = None
+        self.mh = None
+        self.pre_checkout_h = None
+        self.hHandler = None
+
+        self.first_time_handler(message)
+
+    def first_time_handler(self, message):
+        self.get_user_balance()
+
+        if self.user_currency is None:
+            Settings.CurrencySetter(self.bot, self.current_user, self.first_time_handler)
+        else:
+            self.proceed_to_start(message)
+
+    def proceed_to_start(self, message):
         self.ch = self.bot.register_callback_query_handler("", self.callback_handler, user_id=self.current_user)
         self.mh = self.bot.register_message_handler(self.payment_handler, content_types=['successful_payment'], user_id=self.current_user)
         self.pre_checkout_h = self.bot.register_pre_checkout_query_handler(self.pre_checkout_handler, func=lambda query: True)
 
-        if not hasVisited:
-            self.first_time_handler(message)
-            return
-
         self.hHandler = self.bot.register_message_handler(self.help_handler, commands=["help"], user_id=self.current_user)
 
         self.start(message)
-
-    def first_time_handler(self, message, acceptMode=False):
-        if not acceptMode:
-            self.bot.send_message(self.current_user, "Choose the currency you feel most comfortable using to make payments before we continue")
-            self.bot.send_message(self.current_user, self.currency_list_message, reply_markup=self.currency_choiceMarkup)
-            self.bot.register_next_step_handler(message, self.first_time_handler, acceptMode=True, chat_id=self.current_user)
-        else:
-            if message.text == "1" or message.text == "2" or message.text == "3" or message.text == "4" or message.text == "5" or message.text == "6":
-                if Helpers.set_user_currency(self.current_user, message.text):
-                    self.bot.send_message(self.current_user, "Done. You can change selected currency at any time in Settings :)")
-                else:
-                    self.bot.send_message(self.current_user, "Something went wrong. Please, contact the administration")
-
-                self.start(message)
-            else:
-                self.bot.send_message(self.current_user, "No such option", reply_markup=self.currency_choiceMarkup)
-                self.bot.register_next_step_handler(message, self.first_time_handler, acceptMode=acceptMode, chat_id=self.current_user)
 
     def start(self, message):
         self.previous_section = self.destruct
@@ -654,6 +649,11 @@ class Shop:
 
     def set_currency_prices(self):
         self.currency_prices = Resources.get_prices(self.user_currency)
+
+    def get_user_balance(self):
+        self.userBalance = Helpers.get_active_user_balance(self.current_user)
+
+        self.user_currency = self.userBalance["currency"]
 
     def proceed(self, message, **kwargs):
         #Re-subscribe callback handler upon returning from Tester
