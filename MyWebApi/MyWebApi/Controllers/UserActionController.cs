@@ -744,15 +744,20 @@ namespace WebApi.Controllers
             return await _repository.PurchaseEffectAsync(userId, effectId, points, currency, count);
         }
 
+        [HttpGet("/PurchasePoints")]
+        public async Task<IActionResult> PurchasePoints([FromQuery] long userId, [FromQuery]int cost, 
+            [FromQuery] Currency currency, [FromQuery] int amount)
+        {
+            await _repository.PurchasePointsAsync(userId, cost, currency, amount);
+            return Ok();
+        }
+
         [HttpGet("/SetUserCurrency/{userId}/{currency}")]
         public async Task<ActionResult> SetUserCurrency(long userId, Currency currency)
         {
             await _repository.SetUserCurrencyAsync(userId, currency);
 
-            if (ModelState.IsValid)
-                return Ok();
-
-            return BadRequest();
+            return Ok();
         }
 
         [HttpGet("/GetRequestSender/{requestId}")]

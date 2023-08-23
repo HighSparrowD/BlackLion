@@ -460,7 +460,7 @@ def check_user_has_effect(userId, effectId):
 # TODO: Change called API endpoint
 def purchase_effect_for_real_money(userId, effectId, cost, currency, count=1):
     return json.loads(
-        requests.get(f"{api_address}/PurchaseEffect/{userId}/{effectId}/{cost}/{currency}/{count}", verify=False).text)
+        requests.get(f"{api_address}/PurchaseEffect/{userId}/{effectId}/{int(cost.replace(',', ''))}/{currency}/{count}", verify=False).text)
 
 
 def purchase_PP_for_points(userId, cost, count=1):
@@ -470,7 +470,15 @@ def purchase_PP_for_points(userId, cost, count=1):
 
 def purchase_PP_for_real_money(userId, cost, currency, count=1):
     return json.loads(
-        requests.get(f"{api_address}/PurchesPPForRealMoney/{userId}/{cost}/{currency}/{count}", verify=False).text)
+        requests.get(f"{api_address}/PurchesPPForRealMoney/{userId}/{int(cost.replace(',', ''))}/{currency}/{count}", verify=False).text)
+
+def purchase_points_for_real_money(userId, cost, currency, amount):
+    return requests.get(f"{api_address}/PurchasePoints", verify=False, params={
+        "userId": userId,
+        "cost": int(cost.replace(",", "")),
+        "currency": currency,
+        "amount": amount
+    })
 
 def switch_admin_status(userId):
     admin_switch_result = {

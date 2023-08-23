@@ -1,6 +1,8 @@
 import base64
 import random
 
+from telebot import TeleBot
+
 from Registration import *
 from ReportModule import *
 from telebot.types import ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
@@ -10,7 +12,7 @@ from Shop import Shop
 
 
 class Settings:
-    def __init__(self, bot, message, verificationOnly=False, activeMessage=0, returnMethod=None):
+    def __init__(self, bot: TeleBot, message: any, verificationOnly: bool = False, activeMessage=0, returnMethod=None):
         self.isInBlackList = False
         self.verificationOnly = verificationOnly
         #Indicates whether if callback query handler must be deleted. Set to true if it should
@@ -66,7 +68,7 @@ class Settings:
         self.increased_familiarity_status = self.current_user_data["settings"]["increasedFamiliarity"]
         self.user_language = self.current_user_data["data"]["language"]
 
-        self.userBalance = json.loads(requests.get(f"https://localhost:44381/GetActiveUserWalletBalance/{self.current_user}", verify=False).text)
+        self.userBalance = Helpers.get_active_user_balance(self.current_user)
         self.requestStatus = requests.get(f"https://localhost:44381/CheckTickRequestStatus/{self.current_user}", verify=False).text
 
         self.secondChance_indicator = None
@@ -260,30 +262,19 @@ class Settings:
 
         self.send_active_message("<i><b>You can type /help at any time to get more info about functionalities :)</b></i>", markup=self.settingMyProfileMarkup)
 
-    def currency_change_manager(self, message, acceptMode=False):
+    def currency_change_manager(self, message):
         self.previous_section = self.my_profile_settings_choice
         self.active_section = self.currency_change_manager
-        self.isDeciding = True
 
-        if not acceptMode:
-            self.send_secondary_message(f"Choose the currency you feel most comfortable using to make payments\n\n{self.currency_list_message}", markup=self.currency_choiceMarkup)
-            self.bot.register_next_step_handler(message, self.currency_change_manager, acceptMode=True, chat_id=self.current_user)
-        else:
-            self.bot.delete_message(self.current_user, message.id)
-            if message.text == "1" or message.text == "2" or message.text == "3" or message.text == "4" or message.text == "5" or message.text == "6":
-                if Helpers.set_user_currency(self.current_user, message.text):
-                    self.bot.send_message(self.current_user, "Done. You can change selected currency at any time :)")
-                else:
-                    self.bot.send_message(self.current_user, "Something went wrong. Please, contact the administration")
+        self.delete_active_message()
+        self.delete_secondary_message()
 
-                self.proceed(message)
+        self.clear_callback_handler()
+        CurrencySetter(self.bot, self.current_user, self.go_back_from_currency_change)
 
-            elif message.text == "7":
-                self.proceed(message)
-
-            else:
-                self.send_error_message("No such option", markup=self.currency_choiceMarkup)
-                self.bot.register_next_step_handler(message, self.currency_change_manager, acceptMode=acceptMode, chat_id=self.current_user)
+    def go_back_from_currency_change(self, message):
+        self.subscribe_callback_handler(self.menu_callback_handler)
+        self.previous_section(message)
 
     def auto_reply_manager(self, message, acceptMode=False):
         self.isDeciding = True
@@ -319,10 +310,10 @@ class Settings:
                         self.send_error_message("Something went wrong. Please, contact the administration")
                         self.proceed()
                     else:
-                        self.bot.send_error_message("Up to 15 seconds, my friend", markup=self.abortMarkup)
+                        self.send_error_message("Up to 15 seconds, my friend", markup=self.abortMarkup)
                         self.bot.register_next_step_handler(message, self.auto_reply_manager, acceptMode=acceptMode, chat_id=self.current_user)
                 else:
-                    self.bot.send_error_message("Sorry, only users with premium access can perform that action", markup=self.abortMarkup)
+                    self.send_error_message("Sorry, only users with premium access can perform that action", markup=self.abortMarkup)
                     self.bot.register_next_step_handler(message, self.auto_reply_manager, acceptMode=acceptMode, chat_id=self.current_user)
             elif message.text:
                 if len(message.text) < 300:
@@ -333,13 +324,13 @@ class Settings:
                         self.bot.send_message(self.current_user, "Set successfully !")
                         self.proceed()
                         return False
-                    self.bot.send_error_message("Something went wrong. Please, contact the administration")
+                    self.send_error_message("Something went wrong. Please, contact the administration")
                     self.proceed()
                 else:
-                    self.bot.send_error_message("Up to 300 characters please", markup=self.abortMarkup)
+                    self.send_error_message("Up to 300 characters please", markup=self.abortMarkup)
                     self.bot.register_next_step_handler(message, self.auto_reply_manager, acceptMode=acceptMode, chat_id=self.current_user)
             else:
-                self.bot.send_error_message("Only text and voice messages are accepted", markup=self.abortMarkup)
+                self.send_error_message("Only text and voice messages are accepted", markup=self.abortMarkup)
                 self.bot.register_next_step_handler(message, self.auto_reply_manager, acceptMode=acceptMode, chat_id=self.current_user)
 
     def personality_settings_choice(self, message, acceptMode=False):
@@ -1600,14 +1591,14 @@ class Settings:
         # self.bot.send_photo(self.current_user, user["userBaseInfo"]["userMedia"], user["userBaseInfo"]["userDescription"], reply_markup=self.encounterOptionMarkup)
         self.bot.register_next_step_handler(self.message, self.encounter_list_management, acceptMode=True, chat_id=self.current_user)
 
-    def construct_achievement_message(self, achievementId):
+    def construct_achievement_message(self, achievementId) -> str:
         achievement = self.achievements_data[achievementId]
         name = achievement["achievement"]["name"]
 
         if achievement["isAcquired"]:
             name = "✅" + name + "✅"
 
-        msg = f"{name}\n\n{achievement['achievement']['description']}\nProgress: {achievement['progress']} / {['achievement']['condition']}\n\nReward:{achievement['value']} Coins"
+        return f"{name}\n\n{achievement['achievement']['description']}\nProgress: {achievement['progress']} / {['achievement']['condition']}\n\nReward:{achievement['value']} Coins"
 
     def construct_effects_markup(self, balance):
         self.secondChances = balance["secondChances"]
@@ -1784,3 +1775,56 @@ class Settings:
 
         go_back_to_main_menu(self.bot, self.current_user, self.message)
         del self
+
+
+class CurrencySetter:
+    def __init__(self, bot: TeleBot, user_id: any, return_method: any):
+        self.bot = bot
+        self.return_method = return_method
+        self.current_user = user_id
+
+        self.active_message = None
+
+        self.currency_markup = InlineKeyboardMarkup().add(InlineKeyboardButton("USD", callback_data="12"))\
+            .add(InlineKeyboardButton("EUR", callback_data="13"))\
+            .add(InlineKeyboardButton("UAH", callback_data="14"))\
+            .add(InlineKeyboardButton("RUB", callback_data="15"))\
+            .add(InlineKeyboardButton("CZK", callback_data="16"))\
+            .add(InlineKeyboardButton("PLN", callback_data="17"))\
+            .add(InlineKeyboardButton("Go Back", callback_data="-20"))
+
+        self.ch = self.bot.register_callback_query_handler("", self.callback_query_handler, user_id=self.current_user)
+
+        self.start()
+
+    def start(self):
+        self.send_active_message("Choose the currency you feel most comfortable using to make payments", markup=self.currency_markup)
+
+    def send_active_message(self, text, markup):
+        try:
+            if self.active_message is not None:
+                self.bot.edit_message_text(text, self.current_user, self.active_message, reply_markup=markup)
+                return
+            self.active_message = self.bot.send_message(self.current_user, text, reply_markup=markup).id
+        except:
+            self.delete_active_message()
+            self.send_active_message(text, markup)
+
+    def delete_active_message(self):
+        if self.active_message is not None:
+            self.bot.delete_message(self.current_user, self.active_message)
+            self.active_message = None
+
+    def callback_query_handler(self, call):
+        if call.data == "-20":
+            self.destruct()
+            return
+
+        Helpers.set_user_currency(self.current_user, call.data)
+        self.destruct()
+
+    def destruct(self):
+        self.bot.callback_query_handlers.remove(self.ch)
+        self.delete_active_message()
+
+        self.return_method(None)
