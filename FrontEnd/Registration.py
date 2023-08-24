@@ -12,7 +12,7 @@ from TestModule import TestModule
 
 
 class Registrator:
-    def __init__(self, bot: TeleBot, message: any, hasVisited: bool = False, return_method: classmethod = None,
+    def __init__(self, bot: TeleBot, message: any, hasVisited: bool = False, return_method: any = None,
                  localizationIndex: int = None, promoCode: str = None):
         self.bot = bot
         self.message = message

@@ -34,5 +34,10 @@ namespace WebApi.Utilities
         {
             return Resources.ResourceManager.GetString("AppLanguage_" + language.ToString()) ?? language.ToString();
         }
+
+        public static string GetLocalizedValue(PaymentCurrency language)
+        {
+            return Resources.ResourceManager.GetString("Currency_" + language.ToString()) ?? language.ToString();
+        }
     }
 }

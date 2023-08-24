@@ -1785,15 +1785,25 @@ class CurrencySetter:
 
         self.active_message = None
 
-        self.currency_markup = InlineKeyboardMarkup().add(InlineKeyboardButton("USD", callback_data="12"))\
-            .add(InlineKeyboardButton("EUR", callback_data="13"))\
-            .add(InlineKeyboardButton("UAH", callback_data="14"))\
-            .add(InlineKeyboardButton("RUB", callback_data="15"))\
-            .add(InlineKeyboardButton("CZK", callback_data="16"))\
-            .add(InlineKeyboardButton("PLN", callback_data="17"))\
-            .add(InlineKeyboardButton("Go Back", callback_data="-20"))
+        self.currency_markup = InlineKeyboardMarkup()
+            # .add(InlineKeyboardButton("USD", callback_data="12"))\
+            # .add(InlineKeyboardButton("EUR", callback_data="13"))\
+            # .add(InlineKeyboardButton("UAH", callback_data="14"))\
+            # .add(InlineKeyboardButton("RUB", callback_data="15"))\
+            # .add(InlineKeyboardButton("CZK", callback_data="16"))\
+            # .add(InlineKeyboardButton("PLN", callback_data="17"))\
+            # .add(InlineKeyboardButton("Go Back", callback_data="-20"))
 
-        self.ch = self.bot.register_callback_query_handler("", self.callback_query_handler, user_id=self.current_user)
+        currencies = Helpers.get_payment_currencies()
+
+        for currency in currencies:
+            self.currency_markup.add(InlineKeyboardButton(currency["name"], callback_data=f"{currency['id']}"))
+
+        self.currency_markup.add(InlineKeyboardButton("Go Back", callback_data="-20"))
+
+        # I am putting user_id here, just to shut the IDE up.
+        # Normally message has to be put there, but, it does not matter, I suppose, (I hope...)
+        self.ch = self.bot.register_callback_query_handler(user_id, self.callback_query_handler, user_id=self.current_user)
 
         self.start()
 

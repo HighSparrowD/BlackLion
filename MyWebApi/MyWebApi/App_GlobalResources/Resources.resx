@@ -135,6 +135,27 @@
   <data name="CommunicationPreference_Online" xml:space="preserve">
     <value>Online</value>
   </data>
+  <data name="Currency_CZK" xml:space="preserve">
+    <value>CZK [Kč]</value>
+  </data>
+  <data name="Currency_EUR" xml:space="preserve">
+    <value>EUR [€]</value>
+  </data>
+  <data name="Currency_PLN" xml:space="preserve">
+    <value>PLN [zł]</value>
+  </data>
+  <data name="Currency_RUB" xml:space="preserve">
+    <value>RUB</value>
+  </data>
+  <data name="Currency_UAH" xml:space="preserve">
+    <value>UAH</value>
+  </data>
+  <data name="Currency_USD" xml:space="preserve">
+    <value>USD [$]</value>
+  </data>
+  <data name="Currency_USDC" xml:space="preserve">
+    <value>💎 USDT 💎</value>
+  </data>
   <data name="Familiator_OutOfTags" xml:space="preserve">
     <value>Sorry, you have run out of tag searches for today.\nYou can still use Card Deck Mini or Card Deck Premium to replenish your views, buy premium and thus double your view count, or wait until tomorrow :)</value>
   </data>

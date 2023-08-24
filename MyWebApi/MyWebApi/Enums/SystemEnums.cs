@@ -2,13 +2,6 @@
 {
     public static class SystemEnums
     {
-        public enum Localisations
-        {
-            English = 0,
-            Russian = 1,
-            Ukrainian = 2
-        }
-
         public enum LanguageLevels
         {
             A1 = 1,

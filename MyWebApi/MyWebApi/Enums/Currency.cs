@@ -20,4 +20,5 @@ public enum Currency : short
     RUB = 15,
     CZK = 16,
     PLN = 17,
+    USDC = 18
 }
