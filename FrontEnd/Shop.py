@@ -11,7 +11,7 @@ from TestModule import TestModule
 
 class Shop:
     def __init__(self, bot: TeleBot, message: any, hasVisited: bool = False,
-                 startingTransaction: int = None, returnMethod: classmethod = None, active_message: any = None):
+                 startingTransaction: int = None, returnMethod: any = None, active_message: any = None):
         self.bot = bot
         self.message = message
         self.current_user = message.from_user.id

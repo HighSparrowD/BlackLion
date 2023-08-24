@@ -4621,5 +4621,21 @@ namespace WebApi.Repositories
             await RegisterPurchaseInRealMoney(userId, -cost, $"User purchase of {amount} Points for {currency} amount {cost}", currency);
             await RegisterUserPurchase(userId, amount, "Points received", Currency.Points);
         }
+
+        public List<GetLocalizedEnum> GetPaymentCurrencies()
+        {
+            var currencies = new List<GetLocalizedEnum>();
+
+            foreach (var currency in Enum.GetValues(typeof(PaymentCurrency)))
+            {
+                currencies.Add(new GetLocalizedEnum
+                {
+                    Id = (short)currency,
+                    Name = EnumLocalizer.GetLocalizedValue((PaymentCurrency)currency)
+                });
+            }
+
+            return currencies;
+        }
     }
 }

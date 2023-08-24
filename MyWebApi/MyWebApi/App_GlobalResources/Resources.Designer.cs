@@ -115,6 +115,69 @@ namespace WebApi.App_GlobalResources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to CZK [Kč].
+        /// </summary>
+        public static string Currency_CZK {
+            get {
+                return ResourceManager.GetString("Currency_CZK", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to EUR [€].
+        /// </summary>
+        public static string Currency_EUR {
+            get {
+                return ResourceManager.GetString("Currency_EUR", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to PLN [zł].
+        /// </summary>
+        public static string Currency_PLN {
+            get {
+                return ResourceManager.GetString("Currency_PLN", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to RUB.
+        /// </summary>
+        public static string Currency_RUB {
+            get {
+                return ResourceManager.GetString("Currency_RUB", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to UAH [₴].
+        /// </summary>
+        public static string Currency_UAH {
+            get {
+                return ResourceManager.GetString("Currency_UAH", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to USD [$].
+        /// </summary>
+        public static string Currency_USD {
+            get {
+                return ResourceManager.GetString("Currency_USD", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 💎 USDT 💎.
+        /// </summary>
+        public static string Currency_USDC {
+            get {
+                return ResourceManager.GetString("Currency_USDC", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Sorry, you have run out of tag searches for today.\nYou can still use Card Deck Mini or Card Deck Premium to replenish your views, buy premium and thus double your view count, or wait until tomorrow :).
         /// </summary>
         public static string Familiator_OutOfTags {

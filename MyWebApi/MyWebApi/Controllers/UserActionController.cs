@@ -941,6 +941,12 @@ namespace WebApi.Controllers
             return userRepo.GetReportReasonsAsync();
         }
 
+        [HttpGet("/payment-currencies")]
+        public List<GetLocalizedEnum> PaymentCurrencies([FromServices] IUserRepository userRepo)
+        {
+            return userRepo.GetPaymentCurrencies();
+        }
+
         [HttpGet("/genders")]
         public List<GetLocalizedEnum> GetGenders()
         {

@@ -677,6 +677,14 @@ def get_report_reasons(language):
         return None
 
 
+def get_payment_currencies():
+    try:
+        return json.loads(
+            requests.get(f"{api_address}/payment-currencies", verify=False).text)
+    except:
+        return None
+
+
 def report_user(report_data):
     d = json.dumps(report_data)
 

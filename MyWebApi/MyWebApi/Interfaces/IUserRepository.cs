@@ -183,5 +183,6 @@ namespace WebApi.Interfaces
         Task<DeleteResult> DeleteAdventureTemplateAsync(long templateId);
         Task<DeleteResult> DeleteAdventureAttendeeAsync(long adventureId, long attendeeId);
         Task<SetGroupIdResult> SetAdventureGroupIdAsync(SetGroupIdRequest request);
+        List<GetLocalizedEnum> GetPaymentCurrencies();
     }
 }
