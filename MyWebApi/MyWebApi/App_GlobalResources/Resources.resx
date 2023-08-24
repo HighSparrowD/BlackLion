@@ -148,7 +148,7 @@
     <value>RUB</value>
   </data>
   <data name="Currency_UAH" xml:space="preserve">
-    <value>UAH</value>
+    <value>UAH [₴]</value>
   </data>
   <data name="Currency_USD" xml:space="preserve">
     <value>USD [$]</value>

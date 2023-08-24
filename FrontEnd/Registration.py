@@ -679,7 +679,7 @@ class Registrator:
 
         self.gender_markup.add(InlineKeyboardButton("🔙 Go Back", callback_data="-10"))
 
-        self.send_active_message(question_counter + self.localization['GenderQuestionMessage'], markup=self.gender_markup)
+        self.send_active_message(question_counter + self.localization['GenderPrefsQuestionMessage'], markup=self.gender_markup)
 
     def language_preferences_step(self, message=None, acceptMode=False, shouldInsert=True):
         if not acceptMode:

@@ -151,7 +151,7 @@ namespace WebApi.App_GlobalResources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to UAH.
+        ///   Looks up a localized string similar to UAH [₴].
         /// </summary>
         public static string Currency_UAH {
             get {
