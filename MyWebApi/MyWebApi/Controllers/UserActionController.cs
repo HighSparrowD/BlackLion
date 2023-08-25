@@ -45,9 +45,9 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/CheckUserHasVisitedSection/{userId}/{sectionId}")]
-        public async Task<bool> CheckUserHasVisitedSection(long userId, int sectionId)
+        public async Task<bool> CheckUserHasVisitedSection(long userId, Section section)
         {
-            return await _repository.CheckUserHasVisitedSection(userId, sectionId);
+            return await _repository.CheckUserHasVisitedSection(userId, section);
         }
 
         [HttpGet("/CheckUserIsDeleted/{userId}")]
@@ -280,7 +280,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/TopUpUserWalletBalance/{userId}/{points}/{description}")]
-        public async Task<int> TopUpUserWalletBalance(long userId, int points, string description)
+        public async Task<float> TopUpUserWalletBalance(long userId, int points, string description)
         {
             return await _repository.TopUpPointBalance(userId, points, description);
         }
@@ -310,7 +310,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/GrantPremiumToUser/{userId}/{cost}/{dayDuration}/{currency}")]
-        public async Task<DateTime> GrantPremiumToUser(long userId, int cost, int dayDuration, Currency currency)
+        public async Task<DateTime> GrantPremiumToUser(long userId, float cost, int dayDuration, Currency currency)
         {
             return await _repository.GrantPremiumToUser(userId, cost, dayDuration, currency);
         }
@@ -327,10 +327,10 @@ namespace WebApi.Controllers
             return await _repository.SetDebugProperties();
         }
 
-        [HttpGet("/SwhitchUserBusyStatus/{userId}/{sectionId}")]
-        public async Task<SwitchBusyStatusResponse> SwhitchUserBusyStatus([FromRoute] long userId, [FromRoute]int sectionId)
+        [HttpGet("/SwhitchUserBusyStatus/{userId}/{section}")]
+        public async Task<SwitchBusyStatusResponse> SwhitchUserBusyStatus([FromRoute] long userId, [FromRoute]Section section)
         {
-            return await _repository.SwhitchUserBusyStatus(userId, sectionId);
+            return await _repository.SwhitchUserBusyStatus(userId, section);
         }
 
         [HttpGet("/GetUserRequest/{requestId}")]
@@ -739,7 +739,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/PurchaseEffect/{userId}/{effectId}/{points}/{currency}/{count?}")]
-        public async Task<bool> PurchaseEffect(long userId, int effectId, int points, Currency currency, short count=1)
+        public async Task<bool> PurchaseEffect(long userId, int effectId, float points, Currency currency, short count=1)
         {
             return await _repository.PurchaseEffectAsync(userId, effectId, points, currency, count);
         }

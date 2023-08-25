@@ -426,7 +426,7 @@ def check_user_balance_is_sufficient(userId, cost):
         requests.get(f"{api_address}/CheckBalanceIsSufficient/{userId}/{cost}", verify=False).text))
 
 
-def check_should_turnOf_personality(userId):
+def check_should_turn_off_personality(userId):
     return bool(json.loads(
         requests.get(f"{api_address}/CheckShouldTurnOffPersonality/{userId}", verify=False).text))
 
@@ -438,18 +438,19 @@ def check_promo_is_valid(userId, promo, isActivatedBeforeRegistration):
 
 
 def grant_premium_for_points(userId, cost, dayDuration):
-    return json.loads(requests.get(f"{api_address}/GrantPremiumToUser/{userId}/{cost}/{dayDuration}/{points}",
+    return json.loads(requests.get(f"{api_address}/GrantPremiumToUser/{userId}/{float(cost.replace(',', '.'))}/{dayDuration}/{points}",
                                    verify=False).text)
 
 
 def grant_premium_for_real_money(userId, cost, dayDuration, currency):
-    return json.loads(requests.get(f"{api_address}/GrantPremiumToUser/{userId}/{cost}/{dayDuration}/{currency}",
+    c = float(cost.replace(',', '.'))
+    return json.loads(requests.get(f"{api_address}/GrantPremiumToUser/{userId}/{c}/{dayDuration}/{currency}",
                                    verify=False).text)
 
 
 def purchase_effect_for_points(userId, effectId, cost, count=1):
     return json.loads(
-        requests.get(f"{api_address}/PurchaseEffect/{userId}/{effectId}/{cost}/{points}/{count}", verify=False).text)
+        requests.get(f"{api_address}/PurchaseEffect/{userId}/{effectId}/{float(cost.replace(',', '.'))}/{points}/{count}", verify=False).text)
 
 
 def check_user_has_effect(userId, effectId):
@@ -460,22 +461,23 @@ def check_user_has_effect(userId, effectId):
 # TODO: Change called API endpoint
 def purchase_effect_for_real_money(userId, effectId, cost, currency, count=1):
     return json.loads(
-        requests.get(f"{api_address}/PurchaseEffect/{userId}/{effectId}/{int(cost.replace(',', ''))}/{currency}/{count}", verify=False).text)
+        requests.get(f"{api_address}/PurchaseEffect/{userId}/{effectId}/{float(cost.replace(',', '.'))}/{currency}/{count}", verify=False).text)
 
 
 def purchase_PP_for_points(userId, cost, count=1):
     return json.loads(
-        requests.get(f"{api_address}/PurchesPPForPoints/{userId}/{cost}/{count}", verify=False).text)
+        requests.get(f"{api_address}/PurchesPPForPoints/{userId}/{float(cost.replace(',', '.'))}/{count}", verify=False).text)
 
 
 def purchase_PP_for_real_money(userId, cost, currency, count=1):
     return json.loads(
-        requests.get(f"{api_address}/PurchesPPForRealMoney/{userId}/{int(cost.replace(',', ''))}/{currency}/{count}", verify=False).text)
+        requests.get(f"{api_address}/PurchesPPForRealMoney/{userId}/{float(cost.replace(',', '.'))}/{currency}/{count}", verify=False).text)
+
 
 def purchase_points_for_real_money(userId, cost, currency, amount):
     return requests.get(f"{api_address}/PurchasePoints", verify=False, params={
         "userId": userId,
-        "cost": int(cost.replace(",", "")),
+        "cost": float(cost.replace(',', '.')),
         "currency": currency,
         "amount": amount
     })

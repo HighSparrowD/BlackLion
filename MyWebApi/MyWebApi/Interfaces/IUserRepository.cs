@@ -17,7 +17,7 @@ namespace WebApi.Interfaces
     public interface IUserRepository
     {
         Task<bool> CheckUserIsRegistered(long userId);
-        Task<bool> CheckUserHasVisitedSection(long userId, int sectionId);
+        Task<bool> CheckUserHasVisitedSection(long userId, Section section);
         Task<bool> CheckUserIsBusy(long userId);
         Task<bool> CheckUserHasRequests(long userId);
         Task<bool> CheckUserIsBanned(long userId);
@@ -68,12 +68,12 @@ namespace WebApi.Interfaces
         Task<bool> SetUserRtLanguagePrefs(long userId, bool shouldBeConcidered);
         Task<bool> CheckUsersAreCombinableRT(long user1, long user2);
         Task<Balance> GetUserWalletBalance(long userId);
-        Task<int> TopUpPointBalance(long userId, int points, string description);
+        Task<float> TopUpPointBalance(long userId, float points, string description);
         Task<int> TopUpOPBalance(long userId, int points, string description);
         Task<bool> CheckUserHasPremiumAsync(long userId);
         Task<bool> CheckBalanceIsSufficient(long userId, int cost);
         Task<DateTime> GetPremiumExpirationDate(long userId);
-        Task<DateTime> GrantPremiumToUser(long userId, int cost, int dayDuration, Currency currency);
+        Task<DateTime> GrantPremiumToUser(long userId, float cost, int dayDuration, Currency currency);
         Task RegisterUserEncounter(RegisterEncounter model);
         Task<Encounter> GetUserEncounter(long encounterId);
         Task<List<Encounter>> GetUserEncounters(long userId, Section section);
@@ -127,7 +127,7 @@ namespace WebApi.Interfaces
         Task<List<ActiveEffect>> GetUserActiveEffects(long userId);
         Task<bool> DeactivateEffectAsync(long userId, long activeEffectId);
         Task<bool> CheckEffectIsActiveAsync(long userId, Currency effectId);
-        Task<bool> PurchaseEffectAsync(long userId, int effectId, int points, Currency currency, short count=1);
+        Task<bool> PurchaseEffectAsync(long userId, int effectId, float points, Currency currency, short count=1);
         Task<bool> PurchasePersonalityPointsAsync(long userId, int points, Currency currency, short count=1);
         Task PurchasePointsAsync(long userId, int cost, Currency currency, int amount);
         Task<bool> SendTickRequestAsync(SendTickRequest request);
@@ -160,7 +160,7 @@ namespace WebApi.Interfaces
         //Toggle Settings 
         Task SwitchHintsVisibilityAsync(long userId);
         Task<bool> SwitchPersonalityUsage(long userId);
-        Task<SwitchBusyStatusResponse> SwhitchUserBusyStatus(long userId, int sectionId);
+        Task<SwitchBusyStatusResponse> SwhitchUserBusyStatus(long userId, Section section);
         Task SwitchSearchCommentsVisibilityAsync(long userId);
         Task<bool> SwitchUserFreeSearchParamAsync(long userId);
         Task<bool> SwitchUserRTLanguageConsiderationAsync(long userId);

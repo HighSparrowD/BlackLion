@@ -9,7 +9,7 @@ namespace WebApi.Entities.UserInfoEntities
         [Key]
         public long Id { get; set; }
         public long UserId { get; set; }
-        public int Points { get; set; }
+        public float Points { get; set; }
         public int PersonalityPoints { get; set; }
         public int SecondChances { get; set; }
         public int Valentines { get; set; }
@@ -24,7 +24,7 @@ namespace WebApi.Entities.UserInfoEntities
         public Balance()
         {}
 
-        public Balance(long userId, int points, DateTime pointInTime)
+        public Balance(long userId, float points, DateTime pointInTime)
         {
             UserId = userId;
             Points = points;

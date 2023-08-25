@@ -157,7 +157,7 @@ class Familiator:
     #TODO: remove
     def personalityOff_handler(self, message, acceptMode=False):
         if not acceptMode:
-            if Helpers.check_should_turnOf_personality(self.current_user) and not self.wasPersonalityTurnedOff:
+            if Helpers.check_should_turn_off_personality(self.current_user) and not self.wasPersonalityTurnedOff:
                 self.wasPersonalityTurnedOff = True
                 self.bot.send_message(self.current_user,
                                       "We cant find anyone who matches your search parameters. Would you like to temporarily turn off PERSONALITY and continue search without it?",

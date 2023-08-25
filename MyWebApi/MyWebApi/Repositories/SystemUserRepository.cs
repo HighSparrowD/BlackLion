@@ -111,7 +111,7 @@ namespace WebApi.Repositories
 
                 invitor.InvitedUsersCount++;
 
-                var bonus = invitor.HasPremium ? 0.05 : 0;
+                var bonus = invitor.HasPremium ? 0.05f : 0f;
                 var multiplier = 1;
 
                 if (invitor.InvitedUsersCount > 10)
@@ -126,20 +126,20 @@ namespace WebApi.Repositories
                 else if (invitor.InvitedUsersCount == 3 || invitor.InvitedUsersCount % 3 == 0)
                 {
                     if (multiplier == 1)
-                        invitor.InvitedUsersBonus = 0.15 + bonus;
+                        invitor.InvitedUsersBonus = 0.15f + bonus;
                     await TopUpPointBalance(invitor.Id, 1199 * multiplier, $"User {invitor.Id} has invited % 3 users");
                 }
                 else if (invitor.InvitedUsersCount == 7 || invitor.InvitedUsersCount % 7 == 0)
                 {
                     if (multiplier == 1)
-                        invitor.InvitedUsersBonus = 0.35 + bonus;
+                        invitor.InvitedUsersBonus = 0.35f + bonus;
                     await TopUpPointBalance(invitor.Id, 1499 * multiplier, $"User {invitor.Id} has invited % 7 users");
                 }
                 else if (invitor.InvitedUsersCount == 10 || invitor.InvitedUsersCount % 10 == 0)
                 {
                     if (multiplier == 1)
                     {
-                        invitor.InvitedUsersBonus = 0.5 + bonus;
+                        invitor.InvitedUsersBonus = 0.5f + bonus;
                         // 1499 will then turn into 1999 due to premium purchase reward
                         await TopUpPointBalance(invitor.Id, 1499, $"User {invitor.Id} has invited % 10 users");
                         //Adds + 10 random effects to users inventory
@@ -155,7 +155,7 @@ namespace WebApi.Repositories
                     await TopUpPointBalance(invitor.Id, (int)(200 + (200 * bonus) * multiplier), $"User {model.Id} was invited by user {invitor.Id}");
                 }
 
-                user.BonusIndex = 1.5;
+                user.BonusIndex = 1.5f;
                 user.ParentId = invitor.Id;
 
                 _contx.Users.Update(user);
@@ -773,10 +773,10 @@ namespace WebApi.Repositories
             return await _contx.Users.FindAsync(userId) != null;
         }
 
-        public async Task<bool> CheckUserHasVisitedSection(long userId, int sectionId)
+        public async Task<bool> CheckUserHasVisitedSection(long userId, Section section)
         {
             var visit = await _contx.UserVisits.
-                Where(v => v.UserId == userId && v.SectionId == sectionId)
+                Where(v => v.UserId == userId && v.Section == section)
                 .FirstOrDefaultAsync();
 
             if (visit != null)
@@ -788,7 +788,7 @@ namespace WebApi.Repositories
             if (await CheckUserIsRegistered(userId))
             {
                 await AddUserTrustProgressAsync(userId, 0.000002);
-                await _contx.UserVisits.AddAsync(new Visit { UserId = userId, SectionId = sectionId });
+                await _contx.UserVisits.AddAsync(new Visit { UserId = userId, Section = section });
                 await _contx.SaveChangesAsync();
                 return false;
             }
@@ -1353,7 +1353,7 @@ namespace WebApi.Repositories
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<int> TopUpPointBalance(long userId, int points, string description = "")
+        public async Task<float> TopUpPointBalance(long userId, float points, string description = "")
         {
             var time = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
             var userBalance = await GetUserWalletBalance(userId);
@@ -1396,7 +1396,7 @@ namespace WebApi.Repositories
             return userBalance.Points;
         }
 
-        private async Task CreateUserBalance(long userId, int points, DateTime time)
+        private async Task CreateUserBalance(long userId, float points, DateTime time)
         {
            var userBalance = new Balance(userId, points, time);
 
@@ -1441,22 +1441,22 @@ namespace WebApi.Repositories
             return userBalance.PersonalityPoints;
         }
 
-        private async Task<bool> RegisterUserPurchaseInPoints(long userId, int points, string description)
+        private async Task<bool> RegisterUserPurchaseInPoints(long userId, float points, string description)
         {
             return await RegisterUserPurchase(userId, points, description, Currency.Points);
         }
 
-        private async Task<bool> RegisterUserPurchaseInPP(long userId, int points, string description)
+        private async Task<bool> RegisterUserPurchaseInPP(long userId, float points, string description)
         {
             return await RegisterUserPurchase(userId, points, description, Currency.OceanPoints);
         }
 
-        private async Task<bool> RegisterPurchaseInRealMoney(long userId, int points, string description, Currency currency)
+        private async Task<bool> RegisterPurchaseInRealMoney(long userId, float points, string description, Currency currency)
         {
             return await RegisterUserPurchase(userId, points, description, currency);
         }
 
-        private async Task<bool> RegisterUserPurchase(long userId, int amount, string description, Currency currency)
+        private async Task<bool> RegisterUserPurchase(long userId, float amount, string description, Currency currency)
         {
             var purchase = new Transaction
             {
@@ -1515,7 +1515,7 @@ namespace WebApi.Repositories
                 return DateTime.MinValue;
         }
 
-        public async Task<DateTime> GrantPremiumToUser(long userId, int cost, int dayDuration, Currency currency)
+        public async Task<DateTime> GrantPremiumToUser(long userId, float cost, int dayDuration, Currency currency)
         {
             var timeNow = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
             var premiumFutureExpirationDate = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(dayDuration), DateTimeKind.Utc);
@@ -1688,7 +1688,7 @@ namespace WebApi.Repositories
             return user.IsBusy; 
         }
 
-        public async Task<SwitchBusyStatusResponse> SwhitchUserBusyStatus(long userId, int sectionId)
+        public async Task<SwitchBusyStatusResponse> SwhitchUserBusyStatus(long userId, Section section)
         {
             var user = await _contx.Users.Where(u => u.Id == userId)
                 .Include(u => u.Data)
@@ -1699,13 +1699,12 @@ namespace WebApi.Repositories
             {
                 var hint = "";
 
-                user.IsBusy = !user.IsBusy;
                 user.IsUpdated = false;
 
                 _contx.Update(user);
                 await _contx.SaveChangesAsync();
 
-                if (!user.IsBusy) // Negation <= Was busy before update
+                if (user.IsBusy && section != Section.MainMenu)
                 {
                     return new SwitchBusyStatusResponse
                     {
@@ -1721,6 +1720,11 @@ namespace WebApi.Repositories
                     };
                 }
 
+                if(section == Section.MainMenu)
+                    user.IsBusy = false;
+                else
+                    user.IsBusy = true;
+
                 if (user.Settings.ShouldSendHints)
                     hint = await GetRandomHintAsync(user.Data.Language, null);
 
@@ -1729,7 +1733,7 @@ namespace WebApi.Repositories
                 {
                     Status = SwitchBusyStatusResult.Success,
                     Comment = hint,
-                    HasVisited = await CheckUserHasVisitedSection(userId, sectionId),
+                    HasVisited = await CheckUserHasVisitedSection(userId, section),
 
                 };
             }
@@ -3670,7 +3674,7 @@ namespace WebApi.Repositories
             await _contx.SaveChangesAsync();
         }
 
-        public async Task<bool> PurchaseEffectAsync(long userId, int effectId, int points, Currency currency, short count=1)
+        public async Task<bool> PurchaseEffectAsync(long userId, int effectId, float points, Currency currency, short count=1)
         {
             var balance = await GetUserWalletBalance(userId);
 
