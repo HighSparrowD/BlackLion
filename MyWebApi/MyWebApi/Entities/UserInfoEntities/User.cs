@@ -34,9 +34,9 @@ namespace WebApi.Entities.UserInfoEntities
         public bool ShouldEnhance { get; set; }
         public short ReportCount { get; set; } // How many times this user was reported today
         public short DailyRewardPoint { get; set; } 
-        public double BonusIndex { get; set; }
+        public float BonusIndex { get; set; }
         public int InvitedUsersCount { get; set; }
-        public double InvitedUsersBonus { get; set; }
+        public float InvitedUsersBonus { get; set; }
         public string? Nickname { get; set; }
         public long? ParentId { get; set; }
         public int ProfileViewsCount { get; set; }

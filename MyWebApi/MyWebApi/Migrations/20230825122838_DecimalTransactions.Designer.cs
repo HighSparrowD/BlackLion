@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WebApi.Data;
@@ -12,9 +13,11 @@ using WebApi.Data;
 namespace WebApi.Migrations
 {
     [DbContext(typeof(UserContext))]
-    partial class UserContextModelSnapshot : ModelSnapshot
+    [Migration("20230825122838_DecimalTransactions")]
+    partial class DecimalTransactions
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1080,8 +1083,8 @@ namespace WebApi.Migrations
                     b.Property<DateTime>("PointInTime")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<float>("Points")
-                        .HasColumnType("real");
+                    b.Property<decimal>("Points")
+                        .HasColumnType("numeric");
 
                     b.Property<int>("SecondChances")
                         .HasColumnType("integer");
@@ -1180,8 +1183,8 @@ namespace WebApi.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<long>("Id"), "transactions_hilo");
 
-                    b.Property<float>("Amount")
-                        .HasColumnType("real");
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric");
 
                     b.Property<short>("Currency")
                         .HasColumnType("smallint");
@@ -1214,8 +1217,8 @@ namespace WebApi.Migrations
                     b.Property<DateTime?>("BanDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<float>("BonusIndex")
-                        .HasColumnType("real");
+                    b.Property<double>("BonusIndex")
+                        .HasColumnType("double precision");
 
                     b.Property<short>("DailyRewardPoint")
                         .HasColumnType("smallint");
@@ -1238,8 +1241,8 @@ namespace WebApi.Migrations
                     b.Property<int>("IdentityType")
                         .HasColumnType("integer");
 
-                    b.Property<float>("InvitedUsersBonus")
-                        .HasColumnType("real");
+                    b.Property<double>("InvitedUsersBonus")
+                        .HasColumnType("double precision");
 
                     b.Property<int>("InvitedUsersCount")
                         .HasColumnType("integer");
