@@ -1096,8 +1096,6 @@ class Registrator:
             return False
 
         self.send_secondary_message(self.localization['OceanDescriptionMessage'], markup=self.YNmarkup)
-        self.next_handler = self.bot.register_next_step_handler(message, self.tests_step, acceptMode=True, chat_id=self.current_user)
-
 
     def profile_constructor(self):
 
@@ -1474,8 +1472,9 @@ class Registrator:
         self.delete_additional_message()
 
         self.bot.callback_query_handlers.remove(self.chCode)
-        if self.hasVisited:
-            Helpers.switch_user_busy_status(self.current_user, 12)
+
+        Helpers.switch_user_busy_status(self.current_user, 14)
+
         if self.return_method:
             self.return_method()
         else:

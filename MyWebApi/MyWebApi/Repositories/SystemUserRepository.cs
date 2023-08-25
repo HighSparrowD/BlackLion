@@ -773,10 +773,10 @@ namespace WebApi.Repositories
             return await _contx.Users.FindAsync(userId) != null;
         }
 
-        public async Task<bool> CheckUserHasVisitedSection(long userId, int sectionId)
+        public async Task<bool> CheckUserHasVisitedSection(long userId, Section section)
         {
             var visit = await _contx.UserVisits.
-                Where(v => v.UserId == userId && v.SectionId == sectionId)
+                Where(v => v.UserId == userId && v.Section == section)
                 .FirstOrDefaultAsync();
 
             if (visit != null)
@@ -788,7 +788,7 @@ namespace WebApi.Repositories
             if (await CheckUserIsRegistered(userId))
             {
                 await AddUserTrustProgressAsync(userId, 0.000002);
-                await _contx.UserVisits.AddAsync(new Visit { UserId = userId, SectionId = sectionId });
+                await _contx.UserVisits.AddAsync(new Visit { UserId = userId, Section = section });
                 await _contx.SaveChangesAsync();
                 return false;
             }
@@ -1688,7 +1688,7 @@ namespace WebApi.Repositories
             return user.IsBusy; 
         }
 
-        public async Task<SwitchBusyStatusResponse> SwhitchUserBusyStatus(long userId, int sectionId)
+        public async Task<SwitchBusyStatusResponse> SwhitchUserBusyStatus(long userId, Section section)
         {
             var user = await _contx.Users.Where(u => u.Id == userId)
                 .Include(u => u.Data)
@@ -1699,13 +1699,12 @@ namespace WebApi.Repositories
             {
                 var hint = "";
 
-                user.IsBusy = !user.IsBusy;
                 user.IsUpdated = false;
 
                 _contx.Update(user);
                 await _contx.SaveChangesAsync();
 
-                if (!user.IsBusy) // Negation <= Was busy before update
+                if (user.IsBusy && section != Section.MainMenu)
                 {
                     return new SwitchBusyStatusResponse
                     {
@@ -1721,6 +1720,11 @@ namespace WebApi.Repositories
                     };
                 }
 
+                if(section == Section.MainMenu)
+                    user.IsBusy = false;
+                else
+                    user.IsBusy = true;
+
                 if (user.Settings.ShouldSendHints)
                     hint = await GetRandomHintAsync(user.Data.Language, null);
 
@@ -1729,7 +1733,7 @@ namespace WebApi.Repositories
                 {
                     Status = SwitchBusyStatusResult.Success,
                     Comment = hint,
-                    HasVisited = await CheckUserHasVisitedSection(userId, sectionId),
+                    HasVisited = await CheckUserHasVisitedSection(userId, section),
 
                 };
             }

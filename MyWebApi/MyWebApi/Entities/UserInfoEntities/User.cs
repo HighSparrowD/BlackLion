@@ -71,7 +71,7 @@ namespace WebApi.Entities.UserInfoEntities
             SettingsId = userId;
             LocationId = userId;
 
-            IsBusy = false;
+            IsBusy = true; // At the moment of registration user is still inside Registration module, thus true
             IsBanned = false;
             IsDeleted = false;
             HasPremium = false;

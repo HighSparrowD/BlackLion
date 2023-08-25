@@ -26,7 +26,7 @@ def go_back_to_main_menu(bot, user, message, shouldSwitch=True):
     response = None
 
     if shouldSwitch:
-        response = Helpers.switch_user_busy_status(user, 12)
+        response = Helpers.switch_user_busy_status(user, 14)
 
         request_list = Helpers.get_user_requests(user)
 

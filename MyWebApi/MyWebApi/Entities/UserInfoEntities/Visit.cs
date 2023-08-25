@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using WebApi.Enums;
 
 namespace WebApi.Entities.UserInfoEntities
 {
@@ -7,6 +8,6 @@ namespace WebApi.Entities.UserInfoEntities
         [Key]
         public long UserId { get; set; }
         [Key]
-        public int SectionId { get; set; }
+        public Section Section { get; set; }
     }
 }

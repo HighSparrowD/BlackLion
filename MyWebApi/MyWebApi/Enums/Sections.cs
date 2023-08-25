@@ -14,6 +14,7 @@ public enum Section
     Shop = 10,
     Settings = 11,
     Neutral = 12,
-    Adventurer = 13
+    Adventurer = 13,
+    MainMenu = 14 
 }
 

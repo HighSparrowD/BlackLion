@@ -117,7 +117,7 @@ namespace WebApi.Data
             builder.Entity<Country>().HasKey(c => new { c.Id, c.Lang });
             builder.Entity<Language>().HasKey(l => new { l.Id, l.Lang });
             builder.Entity<City>().HasKey(c => new { c.Id, c.CountryLang });
-            builder.Entity<Visit>().HasKey(g => new { g.UserId, g.SectionId });
+            builder.Entity<Visit>().HasKey(g => new { g.UserId, g.Section });
             builder.Entity<Achievement>().HasKey(g => new { g.Id, g.Language });
             builder.Entity<UserAchievement>().HasKey(g => new { g.UserId, g.AchievementId });
             builder.Entity<BlackList>().HasKey(g => new { g.Id, g.UserId });

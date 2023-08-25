@@ -17,7 +17,7 @@ namespace WebApi.Interfaces
     public interface IUserRepository
     {
         Task<bool> CheckUserIsRegistered(long userId);
-        Task<bool> CheckUserHasVisitedSection(long userId, int sectionId);
+        Task<bool> CheckUserHasVisitedSection(long userId, Section section);
         Task<bool> CheckUserIsBusy(long userId);
         Task<bool> CheckUserHasRequests(long userId);
         Task<bool> CheckUserIsBanned(long userId);
@@ -160,7 +160,7 @@ namespace WebApi.Interfaces
         //Toggle Settings 
         Task SwitchHintsVisibilityAsync(long userId);
         Task<bool> SwitchPersonalityUsage(long userId);
-        Task<SwitchBusyStatusResponse> SwhitchUserBusyStatus(long userId, int sectionId);
+        Task<SwitchBusyStatusResponse> SwhitchUserBusyStatus(long userId, Section section);
         Task SwitchSearchCommentsVisibilityAsync(long userId);
         Task<bool> SwitchUserFreeSearchParamAsync(long userId);
         Task<bool> SwitchUserRTLanguageConsiderationAsync(long userId);
