@@ -7,7 +7,7 @@ def create_registration_resources():
     ru = {}
     uk = {}
 
-    file = pandas.read_csv("./Inputs/Registration.csv", usecols=["Name", "EN", "RU", "UKR"])
+    file = pandas.read_csv("./Inputs/Registration.csv", usecols=["Name", "ENG", "RUS", "UKR"])
     resources = file.drop_duplicates().values.tolist()
 
     for res in resources:

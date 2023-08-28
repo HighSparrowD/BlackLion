@@ -438,7 +438,7 @@ class Adventurer:
                 self.previous_item = str(self.data["cityId"])
                 add_tick_to_element(self.bot, self.current_user, self.active_message, self.current_markup_elements, self.markup_page, str(self.data["cityId"]))
 
-            self.send_secondary_message("Chose one from above, or simply type to chat", markup=self.okMarkup)
+            self.send_secondary_message("Choose one from above, or simply type to chat", markup=self.okMarkup)
             self.send_additional_actions_message("Additional actions", self.goBackInlineMarkup)
             self.next_handler = self.bot.register_next_step_handler(message, self.register_city_step, acceptMode=True, chat_id=self.current_user)
         else:

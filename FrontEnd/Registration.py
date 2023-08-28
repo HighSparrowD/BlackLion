@@ -1064,7 +1064,7 @@ class Registrator:
 
         self.question_index = 15
 
-        if self.editMode:
+        if self.hasVisited:
             response = requests.post("https://localhost:44381/UpdateUserProfile", d, headers={
                 "Content-Type": "application/json"}, verify=False)
         else:

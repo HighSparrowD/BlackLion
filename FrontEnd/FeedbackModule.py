@@ -30,7 +30,7 @@ class FeedbackModule:
 
         self.markup.add(KeyboardButton("abort"))
 
-        self.start_text = "Hello, what are you willing to report? "
+        self.start_text = "Hello, what are you willing to report?"
         self.middle_text = "Write us a message!"
         self.interrupt_text = "Give us your report when you ready"
         self.end_text = "Thank you for your input!"

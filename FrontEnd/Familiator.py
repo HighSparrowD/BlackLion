@@ -122,7 +122,7 @@ class Familiator:
 
     def search_by_tags(self, message, acceptMode=False):
         if not acceptMode:
-            self.bot.send_message(self.current_user, f"Sent me up to {self.tagLimit} tags to conduct the search", reply_markup=self.goBackmarkup)
+            self.bot.send_message(self.current_user, f"Send me up to {self.tagLimit} tags to conduct the search", reply_markup=self.goBackmarkup)
             self.bot.register_next_step_handler(message, self.search_by_tags, acceptMode=True, chat_id=self.current_user)
         else:
             if message.text == "Go Back":

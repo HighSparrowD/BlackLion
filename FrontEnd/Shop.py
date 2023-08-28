@@ -124,7 +124,7 @@ class Shop:
             self.proceed_to_start(message)
 
     def proceed_to_start(self, message):
-        self.ch = self.bot.register_callback_query_handler("", self.callback_handler, user_id=self.current_user)
+        self.ch = self.bot.register_callback_query_handler(message, self.callback_handler, user_id=self.current_user)
         self.mh = self.bot.register_message_handler(self.payment_handler, content_types=['successful_payment'], user_id=self.current_user)
         self.pre_checkout_h = self.bot.register_pre_checkout_query_handler(self.pre_checkout_handler, func=lambda query: True)
 
@@ -666,7 +666,7 @@ class Shop:
 
         if self.previous_section:
             if kwargs.get("shouldSubscribe"):
-                self.ch = self.bot.register_callback_query_handler("", self.callback_handler, user_id=self.current_user)
+                self.ch = self.bot.register_callback_query_handler(message, self.callback_handler, user_id=self.current_user)
 
             self.previous_section(message)
 
