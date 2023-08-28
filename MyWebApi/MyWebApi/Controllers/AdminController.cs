@@ -173,7 +173,7 @@ namespace WebApi.Controllers
                         Age = initialUser.Data.UserAge,
                         AgePrefs = initialUser.Data.AgePrefs,
                         AppLanguage = initialUser.Data.Language,
-                        ShouldUserPersonalityFunc = false,
+                        UsesOcean = false,
                         CityCode = initialUser.Location.CityId,
                         CountryCode = initialUser.Location.CountryId,
                         CommunicationPrefs = initialUser.Data.CommunicationPrefs,

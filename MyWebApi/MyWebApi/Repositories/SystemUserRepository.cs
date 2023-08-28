@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using WebApi.Entities;
+using OceanStats = WebApi.Entities.UserInfoEntities.OceanStats;
 
 namespace WebApi.Repositories
 {
@@ -80,7 +81,7 @@ namespace WebApi.Repositories
                 UserRealName = model.RealName,
             };
 
-            var uSettings = new UserSettings(model.Id, model.ShouldUserPersonalityFunc);
+            var uSettings = new UserSettings(model.Id, model.UsesOcean);
 
             user.LocationId = location.Id;
 
@@ -95,10 +96,10 @@ namespace WebApi.Repositories
             await AddUserTrustLevel(model.Id);
             await AddUserTrustProgressAsync(model.Id, 0.000012);
 
-            if (model.ShouldUserPersonalityFunc)
+            if (model.UsesOcean)
             {
-                var personalityStats = new UserPersonalityStats(model.Id);
-                var personalityPoints = new UserPersonalityPoints(model.Id);
+                var personalityStats = new Entities.UserInfoEntities.OceanStats(model.Id);
+                var personalityPoints = new OceanPoints(model.Id);
             }
 
             var invitation = await GetInvitationAsync(model.Id);
@@ -262,7 +263,7 @@ namespace WebApi.Repositories
                 .ToListAsync();
 
             //If user uses PERSONALITY functionality
-            if (currentUser.Settings.ShouldUsePersonalityFunc)
+            if (currentUser.Settings.UsesOcean)
             {
 
                 for (int i = 0; i < data.Count; i++)
@@ -343,9 +344,9 @@ namespace WebApi.Repositories
             var secondaryMatches = 0;
             var bonus = "";
 
-            var hasActiveValentine = userActiveEffects.Where(e => e.EffectId == Currency.TheValentine).SingleOrDefault() != null;
+            var hasActiveValentine = userActiveEffects.Where(e => e.EffectId == Currency.TheValentine).FirstOrDefault() != null;
 
-            var userHasDetectorOn = userActiveEffects.Where(e => e.EffectId == Currency.TheDetector).SingleOrDefault() != null;
+            var userHasDetectorOn = userActiveEffects.Where(e => e.EffectId == Currency.TheDetector).FirstOrDefault() != null;
 
             if (hasActiveValentine)
                 valentineBonus = 2;
@@ -356,64 +357,60 @@ namespace WebApi.Repositories
                 minDeviation *= 3.2;
             }
 
-            var userPoints = await _contx.PersonalityPoints.Where(p => p.UserId == currentUser.Id)
+            var userPoints = await _contx.OceanPoints.Where(p => p.UserId == currentUser.Id)
                 .AsNoTracking()
                 .FirstOrDefaultAsync();
 
-            var userStats = await _contx.PersonalityStats.Where(s => s.UserId == currentUser.Id)
+            var userStats = await _contx.OceanStats.Where(s => s.UserId == currentUser.Id)
                 .AsNoTracking()
                 .FirstOrDefaultAsync();
 
-            //Enhanse users PP if condition is met
+            //Enhanse users OP if condition is met
             if(currentUser.ShouldEnhance)
             {
-                userPoints.PersonalityPercentage = 0.1;
-                userPoints.EmotionalIntellectPercentage = 0.1;
-                userPoints.ReliabilityPercentage = 0.1;
-                userPoints.CompassionPercentage = 0.1;
-                userPoints.OpenMindednessPercentage = 0.1;
-                userPoints.SelfAwarenessPercentage = 0.1;
-                userPoints.AgreeablenessPercentage = 0.1;
-                userPoints.LevelOfSensePercentage = 0.1;
-                userPoints.IntellectPercentage = 0.1;
-                userPoints.NaturePercentage = 0.1;
-                userPoints.CreativityPercentage = 0.1;
+                userPoints.OpennessPercentage = 0.1f;
+                userPoints.ConscientiousnessPercentage = 0.1f;
+                userPoints.ExtroversionPercentage = 0.1f;
+                userPoints.AgreeablenessPercentage = 0.1f;
+                userPoints.NeuroticismPercentage = 0.1f;
+                userPoints.NaturePercentage = 0.1f;
+                userPoints.AgreeablenessPercentage = 0.1f;
             }
 
             var important = await userPoints.GetImportantParams();
 
-            //Pass if user does not use personality
+            //Pass if user does not use OCEAN+
             if (!managedUser.UsesOcean)
                 return returnUser;
 
-            var user2Points = await _contx.PersonalityPoints.Where(p => p.UserId == managedUser.UserId)
+            var user2Points = await _contx.OceanPoints.Where(p => p.UserId == managedUser.UserId)
                 .AsNoTracking()
                 .FirstOrDefaultAsync();
 
-            var user2Stats = await _contx.PersonalityStats.Where(s => s.UserId == managedUser.UserId)
+            var user2Stats = await _contx.OceanStats.Where(s => s.UserId == managedUser.UserId)
                 .AsNoTracking()
                 .FirstOrDefaultAsync();
 
 
-            //Turns off the parameter if it is 0
-            if (userPoints.Personality > 0 && userStats.Personality > 0 && user2Points.Personality > 0 && user2Stats.Personality > 0)
+            //Turns off the parameter if 1. User has no relative tests passed; 2. No points where invested in it
+            if (userPoints.Openness > 0 && userStats.Openness > 0 && user2Points.Openness > 0 && user2Stats.Openness > 0)
             {
                 //TODO: create its own deviation variable depending on the number of personalities (It is likely to be grater than the normal one)
-                var personalitySim = await CalculateSimilarityAsync(userStats.Personality * valentineBonus, user2Stats.Personality);
+                var personalitySim = await CalculateSimilarityAsync(userStats.Openness * valentineBonus, user2Stats.Openness);
 
-                currentValueMax = ApplyMaxDeviation(userPoints.PersonalityPercentage, deviation);
-                currentValueMin = ApplyMinDeviation(userPoints.PersonalityPercentage, minDeviation);
+                currentValueMax = ApplyMaxDeviation(userPoints.OpennessPercentage, deviation);
+                currentValueMin = ApplyMinDeviation(userPoints.OpennessPercentage, minDeviation);
 
                 //Negative conditions are applied, cuz this is an exclussive condition
                 if (personalitySim <= currentValueMax && personalitySim >= currentValueMin)
                 {
-                    currentValueMax = ApplyMaxDeviation(user2Points.PersonalityPercentage, deviation);
-                    currentValueMin = ApplyMinDeviation(user2Points.PersonalityPercentage, minDeviation);
+                    currentValueMax = ApplyMaxDeviation(user2Points.OpennessPercentage, deviation);
+                    currentValueMin = ApplyMinDeviation(user2Points.OpennessPercentage, minDeviation);
 
                     if (personalitySim <= currentValueMax && personalitySim >= currentValueMin)
                     {
-                        bonus += "[P] ";
-                        if (important.Contains(PersonalityStats.PersonalityType))
+                        bonus += "[O] ";
+                        if (important.Contains(Enums.OceanStats.Openness))
                         {
                             importantMatches++;
                         }
@@ -423,23 +420,22 @@ namespace WebApi.Repositories
                 }
             }
 
-
-            if (userPoints.EmotionalIntellect > 0 && userStats.EmotionalIntellect > 0 && user2Points.EmotionalIntellect > 0 && user2Stats.EmotionalIntellect > 0)
+            if (userPoints.Conscientiousness > 0 && userStats.Conscientiousness > 0 && user2Points.Conscientiousness > 0 && user2Stats.Conscientiousness > 0)
             {
-                var emIntellectSim = await CalculateSimilarityAsync(userStats.EmotionalIntellect * valentineBonus, user2Stats.EmotionalIntellect);
+                var emIntellectSim = await CalculateSimilarityAsync(userStats.Conscientiousness * valentineBonus, user2Stats.Conscientiousness);
 
-                currentValueMax = ApplyMaxDeviation(userPoints.EmotionalIntellectPercentage, deviation);
-                currentValueMin = ApplyMinDeviation(userPoints.EmotionalIntellectPercentage, minDeviation);
+                currentValueMax = ApplyMaxDeviation(userPoints.ConscientiousnessPercentage, deviation);
+                currentValueMin = ApplyMinDeviation(userPoints.ConscientiousnessPercentage, minDeviation);
 
                 if (emIntellectSim <= currentValueMax && emIntellectSim >= currentValueMin)
                 {
-                    currentValueMax = ApplyMaxDeviation(user2Points.EmotionalIntellectPercentage, deviation);
-                    currentValueMin = ApplyMinDeviation(user2Points.EmotionalIntellectPercentage, minDeviation);
+                    currentValueMax = ApplyMaxDeviation(user2Points.ConscientiousnessPercentage, deviation);
+                    currentValueMin = ApplyMinDeviation(user2Points.ConscientiousnessPercentage, minDeviation);
 
                     if (emIntellectSim <= currentValueMax && emIntellectSim >= currentValueMin)
                     {
-                        bonus += "[E] ";
-                        if (important.Contains(PersonalityStats.EmotionalIntellect))
+                        bonus += "[C] ";
+                        if (important.Contains(Enums.OceanStats.Conscientiousness))
                         {
                             importantMatches++;
                         }
@@ -449,23 +445,22 @@ namespace WebApi.Repositories
                 }
             }
 
-
-            if (userPoints.Reliability > 0 && userStats.Reliability > 0 && user2Points.Reliability > 0 && user2Stats.Reliability > 0)
+            if (userPoints.Extroversion > 0 && userStats.Extroversion > 0 && user2Points.Extroversion > 0 && user2Stats.Extroversion > 0)
             {
-                var reliabilitySim = await CalculateSimilarityAsync(userStats.Reliability * valentineBonus, user2Stats.Reliability);
+                var reliabilitySim = await CalculateSimilarityAsync(userStats.Extroversion * valentineBonus, user2Stats.Extroversion);
 
-                currentValueMax = ApplyMaxDeviation(userPoints.ReliabilityPercentage, deviation);
-                currentValueMin = ApplyMinDeviation(userPoints.ReliabilityPercentage, minDeviation);
+                currentValueMax = ApplyMaxDeviation(userPoints.ExtroversionPercentage, deviation);
+                currentValueMin = ApplyMinDeviation(userPoints.ExtroversionPercentage, minDeviation);
 
                 if (reliabilitySim <= currentValueMax && reliabilitySim >= currentValueMin)
                 {
-                    currentValueMax = ApplyMaxDeviation(user2Points.ReliabilityPercentage, deviation);
-                    currentValueMin = ApplyMinDeviation(user2Points.ReliabilityPercentage, minDeviation);
+                    currentValueMax = ApplyMaxDeviation(user2Points.ExtroversionPercentage, deviation);
+                    currentValueMin = ApplyMinDeviation(user2Points.ExtroversionPercentage, minDeviation);
 
                     if (reliabilitySim <= currentValueMax && reliabilitySim >= currentValueMin)
                     {
-                        bonus += "[R] ";
-                        if (important.Contains(PersonalityStats.Reliability))
+                        bonus += "[E] ";
+                        if (important.Contains(Enums.OceanStats.Extroversion))
                         {
                             importantMatches++;
                         }
@@ -474,102 +469,23 @@ namespace WebApi.Repositories
                     }
                 }
             }
-
-
-            if (userPoints.Compassion > 0 && userStats.Compassion > 0 && user2Points.Compassion > 0 && user2Stats.Compassion > 0)
-            {
-                var compassionSim = await CalculateSimilarityAsync(userStats.Compassion * valentineBonus, user2Stats.Compassion);
-
-                currentValueMax = ApplyMaxDeviation(userPoints.CompassionPercentage, deviation);
-                currentValueMin = ApplyMinDeviation(userPoints.CompassionPercentage, minDeviation);
-
-                if (compassionSim <= currentValueMax && compassionSim >= currentValueMin)
-                {
-                    currentValueMax = ApplyMaxDeviation(user2Points.CompassionPercentage, deviation);
-                    currentValueMin = ApplyMinDeviation(user2Points.CompassionPercentage, minDeviation);
-
-                    if (compassionSim <= currentValueMax && compassionSim >= currentValueMin)
-                    {
-                        bonus += "[S] ";
-                        if (important.Contains(PersonalityStats.Compassion))
-                        {
-                            importantMatches++;
-                        }
-                        else
-                            secondaryMatches++;
-                    }
-                }
-            }
-
-
-            if (userPoints.OpenMindedness > 0 && userStats.OpenMindedness > 0 && user2Points.OpenMindedness > 0 && user2Stats.OpenMindedness > 0)
-            {
-                var openMindSim = await CalculateSimilarityAsync(userStats.OpenMindedness * valentineBonus, user2Stats.OpenMindedness);
-
-                currentValueMax = ApplyMaxDeviation(userPoints.OpenMindednessPercentage, deviation);
-                currentValueMin = ApplyMinDeviation(userPoints.OpenMindednessPercentage, minDeviation);
-
-                if (openMindSim <= currentValueMax && openMindSim >= currentValueMin)
-                {
-                    currentValueMax = ApplyMaxDeviation(user2Points.OpenMindednessPercentage, deviation);
-                    currentValueMin = ApplyMinDeviation(user2Points.OpenMindednessPercentage, minDeviation);
-
-                    if (openMindSim <= currentValueMax && openMindSim >= currentValueMin)
-                    {
-                        bonus += "[O] ";
-                        if (important.Contains(PersonalityStats.OpenMindedness))
-                        {
-                            importantMatches++;
-                        }
-                        else
-                            secondaryMatches++;
-                    }
-                }
-            }
-
 
             if (userPoints.Agreeableness > 0 && userStats.Agreeableness > 0 && user2Points.Agreeableness > 0 && user2Stats.Agreeableness > 0)
             {
-                var agreeablenessSim = await CalculateSimilarityAsync(userStats.Agreeableness * valentineBonus, user2Stats.Agreeableness);
+                var compassionSim = await CalculateSimilarityAsync(userStats.Agreeableness * valentineBonus, user2Stats.Agreeableness);
 
                 currentValueMax = ApplyMaxDeviation(userPoints.AgreeablenessPercentage, deviation);
                 currentValueMin = ApplyMinDeviation(userPoints.AgreeablenessPercentage, minDeviation);
 
-                if (agreeablenessSim <= currentValueMax && agreeablenessSim >= currentValueMin)
+                if (compassionSim <= currentValueMax && compassionSim >= currentValueMin)
                 {
                     currentValueMax = ApplyMaxDeviation(user2Points.AgreeablenessPercentage, deviation);
                     currentValueMin = ApplyMinDeviation(user2Points.AgreeablenessPercentage, minDeviation);
 
-                    if (agreeablenessSim <= currentValueMax && agreeablenessSim >= currentValueMin)
-                    {
-                        bonus += "[N] ";
-                        if (important.Contains(PersonalityStats.Agreeableness))
-                        {
-                            importantMatches++;
-                        }
-                        else
-                            secondaryMatches++;
-                    }
-                }
-            }
-
-
-            if (userPoints.SelfAwareness > 0 && userStats.SelfAwareness > 0 && user2Points.SelfAwareness > 0 && user2Stats.SelfAwareness > 0)
-            {
-                var selfAwerenessSim = await CalculateSimilarityAsync(userStats.SelfAwareness * valentineBonus, user2Stats.SelfAwareness);
-
-                currentValueMax = ApplyMaxDeviation(userPoints.SelfAwarenessPercentage, deviation);
-                currentValueMin = ApplyMinDeviation(userPoints.SelfAwarenessPercentage, minDeviation);
-
-                if (selfAwerenessSim <= currentValueMax && selfAwerenessSim >= currentValueMin)
-                {
-                    currentValueMax = ApplyMaxDeviation(user2Points.SelfAwarenessPercentage, deviation);
-                    currentValueMin = ApplyMinDeviation(user2Points.SelfAwarenessPercentage, minDeviation);
-
-                    if (selfAwerenessSim <= currentValueMax && selfAwerenessSim >= currentValueMin)
+                    if (compassionSim <= currentValueMax && compassionSim >= currentValueMin)
                     {
                         bonus += "[A] ";
-                        if (important.Contains(PersonalityStats.SelfAwareness))
+                        if (important.Contains(Enums.OceanStats.Agreeableness))
                         {
                             importantMatches++;
                         }
@@ -580,48 +496,22 @@ namespace WebApi.Repositories
             }
 
 
-            if (userPoints.LevelOfSense > 0 && userStats.LevelOfSense > 0 && user2Points.LevelOfSense > 0 && user2Stats.LevelOfSense > 0)
+            if (userPoints.Neuroticism > 0 && userStats.Neuroticism > 0 && user2Points.Neuroticism > 0 && user2Stats.Neuroticism > 0)
             {
-                var levelOfSense = await CalculateSimilarityAsync(userStats.LevelOfSense * valentineBonus, user2Stats.LevelOfSense);
+                var openMindSim = await CalculateSimilarityAsync(userStats.Neuroticism * valentineBonus, user2Stats.Neuroticism);
 
-                currentValueMax = ApplyMaxDeviation(userPoints.LevelOfSensePercentage, deviation);
-                currentValueMin = ApplyMinDeviation(userPoints.LevelOfSensePercentage, minDeviation);
+                currentValueMax = ApplyMaxDeviation(userPoints.NeuroticismPercentage, deviation);
+                currentValueMin = ApplyMinDeviation(userPoints.NeuroticismPercentage, minDeviation);
 
-                if (levelOfSense <= currentValueMax && levelOfSense >= currentValueMin)
+                if (openMindSim <= currentValueMax && openMindSim >= currentValueMin)
                 {
-                    currentValueMax = ApplyMaxDeviation(user2Points.LevelOfSensePercentage, deviation);
-                    currentValueMin = ApplyMinDeviation(user2Points.LevelOfSensePercentage, minDeviation);
+                    currentValueMax = ApplyMaxDeviation(user2Points.NeuroticismPercentage, deviation);
+                    currentValueMin = ApplyMinDeviation(user2Points.NeuroticismPercentage, minDeviation);
 
-                    if (levelOfSense <= currentValueMax && levelOfSense >= currentValueMin)
+                    if (openMindSim <= currentValueMax && openMindSim >= currentValueMin)
                     {
-                        bonus += "[L] ";
-                        if (important.Contains(PersonalityStats.LevelsOfSense))
-                        {
-                            importantMatches++;
-                        }
-                        else
-                            secondaryMatches++;
-                    }
-                }
-            }
-
-
-            if (userPoints.Intellect > 0 && userStats.Intellect > 0 && user2Points.Intellect > 0 && user2Stats.Intellect > 0)
-            {
-                var intellectSim = await CalculateSimilarityAsync(userStats.Intellect * valentineBonus, user2Points.Intellect);
-
-                currentValueMax = ApplyMaxDeviation(userPoints.IntellectPercentage, deviation);
-                currentValueMin = ApplyMinDeviation(userPoints.IntellectPercentage, minDeviation);
-
-                if (intellectSim <= currentValueMax && intellectSim >= currentValueMin)
-                {
-                    currentValueMax = ApplyMaxDeviation(user2Points.IntellectPercentage, deviation);
-                    currentValueMin = ApplyMinDeviation(user2Points.IntellectPercentage, minDeviation);
-
-                    if (intellectSim <= currentValueMax && intellectSim >= currentValueMin)
-                    {
-                        bonus += "[I] ";
-                        if (important.Contains(PersonalityStats.Intellect))
+                        bonus += "[N] ";
+                        if (important.Contains(Enums.OceanStats.Neuroticism))
                         {
                             importantMatches++;
                         }
@@ -645,34 +535,8 @@ namespace WebApi.Repositories
 
                     if (natureSim <= currentValueMax && natureSim >= currentValueMin)
                     {
-                        bonus += "[T] ";
-                        if (important.Contains(PersonalityStats.Nature))
-                        {
-                            importantMatches++;
-                        }
-                        else
-                            secondaryMatches++;
-                    }
-                }
-            }
-
-
-            if (userPoints.Creativity > 0 && userStats.Creativity > 0 && user2Points.Creativity > 0 && user2Stats.Creativity > 0)
-            {
-                var creativitySim = await CalculateSimilarityAsync(userStats.Creativity * valentineBonus, user2Stats.Creativity);
-
-                currentValueMax = ApplyMaxDeviation(userPoints.CreativityPercentage, deviation);
-                currentValueMin = ApplyMinDeviation(userPoints.CreativityPercentage, minDeviation);
-
-                if (creativitySim <= currentValueMax && creativitySim >= currentValueMin)
-                {
-                    currentValueMax = ApplyMaxDeviation(user2Points.CreativityPercentage, deviation);
-                    currentValueMin = ApplyMinDeviation(user2Points.CreativityPercentage, minDeviation);
-
-                    if (creativitySim <= currentValueMax && creativitySim >= currentValueMin)
-                    {
-                        bonus += "[Y] ";
-                        if (important.Contains(PersonalityStats.Creativity))
+                        bonus += "[+] ";
+                        if (important.Contains(Enums.OceanStats.Nature))
                         {
                             importantMatches++;
                         }
@@ -1205,7 +1069,7 @@ namespace WebApi.Repositories
                     Languages = sData.UserLanguages,
                     UserLocationPreferences = sData.LocationPreferences,
                     Reason = sData.Reason,
-                    ShouldUserPersonalityFunc = sSettings.ShouldUsePersonalityFunc,
+                    UsesOcean = sSettings.UsesOcean,
                 });
             }
 
@@ -1411,12 +1275,12 @@ namespace WebApi.Repositories
 
             if (userBalance != null)
             {
-                if (userBalance.PersonalityPoints + points <= 0)
-                    userBalance.PersonalityPoints = 0;
-                else if (userBalance.PersonalityPoints + points >= int.MaxValue)
-                    userBalance.PersonalityPoints = int.MaxValue;
+                if (userBalance.OceanPoints + points <= 0)
+                    userBalance.OceanPoints = 0;
+                else if (userBalance.OceanPoints + points >= int.MaxValue)
+                    userBalance.OceanPoints = int.MaxValue;
                 else
-                    userBalance.PersonalityPoints += points;
+                    userBalance.OceanPoints += points;
 
                 userBalance.PointInTime = time;
 
@@ -1438,7 +1302,7 @@ namespace WebApi.Repositories
             await _contx.SaveChangesAsync();
             await RegisterUserPurchaseInPP(userId, points, description); //Registers info about amount of points decremented / incremented
 
-            return userBalance.PersonalityPoints;
+            return userBalance.OceanPoints;
         }
 
         private async Task<bool> RegisterUserPurchaseInPoints(long userId, float points, string description)
@@ -2525,7 +2389,7 @@ namespace WebApi.Repositories
             try
             {
                 return await _contx.Balances.Where(b => b.UserId == userId)
-                    .Select(b => b.PersonalityPoints)
+                    .Select(b => b.OceanPoints)
                     .SingleOrDefaultAsync();
             }
             catch(NullReferenceException) { return 0; }
@@ -2543,7 +2407,7 @@ namespace WebApi.Repositories
                 if (!await RegisterTestPassingAsync(model, result.TestResult))
                     return false;
 
-                _contx.PersonalityStats.Update(result.Stats);
+                _contx.OceanStats.Update(result.Stats);
                 await _contx.SaveChangesAsync();
                 return true;
             }
@@ -2558,7 +2422,7 @@ namespace WebApi.Repositories
                 var balance = await _contx.Balances.Where(b => b.UserId == model.UserId)
                     .SingleOrDefaultAsync();
 
-                balance.PersonalityPoints = model.Balance;
+                balance.OceanPoints = model.Balance;
 
                 _contx.Update(balance);
                 _contx.Update(points);
@@ -2569,56 +2433,39 @@ namespace WebApi.Repositories
             catch { return false; }
         }
 
-        public async Task<UserPersonalityStats> GetUserPersonalityStats(long userId)
+        public async Task<OceanPoints> GetUserPersonalityPoints(long userId)
         {
             try
             {
-                return await _contx.PersonalityStats
+                return await _contx.OceanPoints
                     .Where(s => s.UserId == userId)
-                    .SingleOrDefaultAsync();
+                    .FirstOrDefaultAsync();
             }
             catch { return null; }
         }
 
-        public async Task<UserPersonalityPoints> GetUserPersonalityPoints(long userId)
-        {
-            try
-            {
-                return await _contx.PersonalityPoints
-                    .Where(s => s.UserId == userId)
-                    .SingleOrDefaultAsync();
-            }
-            catch { return null; }
-        }
-
-        private async Task<UserPersonalityPoints> RecalculateSimilarityPercentage(PointsPayload model)
+        private async Task<OceanPoints> RecalculateSimilarityPercentage(PointsPayload model)
         {
             try
             {
                 var points = await GetUserPersonalityPoints(model.UserId);
 
-                if (model.Personality != null)
+                if (model.Openness != null)
                 {
-                    points.PersonalityPercentage = await CalculateSimilarityPreferences((int)model.Personality, points.PersonalityPercentage);
-                    points.Personality = (int)model.Personality;
+                    points.OpennessPercentage = await CalculateSimilarityPreferences((int)model.Openness, points.OpennessPercentage);
+                    points.Openness = (int)model.Openness;
                 }
 
-                if (model.Creativity != null)
+                if (model.Conscientiousness != null)
                 {
-                    points.CreativityPercentage = await CalculateSimilarityPreferences((int)model.Creativity, points.CreativityPercentage);
-                    points.Creativity = (int)model.Creativity;
+                    points.ConscientiousnessPercentage = await CalculateSimilarityPreferences((int)model.Conscientiousness, points.ConscientiousnessPercentage);
+                    points.Conscientiousness = (int)model.Conscientiousness;
                 }
 
-                if (model.Reliability != null)
+                if (model.Extroversion != null)
                 {
-                    points.ReliabilityPercentage = await CalculateSimilarityPreferences((int)model.Reliability, points.ReliabilityPercentage);
-                    points.Reliability = (int)model.Reliability;
-                }
-
-                if (model.Nature != null)
-                {
-                    points.NaturePercentage = await CalculateSimilarityPreferences((int)model.Nature, points.NaturePercentage);
-                    points.Nature = (int)model.Nature;
+                    points.ExtroversionPercentage = await CalculateSimilarityPreferences((int)model.Extroversion, points.ExtroversionPercentage);
+                    points.Extroversion = (int)model.Extroversion;
                 }
 
                 if (model.Agreeableness != null)
@@ -2627,40 +2474,17 @@ namespace WebApi.Repositories
                     points.Agreeableness = (int)model.Agreeableness;
                 }
 
-                if (model.Compassion != null)
+
+                if (model.Neuroticism != null)
                 {
-                    points.CompassionPercentage = await CalculateSimilarityPreferences((int)model.Compassion, points.CompassionPercentage);
-                    points.Compassion = (int)model.Compassion;
+                    points.NeuroticismPercentage = await CalculateSimilarityPreferences((int)model.Neuroticism, points.NeuroticismPercentage);
+                    points.Nature = (int)model.Neuroticism;
                 }
 
-                if (model.EmotionalIntellect != null)
+                if (model.Nature != null)
                 {
-                    points.EmotionalIntellectPercentage = await CalculateSimilarityPreferences((int)model.EmotionalIntellect, points.EmotionalIntellectPercentage);
-                    points.EmotionalIntellect = (int)model.EmotionalIntellect;
-                }
-
-                if (model.Intellect != null)
-                {
-                    points.IntellectPercentage = await CalculateSimilarityPreferences((int)model.Intellect, points.IntellectPercentage);
-                    points.Intellect = (int)model.Intellect;
-                }
-
-                if (model.LevelOfSense != null)
-                {
-                    points.LevelOfSensePercentage = await CalculateSimilarityPreferences((int)model.LevelOfSense, points.LevelOfSensePercentage);
-                    points.LevelOfSense = (int)model.LevelOfSense;
-                }
-
-                if (model.OpenMindedness != null)
-                {
-                    points.OpenMindednessPercentage = await CalculateSimilarityPreferences((int)model.OpenMindedness, points.OpenMindednessPercentage);
-                    points.OpenMindedness = (int)model.OpenMindedness;
-                }
-
-                if (model.SelfAwareness != null)
-                {
-                    points.SelfAwarenessPercentage = await CalculateSimilarityPreferences((int)model.SelfAwareness, points.SelfAwarenessPercentage);
-                    points.SelfAwareness = (int)model.SelfAwareness;
+                    points.NaturePercentage = await CalculateSimilarityPreferences((int)model.Nature, points.NaturePercentage);
+                    points.Nature = (int)model.Nature;
                 }
 
                 return points;
@@ -2672,64 +2496,45 @@ namespace WebApi.Repositories
         {
             var devider = 1;
             var result = 0;
-            var userStats = await _contx.PersonalityStats.Where(s => s.UserId == model.UserId)
+            var userStats = await _contx.OceanStats.Where(s => s.UserId == model.UserId)
                 .SingleOrDefaultAsync();
 
             //Create user stats if they werent created before
             if (userStats == null)
             {
-                userStats = new UserPersonalityStats(model.UserId);
-                await _contx.PersonalityStats.AddAsync(userStats);
+                userStats = new Entities.UserInfoEntities.OceanStats(model.UserId);
+                await _contx.OceanStats.AddAsync(userStats);
                 await _contx.SaveChangesAsync();
             }
 
 
-            if (model.Personality != 0)
+            if (model.Openness != 0)
             {
                 //Set the devider to 2 if user had passed the tests of the same type before
-                if (userStats.Personality != 0)
+                if (userStats.Openness != 0)
                     devider = 2;
 
-                result = model.Personality;
-                userStats.Personality = (userStats.Personality + model.Personality) / devider;
+                result = (int)model.Openness;
+                userStats.Openness = (userStats.Openness + (int)model.Openness) / devider;
                 //Return the devider to its normal state
                 devider = 1;
             }
-            if (model.EmotionalIntellect != 0)
+            if (model.Conscientiousness != 0)
             {
-                if (userStats.EmotionalIntellect != 0)
+                if (userStats.Conscientiousness != 0)
                     devider = 2;
 
-                result = model.EmotionalIntellect;
-                userStats.EmotionalIntellect = (userStats.EmotionalIntellect + model.EmotionalIntellect) / devider;
+                result = (int)model.Conscientiousness;
+                userStats.Conscientiousness = (userStats.Conscientiousness + (int)model.Conscientiousness) / devider;
                 devider = 1;
             }
-            if (model.Reliability != 0)
+            if (model.Extroversion != 0)
             {
-                if (userStats.Reliability != 0)
+                if (userStats.Extroversion != 0)
                     devider = 2;
 
-                result = model.Reliability;
-                userStats.Reliability = (userStats.Reliability + model.Reliability) / devider;
-                devider = 1;
-            }
-            if (model.Compassion != 0)
-            {
-                if (userStats.Compassion != 0)
-                    devider = 2;
-
-                result = model.Compassion;
-                userStats.Compassion = (userStats.Compassion + model.Compassion) / devider;
-                devider = 1;
-            }
-                
-            if (model.OpenMindedness != 0)
-            {
-                if (userStats.OpenMindedness != 0)
-                    devider = 2;
-
-                result = model.OpenMindedness;
-                userStats.OpenMindedness = (userStats.OpenMindedness + model.OpenMindedness) / devider;
+                result = (int)model.Extroversion;
+                userStats.Extroversion = (userStats.Extroversion + (int)model.Extroversion) / devider;
                 devider = 1;
             }
             if (model.Agreeableness != 0)
@@ -2737,36 +2542,17 @@ namespace WebApi.Repositories
                 if (userStats.Agreeableness != 0)
                     devider = 2;
 
-                result = model.Agreeableness;
-                userStats.Agreeableness = (userStats.Agreeableness + model.Agreeableness) / devider;
+                result = (int)model.Agreeableness;
+                userStats.Agreeableness = (userStats.Agreeableness + (int)model.Agreeableness) / devider;
                 devider = 1;
             }
-            if (model.SelfAwareness != 0)
+            if (model.Neuroticism != 0)
             {
-                if (userStats.SelfAwareness != 0)
+                if (userStats.Neuroticism != 0)
                     devider = 2;
 
-                result = model.SelfAwareness;
-                userStats.SelfAwareness = (userStats.SelfAwareness + model.SelfAwareness) / devider;
-                devider = 1;
-            }
-                
-            if (model.LevelOfSense != 0)
-            {
-                if (userStats.LevelOfSense != 0)
-                    devider = 2;
-
-                result = model.LevelOfSense;
-                userStats.LevelOfSense = (userStats.LevelOfSense + model.LevelOfSense) / devider;
-                devider = 1;
-            }
-            if (model.Intellect != 0)
-            {
-                if (userStats.Intellect != 0)
-                    devider = 2;
-
-                result = model.Intellect;
-                userStats.Intellect = (userStats.Intellect + model.Intellect) / devider;
+                result = (int)model.Neuroticism;
+                userStats.Neuroticism = (userStats.Neuroticism + (int)model.Neuroticism) / devider;
                 devider = 1;
             }
             if (model.Nature != 0)
@@ -2774,31 +2560,22 @@ namespace WebApi.Repositories
                 if (userStats.Nature != 0)
                     devider = 2;
 
-                result = model.Nature;
-                userStats.Nature = (userStats.Nature + model.Nature) / devider;
-                devider = 1;
-            }
-            if (model.Creativity != 0)
-            {
-                if (userStats.Creativity != 0)
-                    devider = 2;
-
-                result = model.Creativity;
-                userStats.Creativity = (userStats.Creativity + model.Creativity) / devider;
+                result = (int)model.Nature;
+                userStats.Nature = (userStats.Nature + (int)model.Nature) / devider;
                 devider = 1;
             }
 
             return new RecalculationResult { Stats = userStats, TestResult = result};
         }
 
-        private async Task<double> CalculateSimilarityPreferences(int points, double similarityCoefficient)
+        private async Task<float> CalculateSimilarityPreferences(int points, float similarityCoefficient)
         {
             if (points == 0)
                 return 1;
 
             await Task.Run(() =>
             {
-                var deviationCoefficient = 0d;
+                var deviationCoefficient = 0f;
                 for (int i = 1; i < points; i++)
                 {
                     var speedCoefficient = 10;
@@ -2818,29 +2595,33 @@ namespace WebApi.Repositories
                 var settings = await _contx.UsersSettings.Where(s => s.Id == userId)
                     .FirstOrDefaultAsync();
                 
-                if (settings.ShouldUsePersonalityFunc)
+                if (settings.UsesOcean)
                 {
-                    settings.ShouldUsePersonalityFunc = false;
+                    settings.UsesOcean = false;
                 }
                 else
                 {
-                    settings.ShouldUsePersonalityFunc = true;
-                    UserPersonalityStats personalityStats;
-                    UserPersonalityPoints personalityPoints;
+                    settings.UsesOcean = true;
 
-                    //Add personality stats, if none were created when user was registering
-                    if (await GetUserPersonalityStats(userId) == null)
+                    var oceanStats = await _contx.OceanStats.Where(s => s.UserId == userId)
+                        .FirstOrDefaultAsync();
+
+                    var oceanPoints = await _contx.OceanPoints.Where(s => s.UserId == userId)
+                        .FirstOrDefaultAsync();
+
+                    //Add personality stats, if they were not created when user was registered
+                    if (oceanStats == null)
                     {
-                        personalityStats = new UserPersonalityStats(userId);
-                        await _contx.PersonalityStats.AddAsync(personalityStats);
+                        oceanStats = new OceanStats(userId);
+                        await _contx.OceanStats.AddAsync(oceanStats);
                         await _contx.SaveChangesAsync();
                     }
 
-                    //Add personality points, if none were created when user was registering
-                    if (await GetUserPersonalityPoints(userId) == null)
+                    //Add ocean points, if they were not created when user was registered
+                    if (oceanPoints == null)
                     {
-                        personalityPoints = new UserPersonalityPoints(userId);
-                        await _contx.PersonalityPoints.AddAsync(personalityPoints);
+                        oceanPoints = new OceanPoints(userId);
+                        await _contx.OceanPoints.AddAsync(oceanPoints);
                         await _contx.SaveChangesAsync();
                     }
                 }
@@ -2848,7 +2629,7 @@ namespace WebApi.Repositories
                 _contx.UsersSettings.Update(settings);
                 await _contx.SaveChangesAsync();
 
-                return settings.ShouldUsePersonalityFunc;
+                return settings.UsesOcean;
             }
             catch { throw new NullReferenceException($"User {userId} does not exist !"); }
         }
@@ -2864,7 +2645,7 @@ namespace WebApi.Repositories
                 if (userTest.PassedOn == null)
                 {
                     var userBalance = await GetUserWalletBalance(model.UserId);
-                    userBalance.PersonalityPoints++;
+                    userBalance.OceanPoints++;
                     await _contx.SaveChangesAsync();
                 }
 
@@ -2978,7 +2759,7 @@ namespace WebApi.Repositories
 
             GetUserData outputUser;
 
-            if (currentUser.Settings.ShouldUsePersonalityFunc)
+            if (currentUser.Settings.UsesOcean)
                 outputUser = await GetPersonalityMatchResult(model.UserId, currentUser, user, false);
             else
                 outputUser = await AssembleProfileAsync(currentUser, user);
@@ -3000,7 +2781,7 @@ namespace WebApi.Repositories
         {
             return await _contx.UsersSettings
                 .Where(p => p.Id == userId)
-                .Select(p => p.ShouldUsePersonalityFunc)
+                .Select(p => p.UsesOcean)
                 .FirstOrDefaultAsync();
         }
 
@@ -3174,7 +2955,7 @@ namespace WebApi.Repositories
                 switch (effectId)
                 {
                     case Currency.TheValentine:
-                        var userPoints = await _contx.PersonalityPoints.Where(p => p.UserId == userId)
+                        var userPoints = await _contx.OceanPoints.Where(p => p.UserId == userId)
                             .FirstOrDefaultAsync();
 
                         if (userPoints != null)
@@ -3285,18 +3066,12 @@ namespace WebApi.Repositories
             catch { return false; }
         }
 
-        private bool AtLeastOneIsNotZero(UserPersonalityPoints points)
+        private bool AtLeastOneIsNotZero(OceanPoints points)
         {
-            if (points.Intellect > 0 || points.SelfAwareness > 0 || 
-                points.Agreeableness > 0 || points.Compassion > 0 ||
-                points.Creativity > 0 || points.EmotionalIntellect > 0 ||
-                points.Reliability > 0 || points.Personality > 0 || points.LevelOfSense > 0 ||
-                points.Nature > 0 || points.OpenMindedness > 0)
-            {
-                return true;
-            }
-
-            return false;
+            return points.Agreeableness > 0 ||
+                points.Conscientiousness > 0 ||
+                points.Extroversion > 0 || points.Openness > 0 ||
+                points.Nature > 0 || points.Neuroticism > 0;
         }
 
         public async Task<List<ActiveEffect>> GetUserActiveEffects(long userId)
@@ -3607,33 +3382,28 @@ namespace WebApi.Repositories
                 return false;
 
             //Return false if personality is not used
-            if (!user.Settings.ShouldUsePersonalityFunc)
+            if (!user.Settings.UsesOcean)
                 return false;
 
             return true;
         }
 
-        public async Task<PersonalityCaps> GetUserPersonalityCapsAsync(long userId)
+        public async Task<OceanCaps> GetUserPersonalityCapsAsync(long userId)
         {
-            var stats = await _contx.PersonalityStats.Where(s => s.UserId == userId)
+            var stats = await _contx.OceanStats.Where(s => s.UserId == userId)
                 .SingleOrDefaultAsync();
 
             if (stats == null)
                 throw new NullReferenceException($"Use #{userId} does not have personality stats");
 
-            return new PersonalityCaps
+            return new OceanCaps
             {
-                CanP = stats.Personality > 0,
-                CanE = stats.EmotionalIntellect > 0,
-                CanR = stats.Reliability > 0,
-                CanS = stats.Compassion > 0,
-                CanO = stats.OpenMindedness > 0,
-                CanN = stats.Agreeableness > 0,
-                CanA = stats.SelfAwareness > 0,
-                CanL = stats.LevelOfSense > 0,
-                CanI = stats.Intellect > 0,
-                CanT = stats.Nature > 0,
-                CanY = stats.Creativity > 0,
+                CanO = stats.Openness > 0,
+                CanC = stats.Conscientiousness > 0,
+                CanE = stats.Extroversion > 0,
+                CanA = stats.Agreeableness > 0,
+                CanN = stats.Neuroticism > 0,
+                CanP = stats.Nature > 0
             };
 
         }
@@ -3802,13 +3572,13 @@ namespace WebApi.Repositories
                 if (currency == Currency.Points)
                 {
                     balance.Points -= amount;
-                    balance.PersonalityPoints += count;
+                    balance.OceanPoints += count;
                     await RegisterUserPurchaseInPoints(userId, -amount, $"User purchase of {count} Ocean+ Points effect for point amount {amount}");
                     await RegisterUserPurchase(userId, count, "OP received", Currency.OceanPoints);
                 }
                 else
                 {
-                    balance.PersonalityPoints += count;
+                    balance.OceanPoints += count;
                     await RegisterPurchaseInRealMoney(userId, -amount, $"User purchase of {count} Ocean+ Points for {currency} amount {amount}", (Currency)balance.Currency);
                     await RegisterUserPurchase(userId, count, "OP received", Currency.OceanPoints);
                 }
@@ -3844,7 +3614,7 @@ namespace WebApi.Repositories
             var userBalance = await _contx.Balances.FindAsync(userId);
 
             userBalance.Points += promo.Points;
-            userBalance.PersonalityPoints += promo.PersonalityPoints;
+            userBalance.OceanPoints += promo.PersonalityPoints;
             userBalance.SecondChances += promo.SecondChance;
             userBalance.Valentines += promo.TheValentine;
             userBalance.Detectors += promo.TheDetector;

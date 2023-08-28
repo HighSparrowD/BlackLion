@@ -1,15 +1,18 @@
 import json
 
 import requests
+from telebot import TeleBot
 
 import Core.HelpersMethodes as Helpers
 from telebot.types import ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
+from Common.Menues import index_converter
 from Common.Menues import count_pages, assemble_markup, reset_pages
 from Common.Menues import go_back_to_main_menu
 
 
 class TestModule:
-    def __init__(self, bot, message, isActivatedFromShop=False, returnMethod=None, active_message=0):
+    def __init__(self, bot: TeleBot, message: any, isActivatedFromShop: bool = False, returnMethod: any = None,
+                 active_message: int = 0):
         self.bot = bot
         self.message = message
         self.current_user = message.from_user.id
@@ -46,21 +49,16 @@ class TestModule:
         self.current_price_C = 0
         self.current_price_RM = 0
 
-        self.chCode = self.bot.register_callback_query_handler("", self.callback_handler, user_id=self.current_user)
+        self.chCode = self.bot.register_callback_query_handler(message, self.callback_handler, user_id=self.current_user)
 
         self.questions_count = 0
 
-        self.start_markup = InlineKeyboardMarkup().add(InlineKeyboardButton("Personality", callback_data="1"))\
-                .add(InlineKeyboardButton("Emotional intellect", callback_data="2")) \
-                .add(InlineKeyboardButton("Reliability", callback_data="3")) \
-                .add(InlineKeyboardButton("Compassion", callback_data="4")) \
-                .add(InlineKeyboardButton("Open-Mindedness", callback_data="5")) \
-                .add(InlineKeyboardButton("Agreeableness", callback_data="6")) \
-                .add(InlineKeyboardButton("Self-Awareness", callback_data="7")) \
-                .add(InlineKeyboardButton("Levels of sense", callback_data="8")) \
-                .add(InlineKeyboardButton("Intellect", callback_data="9")) \
-                .add(InlineKeyboardButton("Nature", callback_data="10")) \
-                .add(InlineKeyboardButton("Creativity", callback_data="11")) \
+        self.start_markup = InlineKeyboardMarkup().add(InlineKeyboardButton("Openness", callback_data="1"))\
+                .add(InlineKeyboardButton("Conscientiousness", callback_data="2")) \
+                .add(InlineKeyboardButton("Extroversion", callback_data="3")) \
+                .add(InlineKeyboardButton("Agreeableness", callback_data="4")) \
+                .add(InlineKeyboardButton("Neuroticism", callback_data="5")) \
+                .add(InlineKeyboardButton("Nature", callback_data="6")) \
                 .add(InlineKeyboardButton("🔙Go Back", callback_data="-15"))
 
         self.buy_markup = InlineKeyboardMarkup()
@@ -127,7 +125,7 @@ class TestModule:
 
     def load_new_tests_data_by_param(self, param):
         try:
-            self.current_tests = json.loads(requests.get(f"https://localhost:44381/GetTestDataByProperty/{self.current_user}/{param}", verify=False).text)
+            self.current_tests = json.loads(requests.get(f"https://localhost:44381/test-data-by-param/{self.current_user}/{param}", verify=False).text)
             self.tests.clear()
             for test in self.current_tests:
                 self.tests[test["id"]] = test["name"]
@@ -136,7 +134,7 @@ class TestModule:
 
     def load_owned_tests_data_by_param(self, param):
         try:
-            self.current_tests = json.loads(requests.get(f"https://localhost:44381/GetUserTestDataByProperty/{self.current_user}/{param}", verify=False).text)
+            self.current_tests = json.loads(requests.get(f"https://localhost:44381/test-data-by-prop/{self.current_user}/{param}", verify=False).text)
             self.tests.clear()
             for test in self.current_tests:
                 self.tests[test["id"]] = test["name"]
@@ -149,7 +147,7 @@ class TestModule:
                 self.isDeciding = True
                 self.bot.edit_message_text(f"{self.get_current_test_data()}\n\n<b>How would you like to purchase this test?</b>", self.current_user, self.active_message_id, reply_markup=self.buy_markup)
             else:
-                canBePassedIn = int(requests.get(f"https://localhost:44381/GetPossibleTestPassRange/{self.current_user}/{self.current_test}", verify=False).text)
+                canBePassedIn = int(requests.get(f"https://localhost:44381/test-pass-range/{self.current_user}/{self.current_test}", verify=False).text)
 
                 if canBePassedIn == 0:
                     self.isDeciding = True
@@ -164,7 +162,7 @@ class TestModule:
                 if self.isActivatedFromShop:
                     #Coins purchase
                     if decisionIndex == "1":
-                        canPurchase = bool(json.loads(requests.get(f"https://localhost:44381/PurchaseTest/{self.current_user}/{self.current_test}/{self.localisation}", verify=False).text))
+                        canPurchase = bool(json.loads(requests.get(f"https://localhost:44381/purchase-test/{self.current_user}/{self.current_test}/{self.localisation}", verify=False).text))
                     else:
                         canPurchase = False
                         pass
@@ -196,7 +194,6 @@ class TestModule:
             else:
                 self.isDeciding = False
                 self.go_back_to_test_selection()
-
 
     def manage_current_test(self, canBePassedIn=0, acceptMode=False):
         if not acceptMode:
@@ -301,10 +298,10 @@ class TestModule:
                 if tag not in result_tags:
                     result_tags.append(tag)
 
-
             data["tags"] = result_tags
             d = json.dumps(data)
-            json.loads(requests.post(f"https://localhost:44381/UpdateUserPersonalityStats", d, headers={"Content-Type": "application/json"}, verify=False).text)
+            json.loads(requests.post(f"https://localhost:44381/update-ocean-stats", d,
+                                     headers={"Content-Type": "application/json"}, verify=False).text)
 
             self.bot.register_next_step_handler(message, self.show_test_result, acceptMode=True, chat_id=self.current_user)
         else:
@@ -312,52 +309,36 @@ class TestModule:
             self.bot.delete_message(self.current_user, message.id)
             self.go_back_to_test_selection()
 
-
     def create_test_payload(self):
         data = {
             "userId": self.current_user,
             "testId": self.current_test,
-            "personality": 0,
-            "emotionalIntellect": 0,
-            "reliability": 0,
-            "compassion": 0,
-            "openMindedness": 0,
+            "openness": 0,
+            "conscientiousness": 0,
+            "extroversion": 0,
             "agreeableness": 0,
-            "selfAwareness": 0,
-            "levelOfSense": 0,
-            "intellect": 0,
+            "neuroticism": 0,
             "nature": 0,
-            "creativity": 0,
         }
 
         if self.active_param == 1:
-            data["personality"] = self.user_total
+            data["openness"] = self.user_total
         elif self.active_param == 2:
-            data["emotionalIntellect"] = self.user_total
+            data["conscientiousness"] = self.user_total
         elif self.active_param == 3:
-            data["reliability"] = self.user_total
+            data["extroversion"] = self.user_total
         elif self.active_param == 4:
-            data["compassion"] = self.user_total
-        elif self.active_param == 5:
-            data["openMindedness"] = self.user_total
-        elif self.active_param == 6:
             data["agreeableness"] = self.user_total
-        elif self.active_param == 7:
-            data["selfAwareness"] = self.user_total
-        elif self.active_param == 8:
-            data["levelOfSense"] = self.user_total
-        elif self.active_param == 9:
-            data["intellect"] = self.user_total
-        elif self.active_param == 10:
+        elif self.active_param == 5:
+            data["neuroticism"] = self.user_total
+        elif self.active_param == 6:
             data["nature"] = self.user_total
-        elif self.active_param == 11:
-            data["creativity"] = self.user_total
 
         return data
 
     def get_current_test_data(self):
         if self.isActivatedFromShop:
-            t = requests.get(f"https://localhost:44381/GetTestFullDataById/{self.current_test}/{self.localisation}", verify=False)
+            t = requests.get(f"https://localhost:44381/test-data-by-id/{self.current_test}/{self.localisation}", verify=False)
             data = json.loads(t.text)
 
             self.current_price_C = data['price']
@@ -368,7 +349,7 @@ class TestModule:
 
             return f"{data['name']}\n\n{data['description']}"
 
-        data = json.loads(requests.get(f"https://localhost:44381/GetUserTest/{self.current_user}/{self.current_test}", verify=False).text)
+        data = json.loads(requests.get(f"https://localhost:44381/user-test/{self.current_user}/{self.current_test}", verify=False).text)
 
         return_string = f"{data['test']['name']}\n\n{data['test']['description']}"
 
@@ -395,13 +376,13 @@ class TestModule:
 
     def load_test_data(self):
         self.current_question_index = -1
-        self.current_test_data = json.loads(requests.get(f"https://localhost:44381/GetSingleTest/{self.current_test}/{self.localisation}", verify=False).text)
+        self.current_test_data = json.loads(requests.get(f"https://localhost:44381/single-test/{self.current_test}/{self.localisation}", verify=False).text)
 
     def callback_handler(self, call):
         self.bot.answer_callback_query(call.id, call.data)
         if call.data == "-1" or call.data == "-2":
             try:
-                index = self.index_converter(call.data)
+                index = index_converter(call.data)
                 if self.markup_page + index <= self.markup_pages_count or self.markup_page + index >= 1:
                     markup = assemble_markup(self.markup_page, self.current_markup_elements, index)
                     self.bot.edit_message_reply_markup(chat_id=call.message.chat.id, reply_markup=markup,
@@ -517,12 +498,6 @@ class TestModule:
         except:
             self.bot.delete_message(self.current_user, self.current_secondary_message)
             self.current_secondary_message = self.bot.send_message(self.current_user, text, reply_markup=markup).id
-
-    @staticmethod
-    def index_converter(index):
-        if index == "-1":
-            return -1
-        return 1
 
     def destruct(self):
         if self.chCode in self.bot.callback_query_handlers:

@@ -10,7 +10,6 @@ using WebApi.Entities.LocationEntities;
 using WebApi.Entities.AchievementEntities;
 using WebApi.Entities.UserActionEntities;
 using WebApi.Entities.TestEntities;
-using static WebApi.Enums.SystemEnums;
 using WebApi.Entities.EffectEntities;
 using WebApi.Entities.AdventureEntities;
 using WebApi.Enums;
@@ -273,7 +272,7 @@ namespace WebApi.Controllers
             return await _repository.SetUserRtLanguagePrefs(userId, shouldBeConsidered);
         }
 
-        [HttpGet("/GetActiveUserWalletBalance/{userId}")]
+        [HttpGet("/user-balance/{userId}")]
         public async Task<Balance> GetActiveUserWalletBalance(long userId)
         {
             return await _repository.GetUserWalletBalance(userId);
@@ -510,37 +509,31 @@ namespace WebApi.Controllers
             return await _repository.DeleteNotificationAsync(notificationId);
         }
 
-        [HttpGet("/GetUserPersonalityPointsAmount/{userId}")]
+        [HttpGet("/ocean-points-amount/{userId}")]
         public async Task<int> GetUserPersonalityPointsAmount(long userId)
         {
             return await _repository.GetUserPersonalityPointsAmount(userId);
         }
 
-        [HttpPost("/UpdateUserPersonalityStats")]
+        [HttpPost("/update-ocean-stats")]
         public async Task<bool> UpdateUserPersonalityStats(TestPayload model)
         {
             return await _repository.UpdateUserPersonalityStats(model);
         }
 
-        [HttpPost("/UpdateUserPersonalityPoints")]
+        [HttpPost("/update-ocean-points")]
         public async Task<bool> UpdateUserPersonalityPoints(PointsPayload model)
         {
             return await _repository.UpdateUserPersonalityPoints(model);
         }
 
-        [HttpGet("/GetUserPersonalityPoints/{userId}")]
-        public async Task<UserPersonalityPoints> GetUserPersonalityPoints(long userId)
+        [HttpGet("/ocean-points/{userId}")]
+        public async Task<OceanPoints> GetUserPersonalityPoints(long userId)
         {
             return await _repository.GetUserPersonalityPoints(userId);
         }
 
-        [HttpGet("/GetUserPersonalityStats/{userId}")]
-        public async Task<UserPersonalityStats> GetUserPersonalityStats(long userId)
-        {
-            return await _repository.GetUserPersonalityStats(userId);
-        }
-
-        [HttpGet("/SwitchPersonalityUsage/{userId}")]
+        [HttpGet("/switch-ocean-usage/{userId}")]
         public async Task<bool> SwitchPersonalityUsage(long userId)
         {
             return await _repository.SwitchPersonalityUsage(userId);
@@ -624,37 +617,37 @@ namespace WebApi.Controllers
             return await _repository.GetUserFilteringByPhotoStatusAsync(userId);
         }
 
-        [HttpGet("/GetTestDataByProperty/{userId}/{param}")]
+        [HttpGet("/test-data-by-param/{userId}/{param}")]
         public async Task<List<GetTestShortData>> GetTestDataByProperty(long userId, short param)
         {
             return await _repository.GetTestDataByPropertyAsync(userId, param);
         }
 
-        [HttpGet("/GetUserTestDataByProperty/{userId}/{param}")]
+        [HttpGet("/test-data-by-prop/{userId}/{param}")]
         public async Task<List<GetTestShortData>> GetUserTestDataByProperty(long userId, short param)
         {
             return await _repository.GetUserTestDataByPropertyAsync(userId, param);
         }
 
-        [HttpGet("/GetTestFullDataById/{testId}/{localisation}")]
+        [HttpGet("/test-data-by-id/{testId}/{localisation}")]
         public async Task<GetFullTestData> GetTestFullDataById(long testId, AppLanguage localisation)
         {
             return await _repository.GetTestFullDataByIdAsync(testId, localisation);
         }
 
-        [HttpGet("/GetUserTest/{userId}/{testId}")]
+        [HttpGet("/user-test/{userId}/{testId}")]
         public async Task<GetUserTest> GetUserTest(long userId, long testId)
         {
             return await _repository.GetUserTestAsync(userId, testId);
         }
 
-        [HttpGet("/GetPossibleTestPassRange/{userId}/{testId}")]
+        [HttpGet("/test-pass-range/{userId}/{testId}")]
         public async Task<int> GetPossibleTestPassRange(long userId, long testId)
         {
             return await _repository.GetPossibleTestPassRangeAsync(userId, testId);
         }
 
-        [HttpGet("/PurchaseTest/{userId}/{testId}/{localisation}")]
+        [HttpGet("/purchase-test/{userId}/{testId}/{localisation}")]
         public async Task<bool> PurchaseTest(long userId, long testId, AppLanguage localisation)
         {
             return await _repository.PurchaseTestAsync(userId, testId, localisation);
@@ -690,8 +683,8 @@ namespace WebApi.Controllers
             return await _repository.CheckShouldTurnOffPersonalityAsync(userId);
         }
 
-        [HttpGet("/GetUserPersonalityCaps/{userId}")]
-        public async Task<PersonalityCaps> GetUserPersonalityCaps(long userId)
+        [HttpGet("/ocean-caps/{userId}")]
+        public async Task<OceanCaps> GetUserPersonalityCaps(long userId)
         {
             return await _repository.GetUserPersonalityCapsAsync(userId);
         }

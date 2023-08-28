@@ -29,7 +29,7 @@ namespace WebApi.Entities.UserActionEntities
             UserId = userModel.Id;
             Nickname = userModel.Nickname;
             HasPremium = userModel.HasPremium;
-            UsesOcean = userModel.Settings!.ShouldUsePersonalityFunc;
+            UsesOcean = userModel.Settings!.UsesOcean;
             IdentityType = userModel.IdentityType;
             UserDataInfo = userModel.Data!;
 

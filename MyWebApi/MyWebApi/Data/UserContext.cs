@@ -52,8 +52,8 @@ namespace WebApi.Data
         public DbSet<DailyReward> DailyRewards => Set<DailyReward>();
         public DbSet<InvitationCredentials> InvitationCredentials => Set<InvitationCredentials>();
         public DbSet<Invitation> Invitations => Set<Invitation>();
-        public DbSet<UserPersonalityStats> PersonalityStats => Set<UserPersonalityStats>();
-        public DbSet<UserPersonalityPoints> PersonalityPoints => Set<UserPersonalityPoints>();
+        public DbSet<OceanStats> OceanStats => Set<OceanStats>();
+        public DbSet<OceanPoints> OceanPoints => Set<OceanPoints>();
         public DbSet<ActiveEffect> ActiveEffects => Set<ActiveEffect>();
         public DbSet<TickRequest> TickRequests => Set<TickRequest>();
 
@@ -184,8 +184,8 @@ namespace WebApi.Data
             builder.Entity<InvitationCredentials>().ToTable("invitation_credentials");
             builder.Entity<Invitation>().ToTable("invitations");
             //builder.Entity<DailyTask>().ToTable("daily_tasks");
-            builder.Entity<UserPersonalityStats>().ToTable("personality_stats");
-            builder.Entity<UserPersonalityPoints>().ToTable("personality_points");
+            builder.Entity<OceanStats>().ToTable("ocean_stats");
+            builder.Entity<OceanPoints>().ToTable("ocean_points");
             builder.Entity<ActiveEffect>().ToTable("active_effects");
             builder.Entity<TickRequest>().ToTable("tick_requests");
             builder.Entity<Adventure>().ToTable("adventures");

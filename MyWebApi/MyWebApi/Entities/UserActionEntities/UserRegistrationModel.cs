@@ -46,8 +46,8 @@ namespace WebApi.Entities.UserActionEntities
         public CommunicationPreference CommunicationPrefs { get; set; }
         [JsonPropertyName("userGenderPrefs")]
         public Gender GenderPrefs { get; set; }
-        [JsonPropertyName("shouldUserPersonalityFunc")]
-        public bool ShouldUserPersonalityFunc { get; set; }
+        [JsonPropertyName("usesOcean")]
+        public bool UsesOcean { get; set; }
         [JsonPropertyName("promo")]
         public string? Promo { get; set; }
     }

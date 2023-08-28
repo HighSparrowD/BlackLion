@@ -1074,7 +1074,7 @@ namespace WebApi.Migrations
                     b.Property<int>("Nullifiers")
                         .HasColumnType("integer");
 
-                    b.Property<int>("PersonalityPoints")
+                    b.Property<int>("OceanPoints")
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("PointInTime")
@@ -1170,6 +1170,86 @@ namespace WebApi.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("invitation_credentials", (string)null);
+                });
+
+            modelBuilder.Entity("WebApi.Entities.UserInfoEntities.OceanPoints", b =>
+                {
+                    b.Property<long>("UserId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("UserId"));
+
+                    b.Property<int>("Agreeableness")
+                        .HasColumnType("integer");
+
+                    b.Property<float>("AgreeablenessPercentage")
+                        .HasColumnType("real");
+
+                    b.Property<int>("Conscientiousness")
+                        .HasColumnType("integer");
+
+                    b.Property<float>("ConscientiousnessPercentage")
+                        .HasColumnType("real");
+
+                    b.Property<int>("Extroversion")
+                        .HasColumnType("integer");
+
+                    b.Property<float>("ExtroversionPercentage")
+                        .HasColumnType("real");
+
+                    b.Property<int>("Nature")
+                        .HasColumnType("integer");
+
+                    b.Property<float>("NaturePercentage")
+                        .HasColumnType("real");
+
+                    b.Property<int>("Neuroticism")
+                        .HasColumnType("integer");
+
+                    b.Property<float>("NeuroticismPercentage")
+                        .HasColumnType("real");
+
+                    b.Property<int>("Openness")
+                        .HasColumnType("integer");
+
+                    b.Property<float>("OpennessPercentage")
+                        .HasColumnType("real");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("ocean_points", (string)null);
+                });
+
+            modelBuilder.Entity("WebApi.Entities.UserInfoEntities.OceanStats", b =>
+                {
+                    b.Property<long>("UserId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("UserId"));
+
+                    b.Property<int>("Agreeableness")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Conscientiousness")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Extroversion")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Nature")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Neuroticism")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Openness")
+                        .HasColumnType("integer");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("ocean_stats", (string)null);
                 });
 
             modelBuilder.Entity("WebApi.Entities.UserInfoEntities.Transaction", b =>
@@ -1382,131 +1462,6 @@ namespace WebApi.Migrations
                     b.ToTable("user_data", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Entities.UserInfoEntities.UserPersonalityPoints", b =>
-                {
-                    b.Property<long>("UserId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("UserId"));
-
-                    b.Property<int>("Agreeableness")
-                        .HasColumnType("integer");
-
-                    b.Property<double>("AgreeablenessPercentage")
-                        .HasColumnType("double precision");
-
-                    b.Property<int>("Compassion")
-                        .HasColumnType("integer");
-
-                    b.Property<double>("CompassionPercentage")
-                        .HasColumnType("double precision");
-
-                    b.Property<int>("Creativity")
-                        .HasColumnType("integer");
-
-                    b.Property<double>("CreativityPercentage")
-                        .HasColumnType("double precision");
-
-                    b.Property<int>("EmotionalIntellect")
-                        .HasColumnType("integer");
-
-                    b.Property<double>("EmotionalIntellectPercentage")
-                        .HasColumnType("double precision");
-
-                    b.Property<int>("Intellect")
-                        .HasColumnType("integer");
-
-                    b.Property<double>("IntellectPercentage")
-                        .HasColumnType("double precision");
-
-                    b.Property<int>("LevelOfSense")
-                        .HasColumnType("integer");
-
-                    b.Property<double>("LevelOfSensePercentage")
-                        .HasColumnType("double precision");
-
-                    b.Property<int>("Nature")
-                        .HasColumnType("integer");
-
-                    b.Property<double>("NaturePercentage")
-                        .HasColumnType("double precision");
-
-                    b.Property<int>("OpenMindedness")
-                        .HasColumnType("integer");
-
-                    b.Property<double>("OpenMindednessPercentage")
-                        .HasColumnType("double precision");
-
-                    b.Property<int>("Personality")
-                        .HasColumnType("integer");
-
-                    b.Property<double>("PersonalityPercentage")
-                        .HasColumnType("double precision");
-
-                    b.Property<int>("Reliability")
-                        .HasColumnType("integer");
-
-                    b.Property<double>("ReliabilityPercentage")
-                        .HasColumnType("double precision");
-
-                    b.Property<int>("SelfAwareness")
-                        .HasColumnType("integer");
-
-                    b.Property<double>("SelfAwarenessPercentage")
-                        .HasColumnType("double precision");
-
-                    b.HasKey("UserId");
-
-                    b.ToTable("personality_points", (string)null);
-                });
-
-            modelBuilder.Entity("WebApi.Entities.UserInfoEntities.UserPersonalityStats", b =>
-                {
-                    b.Property<long>("UserId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("UserId"));
-
-                    b.Property<int>("Agreeableness")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Compassion")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Creativity")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("EmotionalIntellect")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Intellect")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("LevelOfSense")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Nature")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("OpenMindedness")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Personality")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Reliability")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("SelfAwareness")
-                        .HasColumnType("integer");
-
-                    b.HasKey("UserId");
-
-                    b.ToTable("personality_stats", (string)null);
-                });
-
             modelBuilder.Entity("WebApi.Entities.UserInfoEntities.UserSettings", b =>
                 {
                     b.Property<long>("Id")
@@ -1533,7 +1488,7 @@ namespace WebApi.Migrations
                     b.Property<bool>("ShouldSendHints")
                         .HasColumnType("boolean");
 
-                    b.Property<bool>("ShouldUsePersonalityFunc")
+                    b.Property<bool>("UsesOcean")
                         .HasColumnType("boolean");
 
                     b.HasKey("Id");

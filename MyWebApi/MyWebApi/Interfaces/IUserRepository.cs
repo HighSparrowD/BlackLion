@@ -109,8 +109,7 @@ namespace WebApi.Interfaces
         Task<int> GetUserPersonalityPointsAmount(long userId);
         Task<bool> UpdateUserPersonalityStats(TestPayload model);
         Task<bool> UpdateUserPersonalityPoints(PointsPayload model);
-        Task<UserPersonalityStats> GetUserPersonalityStats(long userId);
-        Task<UserPersonalityPoints> GetUserPersonalityPoints(long userId);
+        Task<OceanPoints> GetUserPersonalityPoints(long userId);
         Task<bool?> CheckUserUsesPersonality(long userId);
         Task<bool> RegisterTestPassingAsync(TestPayload model, int testResult);
         Task<bool> UpdateTags(UpdateTags model);
@@ -145,7 +144,7 @@ namespace WebApi.Interfaces
         Task<bool> SetUserFreeSearchParamAsync(long userId, bool freeStatus);
         List<GetLocalizedEnum> GetReportReasonsAsync();
         //Get stats user can invest points in
-        Task<PersonalityCaps> GetUserPersonalityCapsAsync(long userId);
+        Task<OceanCaps> GetUserPersonalityCapsAsync(long userId);
         Task<bool> GetUserRTLanguageConsiderationAsync(long userId);
         Task SetUserCurrencyAsync(long userId, Currency currency);
         Task<GetUserData> GetRequestSenderAsync(long senderId);

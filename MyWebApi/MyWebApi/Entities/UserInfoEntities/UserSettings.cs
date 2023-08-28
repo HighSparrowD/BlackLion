@@ -6,7 +6,7 @@ namespace WebApi.Entities.UserInfoEntities
     {
         [Key]
         public long Id { get; set; }
-        public bool ShouldUsePersonalityFunc { get; set; }
+        public bool UsesOcean { get; set; }
         public bool ShouldFilterUsersWithoutRealPhoto { get; set; }
         public bool ShouldConsiderLanguages { get; set; }
         public bool ShouldComment { get; set; }
@@ -20,7 +20,7 @@ namespace WebApi.Entities.UserInfoEntities
         public UserSettings(long id, bool shouldUserPersonality = false)
         {
             Id = id;
-            ShouldUsePersonalityFunc = shouldUserPersonality;
+            UsesOcean = shouldUserPersonality;
             ShouldFilterUsersWithoutRealPhoto = false;
             ShouldConsiderLanguages = false;
             ShouldComment = false;

@@ -10,7 +10,7 @@ namespace WebApi.Entities.UserInfoEntities
         public long Id { get; set; }
         public long UserId { get; set; }
         public float Points { get; set; }
-        public int PersonalityPoints { get; set; }
+        public int OceanPoints { get; set; }
         public int SecondChances { get; set; }
         public int Valentines { get; set; }
         public int Detectors { get; set; }
@@ -28,7 +28,7 @@ namespace WebApi.Entities.UserInfoEntities
         {
             UserId = userId;
             Points = points;
-            PersonalityPoints = 15;
+            OceanPoints = 15;
             PointInTime = pointInTime;
             SecondChances = 0;
             Valentines = 0;

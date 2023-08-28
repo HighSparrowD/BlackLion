@@ -66,7 +66,7 @@ namespace WebApi.Controllers
             return await _repository.GetLanguagesAsync(lang);
         }
 
-        [HttpGet("/GetSingleTest/{id}/{locId}")]
+        [HttpGet("/single-test/{id}/{locId}")]
         public async Task<Test> GetSingleTest(long id, AppLanguage locId)
         {
             var tests = await _repository.GetSingleTestAsync(id, locId);

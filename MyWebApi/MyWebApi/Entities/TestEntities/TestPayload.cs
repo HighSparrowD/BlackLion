@@ -1,23 +1,29 @@
 ﻿using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace WebApi.Entities.TestEntities
 {
     public class TestPayload
     {
+        [JsonPropertyName("userId")]
         public long UserId { get; set; }
+        [JsonPropertyName("testId")]
         public long TestId { get; set; }
-        public int Personality { get; set; }
-        public int EmotionalIntellect { get; set; }
-        public int Reliability { get; set; }
-        public int Compassion { get; set; }
-        public int OpenMindedness { get; set; }
-        public int Agreeableness { get; set; }
-        public int SelfAwareness { get; set; }
-        public int LevelOfSense { get; set; }
-        public int Intellect { get; set; }
-        public int Nature { get; set; }
-        public int Creativity { get; set; }
+        [JsonPropertyName("balance")]
+        public int Balance { get; set; }
+        [JsonPropertyName("openness")]
+        public int? Openness { get; set; }
+        [JsonPropertyName("conscientiousness")]
+        public int? Conscientiousness { get; set; }
+        [JsonPropertyName("extroversion")]
+        public int? Extroversion { get; set; }
+        [JsonPropertyName("agreeableness")]
+        public int? Agreeableness { get; set; }
+        [JsonPropertyName("neuroticism")]
+        public int? Neuroticism { get; set; }
+        [JsonPropertyName("nature")]
+        public int? Nature { get; set; }
+        [JsonPropertyName("tags")]
         public List<string> Tags{ get; set; }
     }
 }

@@ -83,7 +83,7 @@ namespace WebApi.Migrations
                 columns: table => new
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false),
-                    EffectId = table.Column<int>(type: "integer", nullable: false),
+                    EffectId = table.Column<short>(type: "smallint", nullable: false),
                     UserId = table.Column<long>(type: "bigint", nullable: false),
                     Name = table.Column<string>(type: "text", nullable: true),
                     ExpirationTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
@@ -143,8 +143,8 @@ namespace WebApi.Migrations
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false),
                     UserId = table.Column<long>(type: "bigint", nullable: false),
-                    Points = table.Column<int>(type: "integer", nullable: false),
-                    PersonalityPoints = table.Column<int>(type: "integer", nullable: false),
+                    Points = table.Column<float>(type: "real", nullable: false),
+                    OceanPoints = table.Column<int>(type: "integer", nullable: false),
                     SecondChances = table.Column<int>(type: "integer", nullable: false),
                     Valentines = table.Column<int>(type: "integer", nullable: false),
                     Detectors = table.Column<int>(type: "integer", nullable: false),
@@ -152,6 +152,7 @@ namespace WebApi.Migrations
                     CardDecksMini = table.Column<int>(type: "integer", nullable: false),
                     CardDecksPlatinum = table.Column<int>(type: "integer", nullable: false),
                     ThePersonalities = table.Column<int>(type: "integer", nullable: false),
+                    Currency = table.Column<short>(type: "smallint", nullable: true),
                     PointInTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
@@ -188,24 +189,6 @@ namespace WebApi.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "DailyTasks",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false),
-                    ClassLocalisationId = table.Column<int>(type: "integer", nullable: false),
-                    Condition = table.Column<int>(type: "integer", nullable: false),
-                    Description = table.Column<string>(type: "text", nullable: true),
-                    Reward = table.Column<int>(type: "integer", nullable: false),
-                    RewardCurrency = table.Column<short>(type: "smallint", nullable: false),
-                    SectionId = table.Column<int>(type: "integer", nullable: false),
-                    TaskType = table.Column<short>(type: "smallint", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_DailyTasks", x => new { x.Id, x.ClassLocalisationId });
-                });
-
-            migrationBuilder.CreateTable(
                 name: "hints",
                 columns: table => new
                 {
@@ -236,60 +219,45 @@ namespace WebApi.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "personality_points",
+                name: "ocean_points",
                 columns: table => new
                 {
                     UserId = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Personality = table.Column<int>(type: "integer", nullable: false),
-                    PersonalityPercentage = table.Column<double>(type: "double precision", nullable: false),
-                    EmotionalIntellect = table.Column<int>(type: "integer", nullable: false),
-                    EmotionalIntellectPercentage = table.Column<double>(type: "double precision", nullable: false),
-                    Reliability = table.Column<int>(type: "integer", nullable: false),
-                    ReliabilityPercentage = table.Column<double>(type: "double precision", nullable: false),
-                    Compassion = table.Column<int>(type: "integer", nullable: false),
-                    CompassionPercentage = table.Column<double>(type: "double precision", nullable: false),
-                    OpenMindedness = table.Column<int>(type: "integer", nullable: false),
-                    OpenMindednessPercentage = table.Column<double>(type: "double precision", nullable: false),
+                    Openness = table.Column<int>(type: "integer", nullable: false),
+                    OpennessPercentage = table.Column<float>(type: "real", nullable: false),
+                    Conscientiousness = table.Column<int>(type: "integer", nullable: false),
+                    ConscientiousnessPercentage = table.Column<float>(type: "real", nullable: false),
+                    Extroversion = table.Column<int>(type: "integer", nullable: false),
+                    ExtroversionPercentage = table.Column<float>(type: "real", nullable: false),
                     Agreeableness = table.Column<int>(type: "integer", nullable: false),
-                    AgreeablenessPercentage = table.Column<double>(type: "double precision", nullable: false),
-                    SelfAwareness = table.Column<int>(type: "integer", nullable: false),
-                    SelfAwarenessPercentage = table.Column<double>(type: "double precision", nullable: false),
-                    LevelOfSense = table.Column<int>(type: "integer", nullable: false),
-                    LevelOfSensePercentage = table.Column<double>(type: "double precision", nullable: false),
-                    Intellect = table.Column<int>(type: "integer", nullable: false),
-                    IntellectPercentage = table.Column<double>(type: "double precision", nullable: false),
+                    AgreeablenessPercentage = table.Column<float>(type: "real", nullable: false),
+                    Neuroticism = table.Column<int>(type: "integer", nullable: false),
+                    NeuroticismPercentage = table.Column<float>(type: "real", nullable: false),
                     Nature = table.Column<int>(type: "integer", nullable: false),
-                    NaturePercentage = table.Column<double>(type: "double precision", nullable: false),
-                    Creativity = table.Column<int>(type: "integer", nullable: false),
-                    CreativityPercentage = table.Column<double>(type: "double precision", nullable: false)
+                    NaturePercentage = table.Column<float>(type: "real", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_personality_points", x => x.UserId);
+                    table.PrimaryKey("PK_ocean_points", x => x.UserId);
                 });
 
             migrationBuilder.CreateTable(
-                name: "personality_stats",
+                name: "ocean_stats",
                 columns: table => new
                 {
                     UserId = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Personality = table.Column<int>(type: "integer", nullable: false),
-                    EmotionalIntellect = table.Column<int>(type: "integer", nullable: false),
-                    Reliability = table.Column<int>(type: "integer", nullable: false),
-                    Compassion = table.Column<int>(type: "integer", nullable: false),
-                    OpenMindedness = table.Column<int>(type: "integer", nullable: false),
+                    Openness = table.Column<int>(type: "integer", nullable: false),
+                    Conscientiousness = table.Column<int>(type: "integer", nullable: false),
+                    Extroversion = table.Column<int>(type: "integer", nullable: false),
                     Agreeableness = table.Column<int>(type: "integer", nullable: false),
-                    SelfAwareness = table.Column<int>(type: "integer", nullable: false),
-                    LevelOfSense = table.Column<int>(type: "integer", nullable: false),
-                    Intellect = table.Column<int>(type: "integer", nullable: false),
-                    Nature = table.Column<int>(type: "integer", nullable: false),
-                    Creativity = table.Column<int>(type: "integer", nullable: false)
+                    Neuroticism = table.Column<int>(type: "integer", nullable: false),
+                    Nature = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_personality_stats", x => x.UserId);
+                    table.PrimaryKey("PK_ocean_stats", x => x.UserId);
                 });
 
             migrationBuilder.CreateTable(
@@ -373,7 +341,7 @@ namespace WebApi.Migrations
                     Id = table.Column<long>(type: "bigint", nullable: false),
                     UserId = table.Column<long>(type: "bigint", nullable: false),
                     PointInTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Amount = table.Column<int>(type: "integer", nullable: false),
+                    Amount = table.Column<float>(type: "real", nullable: false),
                     Description = table.Column<string>(type: "text", nullable: true),
                     Currency = table.Column<short>(type: "smallint", nullable: false)
                 },
@@ -398,38 +366,7 @@ namespace WebApi.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "user_settings",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    ShouldUsePersonalityFunc = table.Column<bool>(type: "boolean", nullable: false),
-                    ShouldFilterUsersWithoutRealPhoto = table.Column<bool>(type: "boolean", nullable: false),
-                    ShouldConsiderLanguages = table.Column<bool>(type: "boolean", nullable: false),
-                    ShouldComment = table.Column<bool>(type: "boolean", nullable: false),
-                    ShouldSendHints = table.Column<bool>(type: "boolean", nullable: false),
-                    IncreasedFamiliarity = table.Column<bool>(type: "boolean", nullable: false),
-                    IsFree = table.Column<bool>(type: "boolean", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_user_settings", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "user_visits",
-                columns: table => new
-                {
-                    UserId = table.Column<long>(type: "bigint", nullable: false),
-                    SectionId = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_user_visits", x => new { x.UserId, x.SectionId });
-                });
-
-            migrationBuilder.CreateTable(
-                name: "users_data",
+                name: "user_data",
                 columns: table => new
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false)
@@ -455,7 +392,38 @@ namespace WebApi.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_users_data", x => x.Id);
+                    table.PrimaryKey("PK_user_data", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "user_settings",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    UsesOcean = table.Column<bool>(type: "boolean", nullable: false),
+                    ShouldFilterUsersWithoutRealPhoto = table.Column<bool>(type: "boolean", nullable: false),
+                    ShouldConsiderLanguages = table.Column<bool>(type: "boolean", nullable: false),
+                    ShouldComment = table.Column<bool>(type: "boolean", nullable: false),
+                    ShouldSendHints = table.Column<bool>(type: "boolean", nullable: false),
+                    IncreasedFamiliarity = table.Column<bool>(type: "boolean", nullable: false),
+                    IsFree = table.Column<bool>(type: "boolean", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_user_settings", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "user_visits",
+                columns: table => new
+                {
+                    UserId = table.Column<long>(type: "bigint", nullable: false),
+                    Section = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_user_visits", x => new { x.UserId, x.Section });
                 });
 
             migrationBuilder.CreateTable(
@@ -475,28 +443,6 @@ namespace WebApi.Migrations
                         columns: x => new { x.CountryId, x.CountryLang },
                         principalTable: "countries",
                         principalColumns: new[] { "Id", "Lang" },
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "UserDailyTasks",
-                columns: table => new
-                {
-                    UserId = table.Column<long>(type: "bigint", nullable: false),
-                    DailyTaskId = table.Column<long>(type: "bigint", nullable: false),
-                    DailyTaskClassLocalisationId = table.Column<int>(type: "integer", nullable: false),
-                    Progress = table.Column<int>(type: "integer", nullable: false),
-                    AcquireMessage = table.Column<string>(type: "text", nullable: true),
-                    IsAcquired = table.Column<bool>(type: "boolean", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_UserDailyTasks", x => new { x.UserId, x.DailyTaskId });
-                    table.ForeignKey(
-                        name: "FK_UserDailyTasks_DailyTasks_DailyTaskId_DailyTaskClassLocalis~",
-                        columns: x => new { x.DailyTaskId, x.DailyTaskClassLocalisationId },
-                        principalTable: "DailyTasks",
-                        principalColumns: new[] { "Id", "ClassLocalisationId" },
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -588,8 +534,6 @@ namespace WebApi.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     CityId = table.Column<int>(type: "integer", nullable: true),
                     CountryId = table.Column<int>(type: "integer", nullable: true),
-                    CityCountryClassLocalisationId = table.Column<byte>(type: "smallint", nullable: true),
-                    CountryClassLocalisationId = table.Column<byte>(type: "smallint", nullable: true),
                     CountryLang = table.Column<byte>(type: "smallint", nullable: true),
                     CityCountryLang = table.Column<byte>(type: "smallint", nullable: true)
                 },
@@ -713,28 +657,30 @@ namespace WebApi.Migrations
                     LocationId = table.Column<long>(type: "bigint", nullable: false),
                     IsBusy = table.Column<bool>(type: "boolean", nullable: false),
                     IsBanned = table.Column<bool>(type: "boolean", nullable: false),
-                    BanDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
                     HasPremium = table.Column<bool>(type: "boolean", nullable: false),
+                    BanDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    DeleteDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    PremiumExpirationDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     HadReceivedReward = table.Column<bool>(type: "boolean", nullable: false),
                     PremiumDuration = table.Column<short>(type: "smallint", nullable: true),
                     IdentityType = table.Column<int>(type: "integer", nullable: false),
                     ShouldEnhance = table.Column<bool>(type: "boolean", nullable: false),
                     ReportCount = table.Column<short>(type: "smallint", nullable: false),
                     DailyRewardPoint = table.Column<short>(type: "smallint", nullable: false),
-                    BonusIndex = table.Column<double>(type: "double precision", nullable: false),
+                    BonusIndex = table.Column<float>(type: "real", nullable: false),
                     InvitedUsersCount = table.Column<int>(type: "integer", nullable: false),
-                    InvitedUsersBonus = table.Column<double>(type: "double precision", nullable: false),
+                    InvitedUsersBonus = table.Column<float>(type: "real", nullable: false),
                     Nickname = table.Column<string>(type: "text", nullable: true),
                     ParentId = table.Column<long>(type: "bigint", nullable: true),
                     ProfileViewsCount = table.Column<int>(type: "integer", nullable: false),
                     RTViewsCount = table.Column<int>(type: "integer", nullable: false),
+                    AdventureSearchCount = table.Column<int>(type: "integer", nullable: false),
                     MaxProfileViewsCount = table.Column<int>(type: "integer", nullable: false),
                     MaxRTViewsCount = table.Column<int>(type: "integer", nullable: false),
                     MaxTagSearchCount = table.Column<int>(type: "integer", nullable: false),
+                    MaxAdventureSearchCount = table.Column<int>(type: "integer", nullable: false),
                     TagSearchesCount = table.Column<int>(type: "integer", nullable: false),
-                    Currency = table.Column<short>(type: "smallint", nullable: true),
-                    PremiumExpirationDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     EnteredPromoCodes = table.Column<string>(type: "text", nullable: true),
                     IsUpdated = table.Column<bool>(type: "boolean", nullable: false),
                     IsDecoy = table.Column<bool>(type: "boolean", nullable: false)
@@ -742,6 +688,12 @@ namespace WebApi.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_users", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_users_user_data_DataId",
+                        column: x => x.DataId,
+                        principalTable: "user_data",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_users_user_locations_LocationId",
                         column: x => x.LocationId,
@@ -752,12 +704,6 @@ namespace WebApi.Migrations
                         name: "FK_users_user_settings_SettingsId",
                         column: x => x.SettingsId,
                         principalTable: "user_settings",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_users_users_data_DataId",
-                        column: x => x.DataId,
-                        principalTable: "users_data",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -772,6 +718,8 @@ namespace WebApi.Migrations
                     IsOffline = table.Column<bool>(type: "boolean", nullable: false),
                     CountryId = table.Column<int>(type: "integer", nullable: true),
                     CityId = table.Column<int>(type: "integer", nullable: true),
+                    CountryLang = table.Column<byte>(type: "smallint", nullable: true),
+                    CityCountryLang = table.Column<byte>(type: "smallint", nullable: true),
                     Media = table.Column<string>(type: "text", nullable: true),
                     IsMediaPhoto = table.Column<bool>(type: "boolean", nullable: false),
                     Description = table.Column<string>(type: "text", nullable: true),
@@ -788,6 +736,7 @@ namespace WebApi.Migrations
                     AutoReply = table.Column<string>(type: "text", nullable: true),
                     UniqueLink = table.Column<string>(type: "text", nullable: true),
                     IsAwaiting = table.Column<bool>(type: "boolean", nullable: false),
+                    DeleteDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     GroupLink = table.Column<string>(type: "text", nullable: true),
                     GroupId = table.Column<long>(type: "bigint", nullable: true),
                     Status = table.Column<int>(type: "integer", nullable: false)
@@ -795,6 +744,16 @@ namespace WebApi.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_adventures", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_adventures_cities_CityId_CityCountryLang",
+                        columns: x => new { x.CityId, x.CityCountryLang },
+                        principalTable: "cities",
+                        principalColumns: new[] { "Id", "CountryLang" });
+                    table.ForeignKey(
+                        name: "FK_adventures_countries_CountryId_CountryLang",
+                        columns: x => new { x.CountryId, x.CountryLang },
+                        principalTable: "countries",
+                        principalColumns: new[] { "Id", "Lang" });
                     table.ForeignKey(
                         name: "FK_adventures_users_UserId",
                         column: x => x.UserId,
@@ -855,9 +814,8 @@ namespace WebApi.Migrations
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false),
                     UserId = table.Column<long>(type: "bigint", nullable: false),
+                    AdminId = table.Column<long>(type: "bigint", nullable: true),
                     Text = table.Column<string>(type: "text", nullable: true),
-                    ReasonId = table.Column<short>(type: "smallint", nullable: false),
-                    ReasonClassLocalisationId = table.Column<int>(type: "integer", nullable: false),
                     InsertedUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Reason = table.Column<byte>(type: "smallint", nullable: false)
                 },
@@ -898,22 +856,15 @@ namespace WebApi.Migrations
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false),
                     SenderId = table.Column<long>(type: "bigint", nullable: true),
-                    ReceiverId = table.Column<long>(type: "bigint", nullable: false),
+                    UserId = table.Column<long>(type: "bigint", nullable: false),
                     IsLikedBack = table.Column<bool>(type: "boolean", nullable: false),
-                    Severity = table.Column<int>(type: "integer", nullable: false),
+                    Type = table.Column<short>(type: "smallint", nullable: false),
                     Section = table.Column<int>(type: "integer", nullable: false),
-                    Description = table.Column<string>(type: "text", nullable: true),
-                    UserId = table.Column<long>(type: "bigint", nullable: true)
+                    Description = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_notifications", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_notifications_users_ReceiverId",
-                        column: x => x.ReceiverId,
-                        principalTable: "users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_notifications_users_SenderId",
                         column: x => x.SenderId,
@@ -923,7 +874,8 @@ namespace WebApi.Migrations
                         name: "FK_notifications_users_UserId",
                         column: x => x.UserId,
                         principalTable: "users",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -1010,34 +962,6 @@ namespace WebApi.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "user_reports",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false),
-                    SenderId = table.Column<long>(type: "bigint", nullable: false),
-                    UserId = table.Column<long>(type: "bigint", nullable: false),
-                    Text = table.Column<string>(type: "text", nullable: true),
-                    Reason = table.Column<short>(type: "smallint", nullable: false),
-                    InsertedUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_user_reports", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_user_reports_users_SenderId",
-                        column: x => x.SenderId,
-                        principalTable: "users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_user_reports_users_UserId",
-                        column: x => x.UserId,
-                        principalTable: "users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "user_tags",
                 columns: table => new
                 {
@@ -1093,7 +1017,7 @@ namespace WebApi.Migrations
                     UserId = table.Column<long>(type: "bigint", nullable: false),
                     AdventureId = table.Column<long>(type: "bigint", nullable: false),
                     Username = table.Column<string>(type: "text", nullable: true),
-                    Status = table.Column<int>(type: "integer", nullable: false)
+                    Status = table.Column<short>(type: "smallint", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -1107,7 +1031,41 @@ namespace WebApi.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "invitation",
+                name: "user_reports",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false),
+                    SenderId = table.Column<long>(type: "bigint", nullable: false),
+                    UserId = table.Column<long>(type: "bigint", nullable: true),
+                    AdventureId = table.Column<long>(type: "bigint", nullable: true),
+                    AdminId = table.Column<long>(type: "bigint", nullable: true),
+                    Text = table.Column<string>(type: "text", nullable: true),
+                    Reason = table.Column<short>(type: "smallint", nullable: false),
+                    InsertedUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_user_reports", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_user_reports_adventures_AdventureId",
+                        column: x => x.AdventureId,
+                        principalTable: "adventures",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_user_reports_users_SenderId",
+                        column: x => x.SenderId,
+                        principalTable: "users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_user_reports_users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "users",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "invitations",
                 columns: table => new
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false),
@@ -1117,17 +1075,11 @@ namespace WebApi.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_invitation", x => x.Id);
+                    table.PrimaryKey("PK_invitations", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_invitation_invitation_credentials_InviterCredentialsId",
+                        name: "FK_invitations_invitation_credentials_InviterCredentialsId",
                         column: x => x.InviterCredentialsId,
                         principalTable: "invitation_credentials",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_invitation_users_InvitedUserId",
-                        column: x => x.InvitedUserId,
-                        principalTable: "users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -1141,6 +1093,16 @@ namespace WebApi.Migrations
                 name: "IX_adventure_attendees_AdventureId",
                 table: "adventure_attendees",
                 column: "AdventureId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_adventures_CityId_CityCountryLang",
+                table: "adventures",
+                columns: new[] { "CityId", "CityCountryLang" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_adventures_CountryId_CountryLang",
+                table: "adventures",
+                columns: new[] { "CountryId", "CountryLang" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_adventures_UserId",
@@ -1173,24 +1135,14 @@ namespace WebApi.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_invitation_InvitedUserId",
-                table: "invitation",
-                column: "InvitedUserId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_invitation_InviterCredentialsId",
-                table: "invitation",
-                column: "InviterCredentialsId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_invitation_credentials_UserId",
                 table: "invitation_credentials",
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_notifications_ReceiverId",
-                table: "notifications",
-                column: "ReceiverId");
+                name: "IX_invitations_InviterCredentialsId",
+                table: "invitations",
+                column: "InviterCredentialsId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_notifications_SenderId",
@@ -1273,6 +1225,11 @@ namespace WebApi.Migrations
                 columns: new[] { "CountryId", "CountryLang" });
 
             migrationBuilder.CreateIndex(
+                name: "IX_user_reports_AdventureId",
+                table: "user_reports",
+                column: "AdventureId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_user_reports_SenderId",
                 table: "user_reports",
                 column: "SenderId");
@@ -1291,11 +1248,6 @@ namespace WebApi.Migrations
                 name: "IX_user_tests_UserId",
                 table: "user_tests",
                 column: "UserId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_UserDailyTasks_DailyTaskId_DailyTaskClassLocalisationId",
-                table: "UserDailyTasks",
-                columns: new[] { "DailyTaskId", "DailyTaskClassLocalisationId" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_users_DataId",
@@ -1350,16 +1302,16 @@ namespace WebApi.Migrations
                 name: "hints");
 
             migrationBuilder.DropTable(
-                name: "invitation");
+                name: "invitations");
 
             migrationBuilder.DropTable(
                 name: "notifications");
 
             migrationBuilder.DropTable(
-                name: "personality_points");
+                name: "ocean_points");
 
             migrationBuilder.DropTable(
-                name: "personality_stats");
+                name: "ocean_stats");
 
             migrationBuilder.DropTable(
                 name: "promocodes");
@@ -1404,12 +1356,6 @@ namespace WebApi.Migrations
                 name: "user_visits");
 
             migrationBuilder.DropTable(
-                name: "UserDailyTasks");
-
-            migrationBuilder.DropTable(
-                name: "adventures");
-
-            migrationBuilder.DropTable(
                 name: "invitation_credentials");
 
             migrationBuilder.DropTable(
@@ -1425,10 +1371,7 @@ namespace WebApi.Migrations
                 name: "achievements");
 
             migrationBuilder.DropTable(
-                name: "DailyTasks");
-
-            migrationBuilder.DropTable(
-                name: "users");
+                name: "adventures");
 
             migrationBuilder.DropTable(
                 name: "sponsor_contact_info");
@@ -1440,13 +1383,16 @@ namespace WebApi.Migrations
                 name: "tests");
 
             migrationBuilder.DropTable(
+                name: "users");
+
+            migrationBuilder.DropTable(
+                name: "user_data");
+
+            migrationBuilder.DropTable(
                 name: "user_locations");
 
             migrationBuilder.DropTable(
                 name: "user_settings");
-
-            migrationBuilder.DropTable(
-                name: "users_data");
 
             migrationBuilder.DropTable(
                 name: "cities");
