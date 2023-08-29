@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using WebApi.Entities;
+using WebApi.Entities.SystemEntitires;
 using Microsoft.OpenApi.Validations;
 
 namespace WebApi.Repositories
@@ -389,7 +390,7 @@ namespace WebApi.Repositories
             return model.IsAccepted;
         }
 
-        public async Task<byte> UploadPsTestsAsync(List<UploadTest> tests)
+        public async Task<byte> UploadTestsAsync(List<UploadTest> tests)
         {
             try
             {
@@ -446,7 +447,7 @@ namespace WebApi.Repositories
                                 Text = answer.Text,
                                 Value = answer.Value,
                                 TestQuestionId = q.Id,
-                                Tags = answer.Tags
+                                Tags = string.IsNullOrEmpty(answer.Tags)? null : await _userRep.AddTagsAsync(answer.Tags, TagType.Tests)
                             });
                         }
                     }
@@ -459,7 +460,7 @@ namespace WebApi.Repositories
                             Score = result.Score,
                             TestId = test.Id,
                             TestLanguage = test.Language,
-                            Tags = result.Tags
+                            Tags = string.IsNullOrEmpty(result.Tags) ? null : await _userRep.AddTagsAsync(result.Tags, TagType.Tests)
                         });
                     }
 

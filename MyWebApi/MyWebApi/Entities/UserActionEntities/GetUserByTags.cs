@@ -5,6 +5,6 @@ namespace WebApi.Entities.UserActionEntities
     public class GetUserByTags
     {
         public long UserId { get; set; }
-        public List<string> Tags { get; set; }
+        public string Tags { get; set; }
     }
 }

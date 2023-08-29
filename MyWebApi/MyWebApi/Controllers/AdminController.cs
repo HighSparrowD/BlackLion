@@ -142,9 +142,9 @@ namespace WebApi.Controllers
         }
 
         [HttpPost("/UploadTests")]
-        public async Task<byte> UploadPsTests([FromBody] List<UploadTest> model)
+        public async Task<byte> UploadPsTests([FromBody] List<UploadTest> model, [FromServices] IAdminRepository adminRepo)
         {
-            return await _repository.UploadPsTestsAsync(model);
+            return await adminRepo.UploadTestsAsync(model);
         }
 
         [HttpGet("/GetNewNotificationsCount/{adminId}")]

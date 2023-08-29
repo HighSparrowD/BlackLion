@@ -20,6 +20,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using WebApi.Entities;
 using OceanStats = WebApi.Enums.OceanStats;
+using WebApi.Entities.SystemEntitires;
 
 namespace WebApi.Repositories
 {
@@ -2664,29 +2665,24 @@ namespace WebApi.Repositories
 
         public async Task<bool> UpdateTags(UpdateTags model)
         {
-            try
-            {
-                var userTags = await _contx.UserTags.Where(t => t.UserId == model.UserId)
-                    .ToListAsync();
+            _contx.UserTags.RemoveRange(_contx.UserTags.Where(t => t.UserId == model.UserId));
 
-                var newTags = UserTag.CreateTagList(model.UserId, model.RawTags, " ", TagType.Tags);
+            var tags = await AddTagsAsync(model.RawTags, TagType.Tags);
+            var newTags = tags.Select(t => new UserTag(t, model.UserId, TagType.Tags));
 
-                _contx.UserTags.RemoveRange(userTags);
+            await _contx.UserTags.AddRangeAsync(newTags);
                     
-                await _contx.UserTags.AddRangeAsync(newTags);
-                    
-                await _contx.SaveChangesAsync();
-                return true;
-            }
-            catch (NullReferenceException ) 
-            { return false; }
+            await _contx.SaveChangesAsync();
+            return true;
         }
 
         public async Task<List<UserTag>> GetTags(long userId)
         {
             try
             {
-                return await _contx.UserTags.Where(t => t.UserId == userId && t.TagType == TagType.Tags)
+                return await _contx.UserTags
+                    .Where(t => t.UserId == userId && t.TagType == TagType.Tags)
+                    .Include(t => t.Tag)
                     .ToListAsync();
             }
             catch (NullReferenceException)
@@ -2734,18 +2730,23 @@ namespace WebApi.Repositories
             //Add user search
             currentUser.TagSearchesCount++;
 
-            //Use Fuzzy search only if user has premium
+            var extractedTags = await AddTagsAsync(model.Tags, TagType.Tags);
+            
+            // TODO: Come up with some premium benifits
             if(currentUser.HasPremium)
-            {
+            {   
                 //TODO: Perpabs order by descending afterwards
-                foreach (var tag in model.Tags)
+                foreach (var tag in extractedTags)
                 {   
-                    query = query.Where(u => u.Tags.Any(t => EF.Functions.FuzzyStringMatchDifference(EF.Functions.FuzzyStringMatchSoundex(t.Tag), tag) >= 2));
+                    query = query.Where(u => u.Tags.Any(t => t.TagId == tag));
                 }
             }
             else
             {
-                query = query.Where(u => u.Tags.Any(t => model.Tags.Any(ta => ta == t.Tag)));
+                foreach (var tag in extractedTags)
+                {
+                    query = query.Where(u => u.Tags.Any(t => t.TagId == tag));
+                }
             }
 
             //Shuffle users randomly
@@ -2768,7 +2769,7 @@ namespace WebApi.Repositories
             if (hasActiveDetector)
             {
                 var tags = await _contx.UserTags.Where(t => t.UserId == currentUser.Id && t.TagType == TagType.Tags)
-                    .Select(t => t.Tag)
+                    .Select(t => t.Tag.Text)
                     .ToListAsync();
 
                 outputUser.AddDescriptionBonusDownwards(String.Join(" ", tags));
@@ -3650,24 +3651,24 @@ namespace WebApi.Repositories
             return settings.IncreasedFamiliarity;
         }
 
-        public async Task<bool> AddUserCommercialVector(long userId, string tagString)
-        {
-            var tags = tagString.Replace("#", "").Trim().Replace(" ", "").Split(",");
+        //public async Task<bool> AddUserCommercialVector(long userId, string tagString)
+        //{
+        //    var tags = tagString.Replace("#", "").Trim().Replace(" ", "").Split(",");
 
-            foreach (var tag in tags)
-            {
-                await _contx.UserTags.AddAsync(new UserTag
-                {
-                    UserId = userId, 
-                    Tag = tag,
-                    TagType = TagType.Interests
-                });
+        //    foreach (var tag in tags)
+        //    {
+        //        await _contx.UserTags.AddAsync(new UserTag
+        //        {
+        //            UserId = userId, 
+        //            Tag = tag,
+        //            TagType = TagType.Interests
+        //        });
 
-            }
+        //    }
 
-            await _contx.SaveChangesAsync();
-            return true;
-        }
+        //    await _contx.SaveChangesAsync();
+        //    return true;
+        //}
 
         public async Task<bool> SwitchUserFreeSearchParamAsync(long userId)
         {
@@ -3981,17 +3982,18 @@ namespace WebApi.Repositories
         private async Task<GetUserTags> GetUserTagsAsync(long userId)
         {
             var tags = await _contx.UserTags.Where(t => t.UserId == userId)
+                .Include(t => t.Tag)
                 .ToListAsync();
 
             return new GetUserTags
             {
                 FullTags = tags.Select(t => new UserTags
                 {
-                    Tag = t.Tag,
+                    Tag = t.Tag.Text,
                     TagType = t.TagType
                 }).ToList(),
 
-                Tags = tags.Select(t => t.Tag)
+                Tags = tags.Select(t => t.Tag.Text)
                 .ToList()
             };
         }
@@ -4410,6 +4412,34 @@ namespace WebApi.Repositories
             }
 
             return currencies;
+        }
+
+        public async Task<List<long>> AddTagsAsync(string tags, TagType type)
+        {
+            var tagList = tags.ToLower().Split(",").ToList();
+
+            var tagIds = new List<long>();
+
+            var existingTags = await _contx.Tags.Where(t => tagList.Contains(t.Text) && t.Type == type)
+                .Select(t => new { t.Id, t.Text })
+                .ToListAsync();
+
+            foreach (var tag in tagList)
+            {
+                var existingTag = existingTags.FirstOrDefault(t => t.Text == tag);
+
+                if (existingTag == null)
+                {
+                    var newTag = new Tag(tag, type);
+                    await _contx.Tags.AddAsync(newTag);
+                    tagIds.Add(newTag.Id);
+                    continue;
+                }
+
+                tagIds.Add(existingTag.Id);
+            }
+
+            return tagIds;
         }
     }
 }

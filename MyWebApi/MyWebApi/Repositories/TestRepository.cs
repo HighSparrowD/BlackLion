@@ -123,14 +123,14 @@ namespace WebApi.Repositories
                 .SingleOrDefaultAsync();
         }
 
-        public async Task<List<string>> GetSimmilarTagsAsync(string tag)
-        {
-            return await _contx.UserTags
-                .Where(t => EF.Functions.FuzzyStringMatchDifference(EF.Functions.FuzzyStringMatchSoundex(t.Tag), tag) >= 1)
-                .OrderByDescending(t => EF.Functions.FuzzyStringMatchDifference(EF.Functions.FuzzyStringMatchSoundex(t.Tag), tag))
-                .Select(t => t.Tag)
-                .Take(3)
-                .ToListAsync();
-        }
+        //public async Task<List<string>> GetSimmilarTagsAsync(string tag)
+        //{
+        //    return await _contx.UserTags
+        //        .Where(t => EF.Functions.FuzzyStringMatchDifference(EF.Functions.FuzzyStringMatchSoundex(t.Tag), tag) >= 1)
+        //        .OrderByDescending(t => EF.Functions.FuzzyStringMatchDifference(EF.Functions.FuzzyStringMatchSoundex(t.Tag), tag))
+        //        .Select(t => t.Tag)
+        //        .Take(3)
+        //        .ToListAsync();
+        //}
     }
 }

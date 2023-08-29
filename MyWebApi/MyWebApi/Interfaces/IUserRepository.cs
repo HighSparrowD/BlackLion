@@ -152,7 +152,8 @@ namespace WebApi.Interfaces
         Task<bool> CheckPromoIsCorrectAsync(long userId, string promoText, bool isActivatedBeforeRegistration);
         Task<bool> GetUserIncreasedFamiliarityAsync(long userId);
         Task<bool> SwitchIncreasedFamiliarityAsync(long userId);
-        Task<bool> AddUserCommercialVector(long userId, string tagString);
+        Task<List<long>> AddTagsAsync(string tags, TagType type);
+        //Task<bool> AddUserCommercialVector(long userId, string tagString);
         Task<SimilarityBetweenUsers> GetSimilarityBetweenUsersAsync(long user1, long user2);
         Task<GetUserMedia> GetUserMediaAsync(long userId);
         Task<GetLimitations> GetUserSearchLimitations(long userId);

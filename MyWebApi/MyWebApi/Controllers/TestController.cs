@@ -81,9 +81,10 @@ namespace WebApi.Controllers
         //}
 
         [HttpGet("/similar-tags")]
-        public async Task<List<string>> GetSimmilarTagsAsync([FromQuery] string tag)
+        public IActionResult GetSimmilarTagsAsync()
         {
-            return await _repository.GetSimmilarTagsAsync(tag);
+            //return await _repository.GetSimmilarTagsAsync(tag);
+            return NoContent();
         }
 
     }

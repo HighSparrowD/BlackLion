@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WebApi.Data;
@@ -12,9 +13,11 @@ using WebApi.Data;
 namespace WebApi.Migrations
 {
     [DbContext(typeof(UserContext))]
-    partial class UserContextModelSnapshot : ModelSnapshot
+    [Migration("20230829122437_TestsTags1")]
+    partial class TestsTags1
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -63,6 +66,8 @@ namespace WebApi.Migrations
             modelBuilder.HasSequence<int>("tick_requests_hilo");
 
             modelBuilder.HasSequence<int>("transactions_hilo");
+
+            modelBuilder.HasSequence<int>("user_tags_hilo");
 
             modelBuilder.Entity("WebApi.Entities.AchievementEntities.Achievement", b =>
                 {
@@ -897,7 +902,7 @@ namespace WebApi.Migrations
 
                     b.HasKey("Id", "Type");
 
-                    b.ToTable("tags", (string)null);
+                    b.ToTable("Tags");
                 });
 
             modelBuilder.Entity("WebApi.Entities.TestEntities.Test", b =>
@@ -939,7 +944,7 @@ namespace WebApi.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<long>("Id"), "test_answers_hilo");
 
-                    b.Property<List<long>>("Tags")
+                    b.Property<List<long>>("ReplaceableTags")
                         .HasColumnType("bigint[]");
 
                     b.Property<long>("TestQuestionId")
@@ -996,14 +1001,14 @@ namespace WebApi.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<long>("Id"), "test_results_hilo");
 
+                    b.Property<List<long>>("ReplaceableTags")
+                        .HasColumnType("bigint[]");
+
                     b.Property<string>("Result")
                         .HasColumnType("text");
 
                     b.Property<int>("Score")
                         .HasColumnType("integer");
-
-                    b.Property<List<long>>("Tags")
-                        .HasColumnType("bigint[]");
 
                     b.Property<long>("TestId")
                         .HasColumnType("bigint");
@@ -1551,20 +1556,22 @@ namespace WebApi.Migrations
 
             modelBuilder.Entity("WebApi.Entities.UserInfoEntities.UserTag", b =>
                 {
-                    b.Property<long>("TagId")
-                        .HasColumnType("bigint");
-
                     b.Property<long>("UserId")
                         .HasColumnType("bigint");
+
+                    b.Property<string>("Tag")
+                        .HasColumnType("text");
+
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<long>("Id"), "user_tags_hilo");
 
                     b.Property<int>("TagType")
                         .HasColumnType("integer");
 
-                    b.HasKey("TagId", "UserId", "TagType");
-
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("TagId", "TagType");
+                    b.HasKey("UserId", "Tag");
 
                     b.ToTable("user_tags", (string)null);
                 });
@@ -1969,14 +1976,6 @@ namespace WebApi.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("WebApi.Entities.SystemEntitires.Tag", "Tag")
-                        .WithMany()
-                        .HasForeignKey("TagId", "TagType")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Tag");
                 });
 
             modelBuilder.Entity("WebApi.Entities.UserInfoEntities.UserTest", b =>

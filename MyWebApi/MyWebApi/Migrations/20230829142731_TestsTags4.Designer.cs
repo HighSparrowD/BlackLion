@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WebApi.Data;
@@ -12,9 +13,11 @@ using WebApi.Data;
 namespace WebApi.Migrations
 {
     [DbContext(typeof(UserContext))]
-    partial class UserContextModelSnapshot : ModelSnapshot
+    [Migration("20230829142731_TestsTags4")]
+    partial class TestsTags4
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1551,7 +1554,7 @@ namespace WebApi.Migrations
 
             modelBuilder.Entity("WebApi.Entities.UserInfoEntities.UserTag", b =>
                 {
-                    b.Property<long>("TagId")
+                    b.Property<long>("Id")
                         .HasColumnType("bigint");
 
                     b.Property<long>("UserId")
@@ -1560,7 +1563,10 @@ namespace WebApi.Migrations
                     b.Property<int>("TagType")
                         .HasColumnType("integer");
 
-                    b.HasKey("TagId", "UserId", "TagType");
+                    b.Property<long?>("TagId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id", "UserId", "TagType");
 
                     b.HasIndex("UserId");
 
@@ -1972,9 +1978,7 @@ namespace WebApi.Migrations
 
                     b.HasOne("WebApi.Entities.SystemEntitires.Tag", "Tag")
                         .WithMany()
-                        .HasForeignKey("TagId", "TagType")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("TagId", "TagType");
 
                     b.Navigation("Tag");
                 });

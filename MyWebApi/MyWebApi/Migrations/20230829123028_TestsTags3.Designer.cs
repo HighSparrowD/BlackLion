@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WebApi.Data;
@@ -12,9 +13,11 @@ using WebApi.Data;
 namespace WebApi.Migrations
 {
     [DbContext(typeof(UserContext))]
-    partial class UserContextModelSnapshot : ModelSnapshot
+    [Migration("20230829123028_TestsTags3")]
+    partial class TestsTags3
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -63,6 +66,8 @@ namespace WebApi.Migrations
             modelBuilder.HasSequence<int>("tick_requests_hilo");
 
             modelBuilder.HasSequence<int>("transactions_hilo");
+
+            modelBuilder.HasSequence<int>("user_tags_hilo");
 
             modelBuilder.Entity("WebApi.Entities.AchievementEntities.Achievement", b =>
                 {
@@ -1551,20 +1556,22 @@ namespace WebApi.Migrations
 
             modelBuilder.Entity("WebApi.Entities.UserInfoEntities.UserTag", b =>
                 {
-                    b.Property<long>("TagId")
-                        .HasColumnType("bigint");
-
                     b.Property<long>("UserId")
                         .HasColumnType("bigint");
+
+                    b.Property<string>("Tag")
+                        .HasColumnType("text");
+
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<long>("Id"), "user_tags_hilo");
 
                     b.Property<int>("TagType")
                         .HasColumnType("integer");
 
-                    b.HasKey("TagId", "UserId", "TagType");
-
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("TagId", "TagType");
+                    b.HasKey("UserId", "Tag");
 
                     b.ToTable("user_tags", (string)null);
                 });
@@ -1969,14 +1976,6 @@ namespace WebApi.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("WebApi.Entities.SystemEntitires.Tag", "Tag")
-                        .WithMany()
-                        .HasForeignKey("TagId", "TagType")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Tag");
                 });
 
             modelBuilder.Entity("WebApi.Entities.UserInfoEntities.UserTest", b =>

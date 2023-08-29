@@ -9,6 +9,7 @@ using WebApi.Entities.LocationEntities;
 using WebApi.Entities.ReportEntities;
 using WebApi.Entities.SecondaryEntities;
 using WebApi.Entities.SponsorEntities;
+using WebApi.Entities.SystemEntitires;
 using WebApi.Entities.TestEntities;
 using WebApi.Entities.UserActionEntities;
 using WebApi.Entities.UserInfoEntities;
@@ -24,6 +25,7 @@ namespace WebApi.Data
         public DbSet<Visit> UserVisits => Set<Visit>();
         public DbSet<Country> Countries => Set<Country>();
         public DbSet<City> Cities => Set<City>();
+        public DbSet<Tag> Tags => Set<Tag>();
         public DbSet<Language> Languages => Set<Language>();
         public DbSet<BlackList> UserBlacklists => Set<BlackList>();
         public DbSet<Feedback> Feedbacks => Set<Feedback>();
@@ -96,12 +98,12 @@ namespace WebApi.Data
             ConfigureReports(builder);
             ConfigureTickRequests(builder);
             ConfigureTransactions(builder);
-            ConfigureUserTags(builder);
             ConfigureTests(builder);
             ConfigureTestQuestions(builder);
             ConfigureTestAnswers(builder);
             ConfigureTestResults(builder);
             ConfigureTestScales(builder);
+            ConfigureTags(builder);
         }
 
         private void ConfigureRelations(ModelBuilder builder)
@@ -133,9 +135,10 @@ namespace WebApi.Data
             builder.Entity<Achievement>().HasKey(g => new { g.Id, g.Language });
             builder.Entity<UserAchievement>().HasKey(g => new { g.UserId, g.AchievementId });
             builder.Entity<BlackList>().HasKey(g => new { g.Id, g.UserId });
-            builder.Entity<UserTag>().HasKey(t => new { t.UserId, t.Tag });
+            builder.Entity<UserTag>().HasKey(t => new {t.TagId, t.UserId, t.TagType});
             builder.Entity<Hint>().HasKey(t => new { t.Id, t.Localization });
 
+            builder.Entity<Tag>().HasKey(t => new { t.Id, t.Type });
 
             builder.Entity<Adventure>().HasOne(a => a.City);
             builder.Entity<Adventure>().HasOne(a => a.Country);
@@ -185,6 +188,7 @@ namespace WebApi.Data
             builder.Entity<TestScale>().ToTable("tests_scales");
             builder.Entity<UserTest>().ToTable("user_tests");
             builder.Entity<UserTag>().ToTable("user_tags");
+            builder.Entity<Tag>().ToTable("tags");
             builder.Entity<Ad>().ToTable("ads");
             builder.Entity<Sponsor>().ToTable("sponsors");
             builder.Entity<SponsorLanguage>().ToTable("sponsor_languages");
@@ -406,19 +410,19 @@ namespace WebApi.Data
             });
         }
 
-        private void ConfigureUserTags(ModelBuilder builder)
-        {
-            const string sequenceName = "user_tags_hilo";
+        //private void ConfigureUserTags(ModelBuilder builder)
+        //{
+        //    const string sequenceName = "user_tags_hilo";
 
-            builder.HasSequence<int>(sequenceName)
-                .StartsAt(1)
-                .IncrementsBy(1);
+        //    builder.HasSequence<int>(sequenceName)
+        //        .StartsAt(1)
+        //        .IncrementsBy(1);
 
-            builder.Entity<UserTag>(b =>
-            {
-                b.Property(a => a.Id).UseHiLo(sequenceName);
-            });
-        }
+        //    builder.Entity<UserTag>(b =>
+        //    {
+        //        b.Property(a => a.Id).UseHiLo(sequenceName);
+        //    });
+        //}
 
         private void ConfigureTests(ModelBuilder builder)
         {
@@ -485,6 +489,20 @@ namespace WebApi.Data
                 .IncrementsBy(1);
 
             builder.Entity<TestScale>(b =>
+            {
+                b.Property(a => a.Id).UseHiLo(sequenceName);
+            });
+        }
+
+        private void ConfigureTags(ModelBuilder builder)
+        {
+            const string sequenceName = "tags_hilo";
+
+            builder.HasSequence<long>(sequenceName)
+                .StartsAt(1)
+                .IncrementsBy(1);
+
+            builder.Entity<Tag>(b =>
             {
                 b.Property(a => a.Id).UseHiLo(sequenceName);
             });

@@ -5,6 +5,7 @@ using WebApi.Entities.AchievementEntities;
 using WebApi.Entities.AdminEntities;
 using WebApi.Entities.TestEntities;
 using WebApi.Entities;
+using WebApi.Enums;
 
 namespace WebApi.Interfaces
 {
@@ -16,7 +17,7 @@ namespace WebApi.Interfaces
         Task<long> UploadCountries(List<UpdateCountry> countries);
         Task<long> UploadCities(List<UpdateCity> cities);
         Task<long> UploadLanguages(List<UpdateLanguage> langs);
-        Task<byte> UploadPsTestsAsync(List<UploadTest> model);
+        Task<byte> UploadTestsAsync(List<UploadTest> model);
         //Task<long> UploadInTest(UploadInTest model);
         Task<List<Feedback>> GetFeedbacks ();
         Task<long> DeleteUser (long userId);

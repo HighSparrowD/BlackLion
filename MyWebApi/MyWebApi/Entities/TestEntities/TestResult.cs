@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using WebApi.Enums;
 
@@ -17,6 +18,6 @@ namespace WebApi.Entities.TestEntities
         public int Score { get; set; }
         [NotNull]
         public string Result { get; set; }
-        public string Tags { get; set; }
+        public List<long> Tags { get; set; }
     }
 }

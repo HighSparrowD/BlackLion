@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 
 namespace WebApi.Entities.TestEntities
@@ -14,6 +15,6 @@ namespace WebApi.Entities.TestEntities
         public double Value { get; set; }
         [NotNull]
         public long TestQuestionId { get; set; }
-        public string Tags { get; set; }
+        public List<long> Tags { get; set; }
     }
 }
