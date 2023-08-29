@@ -11,6 +11,7 @@ using WebApi.Entities.TestEntities;
 using WebApi.Entities.EffectEntities;
 using WebApi.Entities.AdventureEntities;
 using WebApi.Entities;
+using OceanStats = WebApi.Enums.OceanStats;
 
 namespace WebApi.Interfaces
 {
@@ -132,8 +133,8 @@ namespace WebApi.Interfaces
         Task<bool> SendTickRequestAsync(SendTickRequest request);
         Task<bool> SwitchUserFilteringByPhotoAsync(long userId);
         Task<bool> GetUserFilteringByPhotoStatusAsync(long userId);
-        Task<List<GetTestShortData>> GetTestDataByPropertyAsync(long userId, short param);
-        Task<List<GetTestShortData>> GetUserTestDataByPropertyAsync(long userId, short param);
+        Task<List<GetTestShortData>> GetTestDataByPropertyAsync(long userId, OceanStats param);
+        Task<List<GetTestShortData>> GetUserTestDataByPropertyAsync(long userId, OceanStats param);
         Task<GetFullTestData> GetTestFullDataByIdAsync(long testId, AppLanguage localisation);
         Task<GetUserTest> GetUserTestAsync(long userId, long testId);
         Task<int> GetPossibleTestPassRangeAsync(long userId, long testId);

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WebApi.Data;
@@ -12,9 +13,11 @@ using WebApi.Data;
 namespace WebApi.Migrations
 {
     [DbContext(typeof(UserContext))]
-    partial class UserContextModelSnapshot : ModelSnapshot
+    [Migration("20230829111317_TestFlagRemoved")]
+    partial class TestFlagRemoved
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -977,6 +980,9 @@ namespace WebApi.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<long>("Id"), "test_results_hilo");
 
+                    b.Property<byte>("Language")
+                        .HasColumnType("smallint");
+
                     b.Property<string>("Result")
                         .HasColumnType("text");
 
@@ -989,7 +995,7 @@ namespace WebApi.Migrations
                     b.Property<long>("TestId")
                         .HasColumnType("bigint");
 
-                    b.Property<byte>("TestLanguage")
+                    b.Property<byte?>("TestLanguage")
                         .HasColumnType("smallint");
 
                     b.HasKey("Id");
@@ -1835,9 +1841,7 @@ namespace WebApi.Migrations
                 {
                     b.HasOne("WebApi.Entities.TestEntities.Test", null)
                         .WithMany("Results")
-                        .HasForeignKey("TestId", "TestLanguage")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("TestId", "TestLanguage");
                 });
 
             modelBuilder.Entity("WebApi.Entities.TestEntities.TestScale", b =>

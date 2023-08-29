@@ -15,6 +15,5 @@ namespace WebApi.Entities.TestEntities
         [NotNull]
         public long TestQuestionId { get; set; }
         public string Tags { get; set; }
-        public bool IsCorrect { get; set; }
     }
 }

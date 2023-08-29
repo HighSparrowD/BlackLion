@@ -19,7 +19,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using WebApi.Entities;
-using OceanStats = WebApi.Entities.UserInfoEntities.OceanStats;
+using OceanStats = WebApi.Enums.OceanStats;
 
 namespace WebApi.Repositories
 {
@@ -2612,7 +2612,7 @@ namespace WebApi.Repositories
                     //Add personality stats, if they were not created when user was registered
                     if (oceanStats == null)
                     {
-                        oceanStats = new OceanStats(userId);
+                        oceanStats = new Entities.UserInfoEntities.OceanStats(userId);
                         await _contx.OceanStats.AddAsync(oceanStats);
                         await _contx.SaveChangesAsync();
                     }
@@ -3219,7 +3219,7 @@ namespace WebApi.Repositories
             return userPrefs.ShouldFilterUsersWithoutRealPhoto;
         }
 
-        public async Task<List<GetTestShortData>> GetTestDataByPropertyAsync(long userId, short param)
+        public async Task<List<GetTestShortData>> GetTestDataByPropertyAsync(long userId, OceanStats param)
         {
             var localisation = await _contx.UserData.Where(u => u.Id == userId).Select(u => u.Language)
                 .FirstOrDefaultAsync();
@@ -3310,7 +3310,7 @@ namespace WebApi.Repositories
             return false;
         }
 
-        public async Task<List<GetTestShortData>> GetUserTestDataByPropertyAsync(long userId, short param)
+        public async Task<List<GetTestShortData>> GetUserTestDataByPropertyAsync(long userId, OceanStats param)
         {
             //Get users tests
             return await _contx.UserTests.Where(t => t.UserId == userId && t.TestType == param)

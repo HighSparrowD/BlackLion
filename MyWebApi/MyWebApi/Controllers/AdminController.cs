@@ -141,7 +141,7 @@ namespace WebApi.Controllers
             return await _repository.NotifyFailierTickRequestAsync(id, adminId);
         }
 
-        [HttpPost("/UploadPsTests")]
+        [HttpPost("/UploadTests")]
         public async Task<byte> UploadPsTests([FromBody] List<UploadTest> model)
         {
             return await _repository.UploadPsTestsAsync(model);

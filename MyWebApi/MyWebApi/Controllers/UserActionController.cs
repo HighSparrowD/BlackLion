@@ -14,6 +14,7 @@ using WebApi.Entities.EffectEntities;
 using WebApi.Entities.AdventureEntities;
 using WebApi.Enums;
 using WebApi.Entities;
+using OceanStats = WebApi.Enums.OceanStats;
 
 namespace WebApi.Controllers
 {
@@ -618,13 +619,13 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/test-data-by-param/{userId}/{param}")]
-        public async Task<List<GetTestShortData>> GetTestDataByProperty(long userId, short param)
+        public async Task<List<GetTestShortData>> GetTestDataByProperty(long userId, OceanStats param)
         {
             return await _repository.GetTestDataByPropertyAsync(userId, param);
         }
 
         [HttpGet("/test-data-by-prop/{userId}/{param}")]
-        public async Task<List<GetTestShortData>> GetUserTestDataByProperty(long userId, short param)
+        public async Task<List<GetTestShortData>> GetUserTestDataByProperty(long userId, OceanStats param)
         {
             return await _repository.GetUserTestDataByPropertyAsync(userId, param);
         }

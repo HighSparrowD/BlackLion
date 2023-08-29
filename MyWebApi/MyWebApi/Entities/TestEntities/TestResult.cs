@@ -12,7 +12,7 @@ namespace WebApi.Entities.TestEntities
         [NotNull]
         public long TestId { get; set; }
         [NotNull]
-        public AppLanguage Language { get; set; }
+        public AppLanguage TestLanguage { get; set; }
         [NotNull]
         public int Score { get; set; }
         [NotNull]
