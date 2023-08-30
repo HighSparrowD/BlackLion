@@ -6,7 +6,7 @@ namespace WebApi.Entities.AdminEntities
     public class UploadTestResult
     {
         [JsonPropertyName("score")]
-        public int Score { get; set; }
+        public int? Score { get; set; }
         [JsonPropertyName("result")]
         public string Result { get; set; }
         [JsonPropertyName("tags")]

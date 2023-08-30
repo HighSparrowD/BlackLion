@@ -7,6 +7,6 @@ namespace WebApi.Entities.AdminEntities
         [JsonPropertyName("scale")]
         public string Scale { get; set; }
         [JsonPropertyName("minValue")]
-        public int MinValue { get; set; }
+        public int? MinValue { get; set; }
     }
 }

@@ -15,7 +15,7 @@ namespace WebApi.Entities.TestEntities
         [NotNull]
         public AppLanguage TestLanguage { get; set; }
         [NotNull]
-        public int Score { get; set; }
+        public int? Score { get; set; }
         [NotNull]
         public string Result { get; set; }
         public List<long> Tags { get; set; }

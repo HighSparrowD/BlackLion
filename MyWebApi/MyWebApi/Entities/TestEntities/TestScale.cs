@@ -14,6 +14,6 @@ namespace WebApi.Entities.TestEntities
         // Used in "Lie" scales. Represents the value,
         // which has to be reached to determine that person has lied
         // during the test
-        public int MinValue { get; set; }
+        public int? MinValue { get; set; }
     }
 }

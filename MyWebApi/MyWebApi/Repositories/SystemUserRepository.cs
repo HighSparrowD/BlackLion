@@ -194,8 +194,8 @@ namespace WebApi.Repositories
             await PurchaseTestAsync(model.Id, 23, AppLanguage.RU); // Approved
             await PurchaseTestAsync(model.Id, 54, AppLanguage.RU); // Approved
             await PurchaseTestAsync(model.Id, 29, AppLanguage.RU); // Approved
+            await PurchaseTestAsync(model.Id, 49, AppLanguage.RU); // Approved
             await PurchaseTestAsync(model.Id, 34, AppLanguage.RU);
-            //await PurchaseTestAsync(model.Id, 49, AppLanguage.RU);
 
             return model.Id;
         }

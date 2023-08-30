@@ -1,4 +1,5 @@
 import json
+import math
 
 import pandas
 import requests
@@ -23,7 +24,7 @@ def create_countries_resource(language, start_index=0, loc_index=0):
     ids = []
     countryNames = []
     languages = []
-    priorities = []  # Dummy column. Set manually afterward
+    priorities = []  # Fake column. Set manually afterward
 
     file = pandas.read_csv("worldcities.csv", usecols=["country", "priority"])
     countries = sorted(file.drop_duplicates().values.tolist())
@@ -285,8 +286,7 @@ def load_test_data(testTemplate, lang) -> dict:
     file = get_file_data(file)
 
     for test in file:
-        #TODO: Handle the notorious nature test
-        if test[0] == 49:
+        if test[0] != 49:
             continue
 
         test_data = {
@@ -374,7 +374,7 @@ def load_results(testId, lang) -> list:
                 tags = result[3]
 
             r = {
-                "score": int(result[1]),
+                "score": int(result[1]) if not math.isnan(result[1]) else None,
                 "result": result[2],
                 "tags": tags
             }

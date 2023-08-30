@@ -45,11 +45,11 @@ class TestModule:
         self.active_param = 0
         self.active_media = None
 
-        self.lie_scale = 0
+        self.lie_scale = {}
 
-        self.user_total = 0
+        self.user_total = None
 
-        #Represent price of current test in different currencies
+        #Represent a price of current test in different currencies
         self.current_price_C = 0
         self.current_price_RM = 0
 
@@ -262,53 +262,64 @@ class TestModule:
         if not acceptMode:
 
             # Lie check
-            isLying = self.hasLieScale and self.lie_scale >= self.current_test_data["scales"][0]["minValue"]
+            isLying = self.hasLieScale and sum(self.lie_scale.values()) >= self.current_test_data["scales"][0]["minValue"]
 
-            # Order results, so that the first one is the smallest
-            results = sorted(self.current_test_data["results"], key=lambda x: x['score'])
+            # Order results, so that the first one is the smallest (if scores are present at all)
+            results = sorted(self.current_test_data["results"], key=lambda x: x['score'] if x["score"] is not None else x["id"])
 
             tags = None
-            self.user_total = sum(self.answer_array.values())
-            score = float(self.user_total) / float(results[-1]["score"])
-            data = self.create_test_payload(score)
             self.isDeciding = True
 
             self.delete_question_message()
 
             active_answer = None
+            data = None
 
             # Set a default result (the smallest one)
             previous_result = results[0]
 
-            for result in results:
-                if self.user_total >= result["score"]:
-                    previous_result = result
-                    continue
+            if self.current_test == 49:
+                self.user_total = {}
+                y = sum(self.answer_array['1'].values())
+                x = sum(self.answer_array['2'].values())
 
-                if previous_result["tags"] is not None:
-                    tags = previous_result["tags"]
+                # for scale in self.answer_array.keys():
+                #     self.user_total[scale] = sum(self.answer_array[scale].values())
 
-                active_answer = previous_result["result"]
-                break
+                # TODO: Provide percentages or a graph
+                if y <= 12 <= x:
+                    result = results[2]
+                    score = 1
+                elif y > 12 and x >= 12:
+                    result = results[0]
+                    score = 2
+                elif y < 12 > x:
+                    result = results[3]
+                    score = 3
+                else:
+                    result = results[1]
+                    score = 4
+
+                data = self.create_test_payload(score)
+                tags = result["tags"]
+                active_answer = result["result"]
+            else:
+                self.user_total = sum(self.answer_array.values())
+                score = float(self.user_total) / float(results[-1]["score"])
+                data = self.create_test_payload(score)
+
+                for result in results:
+                    if self.user_total >= result["score"]:
+                        previous_result = result
+                        continue
+
+                    if previous_result["tags"] is not None:
+                        tags = previous_result["tags"]
+
+                    active_answer = previous_result["result"]
+                    break
 
             self.send_question_message(active_answer, markup=self.continueMarkup)
-
-            # for result in results:
-            #     #Will be sent if user's score is even smaller than the smallest possible score
-            #     if result["score"] < smallest:
-            #         if result["tags"] is not None:
-            #             tags = result["tags"]
-            #         default_answer = result["result"]
-            #     if self.user_total >= int(result["score"]):
-            #         if result["tags"] is not None:
-            #             tags = result["tags"]
-            #         active_answer = result["result"]
-
-            # if active_answer:
-            #     self.send_question_message(active_answer, markup=self.continueMarkup)
-            # else:
-            #     self.send_question_message(default_answer, markup=self.continueMarkup)
-
             self.active_message = self.question_message
 
             if not isLying:
@@ -400,8 +411,13 @@ class TestModule:
         self.hasLieScale = len(self.current_test_data["scales"]) != 0 and \
                            self.current_test_data["scales"][0]["scale"] == "L"
 
+        for scale in self.current_test_data["scales"]:
+            # Lie scale is handled separately
+            if scale["scale"] != "L":
+                self.answer_array[scale["scale"]] = {}
+
     def callback_handler(self, call):
-        self.bot.answer_callback_query(call.id, call.data)
+        self.bot.answer_callback_query(call.id, "")
         if call.data == "-1" or call.data == "-2":
             try:
                 index = index_converter(call.data)
@@ -463,10 +479,14 @@ class TestModule:
                 try:
                     answer_weight = int(self.current_question_answers[int(call.data)]["value"])
                     if self.current_question["scale"] == "L":
-                        self.lie_scale += answer_weight
+                        self.lie_scale[self.current_question_index] = answer_weight
                     else:
-                        self.answer_array[self.current_question_index] = answer_weight
-                except:
+                        # Nature test is so different, it requires its own condition...
+                        if self.current_test == 49:
+                            self.answer_array[self.current_question["scale"]][self.current_question_index] = answer_weight
+                        else:
+                            self.answer_array[self.current_question_index] = answer_weight
+                except Exception as ex:
                     return
 
                 #Add tags from answers if they are present
