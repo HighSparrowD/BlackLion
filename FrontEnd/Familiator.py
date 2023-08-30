@@ -129,9 +129,10 @@ class Familiator:
                 self.start(message)
                 return
 
-            tags = message.text.split()
-            #TODO: check tags formatting
+            # TODO: check tags formatting
+            tags = message.text
             if 0 < len(tags) <= self.tagLimit:
+                tags = tags.lower().strip()
                 data = {
                     "userId": self.current_user,
                     "tags": tags

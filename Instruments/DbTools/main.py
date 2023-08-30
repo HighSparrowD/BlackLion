@@ -1,4 +1,5 @@
 import json
+import math
 
 import pandas
 import requests
@@ -23,7 +24,7 @@ def create_countries_resource(language, start_index=0, loc_index=0):
     ids = []
     countryNames = []
     languages = []
-    priorities = []  # Dummy column. Set manually afterward
+    priorities = []  # Fake column. Set manually afterward
 
     file = pandas.read_csv("worldcities.csv", usecols=["country", "priority"])
     countries = sorted(file.drop_duplicates().values.tolist())
@@ -271,5 +272,145 @@ def load_eng_localization():
     update_languages("en")
 
 
+def add_tests(lang):
+    test_template = []
+
+    test_template = load_test_data(test_template, lang)
+
+    data = json.dumps(test_template)
+    print(requests.post("https://localhost:44381/UploadTests", data, headers={"Content-Type": "application/json"}, verify=False).text)
+
+
+def load_test_data(testTemplate, lang) -> dict:
+    file = pandas.read_csv(f"Inputs/Tests{lang} - Tests.csv")
+    file = get_file_data(file)
+
+    for test in file:
+        if test[0] != 49:
+            continue
+
+        test_data = {
+            "id": test[0],
+            "language": lang,
+            "name": test[1],
+            "description": test[2],
+            "testType": test[3],
+            "canBePassedInDays": test[4],
+            "price": 0, # TODO: Set the price
+            "questions": load_questions(test[0], lang),
+            "results": load_results(test[0], lang),
+            "scales": load_scales(test[0], lang)
+        }
+        testTemplate.append(test_data)
+
+    return testTemplate
+
+
+def load_questions(testId, lang) -> list:
+    file = pandas.read_csv(f"Inputs/Tests{lang} - Questions.csv")
+    file = get_file_data(file)
+
+    questions = []
+
+    for question in file:
+
+        scale = None
+        if not isinstance(question[3], float):
+            scale = question[3]
+
+        if question[2] == testId:
+            q = {
+                "text": question[0],
+                "scale": scale,
+                "answers": load_answers(question[1], lang)
+            }
+
+            # Nullable check
+            if not isinstance(question[4], float):
+                q["photo"] = question[4]
+
+            questions.append(q)
+
+    return questions
+
+
+def load_answers(questionId, lang) -> list:
+    file = pandas.read_csv(f"Inputs/Tests{lang} - Answers.csv")
+    file = get_file_data(file)
+
+    answers = []
+
+    for answer in file:
+        tags = None
+        # Nullable check
+        if not isinstance(answer[3], float):
+            tags = answer[3]
+
+        #If each question has its own answers
+        if answer[2] == questionId:
+            a = {
+                "text": answer[0],
+                "value": answer[1],
+                "tags": tags,
+            }
+
+            answers.append(a)
+
+    return answers
+
+
+def load_results(testId, lang) -> list:
+    file = pandas.read_csv(f"Inputs/Tests{lang} - Results.csv")
+    file = get_file_data(file)
+
+    results = []
+
+    for result in file:
+        if result[0] == testId:
+
+            tags = None
+            # Nullable check
+            if not isinstance(result[3], float):
+                tags = result[3]
+
+            r = {
+                "score": int(result[1]) if not math.isnan(result[1]) else None,
+                "result": result[2],
+                "tags": tags
+            }
+
+            results.append(r)
+
+    return results
+
+
+def load_scales(testId, lang) -> list:
+    file = pandas.read_csv(f"Inputs/Tests{lang} - Scales.csv")
+    file = get_file_data(file)
+
+    scales = []
+
+    for scale in file:
+        if scale[1] == testId:
+
+            s = {
+                "scale": scale[0],
+                "minValue": scale[2]
+            }
+
+            scales.append(s)
+
+    return scales
+
+
+def get_file_data(file):
+    return file.values.tolist()
+
+
+# add_tests(langs[0])
+add_tests(langs[1])
+# add_tests(langs[2])
+
+
 # create_eng_localization()
-load_eng_localization()
+# load_eng_localization()

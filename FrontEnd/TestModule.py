@@ -1,15 +1,19 @@
 import json
 
 import requests
+from telebot import TeleBot
 
 import Core.HelpersMethodes as Helpers
 from telebot.types import ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
+from Common.Menues import index_converter
 from Common.Menues import count_pages, assemble_markup, reset_pages
 from Common.Menues import go_back_to_main_menu
 
 
+# noinspection PyBroadException
 class TestModule:
-    def __init__(self, bot, message, isActivatedFromShop=False, returnMethod=None, active_message=0):
+    def __init__(self, bot: TeleBot, message: any, isActivatedFromShop: bool = False, returnMethod: any = None,
+                 active_message: int = 0):
         self.bot = bot
         self.message = message
         self.current_user = message.from_user.id
@@ -25,7 +29,7 @@ class TestModule:
         self.previous_question = None
         self.answer_array = {}
 
-        self.tags_list = {}
+        self.tags_list = []
 
         self.localisation = Helpers.get_user_app_language(self.current_user)
 
@@ -34,33 +38,32 @@ class TestModule:
         self.markup_page = 1
         self.markup_pages_count = 0
 
-        self.current_question_message = 0
-        self.current_secondary_message = 0
-        self.active_message_id = active_message
+        self.active_message = active_message
+        self.secondary_message = None
+        self.question_message = None
+
         self.active_param = 0
         self.active_media = None
 
-        self.user_total = 0
+        self.lie_scale = {}
 
-        #Represent price of current test in different currencies
+        self.user_total = None
+
+        #Represent a price of current test in different currencies
         self.current_price_C = 0
         self.current_price_RM = 0
 
-        self.chCode = self.bot.register_callback_query_handler("", self.callback_handler, user_id=self.current_user)
+        self.chCode = self.bot.register_callback_query_handler(message, self.callback_handler, user_id=self.current_user)
 
+        self.questions = None
         self.questions_count = 0
 
-        self.start_markup = InlineKeyboardMarkup().add(InlineKeyboardButton("Personality", callback_data="1"))\
-                .add(InlineKeyboardButton("Emotional intellect", callback_data="2")) \
-                .add(InlineKeyboardButton("Reliability", callback_data="3")) \
-                .add(InlineKeyboardButton("Compassion", callback_data="4")) \
-                .add(InlineKeyboardButton("Open-Mindedness", callback_data="5")) \
-                .add(InlineKeyboardButton("Agreeableness", callback_data="6")) \
-                .add(InlineKeyboardButton("Self-Awareness", callback_data="7")) \
-                .add(InlineKeyboardButton("Levels of sense", callback_data="8")) \
-                .add(InlineKeyboardButton("Intellect", callback_data="9")) \
-                .add(InlineKeyboardButton("Nature", callback_data="10")) \
-                .add(InlineKeyboardButton("Creativity", callback_data="11")) \
+        self.start_markup = InlineKeyboardMarkup().add(InlineKeyboardButton("Openness", callback_data="1"))\
+                .add(InlineKeyboardButton("Conscientiousness", callback_data="2")) \
+                .add(InlineKeyboardButton("Extroversion", callback_data="3")) \
+                .add(InlineKeyboardButton("Agreeableness", callback_data="4")) \
+                .add(InlineKeyboardButton("Neuroticism", callback_data="5")) \
+                .add(InlineKeyboardButton("Nature", callback_data="6")) \
                 .add(InlineKeyboardButton("🔙Go Back", callback_data="-15"))
 
         self.buy_markup = InlineKeyboardMarkup()
@@ -72,7 +75,6 @@ class TestModule:
         self.YNmarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Yes", "No")
         self.continueMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Continue")
         self.abortMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("/abort")
-        self.ManageTestMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("1", "2")
 
         self.current_test_data = {}
         self.current_question = {}
@@ -92,10 +94,10 @@ class TestModule:
     def start(self):
         self.isOnStart = True
         self.justEntered = False
-        if not self.active_message_id:
-            self.active_message_id = self.bot.send_message(self.current_user, "<i><b>Please select the parameter, test will be sorted by</b></i>", reply_markup=self.start_markup).id
+        if not self.active_message:
+            self.active_message = self.bot.send_message(self.current_user, "<i><b>Please select the parameter, test will be sorted by</b></i>", reply_markup=self.start_markup).id
         else:
-            self.bot.edit_message_text("<i><b>Please select the parameter, test will be sorted by</b></i>", self.current_user, self.active_message_id, reply_markup=self.start_markup)
+            self.bot.edit_message_text("<i><b>Please select the parameter, test will be sorted by</b></i>", self.current_user, self.active_message, reply_markup=self.start_markup)
 
         self.send_secondary_message("<i>Type '/abort' to leave at any time</i>", markup=self.abortMarkup)
         # self.get_ready_to_abort(self.message)
@@ -104,7 +106,7 @@ class TestModule:
         markup = self.get_markup()
         if markup:
             try:
-                self.bot.edit_message_text(chat_id=self.current_user, text="<i><b>Select any test to view more details</b></i>", reply_markup=markup, message_id=self.active_message_id)
+                self.bot.edit_message_text(chat_id=self.current_user, text="<i><b>Select any test to view more details</b></i>", reply_markup=markup, message_id=self.active_message)
             except:
                 pass
 
@@ -127,7 +129,7 @@ class TestModule:
 
     def load_new_tests_data_by_param(self, param):
         try:
-            self.current_tests = json.loads(requests.get(f"https://localhost:44381/GetTestDataByProperty/{self.current_user}/{param}", verify=False).text)
+            self.current_tests = json.loads(requests.get(f"https://localhost:44381/test-data-by-param/{self.current_user}/{param}", verify=False).text)
             self.tests.clear()
             for test in self.current_tests:
                 self.tests[test["id"]] = test["name"]
@@ -136,7 +138,7 @@ class TestModule:
 
     def load_owned_tests_data_by_param(self, param):
         try:
-            self.current_tests = json.loads(requests.get(f"https://localhost:44381/GetUserTestDataByProperty/{self.current_user}/{param}", verify=False).text)
+            self.current_tests = json.loads(requests.get(f"https://localhost:44381/test-data-by-prop/{self.current_user}/{param}", verify=False).text)
             self.tests.clear()
             for test in self.current_tests:
                 self.tests[test["id"]] = test["name"]
@@ -147,13 +149,13 @@ class TestModule:
         if not acceptMode:
             if self.isActivatedFromShop:
                 self.isDeciding = True
-                self.bot.edit_message_text(f"{self.get_current_test_data()}\n\n<b>How would you like to purchase this test?</b>", self.current_user, self.active_message_id, reply_markup=self.buy_markup)
+                self.send_active_message(f"{self.get_current_test_data()}\n\n<b>How would you like to purchase this test?</b>", self.buy_markup)
             else:
-                canBePassedIn = int(requests.get(f"https://localhost:44381/GetPossibleTestPassRange/{self.current_user}/{self.current_test}", verify=False).text)
+                canBePassedIn = int(requests.get(f"https://localhost:44381/test-pass-range/{self.current_user}/{self.current_test}", verify=False).text)
 
                 if canBePassedIn == 0:
                     self.isDeciding = True
-                    self.bot.edit_message_text(f"{self.get_current_test_data()}\n\n<b>Do you want to pass the test now ?</b>", self.current_user, self.active_message_id, reply_markup=self.pass_test_markup)
+                    self.send_active_message(f"{self.get_current_test_data()}\n\n<b>Do you want to pass the test now ?</b>", self.pass_test_markup)
                 else:
                     self.manage_current_test(canBePassedIn=canBePassedIn)
 
@@ -164,7 +166,7 @@ class TestModule:
                 if self.isActivatedFromShop:
                     #Coins purchase
                     if decisionIndex == "1":
-                        canPurchase = bool(json.loads(requests.get(f"https://localhost:44381/PurchaseTest/{self.current_user}/{self.current_test}/{self.localisation}", verify=False).text))
+                        canPurchase = bool(json.loads(requests.get(f"https://localhost:44381/purchase-test/{self.current_user}/{self.current_test}/{self.localisation}", verify=False).text))
                     else:
                         canPurchase = False
                         pass
@@ -187,7 +189,7 @@ class TestModule:
     def test_pass_step_0(self, message, acceptMode=False):
         if not acceptMode:
             self.isDeciding = True
-            self.bot.edit_message_text(f"{self.get_current_test_data()}\n\n<b>Test had been successfully purchased :)</b>", self.current_user, self.active_message_id,  reply_markup=self.pass_test_markup)
+            self.bot.edit_message_text(f"{self.get_current_test_data()}\n\n<b>Test had been successfully purchased :)</b>", self.current_user, self.active_message,  reply_markup=self.pass_test_markup)
         else:
             if message.text == "Yes":
                 self.isDeciding = False
@@ -197,64 +199,60 @@ class TestModule:
                 self.isDeciding = False
                 self.go_back_to_test_selection()
 
-
     def manage_current_test(self, canBePassedIn=0, acceptMode=False):
         if not acceptMode:
             self.isDeciding = True
-            self.bot.edit_message_text(f"{self.get_current_test_data()}\n\n<b><i>You can pass this test again in {canBePassedIn} days</i></b>", self.current_user, self.active_message_id, reply_markup=self.pass_test_again_markup)
+            self.send_active_message(f"{self.get_current_test_data()}\n\n<b><i>You can pass this test again in {canBePassedIn} days</i></b>", self.pass_test_again_markup)
         else:
             if Helpers.check_user_has_effect(self.current_user, 8):
                 self.isDeciding = False
                 self.load_test_data()
                 self.recurring_test_pass()
             else:
-                self.send_secondary_message("Sorry, you dont have this effect", markup=self.ManageTestMarkup)
+                self.send_secondary_message("Sorry, you dont have this effect")
             # elif decisionIndex == "2":
             #     self.isDeciding = False
             #     self.go_back_to_test_selection()
 
     def recurring_test_pass(self, gotoPrevious=False):
-        self.isPassingTest = True
-        questions = self.current_test_data["questions"]
-        self.questions_count = len(questions)
-        if self.current_question_index +1 < self.questions_count:
+        if self.current_question_index + 1 < self.questions_count:
             if not gotoPrevious:
                 self.current_question_index += 1
 
             markup = InlineKeyboardMarkup()
-            self.current_question = questions[self.current_question_index]
+            self.current_question = self.questions[self.current_question_index]
 
             #Create question counter
-            markup.add(InlineKeyboardButton(f"{self.current_question_index + 1} / {len(questions)}", callback_data="0"))
+            markup.add(InlineKeyboardButton(f"{self.current_question_index + 1} / {len(self.questions)}", callback_data="0"))
 
             self.current_question_answers.clear()
 
-            i = 0
             for answer in self.current_question["answers"]:
-                i += 1
                 self.current_question_answers[answer["id"]] = answer
                 markup.add(InlineKeyboardButton(f"{answer['text']}", callback_data=answer["id"]))
 
             #Create previous question button
             markup.add(InlineKeyboardButton("⬅ Previous question", callback_data="-8"))
 
-            if self.active_media is not None:
-                #Remove photo from question
-                self.active_media = None
-                self.bot.edit_message_media(None, self.current_user, self.active_message_id)
+            # Code below is redundant now. But may be useful in the future
+            # if self.active_media is not None:
+            #     #Remove photo from question
+            #     self.active_media = None
+            #     self.bot.edit_message_media(None, self.current_user, self.active_message)
+            #
+            # #Set question photo if one is required
+            # if self.current_question["photo"]:
+            #     self.active_media = self.current_question["photo"]
+            #     self.bot.edit_message_media(self.active_media, self.current_user, self.active_message)
 
-            #Set question photo if one is required
-            if self.current_question["photo"]:
-                self.active_media = self.current_question["photo"]
-                self.bot.edit_message_media(self.active_media, self.current_user, self.active_message_id)
-
-            if not self.current_question_message:
-                self.bot.delete_message(self.current_user, self.active_message_id)
-                self.current_question_message = self.bot.send_message(self.current_user, f"❓ {self.current_question['text']} ❓", reply_markup=markup).id
+            if not self.question_message:
+                self.delete_active_message()
+                self.send_question_message(f"❓ {self.current_question['text']} ❓", markup)
+                # self.question_message = self.bot.send_message(self, reply_markup=markup).id
                 self.send_secondary_message("<i><b>You can leave by typing '/abort', but all your progress will be lost</b></i>", markup=self.abortMarkup)
             else:
-                # self.bot.edit_message_reply_markup(chat_id=self.current_user, reply_markup=markup, message_id=self.current_question_message)
-                self.bot.edit_message_text(text=f"❓ {self.current_question['text']} ❓", chat_id=self.current_user, message_id=self.current_question_message, reply_markup=markup)
+                self.send_question_message(f"❓ {self.current_question['text']} ❓", markup)
+                # self.bot.edit_message_text(text=, chat_id=self.current_user, message_id=self.question_message, reply_markup=markup)
         else:
             self.isPassingTest = False
             self.show_test_result(self.message)
@@ -262,102 +260,112 @@ class TestModule:
 
     def show_test_result(self, message, acceptMode=False):
         if not acceptMode:
+
+            # Lie check
+            isLying = self.hasLieScale and sum(self.lie_scale.values()) >= self.current_test_data["scales"][0]["minValue"]
+
+            # Order results, so that the first one is the smallest (if scores are present at all)
+            results = sorted(self.current_test_data["results"], key=lambda x: x['score'] if x["score"] is not None else x["id"])
+
             tags = None
-            self.user_total = sum(self.answer_array.values())
-            data = self.create_test_payload()
             self.isDeciding = True
 
-            self.active_message_id = self.current_question_message
-            self.current_question_message = 0
+            self.delete_question_message()
 
-            active_answer = "-"
+            active_answer = None
+            data = None
 
-            default_answer = None
-            smallest = 1000
+            # Set a default result (the smallest one)
+            previous_result = results[0]
 
-            for result in self.current_test_data["results"]:
-                #Will be sent if users score is even smaller than the smallest possible score
-                if result["score"] < smallest:
-                    if result["tags"] is not None:
-                        tags = result["tags"]
-                    default_answer = result["result"]
-                if self.user_total >= int(result["score"]):
-                    if result["tags"] is not None:
-                        tags = result["tags"]
-                    active_answer = result["result"]
+            if self.current_test == 49:
+                self.user_total = {}
+                y = sum(self.answer_array['1'].values())
+                x = sum(self.answer_array['2'].values())
 
-            if active_answer:
-                self.send_secondary_message(active_answer, markup=self.continueMarkup)
+                # for scale in self.answer_array.keys():
+                #     self.user_total[scale] = sum(self.answer_array[scale].values())
+
+                # TODO: Provide percentages or a graph
+                if y <= 12 <= x:
+                    result = results[2]
+                    score = 1
+                elif y > 12 and x >= 12:
+                    result = results[0]
+                    score = 2
+                elif y < 12 > x:
+                    result = results[3]
+                    score = 3
+                else:
+                    result = results[1]
+                    score = 4
+
+                data = self.create_test_payload(score)
+                tags = result["tags"]
+                active_answer = result["result"]
             else:
-                self.send_secondary_message(default_answer, markup=self.continueMarkup)
+                self.user_total = sum(self.answer_array.values())
+                score = float(self.user_total) / float(results[-1]["score"])
+                data = self.create_test_payload(score)
 
-            if tags is not None:
-                for tag in tags.split(" "):
-                    self.tags_list[tag] = tag
+                for result in results:
+                    if self.user_total >= result["score"]:
+                        previous_result = result
+                        continue
 
-            result_tags = []
-            for tag in self.tags_list.values():
-                #Removes duplicates
-                if tag not in result_tags:
-                    result_tags.append(tag)
+                    if previous_result["tags"] is not None:
+                        tags = previous_result["tags"]
 
+                    active_answer = previous_result["result"]
+                    break
 
-            data["tags"] = result_tags
-            d = json.dumps(data)
-            json.loads(requests.post(f"https://localhost:44381/UpdateUserPersonalityStats", d, headers={"Content-Type": "application/json"}, verify=False).text)
+            self.send_question_message(active_answer, markup=self.continueMarkup)
+            self.active_message = self.question_message
+
+            if not isLying:
+                data["tags"] = tags
+                d = json.dumps(data)
+                requests.post(f"https://localhost:44381/update-ocean-stats", d,
+                              headers={"Content-Type": "application/json"}, verify=False)
+            else:
+                self.send_secondary_message("According to your results you haven't been completely honest while passing this test\nYour results will not be registered. You are free to pass the test again without waiting, but, be more honest this time, please ;)")
 
             self.bot.register_next_step_handler(message, self.show_test_result, acceptMode=True, chat_id=self.current_user)
         else:
             self.isDeciding = False
             self.bot.delete_message(self.current_user, message.id)
-            self.go_back_to_test_selection()
+            self.show_current_test(message)
 
-
-    def create_test_payload(self):
+    def create_test_payload(self, score):
         data = {
             "userId": self.current_user,
             "testId": self.current_test,
-            "personality": 0,
-            "emotionalIntellect": 0,
-            "reliability": 0,
-            "compassion": 0,
-            "openMindedness": 0,
+            "openness": 0,
+            "conscientiousness": 0,
+            "extroversion": 0,
             "agreeableness": 0,
-            "selfAwareness": 0,
-            "levelOfSense": 0,
-            "intellect": 0,
+            "neuroticism": 0,
             "nature": 0,
-            "creativity": 0,
         }
 
         if self.active_param == 1:
-            data["personality"] = self.user_total
+            data["openness"] = score
         elif self.active_param == 2:
-            data["emotionalIntellect"] = self.user_total
+            data["conscientiousness"] = score
         elif self.active_param == 3:
-            data["reliability"] = self.user_total
+            data["extroversion"] = score
         elif self.active_param == 4:
-            data["compassion"] = self.user_total
+            data["agreeableness"] = score
         elif self.active_param == 5:
-            data["openMindedness"] = self.user_total
+            data["neuroticism"] = score
         elif self.active_param == 6:
-            data["agreeableness"] = self.user_total
-        elif self.active_param == 7:
-            data["selfAwareness"] = self.user_total
-        elif self.active_param == 8:
-            data["levelOfSense"] = self.user_total
-        elif self.active_param == 9:
-            data["intellect"] = self.user_total
-        elif self.active_param == 10:
-            data["nature"] = self.user_total
-        elif self.active_param == 11:
-            data["creativity"] = self.user_total
+            data["nature"] = score
 
         return data
 
     def get_current_test_data(self):
         if self.isActivatedFromShop:
-            t = requests.get(f"https://localhost:44381/GetTestFullDataById/{self.current_test}/{self.localisation}", verify=False)
+            t = requests.get(f"https://localhost:44381/test-data-by-id/{self.current_test}/{self.localisation}", verify=False)
             data = json.loads(t.text)
 
             self.current_price_C = data['price']
@@ -368,14 +376,14 @@ class TestModule:
 
             return f"{data['name']}\n\n{data['description']}"
 
-        data = json.loads(requests.get(f"https://localhost:44381/GetUserTest/{self.current_user}/{self.current_test}", verify=False).text)
+        data = json.loads(requests.get(f"https://localhost:44381/user-test/{self.current_user}/{self.current_test}", verify=False).text)
 
         return_string = f"{data['test']['name']}\n\n{data['test']['description']}"
 
         if data['passedOn']:
             return_string += f"<b>Passed on: {data['passedOn']}</b>"
         else:
-            return_string += f"<b>Test hadn't been passed yet</b>"
+            return_string += f"\n\n<b>Test hadn't been passed yet</b>"
 
         return return_string
 
@@ -383,11 +391,11 @@ class TestModule:
         markup = self.get_markup()
 
         if markup:
-            if not self.active_message_id:
-                self.active_message_id = self.bot.send_message(self.current_user, "<i><b>Select any test to view more details</b></i>", reply_markup=markup).id
+            if not self.active_message:
+                self.active_message = self.bot.send_message(self.current_user, "<i><b>Select any test to view more details</b></i>", reply_markup=markup).id
             else:
                 try:
-                    self.bot.edit_message_text(chat_id=self.current_user, text="<i><b>Select any test to view more details</b></i>", reply_markup=markup, message_id=self.active_message_id)
+                    self.bot.edit_message_text(chat_id=self.current_user, text="<i><b>Select any test to view more details</b></i>", reply_markup=markup, message_id=self.active_message)
                 except:
                     pass
         else:
@@ -395,13 +403,24 @@ class TestModule:
 
     def load_test_data(self):
         self.current_question_index = -1
-        self.current_test_data = json.loads(requests.get(f"https://localhost:44381/GetSingleTest/{self.current_test}/{self.localisation}", verify=False).text)
+        self.current_test_data = json.loads(requests.get(f"https://localhost:44381/single-test/{self.current_test}/{self.localisation}", verify=False).text)
+
+        self.isPassingTest = True
+        self.questions = self.current_test_data["questions"]
+        self.questions_count = len(self.questions)
+        self.hasLieScale = len(self.current_test_data["scales"]) != 0 and \
+                           self.current_test_data["scales"][0]["scale"] == "L"
+
+        for scale in self.current_test_data["scales"]:
+            # Lie scale is handled separately
+            if scale["scale"] != "L":
+                self.answer_array[scale["scale"]] = {}
 
     def callback_handler(self, call):
-        self.bot.answer_callback_query(call.id, call.data)
+        self.bot.answer_callback_query(call.id, "")
         if call.data == "-1" or call.data == "-2":
             try:
-                index = self.index_converter(call.data)
+                index = index_converter(call.data)
                 if self.markup_page + index <= self.markup_pages_count or self.markup_page + index >= 1:
                     markup = assemble_markup(self.markup_page, self.current_markup_elements, index)
                     self.bot.edit_message_reply_markup(chat_id=call.message.chat.id, reply_markup=markup,
@@ -448,7 +467,7 @@ class TestModule:
         #If user is going back to start
         elif call.data == '-10':
             self.isOnStart = True
-            self.bot.edit_message_text(chat_id=self.current_user, text="<i><b>Please select the parameter, test will be sorted by</b></i>", reply_markup=self.start_markup, message_id=self.active_message_id)
+            self.bot.edit_message_text(chat_id=self.current_user, text="<i><b>Please select the parameter, test will be sorted by</b></i>", reply_markup=self.start_markup, message_id=self.active_message)
 
         elif call.data == '-8':
             if self.current_question_index > 0:
@@ -458,13 +477,21 @@ class TestModule:
         elif self.isPassingTest:
             if self.questions_count > self.current_question_index:
                 try:
-                    self.answer_array[self.current_question_index] = int(self.current_question_answers[int(call.data)]["value"])
-                except:
+                    answer_weight = int(self.current_question_answers[int(call.data)]["value"])
+                    if self.current_question["scale"] == "L":
+                        self.lie_scale[self.current_question_index] = answer_weight
+                    else:
+                        # Nature test is so different, it requires its own condition...
+                        if self.current_test == 49:
+                            self.answer_array[self.current_question["scale"]][self.current_question_index] = answer_weight
+                        else:
+                            self.answer_array[self.current_question_index] = answer_weight
+                except Exception as ex:
                     return
 
                 #Add tags from answers if they are present
                 if self.current_question_answers[int(call.data)]["tags"] is not None:
-                    self.tags_list[call.data] = self.current_question_answers[int(call.data)]["tags"]
+                    self.tags_list.extend(self.current_question_answers[int(call.data)]["tags"])
 
                 self.recurring_test_pass()
             # else:
@@ -500,29 +527,64 @@ class TestModule:
                 self.bot.register_next_step_handler(message, self.abort_handler, acceptMode=acceptMode, chat_id=self.current_user)
         self.bot.delete_message(self.current_user, message.id)
 
+    # def send_active_message(self, text, markup=None):
+    #     try:
+    #         if self.active_message:
+    #             self.bot.edit_message_text(text, self.current_user, self.active_message, reply_markup=markup)
+    #             return
+    #
+    #         self.active_message = self.bot.send_message(self.current_user, text, reply_markup=markup).id
+    #     except:
+    #         self.delete_active_message()
+    #         self.send_active_message(text, markup)
+
+    def send_question_message(self, text, markup=None):
+        try:
+            if self.question_message:
+                self.bot.edit_message_text(text, self.current_user, self.question_message, reply_markup=markup)
+                return
+
+            self.question_message = self.bot.send_message(self.current_user, text, reply_markup=markup).id
+        except:
+            self.delete_question_message()
+            self.send_question_message(text, markup)
+
+    def send_active_message(self, text, markup=None):
+        try:
+            if self.active_message:
+                self.bot.edit_message_text(text, self.current_user, self.active_message, reply_markup=markup)
+                return
+
+            self.active_message = self.bot.send_message(self.current_user, text, reply_markup=markup).id
+        except:
+            self.delete_question_message()
+            self.send_active_message(text, markup)
+
     def send_secondary_message(self, text, markup=None):
         try:
-            if not self.current_secondary_message:
-                if markup:
-                    self.current_secondary_message = self.bot.send_message(self.current_user, text, reply_markup=markup).id
-                    return
+            if self.secondary_message:
+                self.bot.edit_message_text(text, self.current_user, self.secondary_message, reply_markup=markup)
+                return
 
-                self.current_secondary_message = self.bot.send_message(self.current_user, text).id
-            else:
-                if markup:
-                    self.bot.edit_message_text(text=text, chat_id=self.current_user, message_id=self.current_secondary_message, reply_markup=markup)
-                    return
-
-                self.bot.edit_message_text(text=text, chat_id=self.current_user, message_id=self.current_secondary_message)
+            self.secondary_message = self.bot.send_message(self.current_user, text, reply_markup=markup).id
         except:
-            self.bot.delete_message(self.current_user, self.current_secondary_message)
-            self.current_secondary_message = self.bot.send_message(self.current_user, text, reply_markup=markup).id
+            self.delete_secondary_message()
+            self.send_secondary_message(text, markup)
 
-    @staticmethod
-    def index_converter(index):
-        if index == "-1":
-            return -1
-        return 1
+    def delete_active_message(self):
+        if self.active_message:
+            self.bot.delete_message(self.current_user, self.active_message)
+            self.active_message = None
+
+    def delete_question_message(self):
+        if self.question_message:
+            self.bot.delete_message(self.current_user, self.question_message)
+            self.question_message = None
+
+    def delete_secondary_message(self):
+        if self.secondary_message:
+            self.bot.delete_message(self.current_user, self.secondary_message)
+            self.secondary_message = None
 
     def destruct(self):
         if self.chCode in self.bot.callback_query_handlers:
@@ -531,11 +593,14 @@ class TestModule:
         if self.ah in self.bot.message_handlers:
             self.bot.message_handlers.remove(self.ah)
 
-        if self.current_secondary_message is not None:
-            self.bot.delete_message(self.current_user, self.current_secondary_message)
+        self.delete_secondary_message()
+        self.delete_question_message()
 
         if self.returnMethod:
             self.returnMethod(self.message, shouldSubscribe=True)
             return False
 
+        self.delete_question_message()
+        self.delete_active_message()
+        self.delete_secondary_message()
         go_back_to_main_menu(self.bot, self.current_user, self.message)

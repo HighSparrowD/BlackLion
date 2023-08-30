@@ -141,10 +141,10 @@ namespace WebApi.Controllers
             return await _repository.NotifyFailierTickRequestAsync(id, adminId);
         }
 
-        [HttpPost("/UploadPsTests")]
-        public async Task<byte> UploadPsTests([FromBody] List<UploadTest> model)
+        [HttpPost("/UploadTests")]
+        public async Task<byte> UploadPsTests([FromBody] List<UploadTest> model, [FromServices] IAdminRepository adminRepo)
         {
-            return await _repository.UploadPsTestsAsync(model);
+            return await adminRepo.UploadTestsAsync(model);
         }
 
         [HttpGet("/GetNewNotificationsCount/{adminId}")]
@@ -173,7 +173,7 @@ namespace WebApi.Controllers
                         Age = initialUser.Data.UserAge,
                         AgePrefs = initialUser.Data.AgePrefs,
                         AppLanguage = initialUser.Data.Language,
-                        ShouldUserPersonalityFunc = false,
+                        UsesOcean = false,
                         CityCode = initialUser.Location.CityId,
                         CountryCode = initialUser.Location.CountryId,
                         CommunicationPrefs = initialUser.Data.CommunicationPrefs,

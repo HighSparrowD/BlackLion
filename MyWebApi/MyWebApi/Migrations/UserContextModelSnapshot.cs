@@ -48,11 +48,21 @@ namespace WebApi.Migrations
 
             modelBuilder.HasSequence<int>("reports_hilo");
 
+            modelBuilder.HasSequence("tags_hilo");
+
+            modelBuilder.HasSequence("test_answers_hilo");
+
+            modelBuilder.HasSequence("test_questions_hilo");
+
+            modelBuilder.HasSequence("test_results_hilo");
+
+            modelBuilder.HasSequence<int>("test_scales_hilo");
+
+            modelBuilder.HasSequence("tests_hilo");
+
             modelBuilder.HasSequence<int>("tick_requests_hilo");
 
             modelBuilder.HasSequence<int>("transactions_hilo");
-
-            modelBuilder.HasSequence<int>("user_tags_hilo");
 
             modelBuilder.Entity("WebApi.Entities.AchievementEntities.Achievement", b =>
                 {
@@ -871,10 +881,32 @@ namespace WebApi.Migrations
                     b.ToTable("sponsor_stats", (string)null);
                 });
 
+            modelBuilder.Entity("WebApi.Entities.SystemEntitires.Tag", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<long>("Id"), "tags_hilo");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Text")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id", "Type");
+
+                    b.ToTable("tags", (string)null);
+                });
+
             modelBuilder.Entity("WebApi.Entities.TestEntities.Test", b =>
                 {
                     b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<long>("Id"), "tests_hilo");
 
                     b.Property<byte>("Language")
                         .HasColumnType("smallint");
@@ -891,8 +923,8 @@ namespace WebApi.Migrations
                     b.Property<int>("Price")
                         .HasColumnType("integer");
 
-                    b.Property<short>("TestType")
-                        .HasColumnType("smallint");
+                    b.Property<int>("TestType")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id", "Language");
 
@@ -905,13 +937,10 @@ namespace WebApi.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<long>("Id"), "test_answers_hilo");
 
-                    b.Property<bool>("IsCorrect")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Tags")
-                        .HasColumnType("text");
+                    b.Property<List<long>>("Tags")
+                        .HasColumnType("bigint[]");
 
                     b.Property<long>("TestQuestionId")
                         .HasColumnType("bigint");
@@ -935,18 +964,18 @@ namespace WebApi.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<byte>("Language")
-                        .HasColumnType("smallint");
+                    NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<long>("Id"), "test_questions_hilo");
 
                     b.Property<string>("Photo")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Scale")
                         .HasColumnType("text");
 
                     b.Property<long>("TestId")
                         .HasColumnType("bigint");
 
-                    b.Property<byte?>("TestLanguage")
+                    b.Property<byte>("TestLanguage")
                         .HasColumnType("smallint");
 
                     b.Property<string>("Text")
@@ -965,24 +994,21 @@ namespace WebApi.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<byte>("Language")
-                        .HasColumnType("smallint");
+                    NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<long>("Id"), "test_results_hilo");
 
                     b.Property<string>("Result")
                         .HasColumnType("text");
 
-                    b.Property<int>("Score")
+                    b.Property<int?>("Score")
                         .HasColumnType("integer");
 
-                    b.Property<string>("Tags")
-                        .HasColumnType("text");
+                    b.Property<List<long>>("Tags")
+                        .HasColumnType("bigint[]");
 
                     b.Property<long>("TestId")
                         .HasColumnType("bigint");
 
-                    b.Property<byte?>("TestLanguage")
+                    b.Property<byte>("TestLanguage")
                         .HasColumnType("smallint");
 
                     b.HasKey("Id");
@@ -990,6 +1016,33 @@ namespace WebApi.Migrations
                     b.HasIndex("TestId", "TestLanguage");
 
                     b.ToTable("tests_results", (string)null);
+                });
+
+            modelBuilder.Entity("WebApi.Entities.TestEntities.TestScale", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<int>("Id"), "test_scales_hilo");
+
+                    b.Property<long>("TestId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int?>("MinValue")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Scale")
+                        .HasColumnType("text");
+
+                    b.Property<byte>("TestLanguage")
+                        .HasColumnType("smallint");
+
+                    b.HasKey("Id", "TestId");
+
+                    b.HasIndex("TestId", "TestLanguage");
+
+                    b.ToTable("tests_scales", (string)null);
                 });
 
             modelBuilder.Entity("WebApi.Entities.UserActionEntities.Invitation", b =>
@@ -1074,7 +1127,7 @@ namespace WebApi.Migrations
                     b.Property<int>("Nullifiers")
                         .HasColumnType("integer");
 
-                    b.Property<int>("PersonalityPoints")
+                    b.Property<int>("OceanPoints")
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("PointInTime")
@@ -1170,6 +1223,86 @@ namespace WebApi.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("invitation_credentials", (string)null);
+                });
+
+            modelBuilder.Entity("WebApi.Entities.UserInfoEntities.OceanPoints", b =>
+                {
+                    b.Property<long>("UserId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("UserId"));
+
+                    b.Property<int>("Agreeableness")
+                        .HasColumnType("integer");
+
+                    b.Property<float>("AgreeablenessPercentage")
+                        .HasColumnType("real");
+
+                    b.Property<int>("Conscientiousness")
+                        .HasColumnType("integer");
+
+                    b.Property<float>("ConscientiousnessPercentage")
+                        .HasColumnType("real");
+
+                    b.Property<int>("Extroversion")
+                        .HasColumnType("integer");
+
+                    b.Property<float>("ExtroversionPercentage")
+                        .HasColumnType("real");
+
+                    b.Property<int>("Nature")
+                        .HasColumnType("integer");
+
+                    b.Property<float>("NaturePercentage")
+                        .HasColumnType("real");
+
+                    b.Property<int>("Neuroticism")
+                        .HasColumnType("integer");
+
+                    b.Property<float>("NeuroticismPercentage")
+                        .HasColumnType("real");
+
+                    b.Property<int>("Openness")
+                        .HasColumnType("integer");
+
+                    b.Property<float>("OpennessPercentage")
+                        .HasColumnType("real");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("ocean_points", (string)null);
+                });
+
+            modelBuilder.Entity("WebApi.Entities.UserInfoEntities.OceanStats", b =>
+                {
+                    b.Property<long>("UserId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("UserId"));
+
+                    b.Property<float>("Agreeableness")
+                        .HasColumnType("real");
+
+                    b.Property<float>("Conscientiousness")
+                        .HasColumnType("real");
+
+                    b.Property<float>("Extroversion")
+                        .HasColumnType("real");
+
+                    b.Property<float>("Nature")
+                        .HasColumnType("real");
+
+                    b.Property<float>("Neuroticism")
+                        .HasColumnType("real");
+
+                    b.Property<float>("Openness")
+                        .HasColumnType("real");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("ocean_stats", (string)null);
                 });
 
             modelBuilder.Entity("WebApi.Entities.UserInfoEntities.Transaction", b =>
@@ -1382,131 +1515,6 @@ namespace WebApi.Migrations
                     b.ToTable("user_data", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Entities.UserInfoEntities.UserPersonalityPoints", b =>
-                {
-                    b.Property<long>("UserId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("UserId"));
-
-                    b.Property<int>("Agreeableness")
-                        .HasColumnType("integer");
-
-                    b.Property<double>("AgreeablenessPercentage")
-                        .HasColumnType("double precision");
-
-                    b.Property<int>("Compassion")
-                        .HasColumnType("integer");
-
-                    b.Property<double>("CompassionPercentage")
-                        .HasColumnType("double precision");
-
-                    b.Property<int>("Creativity")
-                        .HasColumnType("integer");
-
-                    b.Property<double>("CreativityPercentage")
-                        .HasColumnType("double precision");
-
-                    b.Property<int>("EmotionalIntellect")
-                        .HasColumnType("integer");
-
-                    b.Property<double>("EmotionalIntellectPercentage")
-                        .HasColumnType("double precision");
-
-                    b.Property<int>("Intellect")
-                        .HasColumnType("integer");
-
-                    b.Property<double>("IntellectPercentage")
-                        .HasColumnType("double precision");
-
-                    b.Property<int>("LevelOfSense")
-                        .HasColumnType("integer");
-
-                    b.Property<double>("LevelOfSensePercentage")
-                        .HasColumnType("double precision");
-
-                    b.Property<int>("Nature")
-                        .HasColumnType("integer");
-
-                    b.Property<double>("NaturePercentage")
-                        .HasColumnType("double precision");
-
-                    b.Property<int>("OpenMindedness")
-                        .HasColumnType("integer");
-
-                    b.Property<double>("OpenMindednessPercentage")
-                        .HasColumnType("double precision");
-
-                    b.Property<int>("Personality")
-                        .HasColumnType("integer");
-
-                    b.Property<double>("PersonalityPercentage")
-                        .HasColumnType("double precision");
-
-                    b.Property<int>("Reliability")
-                        .HasColumnType("integer");
-
-                    b.Property<double>("ReliabilityPercentage")
-                        .HasColumnType("double precision");
-
-                    b.Property<int>("SelfAwareness")
-                        .HasColumnType("integer");
-
-                    b.Property<double>("SelfAwarenessPercentage")
-                        .HasColumnType("double precision");
-
-                    b.HasKey("UserId");
-
-                    b.ToTable("personality_points", (string)null);
-                });
-
-            modelBuilder.Entity("WebApi.Entities.UserInfoEntities.UserPersonalityStats", b =>
-                {
-                    b.Property<long>("UserId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("UserId"));
-
-                    b.Property<int>("Agreeableness")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Compassion")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Creativity")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("EmotionalIntellect")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Intellect")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("LevelOfSense")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Nature")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("OpenMindedness")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Personality")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Reliability")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("SelfAwareness")
-                        .HasColumnType("integer");
-
-                    b.HasKey("UserId");
-
-                    b.ToTable("personality_stats", (string)null);
-                });
-
             modelBuilder.Entity("WebApi.Entities.UserInfoEntities.UserSettings", b =>
                 {
                     b.Property<long>("Id")
@@ -1533,7 +1541,7 @@ namespace WebApi.Migrations
                     b.Property<bool>("ShouldSendHints")
                         .HasColumnType("boolean");
 
-                    b.Property<bool>("ShouldUsePersonalityFunc")
+                    b.Property<bool>("UsesOcean")
                         .HasColumnType("boolean");
 
                     b.HasKey("Id");
@@ -1543,22 +1551,20 @@ namespace WebApi.Migrations
 
             modelBuilder.Entity("WebApi.Entities.UserInfoEntities.UserTag", b =>
                 {
+                    b.Property<long>("TagId")
+                        .HasColumnType("bigint");
+
                     b.Property<long>("UserId")
                         .HasColumnType("bigint");
-
-                    b.Property<string>("Tag")
-                        .HasColumnType("text");
-
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<long>("Id"), "user_tags_hilo");
 
                     b.Property<int>("TagType")
                         .HasColumnType("integer");
 
-                    b.HasKey("UserId", "Tag");
+                    b.HasKey("TagId", "UserId", "TagType");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("TagId", "TagType");
 
                     b.ToTable("user_tags", (string)null);
                 });
@@ -1571,27 +1577,19 @@ namespace WebApi.Migrations
                     b.Property<long>("UserId")
                         .HasColumnType("bigint");
 
-                    b.Property<byte>("Language")
-                        .HasColumnType("smallint");
-
                     b.Property<DateTime?>("PassedOn")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<double>("Result")
-                        .HasColumnType("double precision");
+                    b.Property<float>("Result")
+                        .HasColumnType("real");
 
-                    b.Property<List<string>>("Tags")
-                        .HasColumnType("text[]");
-
-                    b.Property<byte?>("TestLanguage")
+                    b.Property<byte>("TestLanguage")
                         .HasColumnType("smallint");
 
-                    b.Property<short>("TestType")
-                        .HasColumnType("smallint");
+                    b.Property<int>("TestType")
+                        .HasColumnType("integer");
 
                     b.HasKey("TestId", "UserId");
-
-                    b.HasIndex("UserId");
 
                     b.HasIndex("TestId", "TestLanguage");
 
@@ -1837,14 +1835,27 @@ namespace WebApi.Migrations
                 {
                     b.HasOne("WebApi.Entities.TestEntities.Test", null)
                         .WithMany("Questions")
-                        .HasForeignKey("TestId", "TestLanguage");
+                        .HasForeignKey("TestId", "TestLanguage")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("WebApi.Entities.TestEntities.TestResult", b =>
                 {
                     b.HasOne("WebApi.Entities.TestEntities.Test", null)
                         .WithMany("Results")
-                        .HasForeignKey("TestId", "TestLanguage");
+                        .HasForeignKey("TestId", "TestLanguage")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("WebApi.Entities.TestEntities.TestScale", b =>
+                {
+                    b.HasOne("WebApi.Entities.TestEntities.Test", null)
+                        .WithMany("Scales")
+                        .HasForeignKey("TestId", "TestLanguage")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("WebApi.Entities.UserActionEntities.Invitation", b =>
@@ -1950,23 +1961,25 @@ namespace WebApi.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("WebApi.Entities.SystemEntitires.Tag", "Tag")
+                        .WithMany()
+                        .HasForeignKey("TagId", "TagType")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Tag");
                 });
 
             modelBuilder.Entity("WebApi.Entities.UserInfoEntities.UserTest", b =>
                 {
-                    b.HasOne("WebApi.Entities.UserInfoEntities.User", "User")
+                    b.HasOne("WebApi.Entities.TestEntities.Test", "Test")
                         .WithMany()
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("TestId", "TestLanguage")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("WebApi.Entities.TestEntities.Test", "Test")
-                        .WithMany()
-                        .HasForeignKey("TestId", "TestLanguage");
-
                     b.Navigation("Test");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("WebApi.Entities.AdventureEntities.Adventure", b =>
@@ -1991,6 +2004,8 @@ namespace WebApi.Migrations
                     b.Navigation("Questions");
 
                     b.Navigation("Results");
+
+                    b.Navigation("Scales");
                 });
 
             modelBuilder.Entity("WebApi.Entities.TestEntities.TestQuestion", b =>

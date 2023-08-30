@@ -52,8 +52,8 @@ class Shop:
         self.points_prices = Resources.get_prices("Points")
 
         self.secondChanceDescription = "<i><b>Second chance allows you to 'like' another user once again. It can be used in the 'encounters' section</b></i>"
-        self.valentineDescription = "<i><b>Doubles your Personality points for an hour</b></i>"
-        self.detectorDescription = "<i><b>When matched, shows which PERSONALITY parameters were matched. Works for 1 hour</b></i>"
+        self.valentineDescription = "<i><b>Doubles your OCEAN+ points for an hour</b></i>"
+        self.detectorDescription = "<i><b>When matched, shows which OCEAN+ parameters were matched. Works for 1 hour</b></i>"
         self.nullifierDescription = "<i><b>Allows you to pass any test one more time, without waiting</b></i>"
         self.cardDeckMiniDescription = "<i><b>Instantly adds 20 profile views to your daily views</b></i>"
         self.cardDeckPlatinumDescription = "<i><b>Instantly adds 50 profile views to your daily views</b></i>"
@@ -63,7 +63,7 @@ class Shop:
 
         self.start_markup = InlineKeyboardMarkup().add(InlineKeyboardButton("Premium", callback_data="1"))\
             .add(InlineKeyboardButton("Coins", callback_data="2"), InlineKeyboardButton("Effects", callback_data="3"))\
-            .add(InlineKeyboardButton("Personality Points", callback_data="4"))\
+            .add(InlineKeyboardButton("OCEAN+ Points", callback_data="4"))\
             .add(InlineKeyboardButton("Tests", callback_data="5"))\
             .add(InlineKeyboardButton("Support us :)", callback_data="6"))\
             .add(InlineKeyboardButton("Exit", callback_data="-1"))

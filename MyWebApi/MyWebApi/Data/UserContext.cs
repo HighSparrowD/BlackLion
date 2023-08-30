@@ -9,6 +9,7 @@ using WebApi.Entities.LocationEntities;
 using WebApi.Entities.ReportEntities;
 using WebApi.Entities.SecondaryEntities;
 using WebApi.Entities.SponsorEntities;
+using WebApi.Entities.SystemEntitires;
 using WebApi.Entities.TestEntities;
 using WebApi.Entities.UserActionEntities;
 using WebApi.Entities.UserInfoEntities;
@@ -24,6 +25,7 @@ namespace WebApi.Data
         public DbSet<Visit> UserVisits => Set<Visit>();
         public DbSet<Country> Countries => Set<Country>();
         public DbSet<City> Cities => Set<City>();
+        public DbSet<Tag> Tags => Set<Tag>();
         public DbSet<Language> Languages => Set<Language>();
         public DbSet<BlackList> UserBlacklists => Set<BlackList>();
         public DbSet<Feedback> Feedbacks => Set<Feedback>();
@@ -34,13 +36,18 @@ namespace WebApi.Data
         public DbSet<Transaction> Transaction => Set<Transaction>();
         public DbSet<UserNotification> Notifications => Set<UserNotification>();
         public DbSet<Encounter> Encounters => Set<Encounter>();
+        public DbSet<UserTag> UserTags => Set<UserTag>();
         public DbSet<Admin> Admins => Set<Admin>();
+
+        //Tests 
         public DbSet<Test> Tests => Set<Test>();
         public DbSet<TestQuestion> TestsQuestions => Set<TestQuestion>();
         public DbSet<TestAnswer> TestsAnswers => Set<TestAnswer>();
         public DbSet<TestResult> TestsResults => Set<TestResult>();
+        public DbSet<TestScale> TestsScales => Set<TestScale>();
         public DbSet<UserTest> UserTests => Set<UserTest>();
-        public DbSet<UserTag> UserTags => Set<UserTag>();
+
+        //Sponsors
         public DbSet<Ad> Ads => Set<Ad>();
         public DbSet<Sponsor> Sponsors => Set<Sponsor>();
         public DbSet<SponsorLanguage> SponsorLanguages => Set<SponsorLanguage>();
@@ -52,8 +59,8 @@ namespace WebApi.Data
         public DbSet<DailyReward> DailyRewards => Set<DailyReward>();
         public DbSet<InvitationCredentials> InvitationCredentials => Set<InvitationCredentials>();
         public DbSet<Invitation> Invitations => Set<Invitation>();
-        public DbSet<UserPersonalityStats> PersonalityStats => Set<UserPersonalityStats>();
-        public DbSet<UserPersonalityPoints> PersonalityPoints => Set<UserPersonalityPoints>();
+        public DbSet<OceanStats> OceanStats => Set<OceanStats>();
+        public DbSet<OceanPoints> OceanPoints => Set<OceanPoints>();
         public DbSet<ActiveEffect> ActiveEffects => Set<ActiveEffect>();
         public DbSet<TickRequest> TickRequests => Set<TickRequest>();
 
@@ -91,7 +98,12 @@ namespace WebApi.Data
             ConfigureReports(builder);
             ConfigureTickRequests(builder);
             ConfigureTransactions(builder);
-            ConfigureUserTags(builder);
+            ConfigureTests(builder);
+            ConfigureTestQuestions(builder);
+            ConfigureTestAnswers(builder);
+            ConfigureTestResults(builder);
+            ConfigureTestScales(builder);
+            ConfigureTags(builder);
         }
 
         private void ConfigureRelations(ModelBuilder builder)
@@ -110,7 +122,9 @@ namespace WebApi.Data
             builder.Entity<Sponsor>().HasMany(s => s.SponsorAds);
             builder.Entity<Test>().HasMany(t => t.Questions);
             builder.Entity<Test>().HasMany(t => t.Results);
+            builder.Entity<Test>().HasMany(t => t.Scales);
             builder.Entity<Test>().HasKey(t => new { t.Id, t.Language });
+            builder.Entity<TestScale>().HasKey(t => new { t.Id, t.TestId });
             builder.Entity<UserTest>().HasKey(t => new { t.TestId, t.UserId });
             builder.Entity<TestQuestion>().HasMany(q => q.Answers);
 
@@ -121,9 +135,10 @@ namespace WebApi.Data
             builder.Entity<Achievement>().HasKey(g => new { g.Id, g.Language });
             builder.Entity<UserAchievement>().HasKey(g => new { g.UserId, g.AchievementId });
             builder.Entity<BlackList>().HasKey(g => new { g.Id, g.UserId });
-            builder.Entity<UserTag>().HasKey(t => new { t.UserId, t.Tag });
+            builder.Entity<UserTag>().HasKey(t => new {t.TagId, t.UserId, t.TagType});
             builder.Entity<Hint>().HasKey(t => new { t.Id, t.Localization });
 
+            builder.Entity<Tag>().HasKey(t => new { t.Id, t.Type });
 
             builder.Entity<Adventure>().HasOne(a => a.City);
             builder.Entity<Adventure>().HasOne(a => a.Country);
@@ -170,8 +185,10 @@ namespace WebApi.Data
             builder.Entity<TestQuestion>().ToTable("tests_questions");
             builder.Entity<TestAnswer>().ToTable("tests_answers");
             builder.Entity<TestResult>().ToTable("tests_results");
+            builder.Entity<TestScale>().ToTable("tests_scales");
             builder.Entity<UserTest>().ToTable("user_tests");
             builder.Entity<UserTag>().ToTable("user_tags");
+            builder.Entity<Tag>().ToTable("tags");
             builder.Entity<Ad>().ToTable("ads");
             builder.Entity<Sponsor>().ToTable("sponsors");
             builder.Entity<SponsorLanguage>().ToTable("sponsor_languages");
@@ -184,8 +201,8 @@ namespace WebApi.Data
             builder.Entity<InvitationCredentials>().ToTable("invitation_credentials");
             builder.Entity<Invitation>().ToTable("invitations");
             //builder.Entity<DailyTask>().ToTable("daily_tasks");
-            builder.Entity<UserPersonalityStats>().ToTable("personality_stats");
-            builder.Entity<UserPersonalityPoints>().ToTable("personality_points");
+            builder.Entity<OceanStats>().ToTable("ocean_stats");
+            builder.Entity<OceanPoints>().ToTable("ocean_points");
             builder.Entity<ActiveEffect>().ToTable("active_effects");
             builder.Entity<TickRequest>().ToTable("tick_requests");
             builder.Entity<Adventure>().ToTable("adventures");
@@ -393,15 +410,99 @@ namespace WebApi.Data
             });
         }
 
-        private void ConfigureUserTags(ModelBuilder builder)
+        //private void ConfigureUserTags(ModelBuilder builder)
+        //{
+        //    const string sequenceName = "user_tags_hilo";
+
+        //    builder.HasSequence<int>(sequenceName)
+        //        .StartsAt(1)
+        //        .IncrementsBy(1);
+
+        //    builder.Entity<UserTag>(b =>
+        //    {
+        //        b.Property(a => a.Id).UseHiLo(sequenceName);
+        //    });
+        //}
+
+        private void ConfigureTests(ModelBuilder builder)
         {
-            const string sequenceName = "user_tags_hilo";
+            const string sequenceName = "tests_hilo";
+
+            builder.HasSequence<long>(sequenceName)
+                .StartsAt(1)
+                .IncrementsBy(1);
+
+            builder.Entity<Test>(b =>
+            {
+                b.Property(a => a.Id).UseHiLo(sequenceName);
+            });
+        }
+
+        private void ConfigureTestQuestions(ModelBuilder builder)
+        {
+            const string sequenceName = "test_questions_hilo";
+
+            builder.HasSequence<long>(sequenceName)
+                .StartsAt(1)
+                .IncrementsBy(1);
+
+            builder.Entity<TestQuestion>(b =>
+            {
+                b.Property(a => a.Id).UseHiLo(sequenceName);
+            });
+        }
+
+        private void ConfigureTestAnswers(ModelBuilder builder)
+        {
+            const string sequenceName = "test_answers_hilo";
+
+            builder.HasSequence<long>(sequenceName)
+                .StartsAt(1)
+                .IncrementsBy(1);
+
+            builder.Entity<TestAnswer>(b =>
+            {
+                b.Property(a => a.Id).UseHiLo(sequenceName);
+            });
+        }
+
+        private void ConfigureTestResults(ModelBuilder builder)
+        {
+            const string sequenceName = "test_results_hilo";
+
+            builder.HasSequence<long>(sequenceName)
+                .StartsAt(1)
+                .IncrementsBy(1);
+
+            builder.Entity<TestResult>(b =>
+            {
+                b.Property(a => a.Id).UseHiLo(sequenceName);
+            });
+        }
+
+        private void ConfigureTestScales(ModelBuilder builder)
+        {
+            const string sequenceName = "test_scales_hilo";
 
             builder.HasSequence<int>(sequenceName)
                 .StartsAt(1)
                 .IncrementsBy(1);
 
-            builder.Entity<UserTag>(b =>
+            builder.Entity<TestScale>(b =>
+            {
+                b.Property(a => a.Id).UseHiLo(sequenceName);
+            });
+        }
+
+        private void ConfigureTags(ModelBuilder builder)
+        {
+            const string sequenceName = "tags_hilo";
+
+            builder.HasSequence<long>(sequenceName)
+                .StartsAt(1)
+                .IncrementsBy(1);
+
+            builder.Entity<Tag>(b =>
             {
                 b.Property(a => a.Id).UseHiLo(sequenceName);
             });

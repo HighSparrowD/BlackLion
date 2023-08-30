@@ -13,6 +13,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using WebApi.Entities;
+using WebApi.Entities.SystemEntitires;
+using Microsoft.OpenApi.Validations;
 
 namespace WebApi.Repositories
 {
@@ -388,7 +390,7 @@ namespace WebApi.Repositories
             return model.IsAccepted;
         }
 
-        public async Task<byte> UploadPsTestsAsync(List<UploadTest> tests)
+        public async Task<byte> UploadTestsAsync(List<UploadTest> tests)
         {
             try
             {
@@ -398,33 +400,24 @@ namespace WebApi.Repositories
                 {
                     var model = tests[i];
 
-                    //Check if a version of test already exists
+                    //Check if a version of the test already exists
                     var existingTest = await _contx.Tests.Where(t => t.Id == model.Id)
-                        .SingleOrDefaultAsync();
+                        .FirstOrDefaultAsync();
 
                     if (existingTest != null)
                     {
-                        if (existingTest.Language == model.ClassLocalisationId)
+                        if (existingTest.Language == model.Language)
                             //Continue if test version already exists.
-                            //It allows to avoid constantly changing source file in tools
+                            //It allows to remove the necessity of constant change of the source file in tools
                             continue;
-
-                        testId = model.Id;
                     }
-                    else
-                        testId = await _contx.Tests.CountAsync() + 1;
 
-                    var lastQuestionId = await _contx.TestsQuestions.CountAsync();
-                    var lastAnswerId = await _contx.TestsAnswers.CountAsync();
-                    var lastResultId = await _contx.TestsResults.CountAsync();
+                    testId = model.Id;
 
-                    var results = new List<TestResult>();
-                    var questions = new List<TestQuestion>();
-                    var answers = new List<TestAnswer>();
                     var test = new Test
                     {
                         Id = testId,
-                        Language = model.ClassLocalisationId,
+                        Language = model.Language,
                         Name = model.Name,
                         Description = model.Description,
                         TestType = model.TestType,
@@ -432,53 +425,56 @@ namespace WebApi.Repositories
                         CanBePassedInDays = model.CanBePassedInDays
                     };
 
+                    await _contx.Tests.AddAsync(test);
+
                     foreach (var question in model.Questions)
                     {
-                        lastQuestionId++;
-
-                        questions.Add(new TestQuestion
+                        var q = new TestQuestion
                         {
-                            Id = lastQuestionId,
-                            Language = test.Language,
+                            TestLanguage = test.Language,
                             TestId = testId,
-                            Text = question.Text
-                        });
+                            Scale = question.Scale,
+                            Text = question.Text,
+                            Photo = question.Photo
+                        };
+
+                        await _contx.TestsQuestions.AddAsync(q);
 
                         foreach (var answer in question.Answers)
                         {
-                            lastAnswerId++;
-
-                            answers.Add(new TestAnswer
+                            _contx.TestsAnswers.Add(new TestAnswer
                             {
-                                Id = lastAnswerId,
                                 Text = answer.Text,
                                 Value = answer.Value,
-                                IsCorrect = answer.IsCorrect,
-                                TestQuestionId = lastQuestionId,
-                                Tags = answer.Tags
+                                TestQuestionId = q.Id,
+                                Tags = string.IsNullOrEmpty(answer.Tags)? null : await _userRep.AddTagsAsync(answer.Tags, TagType.Tests)
                             });
                         }
                     }
 
                     foreach (var result in model.Results)
                     {
-                        lastResultId++;
-
-                        results.Add(new TestResult
+                        await _contx.TestsResults.AddAsync(new TestResult
                         {
-                            Id = lastResultId,
                             Result = result.Result,
                             Score = result.Score,
                             TestId = test.Id,
-                            Language = test.Language,
-                            Tags = result.Tags
+                            TestLanguage = test.Language,
+                            Tags = string.IsNullOrEmpty(result.Tags) ? null : await _userRep.AddTagsAsync(result.Tags, TagType.Tests)
                         });
                     }
 
-                    await _contx.Tests.AddAsync(test);
-                    await _contx.TestsQuestions.AddRangeAsync(questions);
-                    await _contx.TestsAnswers.AddRangeAsync(answers);
-                    await _contx.TestsResults.AddRangeAsync(results);
+                    foreach (var scale in model.Scales)
+                    {
+                        await _contx.TestsScales.AddAsync(new TestScale
+                        {
+                            TestId = test.Id,
+                            TestLanguage = test.Language,
+                            Scale = scale.Scale,
+                            MinValue = scale.MinValue
+                        });
+                    }
+
                     await _contx.SaveChangesAsync();
                 }
 

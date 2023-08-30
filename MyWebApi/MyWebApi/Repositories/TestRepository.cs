@@ -115,22 +115,24 @@ namespace WebApi.Repositories
 
         public async Task<Test> GetSingleTestAsync(long testId, AppLanguage localisationId)
         {
+            // TODO: Apply commented code when test are localized
             return await _contx.Tests
-                .Where(t => t.Id == testId && t.Language == localisationId)
+                .Where(t => t.Id == testId) // && t.Language == localisationId
                 .Include(t => t.Questions)
                 .ThenInclude(q => q.Answers)
+                .Include(q => q.Scales)
                 .Include(t => t.Results.OrderBy(r => r.Score))
-                .SingleOrDefaultAsync();
+                .FirstOrDefaultAsync();
         }
 
-        public async Task<List<string>> GetSimmilarTagsAsync(string tag)
-        {
-            return await _contx.UserTags
-                .Where(t => EF.Functions.FuzzyStringMatchDifference(EF.Functions.FuzzyStringMatchSoundex(t.Tag), tag) >= 1)
-                .OrderByDescending(t => EF.Functions.FuzzyStringMatchDifference(EF.Functions.FuzzyStringMatchSoundex(t.Tag), tag))
-                .Select(t => t.Tag)
-                .Take(3)
-                .ToListAsync();
-        }
+        //public async Task<List<string>> GetSimmilarTagsAsync(string tag)
+        //{
+        //    return await _contx.UserTags
+        //        .Where(t => EF.Functions.FuzzyStringMatchDifference(EF.Functions.FuzzyStringMatchSoundex(t.Tag), tag) >= 1)
+        //        .OrderByDescending(t => EF.Functions.FuzzyStringMatchDifference(EF.Functions.FuzzyStringMatchSoundex(t.Tag), tag))
+        //        .Select(t => t.Tag)
+        //        .Take(3)
+        //        .ToListAsync();
+        //}
     }
 }

@@ -11,6 +11,7 @@ using WebApi.Entities.TestEntities;
 using WebApi.Entities.EffectEntities;
 using WebApi.Entities.AdventureEntities;
 using WebApi.Entities;
+using OceanStats = WebApi.Enums.OceanStats;
 
 namespace WebApi.Interfaces
 {
@@ -38,7 +39,7 @@ namespace WebApi.Interfaces
         Task UpdateUserAsync (UpdateUserProfile model);
         Task<SearchResponse> GetUsersAsync(long userId, bool isRepeated=false, bool isFreeSearch = false);
         Task<bool> CheckUserExists(long id);
-        Task<AppLanguage> GetUserAppLanguage(long id);
+        Task<string> GetUserAppLanguage(long id);
         Task<long> RegisterUserAsync(UserRegistrationModel model, bool wasRegistered=false);
         Task<Country> GetCountryAsync(long id);
         //Task<List<ReportReason>> GetReportReasonsAsync(int localisationId);
@@ -107,19 +108,18 @@ namespace WebApi.Interfaces
         Task<int> GetUserMaximumLanguageCountAsync(long userId);
         int GetMaximumLanguageCount(bool? hasPremium);
         Task<int> GetUserPersonalityPointsAmount(long userId);
-        Task<bool> UpdateUserPersonalityStats(TestPayload model);
+        Task<bool> UpdateOceanStatsAsync(TestPayload model);
         Task<bool> UpdateUserPersonalityPoints(PointsPayload model);
-        Task<UserPersonalityStats> GetUserPersonalityStats(long userId);
-        Task<UserPersonalityPoints> GetUserPersonalityPoints(long userId);
+        Task<OceanPoints> GetUserPersonalityPoints(long userId);
         Task<bool?> CheckUserUsesPersonality(long userId);
-        Task<bool> RegisterTestPassingAsync(TestPayload model, int testResult);
+        Task<bool> RegisterTestPassingAsync(TestPayload model, float testResult);
         Task<bool> UpdateTags(UpdateTags model);
         Task<List<UserTag>> GetTags(long userId);
         Task<SearchResponse> GetUserByTagsAsync(GetUserByTags model);
         Task<bool> CheckEncounteredUserIsInBlackList(long userId, long encounteredUser);
         Task<string> RetreiveCommonLanguagesAsync(long user1Iq, long user2Id, int localisationId);
-        Task<bool> SetAutoReplyTextAsync(long userId, string text);
-        Task<bool> SetAutoReplyVoiceAsync(long userId, string voice);
+        Task SetAutoReplyTextAsync(long userId, string text);
+        Task SetAutoReplyVoiceAsync(long userId, string voice);
         Task<ActiveAutoReply> GetActiveAutoReplyAsync(long userId);
         Task<bool> CheckUserHasEffectAsync(long userId, int effectId);
         Task<DateTime?> ActivateDurableEffectAsync(long userId, Currency effectId);
@@ -133,8 +133,8 @@ namespace WebApi.Interfaces
         Task<bool> SendTickRequestAsync(SendTickRequest request);
         Task<bool> SwitchUserFilteringByPhotoAsync(long userId);
         Task<bool> GetUserFilteringByPhotoStatusAsync(long userId);
-        Task<List<GetTestShortData>> GetTestDataByPropertyAsync(long userId, short param);
-        Task<List<GetTestShortData>> GetUserTestDataByPropertyAsync(long userId, short param);
+        Task<List<GetTestShortData>> GetTestDataByPropertyAsync(long userId, OceanStats param);
+        Task<List<GetTestShortData>> GetUserTestDataByPropertyAsync(long userId, OceanStats param);
         Task<GetFullTestData> GetTestFullDataByIdAsync(long testId, AppLanguage localisation);
         Task<GetUserTest> GetUserTestAsync(long userId, long testId);
         Task<int> GetPossibleTestPassRangeAsync(long userId, long testId);
@@ -145,21 +145,22 @@ namespace WebApi.Interfaces
         Task<bool> SetUserFreeSearchParamAsync(long userId, bool freeStatus);
         List<GetLocalizedEnum> GetReportReasonsAsync();
         //Get stats user can invest points in
-        Task<PersonalityCaps> GetUserPersonalityCapsAsync(long userId);
+        Task<OceanCaps> GetUserPersonalityCapsAsync(long userId);
         Task<bool> GetUserRTLanguageConsiderationAsync(long userId);
         Task SetUserCurrencyAsync(long userId, Currency currency);
         Task<GetUserData> GetRequestSenderAsync(long senderId);
         Task<bool> CheckPromoIsCorrectAsync(long userId, string promoText, bool isActivatedBeforeRegistration);
         Task<bool> GetUserIncreasedFamiliarityAsync(long userId);
         Task<bool> SwitchIncreasedFamiliarityAsync(long userId);
-        Task<bool> AddUserCommercialVector(long userId, string tagString);
+        Task<List<long>> AddTagsAsync(string tags, TagType type);
+        //Task<bool> AddUserCommercialVector(long userId, string tagString);
         Task<SimilarityBetweenUsers> GetSimilarityBetweenUsersAsync(long user1, long user2);
         Task<GetUserMedia> GetUserMediaAsync(long userId);
         Task<GetLimitations> GetUserSearchLimitations(long userId);
 
         //Toggle Settings 
         Task SwitchHintsVisibilityAsync(long userId);
-        Task<bool> SwitchPersonalityUsage(long userId);
+        Task<bool> SwitchOceanUsageAsync(long userId);
         Task<SwitchBusyStatusResponse> SwhitchUserBusyStatus(long userId, Section section);
         Task SwitchSearchCommentsVisibilityAsync(long userId);
         Task<bool> SwitchUserFreeSearchParamAsync(long userId);

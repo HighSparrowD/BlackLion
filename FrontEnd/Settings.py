@@ -1,10 +1,9 @@
 import base64
 import random
 
-from telebot import TeleBot
-
 from Registration import *
 from ReportModule import *
+from Common.Menues import count_pages, assemble_markup, reset_pages, index_converter
 from telebot.types import ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
 import Core.HelpersMethodes as Helpers
 
@@ -34,20 +33,15 @@ class Settings:
         self.user_points = {}
         self.user_free_points = 0
         self.free_points_indicator = None
-        self.p_indicator = None
-        self.e_indicator = None
-        self.r_indicator = None
-        self.s_indicator = None
         self.o_indicator = None
-        self.n_indicator = None
+        self.c_indicator = None
+        self.e_indicator = None
         self.a_indicator = None
-        self.l_indicator = None
-        self.i_indicator = None
-        self.t_indicator = None
-        self.y_indicator = None
-        self.personalityMarkup = None
-        self.personality_caps = {}
-        self.personality_updated_points = {}
+        self.n_indicator = None
+        self.p_indicator = None
+        self.oceanMarkup = None
+        self.ocean_caps = {}
+        self.ocean_updated_points = {}
         self.current_markup_elements = []
         self.markup_page = 1
         self.markup_pages_count = 0
@@ -58,7 +52,7 @@ class Settings:
         self.gesture = None
 
         #TODO: check this parameter instead of calling API every time
-        self.uses_Personality = self.current_user_data["settings"]["shouldUsePersonalityFunc"]
+        self.uses_ocean = self.current_user_data["settings"]["usesOcean"]
         self.has_Premium = self.current_user_data["hasPremium"]
         self.language_cons_status = self.current_user_data["settings"]["shouldConsiderLanguages"]
         self.free_status = self.current_user_data["settings"]["isFree"]
@@ -114,12 +108,6 @@ class Settings:
         self.remove_from_blacklist_text = "Remove user from a blacklist"
 
         self.chooseOption_message = "Choose the option:"
-        self.setting_message = "1. My Profile\n2. Personality Settings\n3. Filter Settings\n4. My Statistics\n5. Additional Actions\n\n6. Exit"
-        self.settingMyProfile_message = f"{self.chooseOption_message}\n1. View the blacklist\n2. Manage recently encountered users\n3. Change profile properties\n4. ⭐Set profile status⭐\n5. Set Auto reply message\n\n 6. Change payment currency\n7. Go back"
-        self.settingPersonalitySettings_message = f"{self.chooseOption_message}\n1. Turn On / Turn Off PERSONALITY\n2. Manage PERSONALITY points\n3. View my tests\n\n4. Go back"
-        self.settingFiltersSettings_message = f"{self.chooseOption_message}\n1. Turn On / Turn Off language consideration (Random Conversation)\n2.Change my 'Free' status\n3. ⭐Turn on / Turn off filtration by a real photo⭐\n\n4. Go back"
-        self.settingStatistics_message = f"{self.chooseOption_message}\n1. View Achievements\n2. Manage Effects\n3. 💎Top-Up coin balance💎\n4. 💎Top-Up Personality points balance💎\n5. 💎Buy premium access💎\n\n6. Go back"
-        self.settingAdditionalActions_message = f"{self.chooseOption_message}\n1. Get invitation credentials\n2. Switch Increased Familiarity parameter\n"
         self.increased_familiarity_start_message = "When you invite someone, this person instantly receives like from you.\n"
         self.increased_familiarity_offline_message = "This functionality is currently Turned off. Would you like to turn it on?"
         self.increased_familiarity_online_message = "This functionality is currently Turned on. Would you like to turn it off?"
@@ -129,7 +117,7 @@ class Settings:
 
         # self.settingMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4", "5", "6")
         self.settingMarkup = InlineKeyboardMarkup().add(InlineKeyboardButton("👤 My Profile 👤", callback_data="200")) \
-            .add(InlineKeyboardButton("Personality Settings", callback_data="201")) \
+            .add(InlineKeyboardButton("OCEAN+ Settings", callback_data="201")) \
             .add(InlineKeyboardButton("Filter Settings", callback_data="202")) \
             .add(InlineKeyboardButton("Inventory and Statistics", callback_data="203")) \
             .add(InlineKeyboardButton("Additional Actions", callback_data="204")) \
@@ -144,14 +132,13 @@ class Settings:
             .add(InlineKeyboardButton("Change payment currency", callback_data="230")) \
             .add(InlineKeyboardButton("Go back", callback_data="-20")) \
 
-        # self.settingPersonalitySettingsMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4")
-        self.settingPersonalitySettingsMarkup_TurnedOn = InlineKeyboardMarkup().add(InlineKeyboardButton("Turn Off PERSONALITY", callback_data="205")) \
-            .add(InlineKeyboardButton("Manage P.E.R.S.O.N.A.L.I.T.Y points", callback_data="206")) \
+        self.settingOceanSettingsMarkup_TurnedOn = InlineKeyboardMarkup().add(InlineKeyboardButton("Turn Off OCEAN+", callback_data="205")) \
+            .add(InlineKeyboardButton("Manage OCEAN+ points", callback_data="206")) \
             .add(InlineKeyboardButton("Pass Tests", callback_data="207")) \
             .add(InlineKeyboardButton("Go back", callback_data="-20"))
 
-        self.settingPersonalitySettingsMarkup_TurnedOff = InlineKeyboardMarkup()\
-            .add(InlineKeyboardButton("Turn On PERSONALITY", callback_data="205")) \
+        self.settingOceanSettingsMarkup_TurnedOff = InlineKeyboardMarkup()\
+            .add(InlineKeyboardButton("Turn On OCEAN+", callback_data="205")) \
             .add(InlineKeyboardButton("Go back", callback_data="-20"))
 
         self.language_considerationIndicator = InlineKeyboardButton("", callback_data="210")
@@ -176,7 +163,7 @@ class Settings:
         self.settingStatisticsMarkup = InlineKeyboardMarkup().add(InlineKeyboardButton("Achievements", callback_data="213")) \
             .add(InlineKeyboardButton("Manage effects", callback_data="214")) \
             .add(InlineKeyboardButton("💎Top-Up coin balance💎", callback_data="215")) \
-            .add(InlineKeyboardButton("💎Top-Up P.E.R.S.O.N.A.L.I.T.Y points balance💎", callback_data="216")) \
+            .add(InlineKeyboardButton("💎Top-Up OCEAN+ points balance💎", callback_data="216")) \
             .add(InlineKeyboardButton("💎Buy premium access💎", callback_data="217")) \
             .add(InlineKeyboardButton("Go back", callback_data="-20"))
 
@@ -222,19 +209,18 @@ class Settings:
         self.YNMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("yes", "no")
         self.skipMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("Skip", "Go Back")
         self.abortMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("Go Back")
-        self.doneMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("Done")
         self.currency_choiceMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4", "5", "6", "7")
 
         self.effect_is_active_Warning = "<i><b>Warning! This effect is already active. Repeated usage will override the effect's timer !</b></i>"
 
         self.secondChanceDescription = "Second chance allows you to 'like' another user once again. It can be used in the 'Encounters' section"
-        self.valentineDescription = "Doubles your Personality points for an hour"
-        self.detectorDescription = "When matched, shows which PERSONALITY parameters were matched. Works for 1 hour"
+        self.valentineDescription = "Doubles your OCEAN+ points for an hour"
+        self.detectorDescription = "When matched, shows which OCEAN+ parameters were matched. Works for 1 hour"
         self.nullifierDescription = "Allows you to pass any test one more time, without waiting. It can be activated from the 'Test' section"
         self.cardDeckMiniDescription = "Instantly adds 20 profile views to your daily views"
         self.cardDeckPlatinumDescription = "Instantly adds 50 profile views to your daily views"
 
-        self.personality_description = "P.E.R.S.O.N.A.L.I.T.Y system is a test-based system, which helps you in finding people or adventures that you need.\n\nEvery P.E.R.S.O.N.A.L.I.T.Y test you pass provides us with better opportunity to give you search result that may suit you the most.\n\n"
+        self.ocean_description = "OCEAN+ system is a test-based system, which helps you in finding people or adventures that you need.\n\nEvery OCEAN+ test you pass provides us with better opportunity to give you search result that may suit you the most.\n\n"
 
         self.okMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Ok")
 
@@ -333,16 +319,16 @@ class Settings:
                 self.send_error_message("Only text and voice messages are accepted", markup=self.abortMarkup)
                 self.bot.register_next_step_handler(message, self.auto_reply_manager, acceptMode=acceptMode, chat_id=self.current_user)
 
-    def personality_settings_choice(self, message, acceptMode=False):
+    def ocean_settings_choice(self, message, acceptMode=False):
         self.previous_section = self.setting_choice
-        self.active_section = self.personality_settings_choice
+        self.active_section = self.ocean_settings_choice
 
         activeMarkup = None
 
-        if self.uses_Personality:
-            activeMarkup = self.settingPersonalitySettingsMarkup_TurnedOn
+        if self.uses_ocean:
+            activeMarkup = self.settingOceanSettingsMarkup_TurnedOn
         else:
-            activeMarkup = self.settingPersonalitySettingsMarkup_TurnedOff
+            activeMarkup = self.settingOceanSettingsMarkup_TurnedOff
 
         self.send_active_message("Please select an option", activeMarkup)
 
@@ -533,85 +519,62 @@ class Settings:
             else:
                 self.send_secondary_message("Something went wrong. Please, contact the administration")
 
-    def personality_points(self, message):
-        self.previous_section = self.personality_settings_choice
-        self.active_section = self.personality_points
+    def ocean_points(self, message):
+        self.previous_section = self.ocean_settings_choice
+        self.active_section = self.ocean_points
         self.notInMenu = True
 
-        self.user_free_points = int(json.loads(requests.get(f"https://localhost:44381/GetUserPersonalityPointsAmount/{self.current_user}", verify=False).text))
-        self.user_points = json.loads(requests.get(f"https://localhost:44381/GetUserPersonalityPoints/{self.current_user}", verify=False).text)
-        self.personality_caps = json.loads(requests.get(f"https://localhost:44381/GetUserPersonalityCaps/{self.current_user}", verify=False).text)
+        self.user_free_points = int(json.loads(requests.get(f"https://localhost:44381/ocean-points-amount/{self.current_user}", verify=False).text))
+        self.user_points = json.loads(requests.get(f"https://localhost:44381/ocean-points/{self.current_user}", verify=False).text)
+        self.ocean_caps = json.loads(requests.get(f"https://localhost:44381/ocean-caps/{self.current_user}", verify=False).text)
 
         self.free_points_indicator = InlineKeyboardButton(self.user_free_points, callback_data="0")
-        # self.current_callback_handler = self.bot.register_callback_query_handler("", self.personality_callback_handler, user_id=self.current_user)
-        self.subscribe_callback_handler(self.personality_callback_handler)
+        self.subscribe_callback_handler(self.ocean_callback_handler)
 
         if not self.user_points:
             self.send_error_message(self.current_user, "Something went wrong")
             self.proceed()
 
-        self.p_indicator = InlineKeyboardButton(f"         {self.user_points['personality']}         ", callback_data="0")
-        self.e_indicator = InlineKeyboardButton(self.user_points["emotionalIntellect"], callback_data="0")
-        self.r_indicator = InlineKeyboardButton(self.user_points["reliability"], callback_data="0")
-        self.s_indicator = InlineKeyboardButton(self.user_points["compassion"], callback_data="0")
-        self.o_indicator = InlineKeyboardButton(self.user_points["openMindedness"], callback_data="0")
-        self.n_indicator = InlineKeyboardButton(self.user_points["agreeableness"], callback_data="0")
-        self.a_indicator = InlineKeyboardButton(self.user_points["selfAwareness"], callback_data="0")
-        self.l_indicator = InlineKeyboardButton(self.user_points["levelOfSense"], callback_data="0")
-        self.i_indicator = InlineKeyboardButton(self.user_points["intellect"], callback_data="0")
-        self.t_indicator = InlineKeyboardButton(self.user_points["nature"], callback_data="0")
-        self.y_indicator = InlineKeyboardButton(self.user_points["creativity"], callback_data="0")
+        self.o_indicator = InlineKeyboardButton(f"{self.user_points['openness']}", callback_data="0")
+        self.c_indicator = InlineKeyboardButton(self.user_points["conscientiousness"], callback_data="0")
+        self.e_indicator = InlineKeyboardButton(self.user_points["extroversion"], callback_data="0")
+        self.a_indicator = InlineKeyboardButton(self.user_points["agreeableness"], callback_data="0")
+        self.n_indicator = InlineKeyboardButton(self.user_points["neuroticism"], callback_data="0")
+        self.p_indicator = InlineKeyboardButton(self.user_points["nature"], callback_data="0")
 
-        self.personalityMarkup = InlineKeyboardMarkup() \
+        self.oceanMarkup = InlineKeyboardMarkup() \
             .add(InlineKeyboardButton("Available points:", callback_data="0"), self.free_points_indicator) \
-            .add(InlineKeyboardButton("Personality", callback_data="0"))\
-            .add(InlineKeyboardButton("-", callback_data="-1"), self.p_indicator, InlineKeyboardButton("+", callback_data="1")) \
-            .add(InlineKeyboardButton("Emotional intellect", callback_data="0")) \
-            .add(InlineKeyboardButton("-", callback_data="-2"), self.e_indicator, InlineKeyboardButton("+", callback_data="2")) \
-            .add(InlineKeyboardButton("Reliability", callback_data="0")) \
-            .add(InlineKeyboardButton("-", callback_data="-3"), self.r_indicator, InlineKeyboardButton("+", callback_data="3")) \
-            .add(InlineKeyboardButton("Compassion", callback_data="0")) \
-            .add(InlineKeyboardButton("-", callback_data="-4"), self.s_indicator, InlineKeyboardButton("+", callback_data="4")) \
-            .add(InlineKeyboardButton("Open-Mindedness", callback_data="0")) \
-            .add(InlineKeyboardButton("-", callback_data="-5"), self.o_indicator, InlineKeyboardButton("+", callback_data="5")) \
+            .add(InlineKeyboardButton("Openness", callback_data="0"))\
+            .add(InlineKeyboardButton("-", callback_data="-1"), self.o_indicator, InlineKeyboardButton("+", callback_data="1")) \
+            .add(InlineKeyboardButton("Conscientiousness", callback_data="0")) \
+            .add(InlineKeyboardButton("-", callback_data="-2"), self.c_indicator, InlineKeyboardButton("+", callback_data="2")) \
+            .add(InlineKeyboardButton("Extroversion", callback_data="0")) \
+            .add(InlineKeyboardButton("-", callback_data="-3"), self.e_indicator, InlineKeyboardButton("+", callback_data="3")) \
             .add(InlineKeyboardButton("Agreeableness", callback_data="0")) \
-            .add(InlineKeyboardButton("-", callback_data="-6"), self.n_indicator, InlineKeyboardButton("+", callback_data="6")) \
-            .add(InlineKeyboardButton("Self-Awareness", callback_data="0")) \
-            .add(InlineKeyboardButton("-", callback_data="-7"), self.a_indicator, InlineKeyboardButton("+", callback_data="7")) \
-            .add(InlineKeyboardButton("Levels Of Sense", callback_data="0")) \
-            .add(InlineKeyboardButton("-", callback_data="-8"), self.l_indicator, InlineKeyboardButton("+", callback_data="8")) \
-            .add(InlineKeyboardButton("Intellect", callback_data="0")) \
-            .add(InlineKeyboardButton("-", callback_data="-9"), self.i_indicator, InlineKeyboardButton("+", callback_data="9")) \
+            .add(InlineKeyboardButton("-", callback_data="-4"), self.a_indicator, InlineKeyboardButton("+", callback_data="4")) \
+            .add(InlineKeyboardButton("Neuroticism", callback_data="0")) \
+            .add(InlineKeyboardButton("-", callback_data="-5"), self.n_indicator, InlineKeyboardButton("+", callback_data="5")) \
             .add(InlineKeyboardButton("Nature", callback_data="0")) \
-            .add(InlineKeyboardButton("-", callback_data="-10"), self.t_indicator, InlineKeyboardButton("+", callback_data="10")) \
-            .add(InlineKeyboardButton("Creativity", callback_data="0")) \
-            .add(InlineKeyboardButton("-", callback_data="-11"), self.y_indicator, InlineKeyboardButton("+", callback_data="11"))
+            .add(InlineKeyboardButton("-", callback_data="-6"), self.p_indicator, InlineKeyboardButton("+", callback_data="6")) \
+            .add(InlineKeyboardButton("✨SAVE✨", callback_data="7"))
 
-        self.send_secondary_message("✨", markup=self.doneMarkup)
-        self.send_active_message("Points table:", markup=self.personalityMarkup)
-        self.bot.register_next_step_handler(message, self.personality_points_save, chat_id=self.current_user)
+        self.send_active_message("Points table:", markup=self.oceanMarkup)
 
-    def personality_points_save(self, message):
-        #Check if message was not sent by the bot
-        if message.from_user.id == self.current_user:
-            self.bot.delete_message(self.current_user, message.id)
-            if message.text == "Done":
-                self.personality_updated_points["balance"] = self.user_free_points
-                self.personality_updated_points["userId"] = self.current_user
+    def ocean_points_save(self):
+        self.ocean_updated_points["balance"] = self.user_free_points
+        self.ocean_updated_points["userId"] = self.current_user
 
-                d = json.dumps(self.personality_updated_points)
-                response = requests.post(f"https://localhost:44381/UpdateUserPersonalityPoints", d,
-                                                headers={"Content-Type": "application/json"},
-                                                verify=False)
-                if response.status_code == 200:
-                    self.send_secondary_message("Changes are saved successfully :)")
-                    self.proceed()
-                else:
-                    self.send_secondary_message("Something went wrong. Please, contact the administration")
-                    self.proceed()
-            else:
-                self.send_secondary_message("You can leave and apply changes by typing 'Done'", markup=self.doneMarkup)
-                self.bot.register_next_step_handler(message, self.personality_points_save, chat_id=self.current_user)
+        d = json.dumps(self.ocean_updated_points)
+        response = requests.post(f"https://localhost:44381/update-ocean-points", d,
+                                 headers={"Content-Type": "application/json"},
+                                 verify=False)
+
+        if response.status_code == 200:
+            self.send_secondary_message("Changes saved successfully :)")
+            self.proceed()
+        else:
+            self.send_secondary_message("Something went wrong. Please, contact the administration")
+            self.proceed()
 
     def credentials_management(self, message=None):
         self.previous_section = self.additional_actions_settings_choice
@@ -774,30 +737,30 @@ class Settings:
                 self.bot.send_message(self.current_user, "No such option", reply_markup=self.abortMarkup)
                 self.bot.register_next_step_handler(message, self.black_list_management, acceptMode=acceptMode, isEncounter=isEncounter, chat_id=self.current_user)
 
-    def personality_switch(self, message, acceptMode=False):
-        self.previous_section = self.personality_settings_choice
-        self.active_section = self.personality_switch
+    def ocean_switch(self, message, acceptMode=False):
+        self.previous_section = self.ocean_settings_choice
+        self.active_section = self.ocean_switch
 
         if not acceptMode:
             status = ""
             switchMessage = ""
 
-            if self.uses_Personality:
+            if self.uses_ocean:
                 status = "Online"
                 switchMessage = "Would you like to turn it off?"
             else:
                 status = "Offline"
                 switchMessage = "Would you like to turn it on?"
 
-            self.send_secondary_message(f"{self.personality_description}P.E.R.S.O.N.A.L.I.T.Y is currently {status}\n{switchMessage}", markup=self.YNMarkup)
-            self.bot.register_next_step_handler(message, self.personality_switch, acceptMode=True, chat_id=self.current_user)
+            self.send_secondary_message(f"{self.ocean_description}OCEAN+ is currently {status}\n{switchMessage}", markup=self.YNMarkup)
+            self.bot.register_next_step_handler(message, self.ocean_switch, acceptMode=True, chat_id=self.current_user)
 
         else:
             self.bot.delete_message(self.current_user, message.id)
             if message.text == "yes":
                 # try:
-                Helpers.switch_personality_status(self.current_user)
-                self.uses_Personality = not self.uses_Personality
+                Helpers.switch_ocean_status(self.current_user)
+                self.uses_ocean = not self.uses_ocean
                 self.send_secondary_message("Done :)")
                 # except:
                 #     self.send_error_message("Something went wrong. Please, contact the administration")
@@ -807,7 +770,7 @@ class Settings:
                 self.proceed()
             else:
                 self.send_error_message("No such option", markup=self.YNMarkup)
-                self.bot.register_next_step_handler(message, self.personality_switch, acceptMode=acceptMode, chat_id=self.current_user)
+                self.bot.register_next_step_handler(message, self.ocean_switch, acceptMode=acceptMode, chat_id=self.current_user)
 
     def set_profile_status(self, message, acceptMode=False):
         self.previous_section = self.my_profile_settings_choice
@@ -840,7 +803,7 @@ class Settings:
             self.current_query = call.message.id
 
             if call.data == "-1" or call.data == "-2":
-                index = self.index_converter(call.data)
+                index = index_converter(call.data)
                 if self.markup_page + index <= self.markup_pages_count or self.markup_page + index >= 1:
                     markup = assemble_markup(self.markup_page, self.current_markup_elements, index)
                     self.bot.edit_message_reply_markup(chat_id=call.message.chat.id, reply_markup=markup,
@@ -943,7 +906,7 @@ class Settings:
             self.current_query = call.message.id
 
             if call.data == "-1" or call.data == "-2":
-                index = self.index_converter(call.data)
+                index = index_converter(call.data)
                 if self.markup_page + index <= self.markup_pages_count or self.markup_page + index >= 1:
                     markup = assemble_markup(self.markup_page, self.current_markup_elements, index)
                     self.bot.edit_message_reply_markup(chat_id=call.message.chat.id, reply_markup=markup,
@@ -992,7 +955,7 @@ class Settings:
                     self.send_secondary_message(self.secondChanceDescription, markup=self.buy_effectMarkup)
             elif call.data == "6":
                 self.effect_index = call.data
-                if self.uses_Personality:
+                if self.uses_ocean:
                     if self.valentines > 0:
                         self.usedEffectAmount = self.valentines
                         #Warn user if effect is already active
@@ -1003,10 +966,10 @@ class Settings:
                     else:
                         self.send_secondary_message(self.valentineDescription, markup=self.buy_effectMarkup)
                 else:
-                    self.send_secondary_message("You have to turn on PERSONALITY to use this effect")
+                    self.send_secondary_message("You have to turn on OCEAN+ to use this effect")
             elif call.data == "7":
                 self.effect_index = call.data
-                if self.uses_Personality:
+                if self.uses_ocean:
                     if self.detectors > 0:
                         self.usedEffectAmount = self.detectors
                         if bool(json.loads(requests.get(f"https://localhost:44381/CheckEffectIsActive/{self.current_user}/{call.data}", verify=False).text)):
@@ -1016,7 +979,7 @@ class Settings:
                     else:
                         self.send_secondary_message(self.detectorDescription, markup=self.buy_effectMarkup)
                 else:
-                    self.send_secondary_message("You have to turn on PERSONALITY to use this effect")
+                    self.send_secondary_message("You have to turn on OCEAN+ to use this effect")
             elif call.data == "8":
                 self.effect_index = call.data
                 if self.nullifiers > 0:
@@ -1058,7 +1021,7 @@ class Settings:
                     self.valentine_indicator.text = self.valentines
                     self.send_secondary_message(f"<i>The Valentine:</i> {self.valentineDescription}\n\n{self.effect_is_active_Warning}", markup=self.activate_effectMarkup)
                 else:
-                    text = "You did not spend any P.E.R.S.O.N.A.L.I.T.Y points yet"
+                    text = "You did not spend any OCEAN+ points yet"
 
             elif effectId == "7":
                 self.detectors -= 1
@@ -1092,7 +1055,7 @@ class Settings:
             if call.data == "200":
                 self.my_profile_settings_choice(call.message)
             elif call.data == "201":
-                self.personality_settings_choice(call.message)
+                self.ocean_settings_choice(call.message)
             elif call.data == "202":
                 self.filters_settings_choice()
             elif call.data == "203":
@@ -1100,12 +1063,16 @@ class Settings:
             elif call.data == "204":
                 self.additional_actions_settings_choice(call.message)
             elif call.data == "205":
-                self.personality_switch(call.message)
+                self.ocean_switch(call.message)
             elif call.data == "206":
-                self.personality_points(call.message)
+                self.ocean_points(call.message)
             elif call.data == "207":
-                self.previous_section = self.personality_settings_choice
-                TestModule(self.bot, self.message, isActivatedFromShop=False, returnMethod=self.proceed)
+                self.previous_section = self.ocean_settings_choice
+                self.notInMenu = True
+                self.clear_callback_handler()
+                self.delete_secondary_message()
+                self.delete_error_message()
+                TestModule(self.bot, self.message, returnMethod=self.proceed, active_message=self.active_message)
             elif call.data == "208":
                 pass
             elif call.data == "209":
@@ -1210,316 +1177,183 @@ class Settings:
             elif call.data == "-20":
                 self.proceed()
 
-    def personality_callback_handler(self, call):
+    def ocean_callback_handler(self, call):
         self.bot.answer_callback_query(call.id, "")
         if call.message.id not in self.old_queries:
 
             if call.data == "1":
-                if self.personality_caps["canP"]:
+                if self.ocean_caps["canO"]:
                     if self.user_free_points > 0:
                         self.user_free_points -= 1
-                        self.user_points["personality"] += 1
+                        self.user_points["openness"] += 1
                         self.free_points_indicator.text = self.user_free_points
-                        self.personality_updated_points["personality"] = self.user_points["personality"]
+                        self.ocean_updated_points["openness"] = self.user_points["openness"]
 
-                        self.p_indicator.text = f"         {self.user_points['personality']}         "
-                        self.update_personality_markup()
+                        self.o_indicator.text = f"{self.user_points['openness']}"
+                        self.update_ocean_markup()
                         return False
-                    self.bot.send_message(self.current_user, "You dont have any personality points left")
+                    self.bot.send_message(self.current_user, "You dont have any OCEAN+ points left")
                     return False
                 self.bot.send_message(self.current_user, "Pass at least one test related to that parameter first :)")
             elif call.data == "-1":
-                if self.personality_caps["canP"]:
-                    if self.user_points["personality"] > 0:
+                if self.ocean_caps["canO"]:
+                    if self.user_points["openness"] > 0:
                         self.user_free_points += 1
-                        self.user_points["personality"] -= 1
+                        self.user_points["openness"] -= 1
                         self.free_points_indicator.text = self.user_free_points
-                        self.personality_updated_points["personality"] = self.user_points["personality"]
+                        self.ocean_updated_points["openness"] = self.user_points["openness"]
 
-                        self.p_indicator.text = f"         {self.user_points['personality']}         "
-                        self.update_personality_markup()
+                        self.o_indicator.text = f"{self.user_points['openness']}"
+                        self.update_ocean_markup()
                         return False
-                    self.bot.send_message(self.current_user, "You dont have any personality points left")
+                    self.bot.send_message(self.current_user, "You dont have any OCEAN+ points left")
                     return False
                 self.bot.send_message(self.current_user, "Pass at least one test related to that parameter first :)")
             elif call.data == "2":
-                if self.personality_caps["canE"]:
+                if self.ocean_caps["canC"]:
                     if self.user_free_points > 0:
                         self.user_free_points -= 1
-                        self.user_points["emotionalIntellect"] += 1
+                        self.user_points["conscientiousness"] += 1
                         self.free_points_indicator.text = self.user_free_points
-                        self.personality_updated_points["emotionalIntellect"] = self.user_points["emotionalIntellect"]
+                        self.ocean_updated_points["conscientiousness"] = self.user_points["conscientiousness"]
 
-                        self.e_indicator.text = self.user_points["emotionalIntellect"]
-                        self.update_personality_markup()
+                        self.c_indicator.text = self.user_points["conscientiousness"]
+                        self.update_ocean_markup()
                         return False
-                    self.bot.send_message(self.current_user, "You dont have any personality points left")
+                    self.bot.send_message(self.current_user, "You dont have any OCEAN+ points left")
                     return False
                 self.bot.send_message(self.current_user, "Pass at least one test related to that parameter first :)")
             elif call.data == "-2":
-                if self.personality_caps["canE"]:
-                    if self.user_points["emotionalIntellect"] > 0:
+                if self.ocean_caps["canC"]:
+                    if self.user_points["conscientiousness"] > 0:
                         self.user_free_points += 1
-                        self.user_points["emotionalIntellect"] -= 1
+                        self.user_points["conscientiousness"] -= 1
                         self.free_points_indicator.text = self.user_free_points
-                        self.personality_updated_points["emotionalIntellect"] = self.user_points["emotionalIntellect"]
+                        self.ocean_updated_points["conscientiousness"] = self.user_points["conscientiousness"]
 
-                        self.e_indicator.text = self.user_points["emotionalIntellect"]
-                        self.update_personality_markup()
+                        self.c_indicator.text = self.user_points["conscientiousness"]
+                        self.update_ocean_markup()
                         return False
                     return False
                 self.bot.send_message(self.current_user, "Pass at least one test related to that parameter first :)")
             elif call.data == "3":
-                if self.personality_caps["canR"]:
+                if self.ocean_caps["canE"]:
                     if self.user_free_points > 0:
                         self.user_free_points -= 1
-                        self.user_points["reliability"] += 1
+                        self.user_points["extroversion"] += 1
                         self.free_points_indicator.text = self.user_free_points
-                        self.personality_updated_points["reliability"] = self.user_points["reliability"]
+                        self.ocean_updated_points["extroversion"] = self.user_points["extroversion"]
 
-                        self.r_indicator.text = self.user_points["reliability"]
-                        self.update_personality_markup()
+                        self.e_indicator.text = self.user_points["extroversion"]
+                        self.update_ocean_markup()
                         return False
-                    self.bot.send_message(self.current_user, "You dont have any personality points left")
+                    self.bot.send_message(self.current_user, "You dont have any OCEAN+ points left")
                     return False
                 self.bot.send_message(self.current_user, "Pass at least one test related to that parameter first :)")
             elif call.data == "-3":
-                if self.personality_caps["canR"]:
-                    if self.user_points["reliability"] > 0:
+                if self.ocean_caps["canE"]:
+                    if self.user_points["extroversion"] > 0:
                         self.user_free_points += 1
-                        self.user_points["reliability"] -= 1
+                        self.user_points["extroversion"] -= 1
                         self.free_points_indicator.text = self.user_free_points
-                        self.personality_updated_points["reliability"] = self.user_points["reliability"]
+                        self.ocean_updated_points["extroversion"] = self.user_points["extroversion"]
 
-                        self.r_indicator.text = self.user_points["reliability"]
-                        self.update_personality_markup()
+                        self.e_indicator.text = self.user_points["extroversion"]
+                        self.update_ocean_markup()
                         return False
-                    self.bot.send_message(self.current_user, "You dont have any personality points left")
+                    self.bot.send_message(self.current_user, "You dont have any OCEAN+ points left")
                     return False
                 self.bot.send_message(self.current_user, "Pass at least one test related to that parameter first :)")
             elif call.data == "4":
-                if self.personality_caps["canS"]:
-                    if self.user_free_points > 0:
-                        self.user_free_points -= 1
-                        self.user_points["compassion"] += 1
-                        self.free_points_indicator.text = self.user_free_points
-                        self.personality_updated_points["compassion"] = self.user_points["compassion"]
-
-                        self.s_indicator.text = self.user_points["compassion"]
-                        self.update_personality_markup()
-                        return False
-                    self.bot.send_message(self.current_user, "You dont have any personality points left")
-                    return False
-                self.bot.send_message(self.current_user, "Pass at least one test related to that parameter first :)")
-            elif call.data == "-4":
-                if self.personality_caps["canS"]:
-                    if self.user_points["compassion"] > 0:
-                        self.user_free_points += 1
-                        self.user_points["compassion"] -= 1
-                        self.free_points_indicator.text = self.user_free_points
-                        self.personality_updated_points["compassion"] = self.user_points["compassion"]
-
-                        self.s_indicator.text = self.user_points["compassion"]
-                        self.update_personality_markup()
-                        return False
-                    return False
-                self.bot.send_message(self.current_user, "Pass at least one test related to that parameter first :)")
-            elif call.data == "5":
-                if self.personality_caps["canO"]:
-                    if self.user_free_points > 0:
-                        self.user_free_points -= 1
-                        self.user_points["openMindedness"] += 1
-                        self.free_points_indicator.text = self.user_free_points
-                        self.personality_updated_points["openMindedness"] = self.user_points["openMindedness"]
-
-                        self.o_indicator.text = self.user_points["openMindedness"]
-                        self.update_personality_markup()
-                        return False
-                    self.bot.send_message(self.current_user, "You dont have any personality points left")
-                    return False
-                self.bot.send_message(self.current_user, "Pass at least one test related to that parameter first :)")
-            elif call.data == "-5":
-                if self.personality_caps["canO"]:
-                    if self.user_points["openMindedness"] > 0:
-                        self.user_free_points += 1
-                        self.user_points["openMindedness"] -= 1
-                        self.free_points_indicator.text = self.user_free_points
-                        self.personality_updated_points["openMindedness"] = self.user_points["openMindedness"]
-
-                        self.o_indicator.text = self.user_points["openMindedness"]
-                        self.update_personality_markup()
-                        return False
-                    return False
-                self.bot.send_message(self.current_user, "Pass at least one test related to that parameter first :)")
-            elif call.data == "6":
-                if self.personality_caps["canN"]:
+                if self.ocean_caps["canA"]:
                     if self.user_free_points > 0:
                         self.user_free_points -= 1
                         self.user_points["agreeableness"] += 1
                         self.free_points_indicator.text = self.user_free_points
-                        self.personality_updated_points["agreeableness"] = self.user_points["agreeableness"]
+                        self.ocean_updated_points["agreeableness"] = self.user_points["agreeableness"]
 
-                        self.n_indicator.text = self.user_points["agreeableness"]
-                        self.update_personality_markup()
+                        self.a_indicator.text = self.user_points["agreeableness"]
+                        self.update_ocean_markup()
                         return False
-                    self.bot.send_message(self.current_user, "You dont have any personality points left")
+                    self.bot.send_message(self.current_user, "You dont have any OCEAN+ points left")
                     return False
                 self.bot.send_message(self.current_user, "Pass at least one test related to that parameter first :)")
-            elif call.data == "-6":
-                if self.personality_caps["canN"]:
-                    if self.user_points["agreeableness"]:
+            elif call.data == "-4":
+                if self.ocean_caps["canA"]:
+                    if self.user_points["agreeableness"] > 0:
                         self.user_free_points += 1
                         self.user_points["agreeableness"] -= 1
                         self.free_points_indicator.text = self.user_free_points
-                        self.personality_updated_points["agreeableness"] = self.user_points["agreeableness"]
+                        self.ocean_updated_points["agreeableness"] = self.user_points["agreeableness"]
 
-                        self.n_indicator.text = self.user_points["agreeableness"]
-                        self.update_personality_markup()
+                        self.a_indicator.text = self.user_points["agreeableness"]
+                        self.update_ocean_markup()
                         return False
                     return False
                 self.bot.send_message(self.current_user, "Pass at least one test related to that parameter first :)")
-            elif call.data == "7":
-                if self.personality_caps["canA"]:
+            elif call.data == "5":
+                if self.ocean_caps["canN"]:
                     if self.user_free_points > 0:
                         self.user_free_points -= 1
-                        self.user_points["selfAwareness"] += 1
+                        self.user_points["neuroticism"] += 1
                         self.free_points_indicator.text = self.user_free_points
-                        self.personality_updated_points["selfAwareness"] = self.user_points["selfAwareness"]
+                        self.ocean_updated_points["neuroticism"] = self.user_points["neuroticism"]
 
-                        self.a_indicator.text = self.user_points["selfAwareness"]
-                        self.update_personality_markup()
+                        self.n_indicator.text = self.user_points["neuroticism"]
+                        self.update_ocean_markup()
                         return False
-                    self.bot.send_message(self.current_user, "You dont have any personality points left")
+                    self.bot.send_message(self.current_user, "You dont have any OCEAN+ points left")
                     return False
                 self.bot.send_message(self.current_user, "Pass at least one test related to that parameter first :)")
-            elif call.data == "-7":
-                if self.personality_caps["canA"]:
-                    if self.user_points["selfAwareness"] > 0:
+            elif call.data == "-5":
+                if self.ocean_caps["canN"]:
+                    if self.user_points["neuroticism"] > 0:
                         self.user_free_points += 1
-                        self.user_points["selfAwareness"] -= 1
+                        self.user_points["neuroticism"] -= 1
                         self.free_points_indicator.text = self.user_free_points
-                        self.personality_updated_points["selfAwareness"] = self.user_points["selfAwareness"]
+                        self.ocean_updated_points["neuroticism"] = self.user_points["neuroticism"]
 
-                        self.a_indicator.text = self.user_points["selfAwareness"]
-                        self.update_personality_markup()
+                        self.n_indicator.text = self.user_points["neuroticism"]
+                        self.update_ocean_markup()
                         return False
                     return False
                 self.bot.send_message(self.current_user, "Pass at least one test related to that parameter first :)")
-            elif call.data == "8":
-                if self.personality_caps["canL"]:
-                    if self.user_free_points > 0:
-                        self.user_free_points -= 1
-                        self.user_points["levelOfSense"] += 1
-                        self.free_points_indicator.text = self.user_free_points
-                        self.personality_updated_points["levelOfSense"] = self.user_points["levelOfSense"]
-
-                        self.l_indicator.text = self.user_points["levelOfSense"]
-                        self.update_personality_markup()
-                        return False
-                    self.bot.send_message(self.current_user, "You dont have any personality points left")
-                    return False
-                self.bot.send_message(self.current_user, "Pass at least one test related to that parameter first :)")
-            elif call.data == "-8":
-                if self.personality_caps["canL"]:
-                    if self.user_points["levelOfSense"] > 0:
-                        self.user_free_points += 1
-                        self.user_points["levelOfSense"] -= 1
-                        self.free_points_indicator.text = self.user_free_points
-                        self.personality_updated_points["levelOfSense"] = self.user_points["levelOfSense"]
-
-                        self.l_indicator.text = self.user_points["levelOfSense"]
-                        self.update_personality_markup()
-                        return False
-                    return False
-                self.bot.send_message(self.current_user, "Pass at least one test related to that parameter first :)")
-            elif call.data == "9":
-                if self.personality_caps["canI"]:
-                    if self.user_free_points > 0:
-                        self.user_free_points -= 1
-                        self.user_points["intellect"] += 1
-                        self.free_points_indicator.text = self.user_free_points
-                        self.personality_updated_points["intellect"] = self.user_points["intellect"]
-
-                        self.i_indicator.text = self.user_points["intellect"]
-                        self.update_personality_markup()
-                        return False
-                    self.bot.send_message(self.current_user, "You dont have any personality points left")
-                    return False
-                self.bot.send_message(self.current_user, "Pass at least one test related to that parameter first :)")
-            elif call.data == "-9":
-                if self.personality_caps["canI"]:
-                    if self.user_points["intellect"] > 0:
-                        self.user_free_points += 1
-                        self.user_points["intellect"] -= 1
-                        self.free_points_indicator.text = self.user_free_points
-                        self.personality_updated_points["intellect"] = self.user_points["intellect"]
-
-                        self.i_indicator.text = self.user_points["intellect"]
-                        self.update_personality_markup()
-                        return False
-                    return False
-                self.bot.send_message(self.current_user, "Pass at least one test related to that parameter first :)")
-            elif call.data == "10":
-                if self.personality_caps["canT"]:
+            elif call.data == "6":
+                if self.ocean_caps["canP"]:
                     if self.user_free_points > 0:
                         self.user_free_points -= 1
                         self.user_points["nature"] += 1
                         self.free_points_indicator.text = self.user_free_points
-                        self.personality_updated_points["nature"] = self.user_points["nature"]
+                        self.ocean_updated_points["nature"] = self.user_points["nature"]
 
-                        self.t_indicator.text = self.user_points["nature"]
-                        self.update_personality_markup()
+                        self.p_indicator.text = self.user_points["nature"]
+                        self.update_ocean_markup()
                         return False
-                    self.bot.send_message(self.current_user, "You dont have any personality points left")
+                    self.bot.send_message(self.current_user, "You dont have any OCEAN+ points left")
                     return False
                 self.bot.send_message(self.current_user, "Pass at least one test related to that parameter first :)")
-            elif call.data == "-10":
-                if self.personality_caps["canT"]:
-                    if self.user_points["nature"] > 0:
+            elif call.data == "-6":
+                if self.ocean_caps["canP"]:
+                    if self.user_points["nature"]:
                         self.user_free_points += 1
                         self.user_points["nature"] -= 1
                         self.free_points_indicator.text = self.user_free_points
-                        self.personality_updated_points["nature"] = self.user_points["nature"]
+                        self.ocean_updated_points["nature"] = self.user_points["nature"]
 
-                        self.t_indicator.text = self.user_points["nature"]
-                        self.update_personality_markup()
+                        self.p_indicator.text = self.user_points["nature"]
+                        self.update_ocean_markup()
                         return False
                     return False
                 self.bot.send_message(self.current_user, "Pass at least one test related to that parameter first :)")
-            elif call.data == "11":
-                if self.personality_caps["canY"]:
-                    if self.user_free_points > 0:
-                        self.user_free_points -= 1
-                        self.user_points["creativity"] += 1
-                        self.free_points_indicator.text = self.user_free_points
-                        self.personality_updated_points["creativity"] = self.user_points["creativity"]
-
-                        self.y_indicator.text = self.user_points["creativity"]
-                        self.update_personality_markup()
-                        return False
-                    self.bot.send_message(self.current_user, "You dont have any personality points left")
-                    return False
-                self.bot.send_message(self.current_user, "Pass at least one test related to that parameter first :)")
-            elif call.data == "-11":
-                if self.personality_caps["canY"]:
-                    if self.user_points["creativity"] > 0:
-                        self.user_free_points += 1
-                        self.user_points["creativity"] -= 1
-                        self.free_points_indicator.text = self.user_free_points
-                        self.personality_updated_points["creativity"] = self.user_points["creativity"]
-
-                        self.y_indicator.text = self.user_points["creativity"]
-                        self.update_personality_markup()
-                        return False
-                    return False
-                self.bot.send_message(self.current_user, "Pass at least one test related to that parameter first :)")
+            elif call.data == "7":
+                self.ocean_points_save()
 
     def achievement_callback_handler(self, call):
         if call.message.id not in self.old_queries:
             self.current_query = call.message.id
 
             if call.data == "-1" or call.data == "-2":
-                index = self.index_converter(call.data)
+                index = index_converter(call.data)
                 if self.markup_page + index <= self.markup_pages_count or self.markup_page + index >= 1:
                     markup = assemble_markup(self.markup_page, self.current_markup_elements, index)
                     self.bot.edit_message_reply_markup(chat_id=call.message.chat.id, reply_markup=markup,
@@ -1539,8 +1373,11 @@ class Settings:
                     self.bot.send_message(self.current_user, "Unable to load achievement data, please, contact the administration")
                     self.proceed()
 
-    def update_personality_markup(self):
-        self.bot.edit_message_reply_markup(chat_id=self.current_user, reply_markup=self.personalityMarkup, message_id=self.active_message)
+    def update_ocean_markup(self):
+        try:
+            self.bot.edit_message_reply_markup(chat_id=self.current_user, reply_markup=self.oceanMarkup, message_id=self.active_message)
+        except:
+            pass
 
     def update_effects_markup(self):
         try:
@@ -1551,7 +1388,7 @@ class Settings:
     def subscribe_callback_handler(self, handler):
         self.clear_callback_handler()
 
-        self.current_callback_handler = self.bot.register_callback_query_handler("", handler, user_id=self.current_user)
+        self.current_callback_handler = self.bot.register_callback_query_handler(self.message, handler, user_id=self.current_user)
 
     def clear_callback_handler(self):
         if self.current_callback_handler:
@@ -1572,7 +1409,7 @@ class Settings:
         self.delete_secondary_message()
 
         if kwargs.get("backFromShop"):
-            self.userBalance = json.loads(requests.get(f"https://localhost:44381/GetActiveUserWalletBalance/{self.current_user}", verify=False).text)
+            self.userBalance = json.loads(requests.get(f"https://localhost:44381/user-balance/{self.current_user}", verify=False).text)
 
         self.previous_section(self.message)
 
@@ -1644,7 +1481,7 @@ class Settings:
         msg = ""
 
         if balance:
-            return f"💎Coins: {balance['points']}\n💎Personality Points: {balance['personalityPoints']}\n💥Second Chances{balance['secondChances']}\n💥Valentines: {balance['valentines']}\n💥Detectors: {balance['detectors']}\n💥Nullifiers: {balance['nullifiers']}\n💥Card Decks Mini: {balance['cardDecksMini']}\n💥Card Decks Platinum: {balance['cardDecksPlatinum']}"
+            return f"💎Coins: {balance['points']}\n💎Ocean Points: {balance['oceanPoints']}\n💥Second Chances{balance['secondChances']}\n💥Valentines: {balance['valentines']}\n💥Detectors: {balance['detectors']}\n💥Nullifiers: {balance['nullifiers']}\n💥Card Decks Mini: {balance['cardDecksMini']}\n💥Card Decks Platinum: {balance['cardDecksPlatinum']}"
 
         return "Something went wrong"
 
@@ -1756,12 +1593,6 @@ class Settings:
                 self.nextHandler = None
             except:
                 pass
-
-    @staticmethod
-    def index_converter(index):
-        if index == "-1":
-            return -1
-        return 1
 
     def destruct(self, msg=None):
         self.clear_callback_handler()

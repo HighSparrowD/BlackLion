@@ -19,6 +19,6 @@ namespace WebApi.Interfaces
         Task<List<Language>> GetLanguagesAsync(AppLanguage localisationId);
         Task<Test> GetSingleTestAsync(long testId, AppLanguage localisationId);
         //Task<List<IntellectualTest>> GetIntellectualTestsAsync();
-        Task<List<string>> GetSimmilarTagsAsync(string tag);
+        //Task<List<string>> GetSimmilarTagsAsync(string tag);
     }
 }

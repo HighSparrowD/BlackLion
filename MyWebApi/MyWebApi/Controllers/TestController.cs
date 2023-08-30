@@ -66,10 +66,10 @@ namespace WebApi.Controllers
             return await _repository.GetLanguagesAsync(lang);
         }
 
-        [HttpGet("/GetSingleTest/{id}/{locId}")]
-        public async Task<Test> GetSingleTest(long id, AppLanguage locId)
+        [HttpGet("/single-test/{id}/{language}")]
+        public async Task<Test> GetSingleTest(long id, AppLanguage language)
         {
-            var tests = await _repository.GetSingleTestAsync(id, locId);
+             var tests = await _repository.GetSingleTestAsync(id, language);
             return tests;
         }
 
@@ -81,9 +81,10 @@ namespace WebApi.Controllers
         //}
 
         [HttpGet("/similar-tags")]
-        public async Task<List<string>> GetSimmilarTagsAsync([FromQuery] string tag)
+        public IActionResult GetSimmilarTagsAsync()
         {
-            return await _repository.GetSimmilarTagsAsync(tag);
+            //return await _repository.GetSimmilarTagsAsync(tag);
+            return NoContent();
         }
 
     }

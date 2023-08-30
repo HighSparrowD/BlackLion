@@ -411,7 +411,7 @@ def get_all_user_achievements_admin(userId):
 def get_active_user_balance(userId):
     try:
         return json.loads(
-            requests.get(f"{api_address}/GetActiveUserWalletBalance/{userId}", verify=False).text)
+            requests.get(f"{api_address}/user-balance/{userId}", verify=False).text)
     except:
         return None
 
@@ -492,8 +492,8 @@ def switch_admin_status(userId):
                                                            verify=False).text))]
 
 
-def switch_personality_status(userId):
-    return requests.get(f"{api_address}/SwitchPersonalityUsage/{userId}",
+def switch_ocean_status(userId):
+    return requests.get(f"{api_address}/switch-ocean-usage/{userId}",
                         verify=False)
 
 

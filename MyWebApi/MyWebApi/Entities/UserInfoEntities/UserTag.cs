@@ -1,53 +1,27 @@
 ﻿using WebApi.Enums;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using WebApi.Entities.SystemEntitires;
 
 namespace WebApi.Entities.UserInfoEntities
 {
     public class UserTag
     {
         [Key]
-        public long Id { get; set; }
+        public long TagId { get; set; }
+        [Key]
         public long UserId { get; set; }
-        public string Tag { get; set; }
+        [Key]
         public TagType TagType { get; set; }
+        public virtual Tag Tag { get; set; }
 
         public UserTag()
         {}
 
-        public static List<UserTag> CreateTagList(long userId, string tagsSeparatedBy, string separator, TagType tagType)
+        public UserTag(long id, long userId, TagType type)
         {
-            var result = new List<UserTag>();
-            var tags = tagsSeparatedBy.ToLower().Trim().Split(separator);
-
-            foreach (var tag in tags)
-            {
-                result.Add(new UserTag
-                {
-                    UserId = userId,
-                    Tag = tag,
-                    TagType = tagType
-                });
-            }
-
-            return result;
-        }
-
-        public static List<UserTag> CreateTagList (long userId, List<string> tagList, TagType tagType)
-        {
-            var result = new List<UserTag>();
-
-            foreach (var tag in tagList)
-            {
-                result.Add(new UserTag
-                {
-                    UserId = userId,
-                    Tag = tag,
-                    TagType = tagType
-                });
-            }
-
-            return result;
+            TagId = id;
+            UserId = userId;
+            TagType = type;
         }
     }
 }

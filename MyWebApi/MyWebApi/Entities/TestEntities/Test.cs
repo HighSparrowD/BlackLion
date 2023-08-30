@@ -2,6 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using WebApi.Enums;
+using OceanStats = WebApi.Enums.OceanStats;
 
 namespace WebApi.Entities.TestEntities
 {
@@ -18,7 +19,7 @@ namespace WebApi.Entities.TestEntities
         [NotNull]
         public string Description { get; set; }
         [NotNull]
-        public short TestType { get; set; }
+        public OceanStats TestType { get; set; }
         [NotNull]
         public int Price { get; set; }
         [NotNull]
@@ -27,5 +28,7 @@ namespace WebApi.Entities.TestEntities
         public virtual List<TestQuestion> Questions { get; set; }
         [NotNull]
         public virtual List<TestResult> Results { get; set; }
+        [NotNull]
+        public virtual List<TestScale> Scales { get; set; }
     }
 }

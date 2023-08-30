@@ -12,10 +12,13 @@ namespace WebApi.Entities.TestEntities
         [NotNull]
         public long TestId { get; set; }
         [NotNull]
-        public AppLanguage Language { get; set; }
+        public AppLanguage TestLanguage { get; set; }
         [NotNull]
         public string Text { get; set; }
         public string Photo { get; set; }
+        // Each test has different number of scales.
+        // This parameter represents, to which the question is related to
+        public string Scale { get; set; }
         public virtual List<TestAnswer> Answers { get; set; }
     }
 }
