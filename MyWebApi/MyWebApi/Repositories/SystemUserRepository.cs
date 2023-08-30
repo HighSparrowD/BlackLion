@@ -21,6 +21,7 @@ using System.Threading.Tasks;
 using WebApi.Entities;
 using OceanStats = WebApi.Enums.OceanStats;
 using WebApi.Entities.SystemEntitires;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Binders;
 
 namespace WebApi.Repositories
 {
@@ -2452,32 +2453,30 @@ namespace WebApi.Repositories
 
         public async Task<bool> UpdateUserPersonalityPoints(PointsPayload model)
         {
-            try
-            {
-                var points = await RecalculateSimilarityPercentage(model);
-                var balance = await _contx.Balances.Where(b => b.UserId == model.UserId)
-                    .SingleOrDefaultAsync();
+            var points = await RecalculateSimilarityPercentage(model);
+            var balance = await _contx.Balances.Where(b => b.UserId == model.UserId)
+                .FirstOrDefaultAsync();
 
-                balance.OceanPoints = model.Balance;
+            balance.OceanPoints = model.Balance;
 
-                _contx.Update(balance);
-                _contx.Update(points);
-                await _contx.SaveChangesAsync();
+            await _contx.SaveChangesAsync();
 
-                return true;
-            }
-            catch { return false; }
+            return true;
         }
 
         public async Task<OceanPoints> GetUserPersonalityPoints(long userId)
         {
-            try
-            {
-                return await _contx.OceanPoints
+            var points = await _contx.OceanPoints
                     .Where(s => s.UserId == userId)
                     .FirstOrDefaultAsync();
+
+            if (points == null)
+            {
+                points = new OceanPoints(userId);
+                await _contx.OceanPoints.AddAsync(points);
             }
-            catch { return null; }
+
+            return points;
         }
 
         private async Task<OceanPoints> RecalculateSimilarityPercentage(PointsPayload model)
@@ -2624,7 +2623,7 @@ namespace WebApi.Repositories
             return similarityCoefficient;
         }
 
-        public async Task<bool> SwitchPersonalityUsage(long userId)
+        public async Task<bool> SwitchOceanUsageAsync(long userId)
         {
             try
             {
@@ -2645,7 +2644,7 @@ namespace WebApi.Repositories
                     var oceanPoints = await _contx.OceanPoints.Where(s => s.UserId == userId)
                         .FirstOrDefaultAsync();
 
-                    //Add personality stats, if they were not created when user was registered
+                    //Add ocean stats, if they were not created when user was registered
                     if (oceanStats == null)
                     {
                         oceanStats = new Entities.UserInfoEntities.OceanStats(userId);
@@ -3405,10 +3404,13 @@ namespace WebApi.Repositories
         public async Task<OceanCaps> GetUserPersonalityCapsAsync(long userId)
         {
             var stats = await _contx.OceanStats.Where(s => s.UserId == userId)
-                .SingleOrDefaultAsync();
+                .FirstOrDefaultAsync();
 
             if (stats == null)
-                throw new NullReferenceException($"Use #{userId} does not have personality stats");
+            {
+                stats = new Entities.UserInfoEntities.OceanStats(userId);
+                await _contx.AddAsync(stats);
+            }
 
             return new OceanCaps
             {

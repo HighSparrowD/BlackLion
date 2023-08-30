@@ -537,7 +537,7 @@ namespace WebApi.Controllers
         [HttpGet("/switch-ocean-usage/{userId}")]
         public async Task<bool> SwitchPersonalityUsage(long userId)
         {
-            return await _repository.SwitchPersonalityUsage(userId);
+            return await _repository.SwitchOceanUsageAsync(userId);
         }
 
         [HttpPost("/UpdateTags")]

@@ -160,7 +160,7 @@ namespace WebApi.Interfaces
 
         //Toggle Settings 
         Task SwitchHintsVisibilityAsync(long userId);
-        Task<bool> SwitchPersonalityUsage(long userId);
+        Task<bool> SwitchOceanUsageAsync(long userId);
         Task<SwitchBusyStatusResponse> SwhitchUserBusyStatus(long userId, Section section);
         Task SwitchSearchCommentsVisibilityAsync(long userId);
         Task<bool> SwitchUserFreeSearchParamAsync(long userId);
