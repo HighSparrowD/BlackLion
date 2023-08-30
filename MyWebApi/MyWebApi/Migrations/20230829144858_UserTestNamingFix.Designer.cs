@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WebApi.Data;
@@ -12,9 +13,11 @@ using WebApi.Data;
 namespace WebApi.Migrations
 {
     [DbContext(typeof(UserContext))]
-    partial class UserContextModelSnapshot : ModelSnapshot
+    [Migration("20230829144858_UserTestNamingFix")]
+    partial class UserTestNamingFix
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1282,23 +1285,23 @@ namespace WebApi.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("UserId"));
 
-                    b.Property<float>("Agreeableness")
-                        .HasColumnType("real");
+                    b.Property<int>("Agreeableness")
+                        .HasColumnType("integer");
 
-                    b.Property<float>("Conscientiousness")
-                        .HasColumnType("real");
+                    b.Property<int>("Conscientiousness")
+                        .HasColumnType("integer");
 
-                    b.Property<float>("Extroversion")
-                        .HasColumnType("real");
+                    b.Property<int>("Extroversion")
+                        .HasColumnType("integer");
 
-                    b.Property<float>("Nature")
-                        .HasColumnType("real");
+                    b.Property<int>("Nature")
+                        .HasColumnType("integer");
 
-                    b.Property<float>("Neuroticism")
-                        .HasColumnType("real");
+                    b.Property<int>("Neuroticism")
+                        .HasColumnType("integer");
 
-                    b.Property<float>("Openness")
-                        .HasColumnType("real");
+                    b.Property<int>("Openness")
+                        .HasColumnType("integer");
 
                     b.HasKey("UserId");
 
@@ -1580,8 +1583,8 @@ namespace WebApi.Migrations
                     b.Property<DateTime?>("PassedOn")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<float>("Result")
-                        .HasColumnType("real");
+                    b.Property<double>("Result")
+                        .HasColumnType("double precision");
 
                     b.Property<byte>("TestLanguage")
                         .HasColumnType("smallint");

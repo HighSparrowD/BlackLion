@@ -69,7 +69,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/GetUserAppLanguage/{userId}")]
-        public async Task<AppLanguage> GetUserLanguagePrefs(long userId)
+        public async Task<string> GetUserLanguagePrefs(long userId)
         {
             return await _repository.GetUserAppLanguage(userId);
         }
@@ -519,7 +519,7 @@ namespace WebApi.Controllers
         [HttpPost("/update-ocean-stats")]
         public async Task<bool> UpdateUserPersonalityStats(TestPayload model)
         {
-            return await _repository.UpdateUserPersonalityStats(model);
+            return await _repository.UpdateOceanStatsAsync(model);
         }
 
         [HttpPost("/update-ocean-points")]
@@ -583,15 +583,17 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/SetAutoReplyText/{userId}/{text}")]
-        public async Task<bool> SetAutoReplyText(long userId, string text)
+        public async Task<IActionResult> SetAutoReplyText(long userId, string text)
         {
-            return await _repository.SetAutoReplyTextAsync(userId, text);
+            await _repository.SetAutoReplyTextAsync(userId, text);
+            return Ok();
         }
 
         [HttpGet("/SetAutoReplyVoice/{userId}/{voice}")]
-        public async Task<bool> SetAutoReplyVoice(long userId, string voice)
+        public async Task<IActionResult> SetAutoReplyVoice(long userId, string voice)
         {
-            return await _repository.SetAutoReplyVoiceAsync(userId, voice);
+            await _repository.SetAutoReplyVoiceAsync(userId, voice);
+            return Ok();
         }
 
         [HttpGet("/GetActiveAutoReply/{userId}")]

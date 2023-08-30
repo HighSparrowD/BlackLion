@@ -43,6 +43,12 @@ namespace WebApi.Entities.UserActionEntities
         public CommunicationPreference CommunicationPrefs { get; set; }
         [JsonPropertyName("userGenderPrefs")]
         public Gender GenderPrefs { get; set; }
+        [JsonPropertyName("voice")]
+        public string? Voice { get; set; }
+        [JsonPropertyName("text")]
+        public string? Text { get; set; }
+        [JsonPropertyName("tags")]
+        public string? Tags { get; set; }
         [JsonPropertyName("wasChanged")]
         public bool WasChanged { get; set; }
     }

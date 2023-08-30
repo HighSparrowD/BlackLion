@@ -78,9 +78,6 @@ class Registrator:
         self.pref_langs = []
         self.pref_countries = []
 
-        self.reply_voice = ""
-        self.reply_text = ""
-
         self.active_message = None
         self.secondary_message = None
         self.error_message = None
@@ -894,6 +891,7 @@ class Registrator:
                     try:
                         if len(message.text.split()) <= self.maxTagCount:
                             self.tags = message.text.lower().strip()
+                            self.data["tags"] = self.tags
 
                             if not self.editMode:
                                 self.auto_reply_step(message)
@@ -938,7 +936,7 @@ class Registrator:
             elif message.voice:
                 if Helpers.check_user_has_premium(self.current_user):
                     if message.voice.duration <= 15:
-                        self.reply_voice = message.voice.file_id
+                        self.data["voice"] = message.voice.file_id
                         if not self.editMode:
                             self.change_something_step(message)
                             return
@@ -952,7 +950,7 @@ class Registrator:
 
             elif message.text:
                 if len(message.text) < 300:
-                    self.reply_text = message.text
+                    self.data["text"] = message.text
                     if not self.editMode:
                         self.change_something_step(message)
                         return
@@ -1058,35 +1056,12 @@ class Registrator:
                 self.send_error_message(self.localization['NoSuchOptionMessage'], markup=change_markup)
                 self.next_handler = self.bot.register_next_step_handler(message, self.checkout_step, acceptMode=acceptMode, chat_id=self.current_user)
 
-    def tests_step(self, message, shouldInsert=True):
-        d = json.dumps(self.data)
-        response = None
-
-        self.question_index = 15
-
+    def finish_step(self, message):
         if self.hasVisited:
+            d = json.dumps(self.data)
             response = requests.post("https://localhost:44381/UpdateUserProfile", d, headers={
                 "Content-Type": "application/json"}, verify=False)
-        else:
-            # del self.data["wasChanged"]
-            response = requests.post("https://localhost:44381/RegisterUser", d, headers={
-                "Content-Type": "application/json"}, verify=False)
 
-        if self.tags:
-            updateTagsModel = json.dumps({
-                "userId": self.data["id"],
-                "rawTags": self.tags
-            })
-
-            requests.post("https://localhost:44381/UpdateTags", updateTagsModel, d, headers={
-                "Content-Type": "application/json"}, verify=False)
-
-        if self.reply_voice:
-            requests.get(f"https://localhost:44381/SetAutoReplyVoice/{self.current_user}/{self.reply_voice}", verify=False)
-        elif self.reply_text:
-            requests.get(f"https://localhost:44381/SetAutoReplyText/{self.current_user}/{self.reply_text}", verify=False)
-
-        if self.hasVisited:
             if response.text == "1":
                 self.bot.send_message(self.current_user, self.localization['ChangesSavedMessage'])
                 self.destruct()
@@ -1094,6 +1069,11 @@ class Registrator:
             self.send_error_message(self.localization['ChangesErrorMessage'])
             self.destruct()
             return False
+
+        self.tests_step(message)
+
+    def tests_step(self, message, shouldInsert=True):
+        self.question_index = 15
 
         self.send_secondary_message(self.localization['OceanDescriptionMessage'], markup=self.YNmarkup)
 
@@ -1106,10 +1086,12 @@ class Registrator:
             cityName = self.cities[self.data['userCityCode']]
             countryName = self.countries[self.data['userCountryCode']]
 
-        if self.tags:
-            return f"{self.data['userRealName']}, {countryName}, {cityName}\n{self.data['userAge']}\n{self.data['userDescription']}\n\n{self.tags}"
+        result = f"{self.data['userRealName']}, {countryName}, {cityName}\n{self.data['userAge']}\n{self.data['userDescription']}"
 
-        return f"{self.data['userRealName']}, {countryName}, {cityName}\n{self.data['userAge']}\n{self.data['userDescription']}"
+        if self.tags:
+            result += f"\n\n{self.tags}"
+
+        return result
 
     def send_encourage_message(self, text):
         #If User is registering his profile
@@ -1394,8 +1376,24 @@ class Registrator:
 
         elif self.question_index == 15:
             if call.data == "1":
+                self.data["usesOcean"] = True
+
+                d = json.dumps(self.data)
+                requests.post("https://localhost:44381/RegisterUser", d,
+                              headers={"Content-Type": "application/json"}, verify=False)
+
                 self.bot.send_message(self.current_user, self.localization['HelperDescriptionMessage'])
+
+                self.cleanup()
+
                 TestModule(self.bot, self.message, isActivatedFromShop=False)
+                return
+
+            self.data["usesOcean"] = False
+
+            d = json.dumps(self.data)
+            requests.post("https://localhost:44381/RegisterUser", d,
+                          headers={"Content-Type": "application/json"}, verify=False)
 
             self.destruct()
 
@@ -1465,13 +1463,16 @@ class Registrator:
         if cities:
             self.bot.send_message(self.current_user, self.localization['ClarifyingQuestionMessage'].format(', '.join(cities)))
 
-    def destruct(self, shouldInsert=False):
+    def cleanup(self):
         self.delete_active_message()
         self.delete_secondary_message()
         self.delete_error_message()
         self.delete_additional_message()
 
         self.bot.callback_query_handlers.remove(self.chCode)
+
+    def destruct(self, shouldInsert=False):
+        self.cleanup()
 
         Helpers.switch_user_busy_status(self.current_user, 14)
 

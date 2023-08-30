@@ -97,6 +97,16 @@ namespace WebApi.Repositories
             await AddUserTrustLevel(model.Id);
             await AddUserTrustProgressAsync(model.Id, 0.000012);
 
+            // Set tags
+            if (!string.IsNullOrEmpty(model.Tags))
+                await UpdateTags(new UpdateTags { UserId = model.Id, RawTags = model.Tags });
+
+            // Set auto reply
+            if (!string.IsNullOrEmpty(model.Voice))
+                await SetAutoReplyVoiceAsync(model.Id, model.Voice);
+            else if (!string.IsNullOrEmpty(model.Text))
+                await SetAutoReplyTextAsync(model.Id, model.Text);
+
             if (model.UsesOcean)
             {
                 var personalityStats = new Entities.UserInfoEntities.OceanStats(model.Id);
@@ -178,9 +188,14 @@ namespace WebApi.Repositories
                 user.EnteredPromoCodes = "";
 
             //Add Starting test pack
-            //TODO: Add more tests here
-            //await PurchaseTestAsync(model.Id, 1, uData.Language);
-            //await PurchaseTestAsync(model.UserId, 3, dataModel.LanguageId);
+            //TODO: Set langauge when tests are localized
+            await PurchaseTestAsync(model.Id, 38, AppLanguage.RU); // Approved
+            await PurchaseTestAsync(model.Id, 32, AppLanguage.RU); // Approved
+            await PurchaseTestAsync(model.Id, 23, AppLanguage.RU); // Approved
+            await PurchaseTestAsync(model.Id, 54, AppLanguage.RU); // Approved
+            await PurchaseTestAsync(model.Id, 29, AppLanguage.RU); // Approved
+            await PurchaseTestAsync(model.Id, 34, AppLanguage.RU);
+            //await PurchaseTestAsync(model.Id, 49, AppLanguage.RU);
 
             return model.Id;
         }
@@ -263,13 +278,12 @@ namespace WebApi.Repositories
                 .Take(profileCount)
                 .ToListAsync();
 
-            //If user uses PERSONALITY functionality
+            //If user uses OCEAN+ functionality
             if (currentUser.Settings.UsesOcean)
             {
-
                 for (int i = 0; i < data.Count; i++)
                 {
-                    returnData.Add(await GetPersonalityMatchResult(userId, currentUser, data[i], isRepeated));
+                    returnData.Add(await GetOceanMatchResult(userId, currentUser, data[i], isRepeated));
                 }
             }
             else
@@ -328,7 +342,7 @@ namespace WebApi.Repositories
             return outputUser;
         }
 
-        private async Task<GetUserData> GetPersonalityMatchResult(long userId, User currentUser, GetUserData managedUser, bool isRepeated)
+        private async Task<GetUserData> GetOceanMatchResult(long userId, User currentUser, GetUserData managedUser, bool isRepeated)
         {
             var returnUser = await AssembleProfileAsync(currentUser, managedUser);
 
@@ -345,9 +359,9 @@ namespace WebApi.Repositories
             var secondaryMatches = 0;
             var bonus = "";
 
-            var hasActiveValentine = userActiveEffects.Where(e => e.EffectId == Currency.TheValentine).FirstOrDefault() != null;
+            var hasActiveValentine = userActiveEffects.Any(e => e.EffectId == Currency.TheValentine);
 
-            var userHasDetectorOn = userActiveEffects.Where(e => e.EffectId == Currency.TheDetector).FirstOrDefault() != null;
+            var userHasDetectorOn = userActiveEffects.Any(e => e.EffectId == Currency.TheDetector);
 
             if (hasActiveValentine)
                 valentineBonus = 2;
@@ -375,7 +389,6 @@ namespace WebApi.Repositories
                 userPoints.AgreeablenessPercentage = 0.1f;
                 userPoints.NeuroticismPercentage = 0.1f;
                 userPoints.NaturePercentage = 0.1f;
-                userPoints.AgreeablenessPercentage = 0.1f;
             }
 
             var important = await userPoints.GetImportantParams();
@@ -566,9 +579,9 @@ namespace WebApi.Repositories
                 bonus += $"✅✅✅\n\n";
 
             if (userHasDetectorOn)
-                bonus += $"<b>PERSONALITY match!</b>\n<b>{bonus}</b>";
+                bonus += $"<b>OCEAN+ match!</b>\n<b>{bonus}</b>";
             else
-                bonus += "<b>PERSONALITY match!</b>";
+                bonus += "<b>OCEAN+ match!</b>";
 
             returnUser.AddDescriptionUpwards(bonus);
 
@@ -624,10 +637,10 @@ namespace WebApi.Repositories
             return true;
         }
 
-        public async Task<AppLanguage> GetUserAppLanguage(long id)
+        public async Task<string> GetUserAppLanguage(long id)
         {
             var language = await _contx.UserData.Where(u => u.Id == id)
-                .Select(u => u.Language)
+                .Select(u => u.Language.ToString())
                 .FirstOrDefaultAsync();
 
             return language;
@@ -1536,6 +1549,16 @@ namespace WebApi.Repositories
             location.CityId = model.CityCode;
             location.CountryLang = model.CityCode != null? model.AppLanguageId : null;
 
+            // Set tags
+            if (!string.IsNullOrEmpty(model.Tags))
+                await UpdateTags(new UpdateTags { UserId = model.Id, RawTags = model.Tags });
+
+            //Set auto reply
+            if (string.IsNullOrEmpty(model.Voice))
+                await SetAutoReplyVoiceAsync(model.Id, model.Voice);
+            else if (string.IsNullOrEmpty(model.Text))
+                await SetAutoReplyTextAsync(model.Id, model.Text);
+
             _contx.Users.Update(user);
             _contx.UserData.Update(user.Data);
             _contx.UserLocations.Update(location);
@@ -1545,7 +1568,7 @@ namespace WebApi.Repositories
         public async Task<bool> CheckUserIsBusy(long userId)
         {
             var user = await _contx.Users.Where(u => u.Id == userId)
-                .SingleOrDefaultAsync();
+                .FirstOrDefaultAsync();
 
             if (user == null)
                 return false;
@@ -2396,19 +2419,31 @@ namespace WebApi.Repositories
             catch(NullReferenceException) { return 0; }
         }
 
-        //Is used when user has passed some tests
-        public async Task<bool> UpdateUserPersonalityStats(TestPayload model)
+        //Is used when user has passed a test
+        public async Task<bool> UpdateOceanStatsAsync(TestPayload model)
         {
             try
             {
-
                 var result = await RecalculateUserStats(model);
 
-                //Break if test result wasnt saved
+                //Break if test result wasn't saved
                 if (!await RegisterTestPassingAsync(model, result.TestResult))
                     return false;
 
-                _contx.OceanStats.Update(result.Stats);
+                // Add tags without duplciates
+                if (model.Tags != null)
+                {
+                    var userTags = await _contx.UserTags.Where(t => t.UserId == model.UserId)
+                        .Select(t => t.TagId)
+                        .ToListAsync();
+
+                    var newTags = model.Tags.Distinct()
+                        .Where(t => !userTags.Contains(t))
+                        .Select(t => new UserTag(t, model.UserId, TagType.Tests));
+
+                    await _contx.UserTags.AddRangeAsync(newTags);
+                }
+
                 await _contx.SaveChangesAsync();
                 return true;
             }
@@ -2496,9 +2531,9 @@ namespace WebApi.Repositories
         private async Task<RecalculationResult> RecalculateUserStats(TestPayload model)
         {
             var devider = 1;
-            var result = 0;
+            var result = 0f;
             var userStats = await _contx.OceanStats.Where(s => s.UserId == model.UserId)
-                .SingleOrDefaultAsync();
+                .FirstOrDefaultAsync();
 
             //Create user stats if they werent created before
             if (userStats == null)
@@ -2508,15 +2543,14 @@ namespace WebApi.Repositories
                 await _contx.SaveChangesAsync();
             }
 
-
             if (model.Openness != 0)
             {
-                //Set the devider to 2 if user had passed the tests of the same type before
+                //Set the devider to 2 if user passed the tests of the same type before
                 if (userStats.Openness != 0)
                     devider = 2;
 
-                result = (int)model.Openness;
-                userStats.Openness = (userStats.Openness + (int)model.Openness) / devider;
+                result = (float)model.Openness;
+                userStats.Openness = (userStats.Openness + (float)model.Openness) / devider;
                 //Return the devider to its normal state
                 devider = 1;
             }
@@ -2525,8 +2559,8 @@ namespace WebApi.Repositories
                 if (userStats.Conscientiousness != 0)
                     devider = 2;
 
-                result = (int)model.Conscientiousness;
-                userStats.Conscientiousness = (userStats.Conscientiousness + (int)model.Conscientiousness) / devider;
+                result = (float)model.Conscientiousness;
+                userStats.Conscientiousness = (userStats.Conscientiousness + (float)model.Conscientiousness) / devider;
                 devider = 1;
             }
             if (model.Extroversion != 0)
@@ -2534,8 +2568,8 @@ namespace WebApi.Repositories
                 if (userStats.Extroversion != 0)
                     devider = 2;
 
-                result = (int)model.Extroversion;
-                userStats.Extroversion = (userStats.Extroversion + (int)model.Extroversion) / devider;
+                result = (float)model.Extroversion;
+                userStats.Extroversion = (userStats.Extroversion + (float)model.Extroversion) / devider;
                 devider = 1;
             }
             if (model.Agreeableness != 0)
@@ -2543,8 +2577,8 @@ namespace WebApi.Repositories
                 if (userStats.Agreeableness != 0)
                     devider = 2;
 
-                result = (int)model.Agreeableness;
-                userStats.Agreeableness = (userStats.Agreeableness + (int)model.Agreeableness) / devider;
+                result = (float)model.Agreeableness;
+                userStats.Agreeableness = (userStats.Agreeableness + (float)model.Agreeableness) / devider;
                 devider = 1;
             }
             if (model.Neuroticism != 0)
@@ -2552,8 +2586,8 @@ namespace WebApi.Repositories
                 if (userStats.Neuroticism != 0)
                     devider = 2;
 
-                result = (int)model.Neuroticism;
-                userStats.Neuroticism = (userStats.Neuroticism + (int)model.Neuroticism) / devider;
+                result = (float)model.Neuroticism;
+                userStats.Neuroticism = (userStats.Neuroticism + (float)model.Neuroticism) / devider;
                 devider = 1;
             }
             if (model.Nature != 0)
@@ -2561,11 +2595,12 @@ namespace WebApi.Repositories
                 if (userStats.Nature != 0)
                     devider = 2;
 
-                result = (int)model.Nature;
-                userStats.Nature = (userStats.Nature + (int)model.Nature) / devider;
+                result = (float)model.Nature;
+                userStats.Nature = (userStats.Nature + (float)model.Nature) / devider;
                 devider = 1;
             }
 
+            await _contx.SaveChangesAsync();
             return new RecalculationResult { Stats = userStats, TestResult = result};
         }
 
@@ -2635,14 +2670,14 @@ namespace WebApi.Repositories
             catch { throw new NullReferenceException($"User {userId} does not exist !"); }
         }
 
-        public async Task<bool> RegisterTestPassingAsync(TestPayload model, int testResult)
+        public async Task<bool> RegisterTestPassingAsync(TestPayload model, float testResult)
         {
             try
             {
                 var userTest = await _contx.UserTests.Where(t => t.UserId == model.UserId && t.TestId == model.TestId)
                     .FirstOrDefaultAsync();
 
-                //Give user 1 PP for passing the test for the first time
+                //Give user 1 OP for passing the test for the first time
                 if (userTest.PassedOn == null)
                 {
                     var userBalance = await GetUserWalletBalance(model.UserId);
@@ -2652,7 +2687,6 @@ namespace WebApi.Repositories
 
                 userTest.PassedOn = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
                 userTest.Result = testResult;
-                userTest.Tags = model.Tags;
 
                 _contx.UserTests.Update(userTest);
                 await _contx.SaveChangesAsync();
@@ -2761,7 +2795,7 @@ namespace WebApi.Repositories
             GetUserData outputUser;
 
             if (currentUser.Settings.UsesOcean)
-                outputUser = await GetPersonalityMatchResult(model.UserId, currentUser, user, false);
+                outputUser = await GetOceanMatchResult(model.UserId, currentUser, user, false);
             else
                 outputUser = await AssembleProfileAsync(currentUser, user);
 
@@ -2804,11 +2838,11 @@ namespace WebApi.Repositories
         {
             var user1Langs = await _contx.UserData.Where(u => u.Id == user1Id)
                 .Select(u => u.UserLanguages)
-                .SingleOrDefaultAsync();
+                .FirstOrDefaultAsync();
 
             var user2Langs = await _contx.UserData.Where(u => u.Id == user2Id)
                 .Select(u => u.UserLanguages)
-                .SingleOrDefaultAsync();
+                .FirstOrDefaultAsync();
 
             var commonIds = user1Langs.Intersect(user2Langs);
             var commons = await _contx.Languages.Where(l => commonIds
@@ -2819,43 +2853,22 @@ namespace WebApi.Repositories
             return String.Join(", ", commons);
         }
 
-        public async Task<bool> SetAutoReplyTextAsync(long userId, string text)
+        public async Task SetAutoReplyTextAsync(long userId, string text)
         {
-            try
-            {
-                var data = await _contx.UserData.Where(u => u.Id == userId)
-                    .SingleOrDefaultAsync();
+            var data = await _contx.UserData.Where(u => u.Id == userId)
+                .FirstOrDefaultAsync();
 
-                data.AutoReplyText = text;
-
-                _contx.UserData.Update(data);
-                await _contx.SaveChangesAsync();
-
-                return true;
-            }
-            catch { return false; }
+            data.AutoReplyText = text;
+            await _contx.SaveChangesAsync();
         }
 
-        public async Task<bool> SetAutoReplyVoiceAsync(long userId, string voice)
+        public async Task SetAutoReplyVoiceAsync(long userId, string voice)
         {
-            try
-            {
-                if (await CheckUserHasPremiumAsync(userId))
-                {
-                    var data = await _contx.UserData.Where(u => u.Id == userId)
-                        .SingleOrDefaultAsync();
+            var data = await _contx.UserData.Where(u => u.Id == userId)
+                .FirstOrDefaultAsync();
 
-                    data.AutoReplyVoice = voice;
-
-                    _contx.UserData.Update(data);
-                    await _contx.SaveChangesAsync();
-
-                    return true;
-
-                }
-                return false;
-            }
-            catch { return false; }
+            data.AutoReplyVoice = voice;
+            await _contx.SaveChangesAsync();
         }
 
         public async Task<ActiveAutoReply> GetActiveAutoReplyAsync(long userId)
@@ -3282,7 +3295,7 @@ namespace WebApi.Repositories
         {
             var balance = await GetUserWalletBalance(userId);
             var sysTest = await _contx.Tests.Where(t => t.Id == testId && t.Language == localisation)
-                .SingleOrDefaultAsync();
+                .FirstOrDefaultAsync();
 
             if (sysTest == null)
                 throw new NullReferenceException($"Test #{testId} with localisation #{localisation} does not exist");
@@ -3301,7 +3314,7 @@ namespace WebApi.Repositories
                     TestId = testId,
                     TestType = test.TestType,
                     Result = 0,
-                    Language = localisation
+                    TestLanguage = localisation
                 });
                 
                 await _contx.SaveChangesAsync();

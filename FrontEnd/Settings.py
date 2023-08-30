@@ -1068,7 +1068,11 @@ class Settings:
                 self.ocean_points(call.message)
             elif call.data == "207":
                 self.previous_section = self.ocean_settings_choice
-                TestModule(self.bot, self.message, isActivatedFromShop=False, returnMethod=self.proceed)
+                self.notInMenu = True
+                self.clear_callback_handler()
+                self.delete_secondary_message()
+                self.delete_error_message()
+                TestModule(self.bot, self.message, returnMethod=self.proceed, active_message=self.active_message)
             elif call.data == "208":
                 pass
             elif call.data == "209":

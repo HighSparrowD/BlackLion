@@ -1,8 +1,5 @@
-﻿using WebApi.Entities.SecondaryEntities;
-using WebApi.Enums;
-using System;
+﻿using WebApi.Enums;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
 #nullable enable
@@ -46,6 +43,12 @@ namespace WebApi.Entities.UserActionEntities
         public CommunicationPreference CommunicationPrefs { get; set; }
         [JsonPropertyName("userGenderPrefs")]
         public Gender GenderPrefs { get; set; }
+        [JsonPropertyName("voice")]
+        public string? Voice { get; set; }
+        [JsonPropertyName("text")]
+        public string? Text { get; set; }
+        [JsonPropertyName("tags")]
+        public string? Tags { get; set; }
         [JsonPropertyName("usesOcean")]
         public bool UsesOcean { get; set; }
         [JsonPropertyName("promo")]

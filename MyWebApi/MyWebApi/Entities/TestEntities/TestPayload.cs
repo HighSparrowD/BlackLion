@@ -9,21 +9,19 @@ namespace WebApi.Entities.TestEntities
         public long UserId { get; set; }
         [JsonPropertyName("testId")]
         public long TestId { get; set; }
-        [JsonPropertyName("balance")]
-        public int Balance { get; set; }
         [JsonPropertyName("openness")]
-        public int? Openness { get; set; }
+        public float? Openness { get; set; }
         [JsonPropertyName("conscientiousness")]
-        public int? Conscientiousness { get; set; }
+        public float? Conscientiousness { get; set; }
         [JsonPropertyName("extroversion")]
-        public int? Extroversion { get; set; }
+        public float? Extroversion { get; set; }
         [JsonPropertyName("agreeableness")]
-        public int? Agreeableness { get; set; }
+        public float? Agreeableness { get; set; }
         [JsonPropertyName("neuroticism")]
-        public int? Neuroticism { get; set; }
+        public float? Neuroticism { get; set; }
         [JsonPropertyName("nature")]
-        public int? Nature { get; set; }
+        public float? Nature { get; set; }
         [JsonPropertyName("tags")]
-        public List<string> Tags{ get; set; }
+        public List<long> Tags{ get; set; }
     }
 }

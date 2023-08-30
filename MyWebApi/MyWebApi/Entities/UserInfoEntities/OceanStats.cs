@@ -6,12 +6,12 @@ namespace WebApi.Entities.UserInfoEntities
     {
         [Key]
         public long UserId { get; set; }
-        public int Openness { get; set; }
-        public int Conscientiousness { get; set; }
-        public int Extroversion { get; set; }
-        public int Agreeableness { get; set; }
-        public int Neuroticism { get; set; }
-        public int Nature { get; set; }
+        public float Openness { get; set; }
+        public float Conscientiousness { get; set; }
+        public float Extroversion { get; set; }
+        public float Agreeableness { get; set; }
+        public float Neuroticism { get; set; }
+        public float Nature { get; set; }
 
         public OceanStats()
         {}
