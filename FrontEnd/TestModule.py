@@ -1,13 +1,16 @@
 import json
 
 import requests
+import stripe
 from telebot import TeleBot
 
 import Core.HelpersMethodes as Helpers
-from telebot.types import ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
+from telebot.types import ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup, LabeledPrice
 from Common.Menues import index_converter
 from Common.Menues import count_pages, assemble_markup, reset_pages
 from Common.Menues import go_back_to_main_menu
+from Core.Resources import Resources
+import Settings
 
 
 # noinspection PyBroadException
@@ -32,6 +35,7 @@ class TestModule:
         self.tags_list = []
 
         self.localisation = Helpers.get_user_app_language(self.current_user)
+        self.user_balance = None
 
         self.current_markup_elements = []
         self.markup_last_element = 0
@@ -39,8 +43,9 @@ class TestModule:
         self.markup_pages_count = 0
 
         self.active_message = active_message
+        self.current_invoice_id = None
+        self.active_transaction_status_message = None
         self.secondary_message = None
-        self.question_message = None
 
         self.active_param = 0
         self.active_media = None
@@ -48,6 +53,11 @@ class TestModule:
         self.lie_scale = {}
 
         self.user_total = None
+
+        self.points_prices = Resources.get_tests_prices("Points")
+        self.prices = None
+
+        self.suggested_tips = [5_00, 50_00, 75_00, 100_00]
 
         #Represent a price of current test in different currencies
         self.current_price_C = 0
@@ -74,8 +84,9 @@ class TestModule:
 
         self.YNmarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Yes", "No")
         self.continueMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Continue")
-        self.abortMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("/abort")
+        self.abortMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("/leave")
 
+        self.current_test_short_data = {}
         self.current_test_data = {}
         self.current_question = {}
         self.current_question_answers = {}
@@ -87,7 +98,26 @@ class TestModule:
         if not self.returnMethod:
             Helpers.switch_user_busy_status(self.current_user, 12)
 
-        self.ah = self.bot.register_message_handler(self.abort_checkout, commands=["abort"], user_id=self.current_user)
+        self.ah = None
+        self.mh = None
+        self.pre_checkout_h = None
+
+        self.first_time_handler(message)
+
+    def first_time_handler(self, message):
+        self.get_user_balance()
+
+        if self.user_currency is None:
+            Settings.CurrencySetter(self.bot, self.current_user, self.first_time_handler)
+        else:
+            self.proceed_to_start(message)
+
+    def proceed_to_start(self, message):
+        self.ah = self.bot.register_message_handler(self.abort_checkout, commands=["leave"], user_id=self.current_user)
+        self.mh = self.bot.register_message_handler(self.payment_handler, content_types=['successful_payment'], user_id=self.current_user)
+        self.pre_checkout_h = self.bot.register_pre_checkout_query_handler(self.pre_checkout_handler, func=lambda query: True)
+        self.prices = Resources.get_tests_prices(self.user_currency)
+        # self.hHandler = self.bot.register_message_handler(self.help_handler, commands=["help"], user_id=self.current_user)
 
         self.start()
 
@@ -99,7 +129,7 @@ class TestModule:
         else:
             self.bot.edit_message_text("<i><b>Please select the parameter, test will be sorted by</b></i>", self.current_user, self.active_message, reply_markup=self.start_markup)
 
-        self.send_secondary_message("<i>Type '/abort' to leave at any time</i>", markup=self.abortMarkup)
+        self.send_secondary_message("<i>Type '/leave' to leave at any time</i>", markup=self.abortMarkup)
         # self.get_ready_to_abort(self.message)
 
     def manage_point_group(self):
@@ -129,7 +159,7 @@ class TestModule:
 
     def load_new_tests_data_by_param(self, param):
         try:
-            self.current_tests = json.loads(requests.get(f"https://localhost:44381/test-data-by-param/{self.current_user}/{param}", verify=False).text)
+            self.current_tests = json.loads(requests.get(f"https://localhost:44381/non-possest-test/{self.current_user}/{param}", verify=False).text)
             self.tests.clear()
             for test in self.current_tests:
                 self.tests[test["id"]] = test["name"]
@@ -145,7 +175,7 @@ class TestModule:
         except:
             return None
 
-    def show_current_test(self, message, acceptMode=False, decisionIndex="1"):
+    def show_current_test(self, message, acceptMode=False, decisionIndex="-3"):
         if not acceptMode:
             if self.isActivatedFromShop:
                 self.isDeciding = True
@@ -161,43 +191,34 @@ class TestModule:
 
         else:
             #If is eager to buy in any currency
-            if decisionIndex == "1" or decisionIndex == "2":
-                self.isDeciding = False
-                if self.isActivatedFromShop:
-                    #Coins purchase
-                    if decisionIndex == "1":
-                        canPurchase = bool(json.loads(requests.get(f"https://localhost:44381/purchase-test/{self.current_user}/{self.current_test}/{self.localisation}", verify=False).text))
-                    else:
-                        canPurchase = False
-                        pass
-                        #TODO: Relocate user to real money purchase section
-                        # canPurchase = bool(json.loads(requests.get(f"https://localhost:44381/PurchaseTest/{self.current_user}/{self.current_test}/{self.localisation}", verify=False).text))
-
-                    if canPurchase:
-                        self.test_pass_step_0(message)
+            self.isDeciding = False
+            if self.isActivatedFromShop:
+                #Coins purchase
+                if decisionIndex == "-6":
+                    if self.user_balance["points"] >= self.current_price_C:
+                        # TODO: replace with real localization when tests are localized
+                        response = Helpers.purchase_test(self.current_user, self.current_test, str(self.current_price_C), "Points", "RU")
+                        if response.status_code == 200:
+                            self.test_pass_step_0(message)
+                        else:
+                            self.send_secondary_message("Something went wrong. Please, contact the administration")
                     else:
                         self.send_secondary_message("You dont have enough points to buy this test")
+                # Real money purchase
                 else:
-                    self.load_test_data()
-                    self.recurring_test_pass()
+                    self.send_price_invoice(self.current_test_short_data["name"], self.current_test_short_data["description"], str(self.current_price_RM), "Test")
+            # else:
+            #     self.load_test_data()
+            #     self.recurring_test_pass()
             elif message.text == "2":
                 self.isDeciding = False
                 self.go_back_to_test_selection()
             elif decisionIndex == "3":
                 self.go_back_to_test_selection()
 
-    def test_pass_step_0(self, message, acceptMode=False):
-        if not acceptMode:
-            self.isDeciding = True
-            self.bot.edit_message_text(f"{self.get_current_test_data()}\n\n<b>Test had been successfully purchased :)</b>", self.current_user, self.active_message,  reply_markup=self.pass_test_markup)
-        else:
-            if message.text == "Yes":
-                self.isDeciding = False
-                self.load_test_data()
-                self.recurring_test_pass()
-            else:
-                self.isDeciding = False
-                self.go_back_to_test_selection()
+    def test_pass_step_0(self, message):
+        self.isDeciding = True
+        self.send_active_message(f"{self.get_current_test_data()}\n\n<b>Test had been successfully purchased :)</b>", markup=self.pass_test_markup)
 
     def manage_current_test(self, canBePassedIn=0, acceptMode=False):
         if not acceptMode:
@@ -214,7 +235,7 @@ class TestModule:
             #     self.isDeciding = False
             #     self.go_back_to_test_selection()
 
-    def recurring_test_pass(self, gotoPrevious=False):
+    def recurring_test_pass(self, gotoPrevious=False, isFirstQuestion=False):
         if self.current_question_index + 1 < self.questions_count:
             if not gotoPrevious:
                 self.current_question_index += 1
@@ -234,9 +255,9 @@ class TestModule:
             #Create previous question button
             markup.add(InlineKeyboardButton("⬅ Previous question", callback_data="-8"))
 
-            # Code below is redundant now. But may be useful in the future
+            # The code below is redundant now. But may be useful in the future
             # if self.active_media is not None:
-            #     #Remove photo from question
+            #     #Remove a photo from question
             #     self.active_media = None
             #     self.bot.edit_message_media(None, self.current_user, self.active_message)
             #
@@ -245,13 +266,12 @@ class TestModule:
             #     self.active_media = self.current_question["photo"]
             #     self.bot.edit_message_media(self.active_media, self.current_user, self.active_message)
 
-            if not self.question_message:
-                self.delete_active_message()
-                self.send_question_message(f"❓ {self.current_question['text']} ❓", markup)
+            if isFirstQuestion:
+                self.send_active_message(f"❓ {self.current_question['text']} ❓", markup)
                 # self.question_message = self.bot.send_message(self, reply_markup=markup).id
-                self.send_secondary_message("<i><b>You can leave by typing '/abort', but all your progress will be lost</b></i>", markup=self.abortMarkup)
+                self.send_secondary_message("<i><b>You can leave by typing '/leave', but all your progress will be lost</b></i>", markup=self.abortMarkup)
             else:
-                self.send_question_message(f"❓ {self.current_question['text']} ❓", markup)
+                self.send_active_message(f"❓ {self.current_question['text']} ❓", markup)
                 # self.bot.edit_message_text(text=, chat_id=self.current_user, message_id=self.question_message, reply_markup=markup)
         else:
             self.isPassingTest = False
@@ -269,8 +289,6 @@ class TestModule:
 
             tags = None
             self.isDeciding = True
-
-            self.delete_question_message()
 
             active_answer = None
             data = None
@@ -319,8 +337,8 @@ class TestModule:
                     active_answer = previous_result["result"]
                     break
 
-            self.send_question_message(active_answer, markup=self.continueMarkup)
-            self.active_message = self.question_message
+            self.send_active_message(active_answer)
+            self.send_secondary_message("✨", markup=self.continueMarkup)
 
             if not isLying:
                 data["tags"] = tags
@@ -334,6 +352,12 @@ class TestModule:
         else:
             self.isDeciding = False
             self.bot.delete_message(self.current_user, message.id)
+            self.delete_secondary_message()
+
+            if self.isActivatedFromShop:
+                self.go_back_to_test_selection()
+                return
+
             self.show_current_test(message)
 
     def create_test_payload(self, score):
@@ -366,15 +390,15 @@ class TestModule:
     def get_current_test_data(self):
         if self.isActivatedFromShop:
             t = requests.get(f"https://localhost:44381/test-data-by-id/{self.current_test}/{self.localisation}", verify=False)
-            data = json.loads(t.text)
+            self.current_test_short_data = json.loads(t.text)
 
-            self.current_price_C = data['price']
-            self.current_price_RM = 0
+            self.current_price_C = self.points_prices[str(self.current_test)]
+            self.current_price_RM = self.prices[str(self.current_test)]
 
             self.buy_markup.clear()
-            self.buy_markup.add(InlineKeyboardButton(f"{data['price']} Coins", callback_data="-6"), InlineKeyboardButton(f"XXX CZK", callback_data="-3")).add(InlineKeyboardButton("🔙Go Back", callback_data="-5"))
+            self.buy_markup.add(InlineKeyboardButton(f"{self.current_price_C} Coins", callback_data="-6"), InlineKeyboardButton(f"{self.current_price_RM}{self.user_currency}", callback_data="-3")).add(InlineKeyboardButton("🔙Go Back", callback_data="-5"))
 
-            return f"{data['name']}\n\n{data['description']}"
+            return f"{self.current_test_short_data['name']}\n\n{self.current_test_short_data['description']}"
 
         data = json.loads(requests.get(f"https://localhost:44381/user-test/{self.current_user}/{self.current_test}", verify=False).text)
 
@@ -395,7 +419,7 @@ class TestModule:
                 self.active_message = self.bot.send_message(self.current_user, "<i><b>Select any test to view more details</b></i>", reply_markup=markup).id
             else:
                 try:
-                    self.bot.edit_message_text(chat_id=self.current_user, text="<i><b>Select any test to view more details</b></i>", reply_markup=markup, message_id=self.active_message)
+                    self.send_active_message("<i><b>Select any test to view more details</b></i>", markup)
                 except:
                     pass
         else:
@@ -431,10 +455,10 @@ class TestModule:
 
         #Buy test for RM
         elif call.data == "-3":
-            self.show_current_test(call.message, acceptMode=True, decisionIndex="2")
+            self.show_current_test(call.message, acceptMode=True, decisionIndex=call.data)
         #Buy test for Points
         elif call.data == "-6":
-            self.show_current_test(call.message, acceptMode=True, decisionIndex="1")
+            self.show_current_test(call.message, acceptMode=True, decisionIndex=call.data)
         #Bo back from test selection
         elif call.data == "-5":
             self.isDeciding = False
@@ -467,7 +491,7 @@ class TestModule:
         #If user is going back to start
         elif call.data == '-10':
             self.isOnStart = True
-            self.bot.edit_message_text(chat_id=self.current_user, text="<i><b>Please select the parameter, test will be sorted by</b></i>", reply_markup=self.start_markup, message_id=self.active_message)
+            self.send_active_message("<i><b>Please select the parameter, test will be sorted by</b></i>", self.start_markup)
 
         elif call.data == '-8':
             if self.current_question_index > 0:
@@ -509,8 +533,27 @@ class TestModule:
     # def get_ready_to_abort(self, message):
     #     self.bot.register_next_step_handler(message, self.abort_checkout, chat_id=self.current_user)
 
+    def pre_checkout_handler(self, query):
+        self.bot.answer_pre_checkout_query(query.id, ok=True)
+
     def abort_handler(self):
         self.destruct()
+
+    def payment_handler(self, message):
+        charge_info = stripe.Charge.retrieve(message.successful_payment.provider_payment_charge_id)
+        # intent_info = stripe.PaymentIntent.retrieve(charge_info.payment_intent)
+
+        if charge_info.status == "succeeded":
+            self.delete_price_invoice()
+            response = Helpers.purchase_test(self.current_user, self.current_test, self.current_price_RM, self.user_currency, "RU")
+
+            # I want this message to be at the bottom
+            self.delete_active_message()
+
+            self.test_pass_step_0(message)
+        else:
+            # TODO: Find out what gone wrong ?
+            self.send_secondary_message("Payment failed. Please try again or contact the administration")
 
     def abort_checkout(self, message, acceptMode=False):
         if not acceptMode:
@@ -538,16 +581,16 @@ class TestModule:
     #         self.delete_active_message()
     #         self.send_active_message(text, markup)
 
-    def send_question_message(self, text, markup=None):
-        try:
-            if self.question_message:
-                self.bot.edit_message_text(text, self.current_user, self.question_message, reply_markup=markup)
-                return
+    def get_user_balance(self):
+        self.user_balance = Helpers.get_active_user_balance(self.current_user)
 
-            self.question_message = self.bot.send_message(self.current_user, text, reply_markup=markup).id
-        except:
-            self.delete_question_message()
-            self.send_question_message(text, markup)
+        self.user_currency = self.user_balance["currency"]
+
+    def send_active_transaction_message(self, text):
+        if self.active_transaction_status_message is not None:
+            self.bot.delete_message(self.current_user, self.active_transaction_status_message)
+
+        self.active_transaction_status_message = self.bot.send_message(self.current_user, text).id
 
     def send_active_message(self, text, markup=None):
         try:
@@ -556,8 +599,8 @@ class TestModule:
                 return
 
             self.active_message = self.bot.send_message(self.current_user, text, reply_markup=markup).id
-        except:
-            self.delete_question_message()
+        except Exception as ex:
+            self.delete_active_message()
             self.send_active_message(text, markup)
 
     def send_secondary_message(self, text, markup=None):
@@ -571,19 +614,44 @@ class TestModule:
             self.delete_secondary_message()
             self.send_secondary_message(text, markup)
 
+    def send_price_invoice(self, title: str, description: str, price: str, invoice_payload: str):
+        # TODO: achieve the same result using another method
+        priceTag = LabeledPrice("Price", int(price.replace(",", "")))
+        self.delete_price_invoice()
+        self.current_invoice_id = self.bot.send_invoice(chat_id=self.current_user, currency=self.user_currency,
+                         title=title,
+                         description=description,
+                         need_name=True,
+                         invoice_payload=invoice_payload,
+                         prices=[priceTag],
+                         provider_token=Helpers.payment_token,
+                         need_email=True,
+                         suggested_tip_amounts=self.suggested_tips,
+                         max_tip_amount=100_000_000,
+                         protect_content=True).message_id
+
+    def delete_price_invoice(self):
+        try:
+            if self.current_invoice_id is not None:
+                self.bot.delete_message(self.current_user, self.current_invoice_id)
+                self.current_invoice_id = None
+        except:
+            pass
+
     def delete_active_message(self):
-        if self.active_message:
-            self.bot.delete_message(self.current_user, self.active_message)
+        try:
+            if self.active_message:
+                self.bot.delete_message(self.current_user, self.active_message)
+                self.active_message = None
+        except:
             self.active_message = None
 
-    def delete_question_message(self):
-        if self.question_message:
-            self.bot.delete_message(self.current_user, self.question_message)
-            self.question_message = None
-
     def delete_secondary_message(self):
-        if self.secondary_message:
-            self.bot.delete_message(self.current_user, self.secondary_message)
+        try:
+            if self.secondary_message:
+                self.bot.delete_message(self.current_user, self.secondary_message)
+                self.secondary_message = None
+        except:
             self.secondary_message = None
 
     def destruct(self):
@@ -593,14 +661,21 @@ class TestModule:
         if self.ah in self.bot.message_handlers:
             self.bot.message_handlers.remove(self.ah)
 
+        if self.mh in self.bot.message_handlers:
+            self.bot.message_handlers.remove(self.mh)
+
+        #TODO: Find out why throws an exception
+        try:
+            self.bot.pre_checkout_query_handlers.remove(self.pre_checkout_h)
+        except:
+            pass
+
+        self.delete_active_message()
         self.delete_secondary_message()
-        self.delete_question_message()
+        self.delete_price_invoice()
 
         if self.returnMethod:
             self.returnMethod(self.message, shouldSubscribe=True)
             return False
 
-        self.delete_question_message()
-        self.delete_active_message()
-        self.delete_secondary_message()
         go_back_to_main_menu(self.bot, self.current_user, self.message)

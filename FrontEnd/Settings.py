@@ -1570,20 +1570,29 @@ class Settings:
             self.active_error_message = self.bot.send_photo(self.current_user, photo=photo, reply_markup=markup).id
 
     def delete_active_message(self):
-        if self.active_message:
-            self.bot.delete_message(self.current_user, self.active_message)
+        try:
+            if self.active_message:
+                self.bot.delete_message(self.current_user, self.active_message)
+                self.active_message = None
+        except:
             self.active_message = None
 
     def delete_secondary_message(self):
-        if self.active_secondary_message:
-            self.bot.delete_message(self.current_user, self.active_secondary_message)
+        try:
+            if self.active_secondary_message:
+                self.bot.delete_message(self.current_user, self.active_secondary_message)
+                self.active_secondary_message = None
+
+            self.delete_error_message()
+        except:
             self.active_secondary_message = None
 
-        self.delete_error_message()
-
     def delete_error_message(self):
-        if self.active_error_message:
-            self.bot.delete_message(self.current_user, self.active_error_message)
+        try:
+            if self.active_error_message:
+                self.bot.delete_message(self.current_user, self.active_error_message)
+                self.active_error_message = None
+        except:
             self.active_error_message = None
 
     def remove_next_step_handler_local(self):

@@ -620,7 +620,7 @@ namespace WebApi.Controllers
             return await _repository.GetUserFilteringByPhotoStatusAsync(userId);
         }
 
-        [HttpGet("/test-data-by-param/{userId}/{param}")]
+        [HttpGet("/non-possest-test/{userId}/{param}")]
         public async Task<List<GetTestShortData>> GetTestDataByProperty(long userId, OceanStats param)
         {
             return await _repository.GetTestDataByPropertyAsync(userId, param);
@@ -650,10 +650,12 @@ namespace WebApi.Controllers
             return await _repository.GetPossibleTestPassRangeAsync(userId, testId);
         }
 
-        [HttpGet("/purchase-test/{userId}/{testId}/{localisation}")]
-        public async Task<bool> PurchaseTest(long userId, long testId, AppLanguage localisation)
+        [HttpGet("/purchase-test")]
+        public async Task<IActionResult> PurchaseTest([FromQuery]long userId, [FromQuery] long testId, 
+            [FromQuery] float cost, [FromQuery] Currency currency, [FromQuery] AppLanguage language)
         {
-            return await _repository.PurchaseTestAsync(userId, testId, localisation);
+            await _repository.PurchaseTestAsync(userId, testId, cost, currency, language);
+            return Ok();
         }
 
         [HttpGet("/CheckTickRequestStatus/{userId}")]

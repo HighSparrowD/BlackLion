@@ -41,6 +41,7 @@ class Shop:
         self.active_description_message = None
         self.active_transaction_status_message = None
         self.current_transaction = None
+        self.current_invoice_id = None
 
         self.suggested_tips = [5_00, 50_00, 75_00, 100_00]
 
@@ -139,30 +140,28 @@ class Shop:
         # Load price lists based on currency selected by user
         self.set_currency_prices()
 
-        if self.startingTransaction == 1:
-            self.choose_pack_points(message)
-            return
-        elif self.startingTransaction == 2:
-            self.choose_effect_to_buy(message)
-            return
-        elif self.startingTransaction == 3:
-            self.buy_premium(message)
-            return
-        elif self.startingTransaction == 4:
-            self.choose_pack_PP(message)
-            return
-        elif self.startingTransaction == 5:
-            self.buy_tests()
-            return
+        if self.startingTransaction:
+            if self.startingTransaction == 1:
+                self.choose_pack_points(message)
+                return
+            elif self.startingTransaction == 2:
+                self.choose_effect_to_buy(message)
+                return
+            elif self.startingTransaction == 3:
+                self.buy_premium(message)
+                return
+            elif self.startingTransaction == 4:
+                self.choose_pack_PP(message)
+                return
+            elif self.startingTransaction == 5:
+                self.buy_tests()
+                return
 
         if self.shouldGreet:
             self.send_active_message(f"Welcome to the shop!\n{self.get_balance_message()}", markup=self.start_markup)
             self.shouldGreet = False
         else:
-            try:
-                self.bot.edit_message_text(f"{self.get_balance_message()}", self.current_user, self.active_message, reply_markup=self.start_markup)
-            except:
-                pass
+            self.send_active_message(self.get_balance_message(), self.start_markup)
 
     def buy_premium(self, message=None):
         self.current_section = self.buy_premium
@@ -306,7 +305,19 @@ class Shop:
     def buy_tests(self):
         # Remove previous callback handler so that handlers do not collide
         self.bot.callback_query_handlers.remove(self.ch)
+        self.bot.message_handlers.remove(self.mh)
+        self.bot.message_handlers.remove(self.hHandler)
+
+        # TODO: Find out why throws an exception
+        try:
+            self.bot.pre_checkout_query_handlers.remove(self.pre_checkout_h)
+        except:
+            pass
+
         self.ch = None
+        self.mh = None
+        self.hHandler = None
+        self.pre_checkout_h = None
 
         self.current_section = self.buy_tests
 
@@ -604,7 +615,7 @@ class Shop:
             except:
                 pass
 
-        # Clear screen of previous effect description message
+        # Clear screen of a previous effect description message
         if self.active_description_message:
             try:
                 self.bot.delete_message(self.current_user, self.active_description_message)
@@ -613,10 +624,14 @@ class Shop:
                 pass
 
     def send_active_message(self, text, markup=None):
-        if self.active_message:
-            self.bot.edit_message_text(text, self.current_user, self.active_message, reply_markup=markup)
-            return
-        self.active_message = self.bot.send_message(self.current_user, text, reply_markup=markup).id
+        try:
+            if self.active_message:
+                self.bot.edit_message_text(text, self.current_user, self.active_message, reply_markup=markup)
+                return
+            self.active_message = self.bot.send_message(self.current_user, text, reply_markup=markup).id
+        except:
+            self.delete_active_message()
+            self.send_active_message(text, markup)
 
     def send_price_invoice(self, title: str, description: str, price: str, invoice_payload: str):
         # TODO: achieve the same result using another method
@@ -633,6 +648,14 @@ class Shop:
                          suggested_tip_amounts=self.suggested_tips,
                          max_tip_amount=100_000_000,
                          protect_content=True).message_id
+
+    def delete_active_message(self):
+        try:
+            if self.active_message:
+                self.bot.delete_message(self.current_user, self.active_message)
+                self.active_message = None
+        except:
+            self.active_message = None
 
     def delete_price_invoice(self):
         try:
@@ -667,6 +690,13 @@ class Shop:
         if self.previous_section:
             if kwargs.get("shouldSubscribe"):
                 self.ch = self.bot.register_callback_query_handler(message, self.callback_handler, user_id=self.current_user)
+                self.mh = self.bot.register_message_handler(self.payment_handler, content_types=['successful_payment'],
+                                                            user_id=self.current_user)
+                self.pre_checkout_h = self.bot.register_pre_checkout_query_handler(self.pre_checkout_handler,
+                                                                                   func=lambda query: True)
+
+                self.hHandler = self.bot.register_message_handler(self.help_handler, commands=["help"],
+                                                                  user_id=self.current_user)
 
             self.previous_section(message)
 

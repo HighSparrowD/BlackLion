@@ -15,6 +15,16 @@ langs = {
     2: "UK",
 }
 
+currencies = {
+    12: "USD",
+    13: "EUR",
+    14: "UAH",
+    15: "RUB",
+    16: "CZK",
+    17: "PLN",
+    18: "Points"
+}
+
 prioritized_langs = ["English", "Russian", "Ukrainian", "Czech", "Polish"]
 prioritized_countries = ["Ukraine", "Russia", "Czechia", "Poland", "United States"]
 
@@ -280,14 +290,35 @@ def add_tests(lang):
     data = json.dumps(test_template)
     print(requests.post("https://localhost:44381/UploadTests", data, headers={"Content-Type": "application/json"}, verify=False).text)
 
+def generate_test_prices():
+    file = pandas.read_csv(f"Inputs/Tests{langs[1]} - Tests.csv")
+    file = get_file_data(file)
+
+    data = {}
+
+    currency_index = 5
+    for currency in currencies.values():
+        data[f"TestPrices{currency}"] = {}
+        for test in file:
+            data[f"TestPrices{currency}"][test[0]] = test[currency_index]
+
+        currency_index += 1
+
+    # Save output
+    for index in data.keys():
+        price_file = data[index]
+        dataframe = pandas.DataFrame(price_file, index=[0])
+        dataframe = dataframe.fillna(value=0)
+        dataframe.to_csv(f"./Output/{index}.csv", index=False)
+
 
 def load_test_data(testTemplate, lang) -> dict:
     file = pandas.read_csv(f"Inputs/Tests{lang} - Tests.csv")
     file = get_file_data(file)
 
     for test in file:
-        if test[0] != 49:
-            continue
+        # if test[0] != 49:
+        #     continue
 
         test_data = {
             "id": test[0],
@@ -408,9 +439,10 @@ def get_file_data(file):
 
 
 # add_tests(langs[0])
-add_tests(langs[1])
+# add_tests(langs[1])
 # add_tests(langs[2])
 
+generate_test_prices()
 
 # create_eng_localization()
 # load_eng_localization()

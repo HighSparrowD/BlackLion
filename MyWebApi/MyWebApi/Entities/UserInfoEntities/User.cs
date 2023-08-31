@@ -104,37 +104,5 @@ namespace WebApi.Entities.UserInfoEntities
         {
             return $"{name}, {age},\n({country} - {city})\n\n{description}";
         }
-
-        public bool CheckIfHasEncountered(List<Encounter> encounters, long userId)
-        {
-            bool result = encounters.Where(e => e.UserId == userId)
-                .SingleOrDefault() != null 
-                || 
-                encounters
-                .Where(e => e.EncounteredUserId == userId)
-                .SingleOrDefault() != null;
-            return result;
-        }
-
-        public static List<int>? CalculateAgeList(int userAge, int c)
-        {
-            switch (c)
-            {
-                case 0:
-                    return Enumerable.Range(userAge + 5, 6).ToList();
-                case 1:
-                    return Enumerable.Range(userAge + 2, 4).ToList();
-                case 2:
-                    return Enumerable.Range(userAge - 2, 4).ToList();
-                case 3:
-                    return Enumerable.Range(userAge - 6, 4).ToList();
-                case 4:
-                    return Enumerable.Range(userAge - 10, 6).ToList();
-                case 5:
-                    return Enumerable.Range(0, 100).ToList();
-                default:
-                    return null;
-            }
-        }
     }
 }

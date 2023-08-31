@@ -190,13 +190,13 @@ namespace WebApi.Repositories
 
             //Add Starting test pack
             //TODO: Set langauge when tests are localized
-            await PurchaseTestAsync(model.Id, 38, AppLanguage.RU); // Approved
-            await PurchaseTestAsync(model.Id, 32, AppLanguage.RU); // Approved
-            await PurchaseTestAsync(model.Id, 23, AppLanguage.RU); // Approved
-            await PurchaseTestAsync(model.Id, 54, AppLanguage.RU); // Approved
-            await PurchaseTestAsync(model.Id, 29, AppLanguage.RU); // Approved
-            await PurchaseTestAsync(model.Id, 49, AppLanguage.RU); // Approved
-            await PurchaseTestAsync(model.Id, 34, AppLanguage.RU);
+            await PurchaseTestAsync(model.Id, 38, 0, Currency.Points, AppLanguage.RU); // Approved
+            await PurchaseTestAsync(model.Id, 32, 0, Currency.Points, AppLanguage.RU); // Approved
+            await PurchaseTestAsync(model.Id, 23, 0, Currency.Points, AppLanguage.RU); // Approved
+            await PurchaseTestAsync(model.Id, 54, 0, Currency.Points, AppLanguage.RU); // Approved
+            await PurchaseTestAsync(model.Id, 29, 0, Currency.Points, AppLanguage.RU); // Approved
+            await PurchaseTestAsync(model.Id, 49, 0, Currency.Points, AppLanguage.RU); // Approved
+            await PurchaseTestAsync(model.Id, 34, 0, Currency.Points, AppLanguage.RU);
 
             return model.Id;
         }
@@ -3242,17 +3242,19 @@ namespace WebApi.Repositories
                 .Select(t => t.TestId)
                 .ToListAsync();
 
+            // TODO: Add localization when tests are localized
             return await _contx.Tests
-                .Where(t => t.TestType == param && !userTests.Contains(t.Id) && t.Language == localisation)
+                .Where(t => t.TestType == param && !userTests.Contains(t.Id)) //&& t.Language == localisation
                 .Select(t => new GetTestShortData { Id = t.Id, Name = t.Name })
                 .ToListAsync();
         }
 
-        public Task<GetFullTestData> GetTestFullDataByIdAsync(long testId, AppLanguage localisation)
+        public async Task<GetFullTestData> GetTestFullDataByIdAsync(long testId, AppLanguage localisation)
         {
-            return _contx.Tests.Where(t => t.Id == testId && t.Language == localisation)
+            // TODO: Add localization when tests are localized
+            return await _contx.Tests.Where(t => t.Id == testId) // && t.Language == localisation
                 .Select(t => new GetFullTestData {Id = t.Id, Name = t.Name, Description = t.Description, Price = t.Price, TestType = t.TestType})
-                .SingleOrDefaultAsync();
+                .FirstOrDefaultAsync();
         }
 
         public async Task<GetUserTest> GetUserTestAsync(long userId, long testId)
@@ -3290,37 +3292,29 @@ namespace WebApi.Repositories
             return result;
         }
 
-        public async Task<bool> PurchaseTestAsync(long userId, long testId, AppLanguage localisation)
+        public async Task PurchaseTestAsync(long userId, long testId, float cost, Currency currency, AppLanguage localisation)
         {
             var balance = await GetUserWalletBalance(userId);
-            var sysTest = await _contx.Tests.Where(t => t.Id == testId && t.Language == localisation)
+
+            // TODO: Add localization when tests are localized
+            var test = await _contx.Tests.Where(t => t.Id == testId) // && t.Language == localisation
                 .FirstOrDefaultAsync();
 
-            if (sysTest == null)
-                throw new NullReferenceException($"Test #{testId} with localisation #{localisation} does not exist");
+            await RegisterUserPurchase(userId, -cost, $"Purchase of test \"{test.Name}\" for {currency} amount of {cost}", currency);
 
-            if (balance.Points >= sysTest.Price)
+            if (currency == Currency.Points)
+                balance.Points -= cost;
+
+            await _contx.UserTests.AddAsync(new UserTest
             {
-                var test = await _contx.Tests.Where(t => t.Id == testId && t.Language == localisation)
-                    .SingleOrDefaultAsync();
-
-                if (test == null)
-                    throw new NullReferenceException($"Test #{testId} with localisation #{localisation} was not found");
-
-                await _contx.UserTests.AddAsync(new UserTest
-                {
-                    UserId = userId,
-                    TestId = testId,
-                    TestType = test.TestType,
-                    Result = 0,
-                    TestLanguage = localisation
-                });
+                UserId = userId,
+                TestId = testId,
+                TestType = test.TestType,
+                Result = 0,
+                TestLanguage = localisation
+            });
                 
-                await _contx.SaveChangesAsync();
-                return true;
-            }
-
-            return false;
+            await _contx.SaveChangesAsync();
         }
 
         public async Task<List<GetTestShortData>> GetUserTestDataByPropertyAsync(long userId, OceanStats param)
