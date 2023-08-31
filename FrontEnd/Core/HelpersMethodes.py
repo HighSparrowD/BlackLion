@@ -13,7 +13,6 @@ payment_token = None
 stripe_key = None
 
 points = "Points"
-money = "RealMoney"
 
 
 def set_api_address(address):
@@ -451,6 +450,16 @@ def grant_premium_for_real_money(userId, cost, dayDuration, currency):
 def purchase_effect_for_points(userId, effectId, cost, count=1):
     return json.loads(
         requests.get(f"{api_address}/PurchaseEffect/{userId}/{effectId}/{float(cost.replace(',', '.'))}/{points}/{count}", verify=False).text)
+
+
+def purchase_test(userId, testId, cost, currency, language):
+    return requests.get(f"{api_address}/purchase-test", params={
+        "userId": userId,
+        "testId": testId,
+        "cost": float(cost.replace(',', '.')),
+        "currency": currency,
+        "language": language
+    }, verify=False)
 
 
 def check_user_has_effect(userId, effectId):

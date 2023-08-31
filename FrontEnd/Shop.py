@@ -306,7 +306,19 @@ class Shop:
     def buy_tests(self):
         # Remove previous callback handler so that handlers do not collide
         self.bot.callback_query_handlers.remove(self.ch)
+        self.bot.message_handlers.remove(self.mh)
+        self.bot.message_handlers.remove(self.hHandler)
+
+        # TODO: Find out why throws an exception
+        try:
+            self.bot.pre_checkout_query_handlers.remove(self.pre_checkout_h)
+        except:
+            pass
+
         self.ch = None
+        self.mh = None
+        self.hHandler = None
+        self.pre_checkout_h = None
 
         self.current_section = self.buy_tests
 
@@ -667,6 +679,13 @@ class Shop:
         if self.previous_section:
             if kwargs.get("shouldSubscribe"):
                 self.ch = self.bot.register_callback_query_handler(message, self.callback_handler, user_id=self.current_user)
+                self.mh = self.bot.register_message_handler(self.payment_handler, content_types=['successful_payment'],
+                                                            user_id=self.current_user)
+                self.pre_checkout_h = self.bot.register_pre_checkout_query_handler(self.pre_checkout_handler,
+                                                                                   func=lambda query: True)
+
+                self.hHandler = self.bot.register_message_handler(self.help_handler, commands=["help"],
+                                                                  user_id=self.current_user)
 
             self.previous_section(message)
 

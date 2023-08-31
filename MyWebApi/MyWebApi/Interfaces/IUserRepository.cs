@@ -138,7 +138,7 @@ namespace WebApi.Interfaces
         Task<GetFullTestData> GetTestFullDataByIdAsync(long testId, AppLanguage localisation);
         Task<GetUserTest> GetUserTestAsync(long userId, long testId);
         Task<int> GetPossibleTestPassRangeAsync(long userId, long testId);
-        Task<bool> PurchaseTestAsync(long userId, long testId, AppLanguage localisation);
+        Task PurchaseTestAsync(long userId, long testId, float cost, Currency currency, AppLanguage localisation);
         Task<string> CheckTickRequestStatusÀsync(long userId);
         Task<bool> CheckUserHaveChosenFreeParamAsync(long userId);
         Task<bool> CheckShouldTurnOffPersonalityAsync(long userId);

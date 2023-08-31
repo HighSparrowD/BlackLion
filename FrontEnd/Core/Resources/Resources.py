@@ -17,3 +17,11 @@ def get_prices(currency):
     resources = file.to_dict(orient='records')
 
     return resources[0]
+
+def get_tests_prices(currency):
+    path = f"Core/Resources/TestPrices{currency}.csv"
+
+    file = pandas.read_csv(path)
+    resources = file.to_dict(orient='records')
+
+    return resources[0]
