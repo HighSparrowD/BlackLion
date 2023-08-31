@@ -85,7 +85,7 @@ class TestModule:
 
         self.YNmarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Yes", "No")
         self.continueMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Continue")
-        self.abortMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("/abort")
+        self.abortMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("/leave")
 
         self.current_test_short_data = {}
         self.current_test_data = {}
@@ -114,7 +114,7 @@ class TestModule:
             self.proceed_to_start(message)
 
     def proceed_to_start(self, message):
-        self.ah = self.bot.register_message_handler(self.abort_checkout, commands=["abort"], user_id=self.current_user)
+        self.ah = self.bot.register_message_handler(self.abort_checkout, commands=["leave"], user_id=self.current_user)
         self.mh = self.bot.register_message_handler(self.payment_handler, content_types=['successful_payment'], user_id=self.current_user)
         self.pre_checkout_h = self.bot.register_pre_checkout_query_handler(self.pre_checkout_handler, func=lambda query: True)
         self.prices = Resources.get_tests_prices(self.user_currency)
@@ -130,7 +130,7 @@ class TestModule:
         else:
             self.bot.edit_message_text("<i><b>Please select the parameter, test will be sorted by</b></i>", self.current_user, self.active_message, reply_markup=self.start_markup)
 
-        self.send_secondary_message("<i>Type '/abort' to leave at any time</i>", markup=self.abortMarkup)
+        self.send_secondary_message("<i>Type '/leave' to leave at any time</i>", markup=self.abortMarkup)
         # self.get_ready_to_abort(self.message)
 
     def manage_point_group(self):
@@ -265,9 +265,9 @@ class TestModule:
             #Create previous question button
             markup.add(InlineKeyboardButton("⬅ Previous question", callback_data="-8"))
 
-            # Code below is redundant now. But may be useful in the future
+            # The code below is redundant now. But may be useful in the future
             # if self.active_media is not None:
-            #     #Remove photo from question
+            #     #Remove a photo from question
             #     self.active_media = None
             #     self.bot.edit_message_media(None, self.current_user, self.active_message)
             #
@@ -280,7 +280,7 @@ class TestModule:
                 self.delete_active_message()
                 self.send_question_message(f"❓ {self.current_question['text']} ❓", markup)
                 # self.question_message = self.bot.send_message(self, reply_markup=markup).id
-                self.send_secondary_message("<i><b>You can leave by typing '/abort', but all your progress will be lost</b></i>", markup=self.abortMarkup)
+                self.send_secondary_message("<i><b>You can leave by typing '/leave', but all your progress will be lost</b></i>", markup=self.abortMarkup)
             else:
                 self.send_question_message(f"❓ {self.current_question['text']} ❓", markup)
                 # self.bot.edit_message_text(text=, chat_id=self.current_user, message_id=self.question_message, reply_markup=markup)
@@ -618,7 +618,7 @@ class TestModule:
 
             self.active_message = self.bot.send_message(self.current_user, text, reply_markup=markup).id
         except:
-            self.delete_question_message()
+            self.delete_active_message()
             self.send_active_message(text, markup)
 
     def send_secondary_message(self, text, markup=None):
@@ -657,18 +657,27 @@ class TestModule:
             pass
 
     def delete_active_message(self):
-        if self.active_message:
-            self.bot.delete_message(self.current_user, self.active_message)
+        try:
+            if self.active_message:
+                self.bot.delete_message(self.current_user, self.active_message)
+                self.active_message = None
+        except:
             self.active_message = None
 
     def delete_question_message(self):
-        if self.question_message:
-            self.bot.delete_message(self.current_user, self.question_message)
+        try:
+            if self.question_message:
+                self.bot.delete_message(self.current_user, self.question_message)
+                self.question_message = None
+        except:
             self.question_message = None
 
     def delete_secondary_message(self):
-        if self.secondary_message:
-            self.bot.delete_message(self.current_user, self.secondary_message)
+        try:
+            if self.secondary_message:
+                self.bot.delete_message(self.current_user, self.secondary_message)
+                self.secondary_message = None
+        except:
             self.secondary_message = None
 
     def destruct(self):
@@ -677,6 +686,15 @@ class TestModule:
 
         if self.ah in self.bot.message_handlers:
             self.bot.message_handlers.remove(self.ah)
+
+        if self.mh in self.bot.message_handlers:
+            self.bot.message_handlers.remove(self.mh)
+
+        #TODO: Find out why throws an exception
+        try:
+            self.bot.pre_checkout_query_handlers.remove(self.pre_checkout_h)
+        except:
+            pass
 
         self.delete_secondary_message()
         self.delete_question_message()
