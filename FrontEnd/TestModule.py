@@ -46,7 +46,6 @@ class TestModule:
         self.current_invoice_id = None
         self.active_transaction_status_message = None
         self.secondary_message = None
-        self.question_message = None
 
         self.active_param = 0
         self.active_media = None
@@ -217,18 +216,9 @@ class TestModule:
             elif decisionIndex == "3":
                 self.go_back_to_test_selection()
 
-    def test_pass_step_0(self, message, acceptMode=False):
-        if not acceptMode:
-            self.isDeciding = True
-            self.send_active_message(f"{self.get_current_test_data()}\n\n<b>Test had been successfully purchased :)</b>", markup=self.pass_test_markup)
-        else:
-            if message.text == "Yes":
-                self.isDeciding = False
-                self.load_test_data()
-                self.recurring_test_pass()
-            else:
-                self.isDeciding = False
-                self.go_back_to_test_selection()
+    def test_pass_step_0(self, message):
+        self.isDeciding = True
+        self.send_active_message(f"{self.get_current_test_data()}\n\n<b>Test had been successfully purchased :)</b>", markup=self.pass_test_markup)
 
     def manage_current_test(self, canBePassedIn=0, acceptMode=False):
         if not acceptMode:
@@ -245,7 +235,7 @@ class TestModule:
             #     self.isDeciding = False
             #     self.go_back_to_test_selection()
 
-    def recurring_test_pass(self, gotoPrevious=False):
+    def recurring_test_pass(self, gotoPrevious=False, isFirstQuestion=False):
         if self.current_question_index + 1 < self.questions_count:
             if not gotoPrevious:
                 self.current_question_index += 1
@@ -276,13 +266,12 @@ class TestModule:
             #     self.active_media = self.current_question["photo"]
             #     self.bot.edit_message_media(self.active_media, self.current_user, self.active_message)
 
-            if not self.question_message:
-                self.delete_active_message()
-                self.send_question_message(f"❓ {self.current_question['text']} ❓", markup)
+            if isFirstQuestion:
+                self.send_active_message(f"❓ {self.current_question['text']} ❓", markup)
                 # self.question_message = self.bot.send_message(self, reply_markup=markup).id
                 self.send_secondary_message("<i><b>You can leave by typing '/leave', but all your progress will be lost</b></i>", markup=self.abortMarkup)
             else:
-                self.send_question_message(f"❓ {self.current_question['text']} ❓", markup)
+                self.send_active_message(f"❓ {self.current_question['text']} ❓", markup)
                 # self.bot.edit_message_text(text=, chat_id=self.current_user, message_id=self.question_message, reply_markup=markup)
         else:
             self.isPassingTest = False
@@ -300,8 +289,6 @@ class TestModule:
 
             tags = None
             self.isDeciding = True
-
-            self.delete_question_message()
 
             active_answer = None
             data = None
@@ -350,8 +337,8 @@ class TestModule:
                     active_answer = previous_result["result"]
                     break
 
-            self.send_question_message(active_answer, markup=self.continueMarkup)
-            self.active_message = self.question_message
+            self.send_active_message(active_answer)
+            self.send_secondary_message("✨", markup=self.continueMarkup)
 
             if not isLying:
                 data["tags"] = tags
@@ -365,6 +352,12 @@ class TestModule:
         else:
             self.isDeciding = False
             self.bot.delete_message(self.current_user, message.id)
+            self.delete_secondary_message()
+
+            if self.isActivatedFromShop:
+                self.go_back_to_test_selection()
+                return
+
             self.show_current_test(message)
 
     def create_test_payload(self, score):
@@ -554,7 +547,7 @@ class TestModule:
             self.delete_price_invoice()
             response = Helpers.purchase_test(self.current_user, self.current_test, self.current_price_RM, self.user_currency, "RU")
 
-            self.send_active_transaction_message("Payment was successful!")
+            # I want this message to be at the bottom
             self.delete_active_message()
 
             self.test_pass_step_0(message)
@@ -599,17 +592,6 @@ class TestModule:
 
         self.active_transaction_status_message = self.bot.send_message(self.current_user, text).id
 
-    def send_question_message(self, text, markup=None):
-        try:
-            if self.question_message:
-                self.bot.edit_message_text(text, self.current_user, self.question_message, reply_markup=markup)
-                return
-
-            self.question_message = self.bot.send_message(self.current_user, text, reply_markup=markup).id
-        except:
-            self.delete_question_message()
-            self.send_question_message(text, markup)
-
     def send_active_message(self, text, markup=None):
         try:
             if self.active_message:
@@ -617,7 +599,7 @@ class TestModule:
                 return
 
             self.active_message = self.bot.send_message(self.current_user, text, reply_markup=markup).id
-        except:
+        except Exception as ex:
             self.delete_active_message()
             self.send_active_message(text, markup)
 
@@ -664,14 +646,6 @@ class TestModule:
         except:
             self.active_message = None
 
-    def delete_question_message(self):
-        try:
-            if self.question_message:
-                self.bot.delete_message(self.current_user, self.question_message)
-                self.question_message = None
-        except:
-            self.question_message = None
-
     def delete_secondary_message(self):
         try:
             if self.secondary_message:
@@ -696,15 +670,12 @@ class TestModule:
         except:
             pass
 
+        self.delete_active_message()
         self.delete_secondary_message()
-        self.delete_question_message()
+        self.delete_price_invoice()
 
         if self.returnMethod:
             self.returnMethod(self.message, shouldSubscribe=True)
             return False
 
-        self.delete_question_message()
-        self.delete_active_message()
-        self.delete_secondary_message()
-        self.delete_price_invoice()
         go_back_to_main_menu(self.bot, self.current_user, self.message)
