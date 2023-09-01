@@ -22,10 +22,10 @@ class StartModule:
 
         self.register_message = "Please note, that by registering you are agreeing to all the rules located in 'Rules section'. We are highly advise to read all the rules before registering\nAre you sure you want to continue?"
 
-        self.startMarkup = InlineKeyboardMarkup(row_width=1).add(InlineKeyboardButton("About  us", url=about_us_url),
+        self.startMarkup = InlineKeyboardMarkup(row_width=1).add(InlineKeyboardButton("✨Register profile✨", callback_data="4"),
+                                                                 InlineKeyboardButton("About  us", url=about_us_url),
                                                                  InlineKeyboardButton("Rules", url=terms_url),
                                                                  InlineKeyboardButton("Enter promo code", callback_data="3"),
-                                                                 InlineKeyboardButton("✨Register profile✨", callback_data="4"),
                                                                  InlineKeyboardButton("🔙Go Back", callback_data="-2"))
 
         self.registerMarkup = InlineKeyboardMarkup().add(InlineKeyboardButton("Yes, I agree to terms and conditions", callback_data="1"),
