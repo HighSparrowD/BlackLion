@@ -2,12 +2,13 @@ from Registration import *
 
 
 class StartModule:
-    def __init__(self, bot, message):
+    def __init__(self, bot: TeleBot, message: any):
         self.bot = bot
         self.message = message
         self.current_user = message.from_user.id
 
         self.active_message = None
+        self.secondary_message = None
 
         self.user_localisation = 0
 
@@ -16,15 +17,26 @@ class StartModule:
         # TODO: load from API
         self.app_languages = ["EN", "RU", "UK"]
 
-        self.startMessage = "1. About us\n2. Read rules\n3. Enter Promo code\n4. Register profile"
-        self.registerMessage = "1. Yes\n2. Go back"
-        self.about_us_message = "--About US-- TODO: Fill up"
-        self.rules_message = "--Rules-- TODO: Fill up"
+        terms_url = "https://telegra.ph/Personality-Bot--Terms-and-conditions-09-01"
+        about_us_url = "https://telegra.ph/Personality-Bot--about-us-09-01"
+
         self.register_message = "Please note, that by registering you are agreeing to all the rules located in 'Rules section'. We are highly advise to read all the rules before registering\nAre you sure you want to continue?"
-        self.startMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("1", "2", "3", "4")
-        self.registerMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Yes", "Go Back")
+
+        self.startMarkup = InlineKeyboardMarkup(row_width=1).add(InlineKeyboardButton("About  us", url=about_us_url),
+                                                                 InlineKeyboardButton("Rules", url=terms_url),
+                                                                 InlineKeyboardButton("Enter promo code", callback_data="3"),
+                                                                 InlineKeyboardButton("✨Register profile✨", callback_data="4"),
+                                                                 InlineKeyboardButton("🔙Go Back", callback_data="-2"))
+
+        self.registerMarkup = InlineKeyboardMarkup().add(InlineKeyboardButton("Yes, I agree to terms and conditions", callback_data="1"),
+                                                         InlineKeyboardButton("🔙Go Back", callback_data="-1"))
+
         self.go_backMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Go Back")
-        self.app_languages_markup = None
+
+        self.app_languages_markup = InlineKeyboardMarkup()
+        self.app_languages_markup.add(InlineKeyboardButton(self.app_languages[0], callback_data=self.app_languages[0]),
+                                      InlineKeyboardButton(self.app_languages[1], callback_data=self.app_languages[1]),
+                                      InlineKeyboardButton(self.app_languages[2], callback_data=self.app_languages[2]))
 
         invitorId = self.get_invitor_id(message.html_text)
         if invitorId:
@@ -33,90 +45,68 @@ class StartModule:
                 self.bot.send_message(self.current_user, "*")
             # bot.send_message(message.from_user.id, "Sorry. Something went wrong")
 
-        self.app_language_step(message)
+        self.ch = self.bot.register_callback_query_handler(message, self.callback_handler, user_id=self.current_user)
 
-    def app_language_step(self, msg, acceptMode=False):
-        if not acceptMode:
+        self.app_language_step()
 
-            self.app_languages_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-            start_message = "Welcome to our bot.\nPlease select a language before proceeding"
+    def app_language_step(self):
+        self.send_active_message("Welcome to our bot.\nPlease select a language before proceeding", markup=self.app_languages_markup)
 
-            self.app_languages_markup.add(self.app_languages[0], self.app_languages[1], self.app_languages[2])
-            self.bot.send_message(msg.chat.id, start_message, reply_markup=self.app_languages_markup)
-            self.bot.register_next_step_handler(msg, self.app_language_step, acceptMode=True, chat_id=self.current_user)
+    def start(self):
+        self.send_active_message(f"Hello and welcome to Personality bot", markup=self.startMarkup)
 
-        else:
-            self.user_localisation = msg.text
-            if self.user_localisation in self.app_languages:
-                self.get_localisations()
-                self.start(msg)
-            else:
-                self.bot.send_message(self.current_user, "There is no such language. Try again", reply_markup=self.app_languages_markup)
-                self.bot.register_next_step_handler(msg, self.app_language_step, acceptMode=acceptMode, chat_id=self.current_user)
+    # def about_us(self, message):
+    #     # self.bot.edit_message_text(self.about_us_message, self.current_user, self.active_message)
+    #     self.bot.send_message(self.current_user, self.about_us_message)
+    #     self.start(message)
 
-    def start(self, message, acceptMode=False):
-        if not acceptMode:
-            self.active_message = self.bot.send_message(self.current_user, f"Hello and welcome to Personality bot\n--Tell more about us--\n{self.startMessage}", reply_markup=self.startMarkup)
-            self.bot.register_next_step_handler(message, self.start, acceptMode=True, chat_id=self.current_user)
-        else:
-            if message.text == "1":
-                self.about_us(message)
-            elif message.text == "2":
-                self.rules(message)
-            elif message.text == "3":
-                if not self.hasEnteredPromo:
-                    self.enter_promo(message)
-                else:
-                    self.start(message)
-            elif message.text == "4":
-                self.register(message)
-            else:
-                self.bot.send_message(self.current_user, "No such option", reply_markup=self.startMarkup)
-                self.bot.register_next_step_handler(message, self.start, acceptMode=acceptMode, chat_id=self.current_user)
-
-    def about_us(self, message):
-        # self.bot.edit_message_text(self.about_us_message, self.current_user, self.active_message)
-        self.bot.send_message(self.current_user, self.about_us_message)
-        self.start(message)
-
-    def rules(self, message):
-        # self.bot.edit_message_text(self.rules_message, self.current_user, self.active_message)
-        self.bot.send_message(self.current_user, self.rules_message)
-        self.start(message)
+    # def rules(self, message):
+    #     # self.bot.edit_message_text(self.rules_message, self.current_user, self.active_message)
+    #     self.bot.send_message(self.current_user, self.rules_message)
+    #     self.start(message)
 
     def enter_promo(self, message, acceptMode=False):
         if not acceptMode:
-            #Nullify active message to avoid inconveniences
-            self.active_message = None
             # self.bot.edit_message_text(, self.current_user, self.active_message, reply_markup=self.go_backMarkup)
-            self.bot.send_message(self.current_user, "Please, enter your promo", reply_markup=self.go_backMarkup)
+            self.send_active_message("Please, enter your promo", markup=self.go_backMarkup)
             self.bot.register_next_step_handler(message, self.enter_promo, acceptMode=True, chat_id=self.current_user)
         else:
             if Helpers.check_promo_is_valid(self.current_user, message.text, True):
-                self.bot.send_message(self.current_user, "Promo code is accepted :)")
+                self.send_secondary_message("Promo code is accepted :)")
                 self.hasEnteredPromo = True
-                self.start(message)
+                self.start()
             else:
                 if message.text == "Go Back":
-                    self.start(message)
+                    self.start()
                     return
 
-                self.bot.send_message(self.current_user, "Wrong promo code", reply_markup=self.go_backMarkup)
+                self.send_secondary_message("Wrong promo code", markup=self.go_backMarkup)
                 self.bot.register_next_step_handler(message, self.enter_promo, acceptMode=True, chat_id=self.current_user)
 
     def register(self, message, acceptMode=False):
         if not acceptMode:
-            self.active_message = None
-            self.bot.send_message(self.current_user, self.register_message, reply_markup=self.registerMarkup)
-            self.bot.register_next_step_handler(message, self.register, acceptMode=True, chat_id=self.current_user)
+            self.send_active_message(self.register_message, markup=self.registerMarkup)
         else:
-            if message.text == "Yes":
-                Registrator(self.bot, message, localizationIndex=self.user_localisation)
-            elif message.text == "Go Back":
-                self.start(message)
-            else:
-                self.bot.send_message(self.current_user, "No such option", reply_markup=self.registerMarkup)
-                self.bot.register_next_step_handler(message, self.register, acceptMode=acceptMode, chat_id=self.current_user)
+            self.bot.callback_query_handlers.remove(self.ch)
+            self.delete_active_message()
+            self.delete_secondary_message()
+            Registrator(self.bot, self.message, localizationIndex=self.user_localisation)
+
+    def callback_handler(self, call):
+        if call.data == "1":
+            self.register(call.message, acceptMode=True)
+        elif call.data == "-1":
+            self.start()
+        elif call.data == "-2":
+            self.app_language_step()
+        elif call.data == "3":
+            self.enter_promo(call.message)
+        elif call.data == "4":
+            self.register(call.message)
+        else:
+            self.user_localisation = call.data
+            self.get_localisations()
+            self.start()
 
     def get_localisations(self):
         #TODO: Get localization from string localizer API
@@ -124,3 +114,38 @@ class StartModule:
 
     def get_invitor_id(self, html_text):
         return html_text.strip("/start")
+
+    def send_active_message(self, text, markup):
+        try:
+            if self.active_message is not None:
+                self.bot.edit_message_text(text, self.current_user, self.active_message, reply_markup=markup)
+                return
+            self.active_message = self.bot.send_message(self.current_user, text, reply_markup=markup).id
+        except Exception as ex:
+            self.delete_active_message()
+            self.send_active_message(text, markup)
+
+    def delete_active_message(self):
+        if self.active_message is not None:
+            self.bot.delete_message(self.current_user, self.active_message)
+            self.active_message = None
+
+    def send_secondary_message(self, text, markup=None):
+        try:
+            if self.secondary_message:
+                self.bot.edit_message_text(text, self.current_user, self.secondary_message, reply_markup=markup)
+                return
+
+            self.secondary_message = self.bot.send_message(self.current_user, text, reply_markup=markup).id
+        except:
+            self.delete_secondary_message()
+            self.send_secondary_message(text, markup)
+
+    def delete_secondary_message(self):
+        try:
+            if self.secondary_message:
+                self.bot.delete_message(self.current_user, self.secondary_message)
+                self.secondary_message = None
+
+        except:
+            self.secondary_message = None
