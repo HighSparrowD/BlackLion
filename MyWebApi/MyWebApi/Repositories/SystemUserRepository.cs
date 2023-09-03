@@ -4425,11 +4425,14 @@ namespace WebApi.Repositories
 
         public async Task<List<long>> AddTagsAsync(string tags, TagType type)
         {
-            var tagList = tags.ToLower().Split(",").ToList();
+            // Hashset is faster than a list
+            var tagList = tags.ToLower().Split(",").ToHashSet();
 
             var tagIds = new List<long>();
 
-            var existingTags = await _contx.Tags.Where(t => tagList.Contains(t.Text) && t.Type == type)
+            // I think, we don't want to separate tags by type in this case
+            // Separating them here makes it possible to have repeated tags in the DB = BAD
+            var existingTags = await _contx.Tags.Where(t => tagList.Contains(t.Text)) // && t.Type == type
                 .Select(t => new { t.Id, t.Text })
                 .ToListAsync();
 
@@ -4439,7 +4442,25 @@ namespace WebApi.Repositories
 
                 if (existingTag == null)
                 {
+
+                    var relatives = await _contx.Tags
+                        .Select(t => new
+                        {   
+                            TagId = t.Id,
+                            TagType = t.Type,
+                            MatchDifference = EF.Functions.FuzzyStringMatchDifference(t.Text, tag) > 3
+                        })
+                        .Where(t => t.MatchDifference)
+                        .OrderByDescending(t => t.MatchDifference)
+                        .Take(2)
+                        .Select(t => new TagRelative(t.TagId, t.TagType))
+                        .ToListAsync();
+
                     var newTag = new Tag(tag, type);
+
+                    if (relatives.Count != 0)
+                        newTag.SetRelatives(relatives);
+
                     await _contx.Tags.AddAsync(newTag);
                     tagIds.Add(newTag.Id);
                     continue;
