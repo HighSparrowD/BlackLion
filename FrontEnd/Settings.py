@@ -94,7 +94,7 @@ class Settings:
 
         self.active_message = activeMessage
         self.message_with_confirmation = 0
-        self.active_secondary_message = 0
+        self.secondary_message = 0
         self.active_error_message = 0
 
         self.return_method = returnMethod
@@ -1464,7 +1464,7 @@ class Settings:
 
     def help_handler(self, message):
         self.bot.delete_message(self.current_user, message.id)
-        Helper(self.bot, message, self.active_section, activeMessageId=self.active_message, secondaryMessageId=self.active_secondary_message, isEncounter=self.isEncounter)
+        Helper(self.bot, message, self.active_section, activeMessageId=self.active_message, secondaryMessageId=self.secondary_message, isEncounter=self.isEncounter)
 
     def construct_active_effects_message(self, effects):
         msg = ""
@@ -1531,23 +1531,23 @@ class Settings:
         self.bot.edit_message_reply_markup(self.current_user, self.active_message, reply_markup=markup)
 
     def edit_secondary_message_markup(self, markup):
-        self.bot.edit_message_reply_markup(self.current_user, self.active_secondary_message, reply_markup=markup)
+        self.bot.edit_message_reply_markup(self.current_user, self.secondary_message, reply_markup=markup)
 
     def send_secondary_message(self, text, markup=None, voice=None):
         try:
-            if self.active_secondary_message:
-                self.bot.edit_message_text(text, self.current_user, self.active_secondary_message, reply_markup=markup)
+            if self.secondary_message:
+                self.bot.edit_message_text(text, self.current_user, self.secondary_message, reply_markup=markup)
                 return
 
             if not voice:
-                self.active_secondary_message = self.bot.send_message(self.current_user, text, reply_markup=markup).id
+                self.secondary_message = self.bot.send_message(self.current_user, text, reply_markup=markup).id
                 return
         except:
-            self.bot.delete_message(self.current_user, self.active_secondary_message)
-            self.active_secondary_message = self.bot.send_message(self.current_user, text, reply_markup=markup).id
+            self.bot.delete_message(self.current_user, self.secondary_message)
+            self.secondary_message = self.bot.send_message(self.current_user, text, reply_markup=markup).id
             return
 
-        self.active_secondary_message = self.bot.send_voice(self.current_user, voice=voice, caption=text, reply_markup=markup).id
+        self.secondary_message = self.bot.send_voice(self.current_user, voice=voice, caption=text, reply_markup=markup).id
 
     def send_error_message(self, text, markup=None, photo=None):
         if self.active_error_message and not photo:
@@ -1579,13 +1579,13 @@ class Settings:
 
     def delete_secondary_message(self):
         try:
-            if self.active_secondary_message:
-                self.bot.delete_message(self.current_user, self.active_secondary_message)
-                self.active_secondary_message = None
+            if self.secondary_message:
+                self.bot.delete_message(self.current_user, self.secondary_message)
+                self.secondary_message = None
 
             self.delete_error_message()
         except:
-            self.active_secondary_message = None
+            self.secondary_message = None
 
     def delete_error_message(self):
         try:
@@ -1666,6 +1666,10 @@ class CurrencySetter:
             self.active_message = None
 
     def callback_query_handler(self, call):
+        # Old query from registrator is transferred here for some reason...
+        if call.data == "1":
+            return 
+
         if call.data == "-20":
             self.destruct()
             return
