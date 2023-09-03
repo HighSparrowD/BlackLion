@@ -1666,6 +1666,10 @@ class CurrencySetter:
             self.active_message = None
 
     def callback_query_handler(self, call):
+        # Old query from registrator is transferred here for some reason...
+        if call.data == "1":
+            return 
+
         if call.data == "-20":
             self.destruct()
             return

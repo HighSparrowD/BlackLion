@@ -1376,6 +1376,8 @@ class Registrator:
 
         elif self.question_index == 15:
             if call.data == "1":
+                self.bot.answer_callback_query(call.id, "")
+
                 self.data["usesOcean"] = True
 
                 d = json.dumps(self.data)
