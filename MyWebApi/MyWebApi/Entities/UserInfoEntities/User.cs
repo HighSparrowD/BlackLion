@@ -1,8 +1,6 @@
 using System;
-using System.Linq;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Data;
 using WebApi.Enums;
 using WebApi.Entities.LocationEntities;
 using System.ComponentModel.DataAnnotations.Schema;
