@@ -74,6 +74,7 @@ class Settings:
 
         self.usedEffectAmount = 0
         self.effect_index = 0
+        self.effect_to_buy = ""
         self.secondChances = 0
         self.valentines = 0
         self.detectors = 0
@@ -464,7 +465,7 @@ class Settings:
         for achievement in achievements:
             name = achievement["achievement"]["name"]
 
-            #Add a tick if user has acquired an achievement
+            #Add a tick if a user has acquired an achievement
             if achievement["isAcquired"]:
                 name = "✅" + name
 
@@ -488,10 +489,10 @@ class Settings:
         self.send_active_message("Please, select an option", markup=self.effects_manageMarkup)
 
     def show_active_users_effects(self, message=None):
-        effects = json.loads(requests.get(f"https://localhost:44381/GetUserActiveEffects/{self.current_user}", verify=False).text)
+        effects = Helpers.get_active_effect(self.current_user)
         self.send_secondary_message(self.construct_active_effects_message(effects))
 
-    def show_users_effects(self, message):
+    def show_users_effects(self, message=None):
         self.notInMenu = True
         self.previous_section = self.effects_manager
 
@@ -781,7 +782,7 @@ class Settings:
                 self.send_secondary_message(f"Please, send me your new status (up to 50 characters)", markup=self.abortMarkup)
                 self.bot.register_next_step_handler(message, self.set_profile_status, acceptMode=True, chat_id=self.current_user)
             else:
-                self.send_secondary_message(f"This action is available only for users with premium", markup=self.YNMarkup)
+                self.send_secondary_message(f"This action is available only for users with premium")
         else:
             self.bot.delete_message(self.current_user, message.id)
 
@@ -952,6 +953,7 @@ class Settings:
                 if self.secondChances > 0:
                     self.send_secondary_message(self.secondChanceDescription)
                 else:
+                    self.effect_to_buy = "16"
                     self.send_secondary_message(self.secondChanceDescription, markup=self.buy_effectMarkup)
             elif call.data == "6":
                 self.effect_index = call.data
@@ -964,6 +966,7 @@ class Settings:
                         else:
                             self.send_secondary_message(self.valentineDescription, markup=self.activate_effectMarkup)
                     else:
+                        self.effect_to_buy = "17"
                         self.send_secondary_message(self.valentineDescription, markup=self.buy_effectMarkup)
                 else:
                     self.send_secondary_message("You have to turn on OCEAN+ to use this effect")
@@ -977,6 +980,7 @@ class Settings:
                         else:
                             self.send_secondary_message(self.detectorDescription, markup=self.activate_effectMarkup)
                     else:
+                        self.effect_to_buy = "18"
                         self.send_secondary_message(self.detectorDescription, markup=self.buy_effectMarkup)
                 else:
                     self.send_secondary_message("You have to turn on OCEAN+ to use this effect")
@@ -985,6 +989,7 @@ class Settings:
                 if self.nullifiers > 0:
                     self.send_secondary_message(self.nullifierDescription)
                 else:
+                    self.effect_to_buy = "19"
                     self.send_secondary_message(self.nullifierDescription, markup=self.buy_effectMarkup)
             elif call.data == "9":
                 self.effect_index = call.data
@@ -992,6 +997,7 @@ class Settings:
                     self.usedEffectAmount = self.cardDecksMini
                     self.send_secondary_message(self.cardDeckMiniDescription, markup=self.activate_effectMarkup)
                 else:
+                    self.effect_to_buy = "20"
                     self.send_secondary_message(self.cardDeckMiniDescription, markup=self.buy_effectMarkup)
             elif call.data == "10":
                 self.effect_index = call.data
@@ -999,6 +1005,7 @@ class Settings:
                     self.usedEffectAmount = self.cardDecksPlatinum
                     self.send_secondary_message(self.cardDeckPlatinumDescription, markup=self.activate_effectMarkup)
                 else:
+                    self.effect_to_buy = ""
                     self.send_secondary_message(self.cardDeckPlatinumDescription, markup=self.buy_effectMarkup)
 
             elif call.data == "-10":
@@ -1013,10 +1020,10 @@ class Settings:
     def use_effect_manager(self, effectId):
         text = "Activated!"
         if effectId == "6" or effectId == "7":
-            if effectId == "6":
-                response = requests.get(f"https://localhost:44381/ActivateDurableEffect/{self.current_user}/{effectId}", verify=False).text
+            response = requests.get(f"https://localhost:44381/ActivateDurableEffect/{self.current_user}/{effectId}", verify=False)
 
-                if response:
+            if effectId == "6":
+                if response.status_code == 200:
                     self.valentines -= 1
                     self.valentine_indicator.text = self.valentines
                     self.send_secondary_message(f"<i>The Valentine:</i> {self.valentineDescription}\n\n{self.effect_is_active_Warning}", markup=self.activate_effectMarkup)
@@ -1044,10 +1051,11 @@ class Settings:
         self.send_error_message(text)
 
     def buy_effect_manager(self):
+        self.previous_section = self.show_users_effects
         self.delete_secondary_message()
         self.delete_error_message()
         hasVisited = Helpers.check_user_has_visited_section(self.current_user, 10)
-        Shop(self.bot, self.message, hasVisited, startingTransaction=2, returnMethod=self.proceed, active_message=self.active_message)
+        Shop(self.bot, self.message, hasVisited, startingTransaction=self.effect_to_buy, returnMethod=self.proceed, active_message=self.active_message)
 
     def menu_callback_handler(self, call):
         self.bot.answer_callback_query(call.id, "")

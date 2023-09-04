@@ -178,6 +178,60 @@ namespace WebApi.App_GlobalResources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Card Deck Mini.
+        /// </summary>
+        public static string Effect_CardDeckMini {
+            get {
+                return ResourceManager.GetString("Effect_CardDeckMini", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Card Deck Platinum.
+        /// </summary>
+        public static string Effect_CardDeckPlatinum {
+            get {
+                return ResourceManager.GetString("Effect_CardDeckPlatinum", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Nullifier.
+        /// </summary>
+        public static string Effect_Nullifier {
+            get {
+                return ResourceManager.GetString("Effect_Nullifier", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Second Chance.
+        /// </summary>
+        public static string Effect_SecondChance {
+            get {
+                return ResourceManager.GetString("Effect_SecondChance", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The Detector.
+        /// </summary>
+        public static string Effect_TheDetector {
+            get {
+                return ResourceManager.GetString("Effect_TheDetector", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The Valentine.
+        /// </summary>
+        public static string Effect_TheValentine {
+            get {
+                return ResourceManager.GetString("Effect_TheValentine", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Sorry, you have run out of tag searches for today.\nYou can still use Card Deck Mini or Card Deck Premium to replenish your views, buy premium and thus double your view count, or wait until tomorrow :).
         /// </summary>
         public static string Familiator_OutOfTags {

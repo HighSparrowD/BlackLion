@@ -694,8 +694,8 @@ namespace WebApi.Controllers
             return await _repository.GetUserPersonalityCapsAsync(userId);
         }
 
-        [HttpGet("/GetUserActiveEffects/{userId}")]
-        public async Task<List<ActiveEffect>> GetUserActiveEffects(long userId)
+        [HttpGet("/active-effects/{userId}")]
+        public async Task<List<GetActiveEffect>> GetUserActiveEffects(long userId)
         {
             return await _repository.GetUserActiveEffects(userId);
         }

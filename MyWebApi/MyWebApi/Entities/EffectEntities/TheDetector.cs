@@ -7,7 +7,7 @@ namespace WebApi.Entities.EffectEntities
     {
         public TheDetector(long userId) : base(userId)
         {
-            EffectId = Currency.TheDetector;
+            Effect = Currency.TheDetector;
             Name = "TheDetector";
             ExpirationTime = DateTime.SpecifyKind(DateTime.UtcNow.AddHours(1), DateTimeKind.Utc);
         }

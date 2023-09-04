@@ -360,9 +360,9 @@ namespace WebApi.Repositories
             var secondaryMatches = 0;
             var bonus = "";
 
-            var hasActiveValentine = userActiveEffects.Any(e => e.EffectId == Currency.TheValentine);
+            var hasActiveValentine = userActiveEffects.Any(e => e.Effect == Currency.TheValentine);
 
-            var userHasDetectorOn = userActiveEffects.Any(e => e.EffectId == Currency.TheDetector);
+            var userHasDetectorOn = userActiveEffects.Any(e => e.Effect == Currency.TheDetector);
 
             if (hasActiveValentine)
                 valentineBonus = 2;
@@ -3003,7 +3003,7 @@ namespace WebApi.Repositories
                         return null;
                 }
 
-                var activeEffect = await _contx.ActiveEffects.Where(e => e.EffectId == effectId && e.UserId == userId)
+                var activeEffect = await _contx.ActiveEffects.Where(e => e.Effect == effectId && e.UserId == userId)
                     .FirstOrDefaultAsync();
 
                 if (activeEffect == null)
@@ -3087,19 +3087,19 @@ namespace WebApi.Repositories
                 points.Nature > 0 || points.Neuroticism > 0;
         }
 
-        public async Task<List<ActiveEffect>> GetUserActiveEffects(long userId)
+        public async Task<List<GetActiveEffect>> GetUserActiveEffects(long userId)
         {
             try
             {
                 var effectsToRemove = new List<ActiveEffect>();
-                var effectsToReturn = new List<ActiveEffect>();
+                var effectsToReturn = new List<GetActiveEffect>();
 
                 foreach (var effect in await _contx.ActiveEffects.Where(e => e.UserId == userId).ToListAsync())
                 {
                     if (effect.ExpirationTime.Value <= DateTime.UtcNow)
                         effectsToRemove.Add(effect);
                     else
-                        effectsToReturn.Add(effect);
+                        effectsToReturn.Add(new GetActiveEffect(effect));
                 }
 
                 if (effectsToRemove.Count > 0)
@@ -3150,7 +3150,7 @@ namespace WebApi.Repositories
             if (effects == null)
                 return false;
 
-            return effects.Any(e => e.EffectId == effectId);
+            return effects.Any(e => e.Effect == effectId);
         }
 
         public async Task<bool> SendTickRequestAsync(SendTickRequest request)

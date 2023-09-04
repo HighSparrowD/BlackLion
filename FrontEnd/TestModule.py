@@ -405,7 +405,7 @@ class TestModule:
         return_string = f"{data['test']['name']}\n\n{data['test']['description']}"
 
         if data['passedOn']:
-            return_string += f"<b>Passed on: {data['passedOn']}</b>"
+            return_string += f"\n<b>Passed on: {data['passedOn']}</b>"
         else:
             return_string += f"\n\n<b>Test hadn't been passed yet</b>"
 
