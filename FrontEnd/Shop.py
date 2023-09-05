@@ -81,14 +81,14 @@ class Shop:
         self.pointsBtn2 = InlineKeyboardButton("0", callback_data="37")
         self.pointsBtn3 = InlineKeyboardButton("0", callback_data="38")
 
-        self.buy_premium_markup = InlineKeyboardMarkup().add(InlineKeyboardButton("3 days", callback_data="0"), InlineKeyboardButton(self.points_prices["Premium7"], callback_data="9"), self.premiumBtn1)\
-                                                        .add(InlineKeyboardButton("21 days", callback_data="0"), InlineKeyboardButton(self.points_prices["Premium21"], callback_data="11"), self.premiumBtn2)\
-                                                        .add(InlineKeyboardButton("30 days", callback_data="0"), InlineKeyboardButton(self.points_prices["Premium30"], callback_data="13"), self.premiumBtn3)\
+        self.buy_premium_markup = InlineKeyboardMarkup().add(InlineKeyboardButton("3 days", callback_data="0"), InlineKeyboardButton(f"{self.points_prices['Premium7']} Coins", callback_data="9"), self.premiumBtn1)\
+                                                        .add(InlineKeyboardButton("21 days", callback_data="0"), InlineKeyboardButton(f"{self.points_prices['Premium21']} Coins", callback_data="11"), self.premiumBtn2)\
+                                                        .add(InlineKeyboardButton("30 days", callback_data="0"), InlineKeyboardButton(f"{self.points_prices['Premium30']} Coins", callback_data="13"), self.premiumBtn3)\
                                                         .add(InlineKeyboardButton("Go Back", callback_data="-1"))
 
-        self.buyPP_markup = InlineKeyboardMarkup().add(InlineKeyboardButton("Buy 3", callback_data="0"), InlineKeyboardButton(self.points_prices["OCP3"], callback_data="30"), self.OCbutton1) \
-            .add(InlineKeyboardButton("Buy 7", callback_data="0"), InlineKeyboardButton(self.points_prices["OCP7"], callback_data="32"), self.OCbutton2)\
-            .add(InlineKeyboardButton("Buy 10", callback_data="0"), InlineKeyboardButton(self.points_prices["OCP10"], callback_data="34"), self.OCbutton3)\
+        self.buyPP_markup = InlineKeyboardMarkup().add(InlineKeyboardButton("Buy 3", callback_data="0"), InlineKeyboardButton(f"{self.points_prices['OCP3']} Coins", callback_data="30"), self.OCbutton1) \
+            .add(InlineKeyboardButton("Buy 7", callback_data="0"), InlineKeyboardButton(f"{self.points_prices['OCP7']} Coins", callback_data="32"), self.OCbutton2)\
+            .add(InlineKeyboardButton("Buy 10", callback_data="0"), InlineKeyboardButton(f"{self.points_prices['OCP10']} Coins", callback_data="34"), self.OCbutton3)\
             .add(InlineKeyboardButton("Go Back", callback_data="-1"))
 
         self.buy_points_markup = InlineKeyboardMarkup().add(InlineKeyboardButton("Buy 150", callback_data="0"), self.pointsBtn1) \
@@ -428,7 +428,7 @@ class Shop:
                 if currency != "2": #TODO: Remove when payment system is fully integrated
                     self.send_active_transaction_message("Something went wrong")
         else:
-            self.send_active_transaction_message("You dont have enough coins to buy this item")
+            self.send_active_transaction_message("You dont have enough Coins to buy this item")
 
     def send_active_transaction_message(self, text):
         if self.active_transaction_status_message is not None:
@@ -599,9 +599,9 @@ class Shop:
 
     def construct_active_pack_markup(self):
         self.effect_pack_markup.clear()
-        self.effect_pack_markup.add(InlineKeyboardButton(f"Buy 1:", callback_data="0"), InlineKeyboardButton(f"{self.active_first_option_price} coins", callback_data="23"), InlineKeyboardButton(f"{self.active_currency_first_option_price} {self.user_currency}", callback_data="24"))\
-            .add(InlineKeyboardButton(f"Buy 5:", callback_data="0"), InlineKeyboardButton(f"{self.active_second_option_price} coins", callback_data="25"), InlineKeyboardButton(f"{self.active_currency_second_option_price} {self.user_currency}", callback_data="26"))\
-            .add(InlineKeyboardButton(f"Buy 10:", callback_data="0"), InlineKeyboardButton(f"{self.active_third_option_price} coins", callback_data="27"), InlineKeyboardButton(f"{self.active_currency_third_option_price} {self.user_currency}", callback_data="28"))\
+        self.effect_pack_markup.add(InlineKeyboardButton(f"Buy 3:", callback_data="0"), InlineKeyboardButton(f"{self.active_first_option_price} Coins", callback_data="23"), InlineKeyboardButton(f"{self.active_currency_first_option_price} {self.user_currency}", callback_data="24"))\
+            .add(InlineKeyboardButton(f"Buy 7:", callback_data="0"), InlineKeyboardButton(f"{self.active_second_option_price} Coins", callback_data="25"), InlineKeyboardButton(f"{self.active_currency_second_option_price} {self.user_currency}", callback_data="26"))\
+            .add(InlineKeyboardButton(f"Buy 10:", callback_data="0"), InlineKeyboardButton(f"{self.active_third_option_price} Coins", callback_data="27"), InlineKeyboardButton(f"{self.active_currency_third_option_price} {self.user_currency}", callback_data="28"))\
             .add(InlineKeyboardButton("Go Back", callback_data="-1"))
 
     def get_balance_message(self):

@@ -688,6 +688,14 @@ def get_report_reasons(language):
         return None
 
 
+def get_app_languages():
+    try:
+        return json.loads(
+            requests.get(f"{api_address}/app-languages", verify=False).text)
+    except:
+        return None
+
+
 def get_payment_currencies():
     try:
         return json.loads(
