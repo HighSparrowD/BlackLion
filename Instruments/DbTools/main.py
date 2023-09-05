@@ -3,7 +3,7 @@ import math
 
 import pandas
 import requests
-import translators as ts
+from deep_translator import GoogleTranslator
 
 countries_last_index = 0
 cities_last_index = 0
@@ -34,32 +34,55 @@ def create_countries_resource(language, start_index=0, loc_index=0):
     ids = []
     countryNames = []
     languages = []
-    priorities = []  # Fake column. Set manually afterward
+    priorities = []
 
-    file = pandas.read_csv("worldcities.csv", usecols=["country", "priority"])
+    try:
+        line_count = sum(1 for line in open(f"./Output/Countries{language.upper()}.csv", encoding='utf-8'))
+    except:
+        line_count = 0
+
+    # If all countries are already present
+    if line_count == 254:
+        return
+    elif line_count < 254 and line_count != 0:
+        file = pandas.read_csv(f"worldcitiesEN.csv", usecols=["country", "priority"], skiprows=range(1, line_count))
+    else:
+        file = pandas.read_csv(f"worldcitiesEN.csv", usecols=["country", "priority"])
+
     countries = sorted(file.drop_duplicates().values.tolist())
     i = start_index
 
     if loc_index == 0:
         for country in countries:
-            if country[0].lower() not in countryNames:
-                ids.append(i)
-                countryNames.append(country[0].lower())
-                languages.append(langs[loc_index])
-                priorities.append(5 if country[0] not in prioritized_countries else 1)
+            ids.append(i)
+            countryNames.append(country[0].lower())
+            languages.append(langs[loc_index])
+            priorities.append(5 if isinstance(country[1], float) else int(country[1]))
 
-                i += 1
+            i += 1
     else:
+        translator = GoogleTranslator(source="auto", target=language)
         for country in countries:
-            translated_name = ts.google(country[0].lower(), from_language="en", to_language=language)
+            ids.append(i)
+            countryNames.append(translator.translate(country[0]).lower())
+            languages.append(langs[loc_index])
+            priorities.append(5 if isinstance(country[1], float) else int(country[1]))
 
-            if translated_name not in countryNames:
-                ids.append(i)
-                countryNames.append(translated_name)
-                languages.append(langs[loc_index])
-                priorities.append(5 if country[0] not in prioritized_countries else 1)
+            i += 1
 
-                i += 1
+            data = {
+                "Id": ids,
+                "Name": countryNames,
+                "Language": languages,
+                "Priority": priorities
+            }
+
+            # Save output
+            dataframe = pandas.DataFrame(data)
+            dataframe = dataframe.fillna(value=0)
+            dataframe.to_csv(f"./Output/Countries{language.upper()}.csv", index=False)
+
+            print(i)
 
     data = {
         "Id": ids,
@@ -79,39 +102,78 @@ def create_countries_resource(language, start_index=0, loc_index=0):
 def create_cities_resource(language, start_index=0, loc_index=0):
     global cities_last_index
 
+    existing_file_path = f"./Output/Cities{language.upper()}.csv"
+
     ids = []
     cityNames = []
     cityIds = []
     languages = []
 
-    cities = pandas.read_csv("worldcities.csv", usecols=["city", "country"])
-    file = sorted(pandas.read_csv("worldcities.csv", usecols=["country"]).drop_duplicates().values.tolist())
+    try:
+        line_count = sum(1 for line in open(existing_file_path, encoding='utf-8'))
+    except:
+        line_count = 0
+
+    # Load previously translated data
+    if line_count != 0:
+        existing_cities = pandas.read_csv(existing_file_path).values.tolist()
+
+        for city in existing_cities:
+            ids.append(city[0])
+            cityNames.append(city[1])
+            cityIds.append(city[2])
+            languages.append(city[3])
+
+        cities = pandas.read_csv(f"worldcitiesEN.csv", usecols=["city", "country"], skiprows=range(1, line_count))
+        i = line_count
+    else:
+        cities = pandas.read_csv(f"worldcitiesEN.csv", usecols=["city", "country"])
+        i = 1
+
+    file = sorted(pandas.read_csv(f"worldcitiesEN.csv", usecols=["country"]).drop_duplicates().values.tolist())
     countries = []
-    i = start_index
 
     for f in file:
         countries.append(f[0])
 
     if loc_index == 0:
         for index, data in cities.iterrows():
+            cName = data[0]
+
+            if isinstance(data[0], float):
+                cName = "None"
+
             ids.append(i)
-            cityNames.append(data[0])
+            cityNames.append(cName.lower())
             cityIds.append(countries.index(data[1]) + 1)
             languages.append(langs[loc_index])
 
+            print(f"{i} -> {cName.lower()}")
             i += 1
-
     else:
+        translator = GoogleTranslator(source="auto", target=language)
         for index, data in cities.iterrows():
-            translated_name = ts.google(data[0], from_language="en", to_language=language)
-
+            t = translator.translate(data[0]).lower()
             ids.append(i)
-            cityNames.append(translated_name)
+            cityNames.append(t)
             cityIds.append(countries.index(data[1]) + 1)
             languages.append(langs[loc_index])
 
-            print(i)
             i += 1
+
+            data = {
+                "Id": ids,
+                "Name": cityNames,
+                "Country Id": cityIds,
+                "Language": languages
+            }
+
+            # Save output
+            dataframe = pandas.DataFrame(data)
+            dataframe = dataframe.fillna(value=0)
+            dataframe.to_csv(f"./Output/Cities{language.upper()}.csv", index=False)
+
+            print(f"{i} -> {t}")
 
     data = {
         "Id": ids,
@@ -153,8 +215,9 @@ def create_languages_resource(language, start_index=0, loc_index=0):
             i += 1
 
     else:
+        translator = GoogleTranslator(source="en", target=language)
         for lang in languages:
-            translated_lang = ts.google(lang[0].strip().lower(), from_language="en", to_language=language)
+            translated_lang = translator.translate(lang[0].strip()).lower()
 
             ids.append(i)
             languageNames.append(translated_lang)
@@ -257,9 +320,11 @@ def update_languages(language):
 
 
 def Do():
-    data = ts.google("Me", from_language="en", to_language="ru")
-    # print(ts._google.api_url)
-    print(data)
+    output_data = ""
+    trsl = GoogleTranslator(source="en", target="ru")
+
+    file = trsl.translate_file("worldcitiesEN.csv")
+    pass
 
 
 # create_countries_resource("ru", 1, 1)
@@ -271,15 +336,39 @@ def Do():
 
 
 def create_eng_localization():
-    create_countries_resource("en", 1, 0)
+    # create_countries_resource("en", 1, 0)
     create_cities_resource("en", 1, 0)
-    create_languages_resource("en", 1, 0)
+    # create_languages_resource("en", 1, 0)
+
+
+def create_ru_localization():
+    # create_countries_resource("ru", 1, 1)
+    create_cities_resource("ru", 1, 1)
+    # create_languages_resource("ru", 1, 1)
+
+
+def create_uk_localization():
+    # create_countries_resource("uk", 1, 1)
+    create_cities_resource("uk", 1, 1)
+    # create_languages_resource("uk", 1, 1)
 
 
 def load_eng_localization():
     update_countries("en")
     update_cities("en")
     update_languages("en")
+
+
+def load_ru_localization():
+    update_countries("ru")
+    update_cities("ru")
+    update_languages("ru")
+
+
+def load_uk_localization():
+    update_countries("uk")
+    update_cities("uk")
+    update_languages("uk")
 
 
 def add_tests(lang):
@@ -442,7 +531,12 @@ def get_file_data(file):
 # add_tests(langs[1])
 # add_tests(langs[2])
 
-generate_test_prices()
+# generate_test_prices()
 
-# create_eng_localization()
+create_eng_localization()
+create_ru_localization()
+create_uk_localization()
+
 # load_eng_localization()
+
+# Do()

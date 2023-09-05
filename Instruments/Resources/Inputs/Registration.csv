@@ -1,21 +1,21 @@
-Name,EN,RU,UKR
+Name,ENG,RUS,UKR
 StartMessage,"Hello! Welcome to our bot. 
 Choose a language, bot will communicate with you first","Привет!
 Добро пожаловать в нашего бота. Выбери язык на котором с тобой будет общаться бот","Привіт!
 Ласкаво просимо до нашого бота. Вибери мову, якою з тобою буде спілкуватися бот"
 NoSuchOptionMessage,There is no such option. Try again,Нет такого варианта ответа ,Немає такого варіанту відповіді
-SateLanguagesMessage,Please state all languages you speak,"Пожалуйста, укажи все языки, которыми ты владеешь""","Будь ласка, вкажи всі мови, якими ти володієш"""
-ChooseLanguageMessage,"Choose a few from above, or simply send language name to chat :-)",Выберит несколько из выше перечисленных языков или напишите название языка в чат,Виберіть кілька з вище перерахованих мов або напишіть назву мови в чат
+SateLanguagesMessage,Please state all languages you speak,"Пожалуйста, укажи все языки, которыми ты владеешь","Будь ласка, вкажи всі мови, якими ти володієш"
+ChooseLanguageMessage,"Choose a few from above, or simply send language name to chat ",Выберит несколько из выше перечисленных языков или напишите название языка в чат,Виберіть кілька з вище перерахованих мов або напишіть назву мови в чат
 LanguagesPremiumErrorMessage,"Sorry, users without premium can chose only up to {} languages","Извини, пользователи без премиума могут выбрать только до {} языков","Вибач, користувачі без преміуму можуть вибрати тільки до {} мов"
 AddedMessage,Added,Добавлено,Додано
 RemovedMessage,Removed,Удалено,Видалено
-NoLanguagesMessage,You haven't chosen any languages !,Ты не выбрал/а ни одного языка!,Ти не вибрав/а жодної мови!
+NoLanguagesMessage,You haven't chosen any languages !,Ты не выбрал/а ни одного языка!,Ти не вибрав/ла жодної мови!
 GenderQuestionMessage,What is your gender?,Каков твой пол?,Яка твоя стать?
-GenderPrefsQuestionMessage,Who are you searching for ?,,
+GenderPrefsQuestionMessage,Who are you searching for ?,Кого ты ищешь?,Кого ты шукаєш?
 ChooseExistingMessage,Please choose only ones in a given list !,"Пожалуйста, выбери только те, которые есть в данном списке!","Будь ласка, вибери тільки ті, які є в цьому списку!"
 CommunicationQuestionMessage,How would you like to communicate?,Как бы ты хотел общаться?,Як би ти хотів спілкуватися?
 CountryQuestionMessage,Which country do you live in?,В какой стране ты живешь?,У якій країні ти живеш?
-NoMatterButton,does not matter,не имеет значения,не має значення
+NoMatterButton,Does not matter,Не имеет значения,Не має значення
 ChooseOrSkipMessage,"Choose one from above Or Press 'Does not matter' button if you want to skip location part""","Выбери одну из указанных выше или нажми кнопку ""Не имеет значения"", если ты хочешь пропустить часть, касающуюся местоположения"".","Вибери одну із зазначених вище або натисни кнопку ""Не має значення"", якщо ти хочеш пропустити частину, що стосується місця розташування""."
 ChooseCountryMessage,Choose one from above. Or simply type country name to chat,Выбери одну из вышеперечисленных. Или просто введи название страны в чате,Вибери одну з перерахованих вище. Або просто введи назву країни в чаті
 RestrictLocationMessage,"Gotcha. Please note, that you won't be able to choose city or location preferences until you choose the country","Обратите внимание, что ты не можешь выбрать город или местоположение, пока не выберешь страну.","Зверніть увагу, що ти не можеш вибрати місто або місце розташування, поки не вибереш країну."
@@ -29,13 +29,13 @@ NameQuestionMessage,What is your name?,Как тебя зовут?,Як тебе
 LongNameErrorMessage,Name cannot be longer than 50 characters,Имя не может быть длиннее 50 символов,Ім'я не може бути довшим за 50 символів
 EmptyNameErrorMessage,Name cannot be empty !,Имя не может быть пустым!,Ім'я не може бути порожнім!
 AgeQuestionMessage,How old are you?,Сколько тебе лет?,Скільки тобі років?
-HighAgeErrorMessage,Age cannot be grater than 100 :),Возраст не может быть больше 100 лет :),Вік не може бути більше 100 років :)
-UnderagedErrorMessage,Minimal age is 14 :),Минимальный возраст - 14 лет :),Мінімальний вік - 14 років :)
+HighAgeErrorMessage,Age cannot be grater than 100 ,Возраст не может быть больше 100 лет,Вік не може бути більше 100 років 
+UnderagedErrorMessage,Minimal age is 14 ,Минимальный возраст - 14 лет ,Мінімальний вік - 14 років 
 DigitalAgeErrorMessage,"Age please, only numbers",Возраст напиши цифрами,Вік напиши цифрами
 DescritpionQuestionMessage,Tell something about yourself !,Расскажи что-нибудь о себе!,Розкажи що-небудь про себе!
 LargeDescriptionErrorMessage,Description cannot contain more than 1000 characters,Описание не может содержать более 1000 символов,Опис не може містити більше 1000 символів
 DescriptionAdviseMessage,"Statistically, 94% of users who use our bot would pay more attention to a profile that has a good description,  they would skip profiles without a description.","По статистике 94% пользователей использующих нашего бота оценили бы профиль, который имеет хорошее описание, профили без описания они бы пропустили","За статистикою 94% користувачів, які використовують нашого бота, оцінили б профіль, який має гарний опис, профілі без опису вони б пропустили"
-EmptyDescriptionErrorMessage,Description cannot be empty. Just  describe yourself in a few words ,Описание не может быть пустым. Просто опишите себя в нескольких словах ;-),Опис не може бути порожнім. Просто опишіть себе в кількох словах ;-)
+EmptyDescriptionErrorMessage,Description cannot be empty. Just  describe yourself in a few words ,Описание не может быть пустым. Просто опишите себя в нескольких словах ,Опис не може бути порожнім. Просто опишіть себе в кількох словах 
 MediaQuestionMessage,Send your photo or video (15 seconds max),Пришлите свою фотографию или видео (не более 15 секунд),Надішліть свою фотографію або відео (не більше 15 секунд)
 ChangeMediaWarningMessage,"Note, that changing your media will temporarily re-open your identity confirmation request and thus remove tick from your profile","Обратите внимание, что смена носителя информации приведет к временному повторному запросу на подтверждение личности и, таким образом, снимет галочку с вашего профиля","Зверніть увагу, що зміна носія інформації призведе до тимчасового повторного запиту на підтвердження особи і, таким чином, зніме галочку з вашого профілю"
 LongVideoErrorMessage,Video cannot be longer than 15 seconds,Видео не может быть длиннее 15 секунд,Відео не може бути довшим за 15 секунд
@@ -47,12 +47,46 @@ LocationPrefsQuestionMessage,People from which countries would you like to commu
 AgePrefsQuestionMessage,"What age would you like your companion to be? Please, send a range of numbers\nExample: {}","Какого возраста ты хотел бы видеть своего собеседника? Пожалуйста, отправь диапазон чисел\nПример: {}","Якого віку ти хотів би бачити свого співрозмовника? Будь ласка, відправ діапазон чисел\nПриклад: {}"
 AgePrefsErrorMessage,Single number or a Range of numbers please ,"Одно число или диапазон чисел, пожалуйста","Одне число чи діапазон чисел, будь ласка"
 TagsDescritpionMessage,"To be able to search people by tags you have to have your own as well.\nHow it works: -----------\nIf you want to use that functionality: type a few tags (up to 25) that describe you, your interests etc... Please, don't use more than two words in your tag. For instance: if you want to type #ILoveTea rather just use #tea tag :)\n<b>Note that using tags which go against our policies can lead your account to be banned ---------</b>\nIf you dont want to use that functionality: just hit 'skip' :-)","Чтобы иметь возможность искать людей по тегам, необходимо иметь и свои собственные.\nКак это работает: -----------\nЕсли ты хочешь использовать эту функцию: введи несколько тегов (до 25), описывающих тебя, твои интересы и т. д. Пожалуйста, не используй более двух слов в своем теге. Например: если ты хочешь ввести #ILoveTea, просто используй тег #tea :)\n<b>Обрати внимание, что использование тегов, противоречащих нашим правилам, может привести к блокировке твоей учетной записи ---------</ b>\nЕсли ты не хочешь использовать эту функцию: просто нажми «Пропустить»","Щоб мати можливість шукати людей за тегами, необхідно мати й свої власні. інтереси тощо. буд. Будь ласка, не використовуй більше двох слів у своєму тегу. Наприклад: якщо ти хочеш ввести #ILoveTea, просто використовуй тег #tea :)\n<b>Зверніть увагу, що використання тегів, що суперечать нашим правилам, може призвести до блокування твого облікового запису ---------</ b>\nЯкщо ти не хочеш використовувати цю функцію: просто натисни ""Пропустити"" "
-TagsQuestionMessage,"Type a few tags (up to {}) that describe you, your interests etc...Please, don't use more than two words in your tag. For instance: if you want to type #ILoveTea rather just use #tea tag :)\n<b>Note that using tags which go against our policies can lead your account to be permanently banned.</b> \nYour previous tag list will be overwritten"," Введит несколько тегов (до {}), описывающих тебя , твои интересы и т. д. Пожалуйста, не используй более двух слов в теге. Например: если ты хочешь  ввести #ILoveTea, просто используй тег #tea :)\n<b>Обрати внимание, что использование тегов, противоречащих нашим правилам, может привести к тому, что твоя учетная запись будет навсегда заблокирована.</b> \nТвой  предыдущий список тегов будет перезаписан","Введіть кілька тегів (до {}), що описують тебе, твої інтереси і т. д. Будь ласка, не використовуй більше двох слів у тезі. Наприклад: якщо ти хочеш ввести #ILoveTea, просто використовуй тег #tea :)\n<b>Зверни увагу, що використання тегів, що суперечать нашим правилам, може призвести до того, що ваш обліковий запис буде назавжди заблокований.</b> \ nТвій попередній список тегів буде перезаписано"
+TagsQuestionMessage,"Type a few tags (up to {}) that describe you, your interests etc
+Please, don't use more than two words in your tag. 
+
+For instance: if you want to type #ILoveTea rather just use #tea tag 
+
+\n<b>Note that using tags which go against our policies can lead your account to be permanently banned.
+
+</b> \nYour previous tag list will be overwritten","Введите несколько тегов (до {}), которые описывают вас, ваши интересы и т. д.
+Пожалуйста, не используйте в теге более двух слов.
+
+Например: если вы хотите написать #Люблю_чай, просто используйте тег #чай.
+
+\n<b>Обратите внимание, что использование тегов, противоречащих нашей политике, может привести к постоянной блокировке вашей учетной записи.
+
+</b> \nПредыдущий список тегов будет перезаписан.","Введіть кілька тегів (до {}), які описують вас, ваші інтереси тощо
+Будь ласка, не використовуйте більше двох слів у своєму тегу.
+
+Наприклад: якщо ви хочете ввести #Люблю_чай, краще використовуйте тег #чай
+
+\n<b>Зверніть увагу, що використання тегів, які суперечать нашій політиці, може призвести до остаточного блокування вашого облікового запису.
+
+</b> \nВаш попередній список тегів буде перезаписано
+"
 GotchaMessage,Gotcha,Принято,Прийнято
 ToManyTagsErrorMessage,You cannot use more than {} tags,Ты не можешь использовать более {} тегов,Ти не можеш використовувати більше {} тегів
 TagsErrorMessage,"Please, dont use any special characters apart from #","Пожалуйста, не используй никаких специальных символов, кроме #","Будь ласка, не використовуй жодних спеціальних символів, крім #"
-AutoreplyDescriptionMessage,---> AUTOREPLY FUNC DESCRIPTION,---> ОПИСАНИЕ ФУНКЦИИ АВТООТВЕТА,---> ОПИС ФУНКЦІЇ АВТОВІДПОВІДІ
-SkipMessage,skip,пропустить,пропустити
+AutoreplyDescriptionMessage,"When someone likes your profile, the bot sends a previously recorded video, voice or text message. 
+
+This facilitates the immediate start of communication, creating the opportunity for more interesting and personal conversations. 
+
+This way, users can start communicating right here and now, deepening their interactions.","Когда кто-то лайкает ваш профиль, бот отправляет ранее записанное вами видео, голосовое или текстовое сообщение. 
+
+Это способствует немедленному началу общения, создавая возможность более интересных и личных разговоров. 
+
+Таким образом, пользователи могут начать общение прямо здесь и сейчас, углубляя свои взаимодействия.","Коли хтось лайкає ваш профіль, бот надсилає раніше записане вами відео, голосове або текстове повідомлення. 
+
+Це сприяє негайному початку спілкування, створюючи можливість більш цікавих і особистих розмов. 
+
+Таким чином, користувачі можуть почати спілкування просто тут і зараз, поглиблюючи свої взаємодії."
+SkipMessage,Skip,Пропустить,Пропустити
 PremiumErrorMessage,"Sorry, only users with premium access can perform that action","К сожалению, это действие могут выполнять только пользователи с премиальным доступом.","На жаль, цю дію можуть виконувати лише користувачі з преміальним доступом."
 ToLongErrorMessage,Up to 300 characters please,"Пожалуйста, до 300 символов","Будь ласка, до 300 символів"
 EmptyErrorMessage,Empty message,Пустое сообщение ,Порожнє повідомлення
@@ -61,19 +95,67 @@ CheckoutQuestionMessage,Would you like to change something?,Хочешь что-
 YesButton,yes,да,так
 NoButton,no,нет,ні
 FinishRegistrationButton,✨Finish the registration✨,✨Завершить регистрацию✨,✨Завершити реєстрацію✨
-SaveChangesButton,✨Save changes✨,✨ Сохранить изменения✨,✨ Зберегти зміни✨
-CheckoutMenuMessage,1. Change app language\n2. Change name\n3. Change description\n4. Add or remove languages you speak\n5. Change country\n6. Change city\n7. Change reason for using the bot\n8. Change age\n9. Change your gender\n10. Change profile photo\n11. Languages the encountered users speak\n12. Country the encountered users are located\n13. Encountered users age\n14. Preferred gender\n15. Communication preferences\n16. Change tags\n17. Change Auto-reply message\n{},"1. Изменить язык приложения\n2. Изменить название\n3. Изменить описание\n4. Добавить или удалить языки, на которых ты говоришь\n5. Изменить страну\n6. Изменить город\n7. Изменить цель использования бота\n8. Изменить возраст\n9. Изменить пол\n10. Изменить фотографию профиля\n11. Языки, на которых говорят встреченные пользователи\n12. Страна, в которой находятся встреченные пользователи\n13. Возраст встреченных пользователей\n14. Предпочитаемый пол\n15. Предпочтения в общении\n16. Изменить теги\n17. Изменить сообщение автоответчика\n{}","1. Змінити мову програми\n2. Змінити назву\n3. Змінити опис\n4. Додати або видалити мови, якими ти говориш\n5. Змінити країну\n6. Змінити місто\n7. Змінити мету використання бота\n8. Змінити вік\n9. Змінити підлогу\n10. Змінити фотографію профілю\n11. Мови, на яких говорять зустрінуті користувачі\n12. Країна, в якій знаходяться зустрінуті користувачі\n13. Вік зустрінутих користувачів\n14. Вважаємо за краще підлогу\n15. Уподобання у спілкуванні\n16. Змінити теги\n17. Змінити повідомлення автовідповідача\n{}"
+DoneButton,✨Done✨,✨Готово✨,✨Готово✨
+CheckoutMenuMessage,"Please, select an option","Пожалуйста, выберите опцию","Будь ласка, оберіть опцію"
 DiscardChangesButton,✨Discard changes✨,✨Отменить изменения✨,✨Скасувати зміни✨
 ChangesSavedMessage,Changes saved successfully !,Изменения сохранены успешно!,Зміни збережені вдало!
 ChangesErrorMessage,Something went wrong during the attempt of saving changes!,Что-то пошло не так во время попытки сохранения изменений!,Щось сталося не так під час спроби збереження змін!
-OceanDescriptionMessage,Would you like to use PERSONALITY functionality?\n--->>FUNCTIONALITY DESCRIPTION---,Ты хочешь использовать функциональность PERSONALITY?\n--->> ОПИСАНИЕ ФУНКЦИОНАЛЬНОСТИ---.,Ти хочеш використовувати функціональність PERSONALITY?\n--->> ОПИС ФУНКЦІОНАЛЬНОСТІ---.
-HelperDescriptionMessage,You can call /help command at any time to get a hint about our functionality :),"Ты  можеim вызвать команду /help в любое время, чтобы получить подсказку в функционале","Ты хочеш викликати команду /help у будь-який час, щоб отримати підказку функціоналі"
-SameAsMineMessage,Got it! Press OK to move to the next step or add more if you want ;-),"Принято! Нажми OK для перехода к следующему шагу или добавь больше, если хочешь","Прийнято! Натисніть OK для переходу до наступного кроку або додай більше, якщо хочеш"
+OceanDescriptionMessage,"Would you like to use the functionality of OCEAN+?
+
+\n--->> OCEAN+ is a system of psychological tests that will select you a partner based on your psychological portrait.
+
+O - Openness to Experience
+C - Conscientiousness
+E - Extraversion
+A - Agreeableness
+N - Neuroticism
++ - Temperament
+""+"" Our personal refinement of this test system)
+
+Take one basic test from this list in order to have an improved result OR take an express test.
+
+Express test will take less time, but 6 basic tests will show more accurate results
+
+We recommend that you first pass the express test","Хотели бы вы использовать функциональность OCEAN+?
+
+\n--->> OCEAN+ - система психологических тестов которая подберет вам партнера на основе вашего психологического портрета.
+
+О - Открытость (Openness to Experience)
+С - Сознательность (Conscientiousness)
+E - Экстраверсия (Extraversion)
+A - Доброжелательность (Agreeableness)
+N - Нейротизм (Neuroticism)
++ - Темперамент
+""+"" Наша личная доработка этой системы тестов)
+
+Пройдите по одному базовому тесту из этого списка для того что бы иметь улучшенный результат ИЛИ пройди экспресс тест.
+
+Экспресс тест займет меньше времени, но 6 базовых тестов будут более точная показывать результаты
+
+Рекомендуем сначала пройти экспресс тест","Чи хотіли б ви використовувати функціональність OCEAN+?
+
+\n--->> OCEAN+ - система психологічних тестів, яка підбере вам партнера на основі вашого психологічного портрета.
+
+O - Відкритість (Openness to Experience)
+С - Свідомість (Conscientiousness)
+E - Екстраверсія (Extraversion)
+A - Доброзичливість (Agreeableness)
+N - Нейротизм (Neuroticism)
++ - Темперамент
+""+"" Наше особисте доопрацювання цієї системи тестів)
+
+Пройдіть по одному базовому тесту з цього списку для того щоб мати покращений результат АБО пройди експрес тест.
+
+Експрес тест займе менше часу, але 6 базових тестів більш точно показуватимуть результати
+
+Рекомендуємо спочатку пройти експрес-тест"
+HelperDescriptionMessage,You can call /help command at any time to get a hint about our functionality ,"Ты  можешь вызвать команду /help в любое время, чтобы получить подсказку в функционале","Ты хочеш викликати команду /help у будь-який час, щоб отримати підказку функціоналі"
+SameAsMineMessage,Got it! Press OK to move to the next step or add more if you want ,"Принято! Нажми OK для перехода к следующему шагу или добавь больше, если хочешь","Прийнято! Натисніть OK для переходу до наступного кроку або додай більше, якщо хочеш"
 CountyNotRecognizedErrorMessage,"Country was not recognized, try finding it in our list above.","Страна не была распознана, попробуйте найти ее в нашем списке выше.","Країна не була розпізнана, спробуйте знайти її в нашому списку вище."
 LanguageNotRecognizedErrorMessage,"Language was not recognized, try finding it in our list above.","Язык не был распознан, попробуйте найти его в нашем списке выше.","Мова не була розпізнана, спробуйте знайти її в нашому списку вище."
 CityNotRecognizedErrorMessage,"City was not recognized, try finding it in our list above.","Город не был распознан, попробуйте найти его в нашем списке выше.","Місто не було розпізнано, спробуйте знайти його в нашому списку вище."
-InvalidReasonErrorMessage,"No-no, you can't search for something else here ;-)","Нет-нет, вы не можете искать здесь что-то другое ;-)","Ні-ні, ви не можете шукати тут щось інше ;-)"
+InvalidReasonErrorMessage,"No-no, you can't search for something else here ","Нет-нет, вы не можете искать здесь что-то другое ","Ні-ні, ви не можете шукати тут щось інше "
 CountriesPremiumErrorMessage,"Sorry, users without premium can choose only up to {} countries","Извините, пользователи без премиума могут выбрать только до {} стран","Вибачте, користувачі без преміум-аккаунта можуть вибрати лише до {} країн"
 ClarifyingQuestionMessage,Maybe you've meant: {},"Возможно, вы имели ввиду: {}",Можливо ви мали на увазі: {}
-OkButton,ok,ок,ок
-GoBackButton,go back,вернуться,повернутися
+OkButton,Ok,Ок,Ок
+GoBackButton,Go back,Вернуться,Повернутися

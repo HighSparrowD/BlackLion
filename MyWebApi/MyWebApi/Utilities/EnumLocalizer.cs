@@ -39,5 +39,10 @@ namespace WebApi.Utilities
         {
             return Resources.ResourceManager.GetString("Currency_" + language.ToString()) ?? language.ToString();
         }
+
+        public static string GetLocalizedValue(Currency effect)
+        {
+            return Resources.ResourceManager.GetString("Effect_" + effect.ToString()) ?? effect.ToString();
+        }
     }
 }

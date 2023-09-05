@@ -398,14 +398,11 @@ namespace WebApi.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<long>("Id"), "active_effects_hilo");
 
-                    b.Property<short>("EffectId")
+                    b.Property<short>("Effect")
                         .HasColumnType("smallint");
 
                     b.Property<DateTime?>("ExpirationTime")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<short?>("ExpiresIn")
-                        .HasColumnType("smallint");
 
                     b.Property<string>("Name")
                         .HasColumnType("text");

@@ -11,7 +11,7 @@ from TestModule import TestModule
 
 class Shop:
     def __init__(self, bot: TeleBot, message: any, hasVisited: bool = False,
-                 startingTransaction: int = None, returnMethod: any = None, active_message: any = None):
+                 startingTransaction: int or str = None, returnMethod: any = None, active_message: any = None):
         self.bot = bot
         self.message = message
         self.current_user = message.from_user.id
@@ -141,11 +141,11 @@ class Shop:
         self.set_currency_prices()
 
         if self.startingTransaction:
-            if self.startingTransaction == 1:
-                self.choose_pack_points(message)
+            if isinstance(self.startingTransaction, str):
+                self.callback_handler(DummyCallable(0, self.startingTransaction))
                 return
-            elif self.startingTransaction == 2:
-                self.choose_effect_to_buy(message)
+            elif self.startingTransaction == 1:
+                self.choose_pack_points(message)
                 return
             elif self.startingTransaction == 3:
                 self.buy_premium(message)
@@ -437,7 +437,8 @@ class Shop:
         self.active_transaction_status_message = self.bot.send_message(self.current_user, text).id
 
     def callback_handler(self, call):
-        self.bot.answer_callback_query(call.id, "")
+        if call.id != 0:
+            self.bot.answer_callback_query(call.id, "")
         #Exit / Go Back
         if call.data == "-1":
             self.proceed(call.message, shouldClearChat=True)
@@ -718,11 +719,17 @@ class Shop:
             pass
 
         self.delete_price_invoice()
+        self.delete_active_message()
 
         if not self.activatedElsewhere:
-            self.bot.delete_message(self.current_user, self.active_message)
-
             menues.go_back_to_main_menu(self.bot, self.current_user, self.message)
             return
 
         self.returnMethod(self.message, backFromShop=True)
+
+
+class DummyCallable:
+    def __init__(self, id: int, data: str):
+        self.id = id
+        self.data = data
+        self.message = None

@@ -55,6 +55,15 @@ class Registrator:
         self.go_backMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add(self.localization['GoBackButton'])
         self.photo_Markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("Use photo from profile")
 
+        self.change_markup = InlineKeyboardMarkup().add(InlineKeyboardButton("App langauge", callback_data="1"), InlineKeyboardButton("Preferred gender", callback_data="17"))\
+            .add(InlineKeyboardButton("Description", callback_data="3"), InlineKeyboardButton("Spoken languages", callback_data="4"), InlineKeyboardButton("Auto-Reply", callback_data="17"))\
+            .add(InlineKeyboardButton("Name", callback_data="2"), InlineKeyboardButton("Country", callback_data="5"), InlineKeyboardButton("City", callback_data="6"))\
+            .add(InlineKeyboardButton("Usage reason", callback_data="7"), InlineKeyboardButton("Preferred age", callback_data="13"))\
+            .add(InlineKeyboardButton("Age", callback_data="8"), InlineKeyboardButton("Gender", callback_data="9"), InlineKeyboardButton("Tags", callback_data="16"))\
+            .add(InlineKeyboardButton("Preferred languages", callback_data="11"), InlineKeyboardButton("Preferred country", callback_data="12"))\
+            .add(InlineKeyboardButton("Profile media", callback_data="10"), InlineKeyboardButton("Preferred Communication", callback_data="15"))\
+            .add(InlineKeyboardButton(self.localization["DoneButton"], callback_data="18"))
+
         self.app_language = localizationIndex
 
         self.data = {}
@@ -970,93 +979,82 @@ class Registrator:
             self.send_active_message_with_video(self.localization['CheckoutMessage'].format(self.profile_constructor()), video=self.data["userMedia"])
         self.send_secondary_message(self.localization['CheckoutQuestionMessage'], markup=self.YNmarkup)
 
-    def checkout_step(self, message=None, acceptMode=False, shouldInsert=True):
-        change_markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18")
-        final_message = self.localization['FinishRegistrationButton']
-
-        if self.hasVisited:
-            final_message = self.localization['SaveChangesButton']
-
-        change_text = self.localization['CheckoutMenuMessage'].format(final_message)
-
-        #Add discard changes button if user exists
-        if self.hasVisited:
-            change_text += self.localization['DiscardChangesButton']
-
-        self.editMode = True
+    def checkout_step(self, input=None, acceptMode=False, shouldInsert=True):
+        self.question_index = 16
         if not acceptMode:
+            # Add discard changes button if user exists
+            if self.hasVisited:
+                self.change_markup.add(
+                    InlineKeyboardButton(self.localization['DiscardChangesButton'], callback_data="19"))
+
+            self.editMode = True
+
             self.configure_registration_step(self.checkout_step, shouldInsert)
 
             if self.data["isMediaPhoto"]:
                 self.send_active_message_with_photo(self.localization['CheckoutMessage'].format(self.profile_constructor()), self.data["userMedia"])
             else:
                 self.send_active_message_with_video(self.localization['CheckoutMessage'].format(self.profile_constructor()), self.data["userMedia"])
-            self.send_secondary_message(change_text, markup=change_markup)
-            self.send_additional_actions_message()
-            self.next_handler = self.bot.register_next_step_handler(message, self.checkout_step, acceptMode=True, chat_id=self.current_user)
-        else:
-            self.delete_message(message.id)
 
-            if message.text == "1":
+            self.send_secondary_message(self.localization['CheckoutMenuMessage'], markup=self.change_markup)
+        else:
+            if input == "1":
                 self.data["wasChanged"] = True
-                self.app_language_step(message, shouldInsert=False)
-            elif message.text == "2":
+                self.app_language_step(shouldInsert=False)
+            elif input == "2":
                 self.data["wasChanged"] = True
-                self.name_step(message, shouldInsert=False)
-            elif message.text == "3":
+                self.name_step(shouldInsert=False)
+            elif input == "3":
                 self.data["wasChanged"] = True
-                self.description_step(message, shouldInsert=False)
-            elif message.text == "4":
+                self.description_step(shouldInsert=False)
+            elif input == "4":
                 self.data["wasChanged"] = True
-                self.spoken_language_step(message, shouldInsert=False)
-            elif message.text == "5":
+                self.spoken_language_step(shouldInsert=False)
+            elif input == "5":
                 self.data["wasChanged"] = True
-                self.location_step(message, shouldInsert=False)
-            elif message.text == "6":
+                self.location_step(shouldInsert=False)
+            elif input == "6":
                 self.data["wasChanged"] = True
-                self.city_step(message, shouldInsert=False)
-            elif message.text == "7":
+                self.city_step(shouldInsert=False)
+            elif input == "7":
                 self.data["wasChanged"] = True
                 self.reason_step(shouldInsert=False)
-            elif message.text == "8":
+            elif input == "8":
                 self.data["wasChanged"] = True
-                self.age_step(message, shouldInsert=False)
-            elif message.text == "9":
+                self.age_step(shouldInsert=False)
+            elif input == "9":
                 self.data["wasChanged"] = True
                 self.gender_step(shouldInsert=False)
-            elif message.text == "10":
+            elif input == "10":
                 self.data["wasChanged"] = True
-                self.photo_step(message, shouldInsert=False)
-            elif message.text == "11":
+                self.photo_step(shouldInsert=False)
+            elif input == "11":
                 self.data["wasChanged"] = True
-                self.language_preferences_step(message, shouldInsert=False)
-            elif message.text == "12":
+                self.language_preferences_step(shouldInsert=False)
+            elif input == "12":
                 self.data["wasChanged"] = True
-                self.location_preferences_step(message, shouldInsert=False)
-            elif message.text == "13":
+                self.location_preferences_step(shouldInsert=False)
+            elif input == "13":
                 self.data["wasChanged"] = True
-                self.age_pref_step(message, shouldInsert=False)
-            elif message.text == "14":
+                self.age_pref_step(shouldInsert=False)
+            elif input == "14":
                 self.data["wasChanged"] = True
                 self.gender_preferences_step(shouldInsert=False)
-            elif message.text == "15":
+            elif input == "15":
                 self.data["wasChanged"] = True
                 self.communication_preferences_step(shouldInsert=False)
-            elif message.text == "16":
+            elif input == "16":
                 self.data["wasChanged"] = True
-                self.tags_step(message, shouldInsert=False)
-            elif message.text == "17":
+                self.tags_step(shouldInsert=False)
+            elif input == "17":
                 self.data["wasChanged"] = True
-                self.auto_reply_step(message, shouldInsert=False)
-            elif message.text == "18":
-                self.tests_step(message, shouldInsert=False)
-            elif self.hasVisited and message.text == "19":
+                self.auto_reply_step(shouldInsert=False)
+            elif input == "18":
+                self.finish_step()
+            elif self.hasVisited and input == "19":
                 self.destruct()
-            else:
-                self.send_error_message(self.localization['NoSuchOptionMessage'], markup=change_markup)
-                self.next_handler = self.bot.register_next_step_handler(message, self.checkout_step, acceptMode=acceptMode, chat_id=self.current_user)
 
-    def finish_step(self, message):
+    def finish_step(self, message=None):
         if self.hasVisited:
             d = json.dumps(self.data)
             response = requests.post("https://localhost:44381/UpdateUserProfile", d, headers={
@@ -1072,7 +1070,7 @@ class Registrator:
 
         self.tests_step(message)
 
-    def tests_step(self, message, shouldInsert=True):
+    def tests_step(self, message=None, shouldInsert=True):
         self.question_index = 15
 
         self.send_secondary_message(self.localization['OceanDescriptionMessage'], markup=self.YNmarkup)
@@ -1295,7 +1293,7 @@ class Registrator:
         elif self.question_index == 10:
             self.data["communicationPrefs"] = call.data
 
-            # TODO: Find out what the fuck is that ?
+            # TODO: Find out what the fuck is that for?
             if not self.editMode:
                 self.location_step(call.message)
             else:
@@ -1398,6 +1396,9 @@ class Registrator:
                           headers={"Content-Type": "application/json"}, verify=False)
 
             self.destruct()
+
+        elif self.question_index == 16:
+            self.checkout_step(input=call.data, acceptMode=True)
 
     def move_forward(self) -> str:
         self.delete_secondary_message()

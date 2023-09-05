@@ -740,3 +740,10 @@ def send_feedback(payload: dict):
 
     except:
         return None
+
+
+def get_active_effect(user_id):
+    try:
+        return json.loads(requests.get(f"https://localhost:44381/active-effects/{user_id}", verify=False).text)
+    except:
+        return None

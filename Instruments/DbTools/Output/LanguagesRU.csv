@@ -1,0 +1,186 @@
+Id,Name,Native Name,Language,Priority
+1,издалека,afar,RU,5
+2,абхазский,abkhaz,RU,5
+3,авестийский,avestan,RU,5
+4,африкаанс,afrikaans,RU,5
+5,акан,akan,RU,5
+6,амхарский,amharic,RU,5
+7,арагонский,aragonese,RU,5
+8,арабский,arabic,RU,5
+9,ассамский,assamese,RU,5
+10,скупой,avaric,RU,5
+11,аймара,aymara,RU,5
+12,азербайджанский,azerbaijani,RU,5
+13,южный азербайджанец,south azerbaijani,RU,5
+14,башкир,bashkir,RU,5
+15,белорусский,belarusian,RU,5
+16,болгарский,bulgarian,RU,5
+17,Бихари,bihari,RU,5
+18,бислама,bislama,RU,5
+19,бамбара,bambara,RU,5
+20,бенгальский; бангла,bengali; bangla,RU,5
+21,"тибетский стандарт, тибетский, центральный","tibetan standard, tibetan, central",RU,5
+22,бретонец,breton,RU,5
+23,боснийский,bosnian,RU,5
+24,каталанский; валенсийский,catalan; valencian,RU,5
+25,чеченский,chechen,RU,5
+26,чаморро,chamorro,RU,5
+27,корсиканец,corsican,RU,5
+28,кри,cree,RU,5
+29,Чешский,czech,RU,5
+30,"старославянский, церковнославянский, староболгарский","old church slavonic, church slavonic, old bulgarian",RU,5
+31,чувашский,chuvash,RU,5
+32,валлийский,welsh,RU,5
+33,датский,danish,RU,5
+34,Немецкий,german,RU,5
+35,дивехи; дивехи; мальдивский;,divehi; dhivehi; maldivian;,RU,5
+36,дзонгкха,dzongkha,RU,5
+37,овца,ewe,RU,5
+38,"греческий, современный","greek, modern",RU,5
+39,английский,english,RU,5
+40,эсперанто,esperanto,RU,5
+41,испанский язык; кастильский,spanish; castilian,RU,5
+42,эстонский,estonian,RU,5
+43,баскский,basque,RU,5
+44,персидский (фарси),persian (farsi),RU,5
+45,фула; фула; пулар; популярный,fula; fulah; pulaar; pular,RU,5
+46,финский,finnish,RU,5
+47,фиджийский,fijian,RU,5
+48,фарерский,faroese,RU,5
+49,французский,french,RU,5
+50,западно-фризский язык,western frisian,RU,5
+51,ирландский,irish,RU,5
+52,шотландский гэльский; гэльский,scottish gaelic; gaelic,RU,5
+53,галисийский,galician,RU,5
+54,гуарани,guaraní,RU,5
+55,Гуджарати,gujarati,RU,5
+56,Мэнкс,manx,RU,5
+57,хауса,hausa,RU,5
+58,иврит (современный),hebrew (modern),RU,5
+59,хинди,hindi,RU,5
+60,Хири Моту,hiri motu,RU,5
+61,хорватский,croatian,RU,5
+62,гаитянский; гаитянский креольский,haitian; haitian creole,RU,5
+63,Венгерский,hungarian,RU,5
+64,армянский,armenian,RU,5
+65,гереро,herero,RU,5
+66,интерлингва,interlingua,RU,5
+67,индонезийский,indonesian,RU,5
+68,интерлингв,interlingue,RU,5
+69,игбо,igbo,RU,5
+70,nuosu,nuosu,RU,5
+71,инупиак,inupiaq,RU,5
+72,я делаю,ido,RU,5
+73,исландский,icelandic,RU,5
+74,итальянский,italian,RU,5
+75,инуктитут,inuktitut,RU,5
+76,Японский,japanese,RU,5
+77,яванский,javanese,RU,5
+78,грузинский,georgian,RU,5
+79,Конго,kongo,RU,5
+80,"kikuyu, gikuyu","kikuyu, gikuyu",RU,5
+81,"Кваньяма, куаньяма","kwanyama, kuanyama",RU,5
+82,казахский,kazakh,RU,5
+83,"Калааллисут, Гренландия","kalaallisut, greenlandic",RU,5
+84,кхмерский,khmer,RU,5
+85,каннада,kannada,RU,5
+86,Корейский,korean,RU,5
+87,канури,kanuri,RU,5
+88,кашмирский,kashmiri,RU,5
+89,курдский,kurdish,RU,5
+90,коми,komi,RU,5
+91,корнуэльский,cornish,RU,5
+92,кыргызский,kyrgyz,RU,5
+93,латинский,latin,RU,5
+94,"люксембургский, летцебургский","luxembourgish, letzeburgesch",RU,5
+95,ганда,ganda,RU,5
+96,"лимбургский, лимбургский, лимбургский","limburgish, limburgan, limburger",RU,5
+97,лингала,lingala,RU,5
+98,лаосский,lao,RU,5
+99,Литовский,lithuanian,RU,5
+100,люба-катанга,luba-katanga,RU,5
+101,Латышский,latvian,RU,5
+102,малагасийский,malagasy,RU,5
+103,Маршалловый остров,marshallese,RU,5
+104,маори,māori,RU,5
+105,македонский,macedonian,RU,5
+106,малаялам,malayalam,RU,5
+107,монгольский,mongolian,RU,5
+108,маратхи (маратхи),marathi (marāṭhī),RU,5
+109,малайский,malay,RU,5
+110,мальтийский,maltese,RU,5
+111,бирманский,burmese,RU,5
+112,Науру,nauru,RU,5
+113,норвежский букмол,norwegian bokmål,RU,5
+114,Северный Ндебеле,north ndebele,RU,5
+115,непальский,nepali,RU,5
+116,ндонга,ndonga,RU,5
+117,голландский,dutch,RU,5
+118,норвежский нюнорск,norwegian nynorsk,RU,5
+119,Норвежский,norwegian,RU,5
+120,Южный Ндебеле,south ndebele,RU,5
+121,"навахо, навахо","navajo, navaho",RU,5
+122,чичева; чева; Ньянджа,chichewa; chewa; nyanja,RU,5
+123,окситанский,occitan,RU,5
+124,"оджибве, оджибва","ojibwe, ojibwa",RU,5
+125,оромо,oromo,RU,5
+126,Ория,oriya,RU,5
+127,"осетинский, осетинский","ossetian, ossetic",RU,5
+128,"панджаби, панджаби","panjabi, punjabi",RU,5
+129,пали,pāli,RU,5
+130,полировать,polish,RU,5
+131,"пушту, пушту","pashto, pushto",RU,5
+132,португальский,portuguese,RU,5
+133,кечуа,quechua,RU,5
+134,ретороманский,romansh,RU,5
+135,Кирунди,kirundi,RU,5
+136,румынский,romanian,RU,5
+137,русский,russian,RU,5
+138,киньяруанда,kinyarwanda,RU,5
+139,санскрит (самскрта),sanskrit (saṁskṛta),RU,5
+140,сардинский,sardinian,RU,5
+141,синдхи,sindhi,RU,5
+142,северные саамы,northern sami,RU,5
+143,санго,sango,RU,5
+144,"сингальский, сингальский","sinhala, sinhalese",RU,5
+145,словацкий,slovak,RU,5
+146,словенский,slovene,RU,5
+147,самоанец,samoan,RU,5
+148,шона,shona,RU,5
+149,сомалийский,somali,RU,5
+150,албанский,albanian,RU,5
+151,сербский,serbian,RU,5
+152,Свати,swati,RU,5
+153,южный сото,southern sotho,RU,5
+154,суданский,sundanese,RU,5
+155,шведский,swedish,RU,5
+156,суахили,swahili,RU,5
+157,тамильский,tamil,RU,5
+158,телугу,telugu,RU,5
+159,таджикский,tajik,RU,5
+160,тайский,thai,RU,5
+161,тигринья,tigrinya,RU,5
+162,туркменский,turkmen,RU,5
+163,тагальский,tagalog,RU,5
+164,тсвана,tswana,RU,5
+165,Тонга (острова Тонга),tonga (tonga islands),RU,5
+166,турецкий,turkish,RU,5
+167,цонга,tsonga,RU,5
+168,татарин,tatar,RU,5
+169,два дня,twi,RU,5
+170,таитянский,tahitian,RU,5
+171,"уйгур, уйгур","uyghur, uighur",RU,5
+172,украинец,ukrainian,RU,5
+173,урду,urdu,RU,5
+174,узбекский,uzbek,RU,5
+175,венда,venda,RU,5
+176,вьетнамский,vietnamese,RU,5
+177,волапюк,volapük,RU,5
+178,валлонский,walloon,RU,5
+179,волоф,wolof,RU,5
+180,коса,xhosa,RU,5
+181,идиш,yiddish,RU,5
+182,йоруба,yoruba,RU,5
+183,"zhuang, chuang","zhuang, chuang",RU,5
+184,Китайский,chinese,RU,5
+185,зулусский,zulu,RU,5

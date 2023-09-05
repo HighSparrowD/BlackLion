@@ -135,6 +135,24 @@
   <data name="CommunicationPreference_Online" xml:space="preserve">
     <value>Онлайн</value>
   </data>
+  <data name="Effect_CardDeckMini" xml:space="preserve">
+    <value>Card Deck Mini</value>
+  </data>
+  <data name="Effect_CardDeckPlatinum" xml:space="preserve">
+    <value>Card Deck Platinum</value>
+  </data>
+  <data name="Effect_Nullifier" xml:space="preserve">
+    <value>Nullifier</value>
+  </data>
+  <data name="Effect_SecondChance" xml:space="preserve">
+    <value>Second Chance</value>
+  </data>
+  <data name="Effect_TheDetector" xml:space="preserve">
+    <value>The Detector</value>
+  </data>
+  <data name="Effect_TheValentine" xml:space="preserve">
+    <value>The Valentine</value>
+  </data>
   <data name="Familiator_OutOfTags" xml:space="preserve">
     <value>Извините, на сегодня у вас закончились поиски по тегам.\nВы все еще можете использовать Card Deck Mini или Card Deck Premium, чтобы пополнить количество просмотров, купить премиум и тем самым удвоить количество просмотров, или подождать до завтра :)</value>
   </data>

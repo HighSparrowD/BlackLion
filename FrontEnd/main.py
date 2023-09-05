@@ -1,5 +1,3 @@
-from telebot import *
-
 import Common.Menues as Menus
 from Adventurer import Adventurer
 from Familiator import *

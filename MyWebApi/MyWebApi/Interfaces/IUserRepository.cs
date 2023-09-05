@@ -124,7 +124,7 @@ namespace WebApi.Interfaces
         Task<bool> CheckUserHasEffectAsync(long userId, int effectId);
         Task<DateTime?> ActivateDurableEffectAsync(long userId, Currency effectId);
         Task<bool> ActivateToggleEffectAsync(long userId, int effectId, long? user2Id=null, string description=null);
-        Task<List<ActiveEffect>> GetUserActiveEffects(long userId);
+        Task<List<GetActiveEffect>> GetUserActiveEffects(long userId);
         Task<bool> DeactivateEffectAsync(long userId, long activeEffectId);
         Task<bool> CheckEffectIsActiveAsync(long userId, Currency effectId);
         Task<bool> PurchaseEffectAsync(long userId, int effectId, float points, Currency currency, short count=1);

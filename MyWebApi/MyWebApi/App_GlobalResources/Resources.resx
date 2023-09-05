@@ -156,6 +156,24 @@
   <data name="Currency_USDC" xml:space="preserve">
     <value>💎 USDT 💎</value>
   </data>
+  <data name="Effect_CardDeckMini" xml:space="preserve">
+    <value>Card Deck Mini</value>
+  </data>
+  <data name="Effect_CardDeckPlatinum" xml:space="preserve">
+    <value>Card Deck Platinum</value>
+  </data>
+  <data name="Effect_Nullifier" xml:space="preserve">
+    <value>Nullifier</value>
+  </data>
+  <data name="Effect_SecondChance" xml:space="preserve">
+    <value>Second Chance</value>
+  </data>
+  <data name="Effect_TheDetector" xml:space="preserve">
+    <value>The Detector</value>
+  </data>
+  <data name="Effect_TheValentine" xml:space="preserve">
+    <value>The Valentine</value>
+  </data>
   <data name="Familiator_OutOfTags" xml:space="preserve">
     <value>Sorry, you have run out of tag searches for today.\nYou can still use Card Deck Mini or Card Deck Premium to replenish your views, buy premium and thus double your view count, or wait until tomorrow :)</value>
   </data>
