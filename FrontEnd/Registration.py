@@ -55,7 +55,9 @@ class Registrator:
         self.go_backMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add(self.localization['GoBackButton'])
         self.photo_Markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("Use photo from profile")
 
-        self.change_markup = InlineKeyboardMarkup().add(InlineKeyboardButton("App langauge", callback_data="1"), InlineKeyboardButton("Preferred gender", callback_data="17"))\
+        self.app_languages_markup = InlineKeyboardMarkup()
+
+        self.create_markup = InlineKeyboardMarkup().add(InlineKeyboardButton("App langauge", callback_data="1"), InlineKeyboardButton("Preferred gender", callback_data="17"))\
             .add(InlineKeyboardButton("Description", callback_data="3"), InlineKeyboardButton("Spoken languages", callback_data="4"), InlineKeyboardButton("Auto-Reply", callback_data="17"))\
             .add(InlineKeyboardButton("Name", callback_data="2"), InlineKeyboardButton("Country", callback_data="5"), InlineKeyboardButton("City", callback_data="6"))\
             .add(InlineKeyboardButton("Usage reason", callback_data="7"), InlineKeyboardButton("Preferred age", callback_data="13"))\
@@ -63,6 +65,8 @@ class Registrator:
             .add(InlineKeyboardButton("Preferred languages", callback_data="11"), InlineKeyboardButton("Preferred country", callback_data="12"))\
             .add(InlineKeyboardButton("Profile media", callback_data="10"), InlineKeyboardButton("Preferred Communication", callback_data="15"))\
             .add(InlineKeyboardButton(self.localization["DoneButton"], callback_data="18"))
+
+        self.change_markup = copy.copy(self.create_markup)
 
         self.app_language = localizationIndex
 
@@ -97,6 +101,13 @@ class Registrator:
         self.current_section = None
 
         self.editMode = False
+
+        app_languages = Helpers.get_app_languages()
+
+        for lang in app_languages:
+            self.app_languages_markup.add(InlineKeyboardButton(lang["name"], callback_data=lang["name"]))
+
+        self.app_languages_markup.add(InlineKeyboardButton("🔙 Go Back", callback_data="-10"))
 
         if not hasVisited:
             self.get_localisations()
@@ -159,43 +170,17 @@ class Registrator:
             else:
                 self.spoken_language_step(message)
 
-    # Case without 'editMode=True' is redundant
     def app_language_step(self, message=None, acceptMode=False, shouldInsert=True):
         if not acceptMode:
             self.question_index = 1
 
             self.configure_registration_step(self.app_language_step, shouldInsert)
 
-            for lang in json.loads(requests.get("https://localhost:44381/app-languages", verify=False).text):
-                self.app_langs[lang["id"]] = lang["languageNameShort"]
-
-            self.app_languages_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-            start_message = "START MESSAGE" #self.localisation[0]["loc"][0]["elementText"]
-            b = []
-
-            for lang in self.app_langs.values():
-                b.append(KeyboardButton(lang))
-
-            self.app_languages_markup.add(b[0], b[1], b[2])
-            self.send_active_message(start_message, markup=self.app_languages_markup)
-            self.send_additional_actions_message()
-            self.next_handler = self.bot.register_next_step_handler(message, self.app_language_step, acceptMode=True,
-                                                                    chat_id=self.current_user)
-
+            self.delete_secondary_message()
+            self.send_active_message("Please select a language", markup=self.app_languages_markup)
         else:
-            self.delete_message(message.id)
-
-            self.app_language = self.app_language_converter(message.text)
-            if self.app_language is not None:
-
-                self.checkout_step(message)
-                self.data["userAppLanguageId"] = self.app_language
-
-            else:
-                self.send_error_message(self.localization['LanguageNotRecognizedErrorMessage'], markup=self.app_languages_markup)
-                self.next_handler = self.bot.register_next_step_handler(message, self.app_language_step, acceptMode=acceptMode,
-                                                                        shouldInsert=False,
-                                                                        chat_id=self.current_user)
+            self.checkout_step(message)
+            self.data["userAppLanguageId"] = self.app_language
 
     def spoken_language_step(self, message=None, acceptMode=False, shouldInsert=True):
         if not acceptMode:
@@ -919,15 +904,16 @@ class Registrator:
 
     def auto_reply_step(self, message=None, acceptMode=False, shouldInsert=True):
         if not acceptMode:
-            description_message = "---Functionality description---\n"
-            question_message = self.localization['AutoreplyDescriptionMessage']
+            description_message = f"ℹ️{self.localization['AutoreplyDescriptionMessage']}"
+            # TODO: load from localization
+            question_message = "Please, send your auto-reply\n\n"
 
             question_counter = self.move_forward()
 
             self.configure_registration_step(self.auto_reply_step, shouldInsert)
 
             if not self.hasVisited:
-                question_message = description_message + question_message
+                question_message = question_message + description_message
 
             self.send_additional_actions_message()
             self.send_active_message(question_counter + question_message, markup=self.skip_markup)
@@ -982,10 +968,11 @@ class Registrator:
     def checkout_step(self, input=None, acceptMode=False, shouldInsert=True):
         self.question_index = 16
         if not acceptMode:
+
             # Add discard changes button if user exists
+            active_markup = self.create_markup
             if self.hasVisited:
-                self.change_markup.add(
-                    InlineKeyboardButton(self.localization['DiscardChangesButton'], callback_data="19"))
+                active_markup = self.change_markup
 
             self.editMode = True
 
@@ -996,11 +983,11 @@ class Registrator:
             else:
                 self.send_active_message_with_video(self.localization['CheckoutMessage'].format(self.profile_constructor()), self.data["userMedia"])
 
-            self.send_secondary_message(self.localization['CheckoutMenuMessage'], markup=self.change_markup)
+            self.send_secondary_message(self.localization['CheckoutMenuMessage'], markup=active_markup)
         else:
             if input == "1":
                 self.data["wasChanged"] = True
-                self.app_language_step(shouldInsert=False)
+                self.app_language_step(shouldInsert=True)
             elif input == "2":
                 self.data["wasChanged"] = True
                 self.name_step(shouldInsert=False)
@@ -1114,12 +1101,6 @@ class Registrator:
                 return c
         return None
 
-    def app_language_converter(self, lang):
-        for l in self.app_langs:
-            if lang == self.app_langs[l]:
-                return l
-        return None
-
     def send_active_message(self, text, markup=None):
         try:
             if self.active_message:
@@ -1226,6 +1207,9 @@ class Registrator:
 
         elif call.data == "-10":
             self.go_back_to_previous_registration_step()
+
+        elif self.question_index == 1:
+            self.app_language_step(acceptMode=True)
 
         elif self.question_index == 2:
             if int(call.data) not in self.chosen_langs:

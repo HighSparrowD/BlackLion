@@ -24,7 +24,8 @@ namespace WebApi.Services.Background
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                await CorrectTimerAsync();
+                //await CorrectTimerAsync();
+                await CorrectTimerFasterAsync();
                 await Beat();
             }
         }
@@ -43,6 +44,12 @@ namespace WebApi.Services.Background
             Console.WriteLine($"UTC Time now is {now}");
             Console.WriteLine($"Correcting by timespan: {timespan}");
             await Task.Delay(timespan);
+        }
+
+        // Debugging method
+        public async Task CorrectTimerFasterAsync()
+        {
+            await Task.Delay(10000);
         }
 
         public async Task Beat()

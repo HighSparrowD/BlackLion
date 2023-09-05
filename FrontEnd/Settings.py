@@ -1469,7 +1469,6 @@ class Settings:
             .add(InlineKeyboardButton("Card Deck Platinum", callback_data="10"), self.cardDeckPlatinum_indicator) \
             .add(InlineKeyboardButton("Go Back", callback_data="-20")) \
 
-
     def help_handler(self, message):
         self.bot.delete_message(self.current_user, message.id)
         Helper(self.bot, message, self.active_section, activeMessageId=self.active_message, secondaryMessageId=self.secondary_message, isEncounter=self.isEncounter)

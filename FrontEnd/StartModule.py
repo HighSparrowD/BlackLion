@@ -14,9 +14,7 @@ class StartModule:
 
         self.hasEnteredPromo = False
 
-        # TODO: load from API
-        self.app_languages = ["EN", "RU", "UK"]
-
+        self.app_languages = Helpers.get_app_languages()
         terms_url = "https://telegra.ph/Personality-Bot--Terms-and-conditions-09-01"
         about_us_url = "https://telegra.ph/Personality-Bot--about-us-09-01"
 
@@ -34,9 +32,9 @@ class StartModule:
         self.go_backMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Go Back")
 
         self.app_languages_markup = InlineKeyboardMarkup()
-        self.app_languages_markup.add(InlineKeyboardButton(self.app_languages[0], callback_data=self.app_languages[0]),
-                                      InlineKeyboardButton(self.app_languages[1], callback_data=self.app_languages[1]),
-                                      InlineKeyboardButton(self.app_languages[2], callback_data=self.app_languages[2]))
+
+        for lang in self.app_languages:
+            self.app_languages_markup.add(InlineKeyboardButton(lang["name"], callback_data=lang["name"]))
 
         invitorId = self.get_invitor_id(message.html_text)
         if invitorId:
