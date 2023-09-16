@@ -591,6 +591,7 @@ class Shop:
 
         if charge_info.status == "succeeded":
             self.delete_price_invoice()
+            self.delete_active_message()
             self.process_transaction(self.current_transaction, None, is_final=True)
             self.send_active_transaction_message("Payment was successful!")
         else:

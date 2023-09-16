@@ -24,6 +24,8 @@ class Registrator:
         self.okMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(KeyboardButton(self.localization['OkButton']))
         self.YNmarkup = InlineKeyboardMarkup().add(InlineKeyboardButton(self.localization['YesButton'], callback_data="1"),
                                                    InlineKeyboardButton(self.localization['NoButton'], callback_data="2"))
+        self.registration_typeMarkup = InlineKeyboardMarkup().add(InlineKeyboardButton("Short. 10 questions", callback_data="1"))\
+            .add(InlineKeyboardButton("Full. 16 questions", callback_data="2"))
         self.goBackInlineMarkup = InlineKeyboardMarkup().add(InlineKeyboardButton("🔙 Go Back", callback_data="-10"))
 
         self.chCode = self.bot.register_callback_query_handler(message, self.callback_handler, user_id=self.current_user)
@@ -46,7 +48,6 @@ class Registrator:
         self.markup_page = 1
         self.markup_pages_count = 0
 
-        self.app_languages_markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
         self.gender_markup = InlineKeyboardMarkup()
         self.reason_markup = InlineKeyboardMarkup()
         self.communication_pref_markup = InlineKeyboardMarkup()
@@ -101,6 +102,7 @@ class Registrator:
         self.current_section = None
 
         self.editMode = False
+        self.isShortReg = False
 
         app_languages = Helpers.get_app_languages()
 
@@ -112,7 +114,7 @@ class Registrator:
         if not hasVisited:
             self.get_localisations()
             self.current_section = self.destruct
-            self.spoken_language_step(message)
+            self.start()
         else:
             self.current_user_data = Helpers.get_user_info(self.current_user)
             if self.current_user_data:
@@ -168,7 +170,11 @@ class Registrator:
 
                 self.checkout_step(message)
             else:
-                self.spoken_language_step(message)
+                self.start()
+
+    def start(self):
+        self.question_index = 0
+        self.send_active_message("Choose the registration type", markup=self.registration_typeMarkup)
 
     def app_language_step(self, message=None, acceptMode=False, shouldInsert=True):
         if not acceptMode:
@@ -179,8 +185,8 @@ class Registrator:
             self.delete_secondary_message()
             self.send_active_message("Please select a language", markup=self.app_languages_markup)
         else:
-            self.checkout_step(message)
             self.data["userAppLanguageId"] = self.app_language
+            self.checkout_step(message)
 
     def spoken_language_step(self, message=None, acceptMode=False, shouldInsert=True):
         if not acceptMode:
@@ -957,7 +963,7 @@ class Registrator:
                 self.send_error_message(self.localization['EmptyErrorMessage'], markup=self.skip_markup)
                 self.next_handler = self.bot.register_next_step_handler(message, self.auto_reply_step, acceptMode=acceptMode, chat_id=self.current_user)
 
-    def change_something_step(self, message):
+    def change_something_step(self, message=None):
         self.question_index = 13
         if self.data["isMediaPhoto"]:
             self.send_active_message_with_photo(self.localization['CheckoutMessage'].format(self.profile_constructor()), self.data["userMedia"])
@@ -1208,6 +1214,11 @@ class Registrator:
         elif call.data == "-10":
             self.go_back_to_previous_registration_step()
 
+        elif self.question_index == 0:
+            self.isShortReg = call.data == "1"
+            self.max_questions_count = 10
+            self.spoken_language_step()
+
         elif self.question_index == 1:
             self.app_language_step(acceptMode=True)
 
@@ -1270,6 +1281,12 @@ class Registrator:
             self.data["reasonId"] = call.data
 
             if not self.editMode:
+                if self.isShortReg:
+                    # "Does not matter is always the last one"
+                    self.data["communicationPrefs"] = self.communication_pref[len(self.communication_pref.values())].replace(" ", "")
+                    self.location_step()
+                    return
+
                 self.communication_preferences_step()
             else:
                 self.checkout_step(call.message)
@@ -1292,6 +1309,15 @@ class Registrator:
             self.data["userGenderPrefs"] = gender
 
             if not self.editMode:
+                if self.isShortReg:
+                    self.pref_langs.extend(self.chosen_langs)
+                    self.pref_countries.append(self.country)
+
+                    self.data["userLanguagePreferences"] = self.pref_langs
+                    self.data["userLocationPreferences"] = self.pref_countries
+                    self.data["agePrefs"] = list(range(self.data["userAge"] - 3, self.data["userAge"] + 5))
+                    self.change_something_step()
+                    return
                 self.language_preferences_step(call.message)
             else:
                 self.checkout_step(call.message)
