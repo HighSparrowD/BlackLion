@@ -10,7 +10,6 @@ using WebApi.Entities.LocationEntities;
 using WebApi.Entities.AchievementEntities;
 using WebApi.Entities.UserActionEntities;
 using WebApi.Entities.TestEntities;
-using WebApi.Entities.EffectEntities;
 using WebApi.Entities.AdventureEntities;
 using WebApi.Enums;
 using WebApi.Entities;
