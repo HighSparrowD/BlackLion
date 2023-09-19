@@ -29,6 +29,43 @@ prioritized_langs = ["English", "Russian", "Ukrainian", "Czech", "Polish"]
 prioritized_countries = ["Ukraine", "Russia", "Czechia", "Poland", "United States"]
 
 
+
+initial_prompt = """У меня есть вопрос из психологического теста. Он звучит так: '{}' ответы на него: {}.
+Мне нужно чтобы ты описал информацию полученную о человеке которую мы получим в случае если он ответит каждым из возможных вариантов ответа. 
+Пример ответа: 
+Да - боится темноты
+Иногда - неоднозначно 
+Нет - не боится темноты
+
+Твои ответы должны содержать как можно меньше слов и как можно больше смысла. (не использую слов "возможно", "вероятно" и тд). Если ответ может быть только неоднозначным - пожалуйста, оставляй его пустым
+"""
+
+
+def generate_tag_prompt():
+    file = pandas.read_csv(f"Inputs/TestsRU - Tests.csv")
+    file = get_file_data(file)
+    question_stacks = []
+    prompts = ""
+
+    count = 1
+
+    for test in file:
+        question_stacks.append(load_questions(test[0], "RU"))
+
+    for question_stack in question_stacks:
+        for question in question_stack:
+            q = question["text"]
+            answers = ""
+            for answer in question["answers"]:
+                answers += f' {answer["text"]} '
+
+            prompts += f"{count}. {initial_prompt.format(q, answers)}\n\n"
+            count += 1
+
+    with open('prompts.txt', 'w+', encoding='utf-8') as f:
+        f.write(prompts)
+
+
 def create_countries_resource(language, start_index=0, loc_index=0):
     global countries_last_index
     ids = []
@@ -319,14 +356,6 @@ def update_languages(language):
     pass
 
 
-def Do():
-    output_data = ""
-    trsl = GoogleTranslator(source="en", target="ru")
-
-    file = trsl.translate_file("worldcitiesEN.csv")
-    pass
-
-
 # create_countries_resource("ru", 1, 1)
 # create_countries_resource("uk", 1, 2)
 # create_cities_resource("ru", cities_last_index, 1)
@@ -336,21 +365,21 @@ def Do():
 
 
 def create_eng_localization():
-    # create_countries_resource("en", 1, 0)
-    create_cities_resource("en", 1, 0)
-    # create_languages_resource("en", 1, 0)
+    create_countries_resource("en", 1, 0)
+    # create_cities_resource("en", 1, 0)
+    create_languages_resource("en", 1, 0)
 
 
 def create_ru_localization():
-    # create_countries_resource("ru", 1, 1)
-    create_cities_resource("ru", 1, 1)
-    # create_languages_resource("ru", 1, 1)
+    create_countries_resource("ru", 1, 1)
+    # create_cities_resource("ru", 1, 1)
+    create_languages_resource("ru", 1, 1)
 
 
 def create_uk_localization():
-    # create_countries_resource("uk", 1, 1)
-    create_cities_resource("uk", 1, 1)
-    # create_languages_resource("uk", 1, 1)
+    create_countries_resource("uk", 1, 1)
+    # create_cities_resource("uk", 1, 1)
+    create_languages_resource("uk", 1, 1)
 
 
 def load_eng_localization():
@@ -378,6 +407,7 @@ def add_tests(lang):
 
     data = json.dumps(test_template)
     print(requests.post("https://localhost:44381/UploadTests", data, headers={"Content-Type": "application/json"}, verify=False).text)
+
 
 def generate_test_prices():
     file = pandas.read_csv(f"Inputs/Tests{langs[1]} - Tests.csv")
@@ -533,10 +563,12 @@ def get_file_data(file):
 
 # generate_test_prices()
 
-create_eng_localization()
-create_ru_localization()
-create_uk_localization()
+# create_eng_localization()
+# create_ru_localization()
+# create_uk_localization()
 
 # load_eng_localization()
+# load_ru_localization()
+# load_uk_localization()
 
-# Do()
+generate_tag_prompt()

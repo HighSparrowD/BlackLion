@@ -2,6 +2,7 @@ import requests
 
 from Common.Menues import go_back_to_main_menu
 from Requester import *
+import Core.HelpersMethodes as Helpers
 
 
 class Familiator:
@@ -80,10 +81,9 @@ class Familiator:
             self.send_active_message(f"Send me up to {self.tagLimit} tags to conduct the search", markup=self.goBackmarkup)
             self.nextHandler = self.bot.register_next_step_handler(message, self.search_by_tags, acceptMode=True, chat_id=self.current_user)
         else:
-            # TODO: check tags formatting
             tags = message.text
             if 0 < len(tags) <= self.tagLimit:
-                tags = tags.lower().strip()
+                tags = Helpers.format_tags(tags)
                 data = {
                     "userId": self.current_user,
                     "tags": tags

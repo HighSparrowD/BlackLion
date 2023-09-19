@@ -21,7 +21,6 @@ namespace WebApi.Controllers
     [Route("[controller]")]
     public class UserActionController : ControllerBase
     {
-        //private User currentUser = Entities.UserInfoEntities.User.CreateDummyUser(); //TODO: relocate to an application 
         private readonly ILogger<UserActionController> _logger;
         private IUserRepository _repository;
 

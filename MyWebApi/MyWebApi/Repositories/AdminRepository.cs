@@ -35,7 +35,7 @@ namespace WebApi.Repositories
 
             foreach (var city in cities)
             {
-                if (dbCities.Any(c => c.Id == city.Id))
+                if (dbCities.Any(c => c.Id == city.Id && c.CountryLang == city.Lang))
                     continue;
 
                 await _contx.Cities.AddAsync(new City
@@ -57,13 +57,13 @@ namespace WebApi.Repositories
 
             foreach (var country in countries)
             {
-                if (dbCountries.Any(c => c.Id == country.Id))
+                if (dbCountries.Any(c => c.Id == country.Id && c.Lang == country.Lang))
                     continue;
 
                 await _contx.Countries.AddAsync(new Country
                 {
                     Id = country.Id,
-                    CountryName = country.CountryName,
+                    CountryName = country.CountryName.ToLower(),
                     Priority = country.Priority,
                     Lang = country.Lang
                 });
@@ -79,13 +79,13 @@ namespace WebApi.Repositories
 
             foreach (var lang in langs)
             {
-                if (dbLangs.Any(c => c.Id == lang.Id))
+                if (dbLangs.Any(c => c.Id == lang.Id && c.Lang == lang.Lang))
                     continue;
 
                 await _contx.Languages.AddAsync(new Language
                 {
                     Id = lang.Id,
-                    LanguageName = lang.LanguageName,
+                    LanguageName = lang.LanguageName.ToLower(),
                     LanguageNameNative = lang.LanguageNameNative,
                     Priority = lang.Priority,
                     Lang = lang.Lang
