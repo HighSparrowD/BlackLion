@@ -502,7 +502,7 @@ class Adventurer:
             self.delete_message(message)
             if message.photo:
                 self.data["media"] = message.photo[len(message.photo) - 1].file_id
-                self.data["isMediaPhoto"] = True
+                self.data["MediaType"] = "Photo"
             elif message.video:
                 if message.video.duration > 180:
                     self.send_secondary_message("Video is to long")
@@ -510,7 +510,7 @@ class Adventurer:
                     return
 
                 self.data["media"] = message.video.file_id
-                self.data["isMediaPhoto"] = False
+                self.data["mediaType"] = "Video"
             else:
                 self.send_secondary_message("Unsupported media type")
                 self.next_handler = self.bot.register_next_step_handler(message, self.register_media_step, acceptMode=acceptMode, chat_id=self.current_user)
@@ -927,7 +927,7 @@ class Adventurer:
 
             msg = self.register_checkout_message.format(commOption=addition1, action=addition2)
 
-            if self.data["isMediaPhoto"]:
+            if self.data["mediaType"] == "Photo":
                 self.send_active_message_with_photo(self.assemble_adventure_checkout_message(), self.data["media"], markup=self.registerCheckoutMarkup_E)
             else:
                 self.send_active_message_with_video(self.assemble_adventure_checkout_message(), self.data["media"], markup=self.registerCheckoutMarkup_E)
@@ -1018,7 +1018,7 @@ class Adventurer:
 
             msg = self.register_template_checkout_message.format(commOption=addition1, action=addition2)
 
-            if self.data["isMediaPhoto"]:
+            if self.data["mediaType"] == "Photo":
                 self.send_active_message_with_photo(self.assemble_adventure_checkout_message(), self.data["media"], markup=self.registerTemplateCheckoutMarkup_E)
             else:
                 self.send_active_message_with_video(self.assemble_adventure_checkout_message(), self.data["media"], markup=self.registerTemplateCheckoutMarkup_E)
@@ -1250,7 +1250,7 @@ class Adventurer:
 
     def show_adventure(self, message, acceptMode=False):
         if not acceptMode:
-            if self.current_adventure_data["isMediaPhoto"]:
+            if self.current_adventure_data["mediaType"] == "Photo":
                 self.send_active_message_with_photo(self.current_adventure_data["description"], self.current_adventure_data["media"], self.SearchMarkup)
             else:
                 self.send_active_message_with_video(self.current_adventure_data["description"], self.current_adventure_data["media"], self.SearchMarkup)
@@ -1561,7 +1561,7 @@ class Adventurer:
     def display_current_attendee_data(self):
         base = self.current_attendee_data["data"]
 
-        if base["isMediaPhoto"]:
+        if base["mediaType"] == "Photo":
             self.send_active_message_with_photo(base["userDescription"], base["userMedia"])
         else:
             self.send_active_message_with_video(base["userDescription"], base["userMedia"])

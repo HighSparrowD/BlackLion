@@ -121,7 +121,7 @@ class Familiator:
         if not acceptMode:
             user = self.active_user["userDataInfo"]
 
-            if user["isMediaPhoto"]:
+            if user["mediaType"] == "Photo":
                 self.bot.send_photo(self.current_user, user["userMedia"], user["userDescription"], reply_markup=self.markup)
             else:
                 self.bot.send_video(self.current_user, video=user["userMedia"], caption=user["userDescription"], reply_markup=self.markup)

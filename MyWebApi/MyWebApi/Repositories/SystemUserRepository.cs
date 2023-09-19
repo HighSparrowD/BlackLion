@@ -3725,7 +3725,7 @@ namespace WebApi.Repositories
                 Experience = model.Experience,
                 UnwantedAttendeesDescription = model.UnwantedAttendeesDescription,
                 Gratitude = model.Gratitude,
-                IsMediaPhoto = model.IsMediaPhoto,
+                MediaType = model.MediaType,
                 Media = model.Media,
                 IsAutoReplyText = model.IsAutoReplyText,
                 AutoReply = model.AutoReply,
@@ -3757,7 +3757,7 @@ namespace WebApi.Repositories
             adventure.AttendeesDescription = model.AttendeesDescription;
             adventure.UnwantedAttendeesDescription = model.UnwantedAttendeesDescription;
             adventure.Media = model.Media;
-            adventure.IsMediaPhoto = model.IsMediaPhoto;
+            adventure.MediaType = model.MediaType;
             adventure.CityId = model.CityId;
             adventure.CountryId = model.CountryId;
             adventure.Description = model.Description;
@@ -4391,7 +4391,7 @@ namespace WebApi.Repositories
                 Id = q.Id,
                 Description = GetAdventureSearch.GenerateDescription(q),
                 Media = q.Media,
-                IsMediaPhoto = q.IsMediaPhoto,
+                MediaType = q.MediaType,
                 AutoReply = q.AutoReply,
                 IsAutoReplyText = q.IsAutoReplyText
             }).ToListAsync();

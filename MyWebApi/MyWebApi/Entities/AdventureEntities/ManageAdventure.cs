@@ -1,6 +1,7 @@
 ﻿
 using System;
 using System.Text.Json.Serialization;
+using WebApi.Enums;
 
 namespace WebApi.Entities.AdventureEntities
 {
@@ -20,8 +21,8 @@ namespace WebApi.Entities.AdventureEntities
         public int? CityId { get; set; }
         [JsonPropertyName("media")]
         public string Media { get; set; }
-        [JsonPropertyName("isMediaPhoto")]
-        public bool IsMediaPhoto { get; set; }
+        [JsonPropertyName("mediaType")]
+        public MediaType MediaType { get; set; }
         [JsonPropertyName("description")]
         public string Description { get; set; }
         [JsonPropertyName("experience")]
@@ -64,7 +65,7 @@ namespace WebApi.Entities.AdventureEntities
             CountryId = adventure.CountryId;
             CityId = adventure.CityId;
             Media = adventure.Media;
-            IsMediaPhoto = adventure.IsMediaPhoto;
+            MediaType = adventure.MediaType;
             Description = adventure.Description;
             Experience = adventure.Experience;
             AttendeesDescription = adventure.AttendeesDescription;
