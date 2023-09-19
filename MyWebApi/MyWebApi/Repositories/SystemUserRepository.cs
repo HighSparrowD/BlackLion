@@ -74,7 +74,7 @@ namespace WebApi.Repositories
                 UserDescription = user.GenerateUserDescription(model.RealName, model.Age, country, city, model.Description),
                 UserGenderPrefs = model.GenderPrefs,
                 UserMedia = model.Media,
-                IsMediaPhoto = model.IsMediaPhoto,
+                MediaType = model.MediaType,
                 CommunicationPrefs = model.CommunicationPrefs,
                 LanguagePreferences = model.LanguagePreferences,
                 LocationPreferences = model.UserLocationPreferences,
@@ -1078,7 +1078,7 @@ namespace WebApi.Repositories
                     Description = sData.UserDescription,
                     Gender = sData.UserGender,
                     GenderPrefs = sData.UserGenderPrefs,
-                    IsMediaPhoto = sData.IsMediaPhoto,
+                    MediaType = sData.MediaType,
                     Media = sData.UserMedia,
                     LanguagePreferences = sData.LanguagePreferences,
                     Languages = sData.UserLanguages,
@@ -1529,7 +1529,7 @@ namespace WebApi.Repositories
             if (model.Media != user.Data.UserMedia)
             {
                 user.Data.UserMedia = model.Media;
-                user.Data.IsMediaPhoto = model.IsMediaPhoto;
+                user.Data.MediaType = model.MediaType;
                 await ReactivateTickRequest(user.Id);
             }
 
@@ -4124,7 +4124,7 @@ namespace WebApi.Repositories
             return await _contx.UserData.Where(u => u.Id == userId).Select(u => new GetUserMedia
             {
                 Media = u.UserMedia,
-                IsPhoto = u.IsMediaPhoto
+                MediaType = u.MediaType
             }).FirstOrDefaultAsync();
         }
 
@@ -4135,7 +4135,7 @@ namespace WebApi.Repositories
                 Id = u.Id,
                 AppLanguage = u.Data.Language,
                 Media = u.Data.UserMedia,
-                IsPhoto = u.Data.IsMediaPhoto
+                MediaType = u.Data.MediaType
             }).FirstOrDefaultAsync();
         }
 

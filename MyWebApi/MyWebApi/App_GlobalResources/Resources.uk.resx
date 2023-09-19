@@ -177,6 +177,9 @@
   <data name="Gender_RatherNotSays" xml:space="preserve">
     <value>Неважливо</value>
   </data>
+  <data name="RandomAchievements_Message" xml:space="preserve">
+    <value>&lt;b&gt;Сьогоднішні рандомні досягнення&lt;/b&gt;\n\n</value>
+  </data>
   <data name="ReportReason_Spam" xml:space="preserve">
     <value>Спам</value>
   </data>

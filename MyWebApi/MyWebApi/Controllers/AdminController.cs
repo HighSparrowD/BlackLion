@@ -180,7 +180,7 @@ namespace WebApi.Controllers
                         Description = initialUser.Data.UserDescription,
                         Gender = initialUser.Data.UserGender,
                         GenderPrefs = initialUser.Data.UserGenderPrefs,
-                        IsMediaPhoto = initialUser.Data.IsMediaPhoto,
+                        MediaType = initialUser.Data.MediaType,
                         Id = initialUser.Id + i,
                         LanguagePreferences = initialUser.Data.LanguagePreferences,
                         Languages = initialUser.Data.UserLanguages,

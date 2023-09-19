@@ -6,6 +6,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using WebApi.Enums;
+using WebApi.App_GlobalResources;
 
 namespace WebApi.Services.Background
 {
@@ -88,15 +89,19 @@ namespace WebApi.Services.Background
                     user.Settings.IsFree = null;
 
                     //Random achievements
-                    //TODO: Localize
                     var achievements = await userRepo.GetRandomAchievements(user.Id);
-                    await userRepo.AddUserNotificationAsync(new UserNotification
+
+                    if (achievements.Count > 0)
                     {
-                        Description = "<b>Today's Random Achievements</b>\n\n" + string.Join("\n\n", achievements),
-                        UserId = user.Id,
-                        Type = NotificationType.Other,
-                        Section = Section.Neutral
-                    });
+                        await userRepo.AddUserNotificationAsync(new UserNotification
+                        {
+                            
+                            Description = Resources.ResourceManager.GetString("RandomAchievements_Message") + string.Join("\n\n", achievements),
+                            UserId = user.Id,
+                            Type = NotificationType.Other,
+                            Section = Section.Neutral
+                        });
+                    }
 
                     if (user.PremiumExpirationDate != null)
                     {

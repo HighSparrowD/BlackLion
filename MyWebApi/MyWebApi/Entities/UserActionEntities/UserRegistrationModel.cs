@@ -19,8 +19,8 @@ namespace WebApi.Entities.UserActionEntities
         public AppLanguage AppLanguage { get; set; }
         [JsonPropertyName("userMedia")]
         public string? Media { get; set; }
-        [JsonPropertyName("isMediaPhoto")]
-        public bool IsMediaPhoto { get; set; }
+        [JsonPropertyName("mediaType")]
+        public MediaType MediaType { get; set; }
         [JsonPropertyName("userCountryCode")]
         public int? CountryCode { get; set; }
         [JsonPropertyName("userCityCode")]
