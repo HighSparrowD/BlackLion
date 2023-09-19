@@ -125,9 +125,9 @@ class Registrator:
                 self.chosen_langs = data["userLanguages"]
                 self.app_language = data["language"]
 
-                if "location" in data:
+                if "location" in self.current_user_data:
                     self.country = self.current_user_data["location"]["countryId"]
-                    self.city = data["location"]["cityId"]
+                    self.city = self.current_user_data["location"]["cityId"]
 
                 if "tags" in self.data.keys():
                     self.tags = ' '.join(self.current_user_data["tags"])
@@ -150,7 +150,7 @@ class Registrator:
                 self.data["communicationPrefs"] = data["communicationPrefs"]
                 self.data["userGenderPrefs"] = data["userGenderPrefs"]
                 self.data["tags"] = self.tags
-                self.data["isMediaPhoto"] = data["isMediaPhoto"]
+                self.data["mediaType"] = data["mediaType"]
 
                 self.get_localisations()
 
@@ -224,7 +224,7 @@ class Registrator:
             message_text = message.text.lower().strip()
             if message_text != self.localization['OkButton']:
                 lang = self.spoken_languages_convertor(message_text)
-                if lang:  # TODO: Get string, separate by "," and process it
+                if lang:
                     if lang not in self.chosen_langs:
                         if len(self.chosen_langs) + 1 > self.premium_limit:
                             self.send_error_message(self.localization['LanguagesPremiumErrorMessage'].format(self.premium_limit), markup=self.okMarkup)
@@ -619,7 +619,7 @@ class Registrator:
 
             if message.photo:
                 self.data["userMedia"] = message.photo[len(message.photo) - 1].file_id  # TODO: troubleshoot photos
-                self.data["isMediaPhoto"] = True
+                self.data["mediaType"] = "Photo"
 
                 if self.editMode:
                     self.checkout_step(message)
@@ -633,7 +633,7 @@ class Registrator:
                     return
 
                 self.data["userMedia"] = message.video.file_id
-                self.data["isMediaPhoto"] = False
+                self.data["mediaType"] = "Video"
 
                 if self.editMode:
                     self.checkout_step(message)
@@ -649,7 +649,7 @@ class Registrator:
                     return
 
                 self.data["userMedia"] = photos.photos[0][len(photos.photos[0]) -1].file_id
-                self.data["isMediaPhoto"] = True
+                self.data["mediaType"] = "Photo"
 
                 if self.editMode:
                     self.checkout_step(message)
@@ -713,7 +713,7 @@ class Registrator:
             message_text = message.text.lower().strip()
             if message_text != self.localization['OkButton']:
                 lang = self.spoken_languages_convertor(message_text)
-                if lang:  # TODO: Get string, separate by , and process it
+                if lang:
                     if lang not in self.pref_langs:
                         if len(self.pref_langs) + 1 > self.premium_limit:
                             self.send_error_message(self.localization['LanguagesPremiumErrorMessage'].format(self.premium_limit), markup=self.okMarkup)
@@ -912,8 +912,7 @@ class Registrator:
     def auto_reply_step(self, message=None, acceptMode=False, shouldInsert=True):
         if not acceptMode:
             description_message = f"ℹ️{self.localization['AutoreplyDescriptionMessage']}"
-            # TODO: load from localization
-            question_message = "Please, send your auto-reply\n\n"
+            question_message = self.localization["AutoReplyQ"]
 
             question_counter = self.move_forward()
 
@@ -966,7 +965,7 @@ class Registrator:
 
     def change_something_step(self, message=None):
         self.question_index = 13
-        if self.data["isMediaPhoto"]:
+        if self.data["mediaType"] == "Photo":
             self.send_active_message_with_photo(self.localization['CheckoutMessage'].format(self.profile_constructor()), self.data["userMedia"])
         else:
             self.send_active_message_with_video(self.localization['CheckoutMessage'].format(self.profile_constructor()), video=self.data["userMedia"])
@@ -985,7 +984,7 @@ class Registrator:
 
             self.configure_registration_step(self.checkout_step, shouldInsert)
 
-            if self.data["isMediaPhoto"]:
+            if self.data["mediaType"] == "Photo":
                 self.send_active_message_with_photo(self.localization['CheckoutMessage'].format(self.profile_constructor()), self.data["userMedia"])
             else:
                 self.send_active_message_with_video(self.localization['CheckoutMessage'].format(self.profile_constructor()), self.data["userMedia"])
@@ -1437,26 +1436,29 @@ class Registrator:
 
         return f"{min_value} - {max_value}"
 
-    #TODO: Send Accept-Language header !
     def get_localisations(self):
         for language in json.loads(
-                requests.get(f"https://localhost:44381/GetLanguages/{self.app_language}", verify=False).text):
+                requests.get(f"https://localhost:44381/GetLanguages/{self.app_language}", headers={
+                    f"Accept-Language": self.app_language}, verify=False).text):
             self.languages[language["id"]] = language["languageName"].lower().strip()
 
         for gender in json.loads(
-                requests.get(f"https://localhost:44381/genders", verify=False).text):
+                requests.get(f"https://localhost:44381/genders", headers={
+                    f"Accept-Language": self.app_language}, verify=False).text):
             self.genders[gender["id"]] = gender["name"].strip()
 
         for country in json.loads(
-                requests.get(f"https://localhost:44381/GetCountries/{self.app_language}", verify=False).text):
+                requests.get(f"https://localhost:44381/GetCountries/{self.app_language}", headers={
+                    f"Accept-Language": self.app_language}, verify=False).text):
             self.countries[country["id"]] = country["countryName"].lower().strip()
 
         for reason in json.loads(
-                requests.get(f"https://localhost:44381/usage-reasons", verify=False).text):
+                requests.get(f"https://localhost:44381/usage-reasons", headers={
+                    f"Accept-Language": self.app_language}, verify=False).text):
             self.reasons[reason["id"]] = reason["name"].strip()
 
-        for pref in json.loads(requests.get(f"https://localhost:44381/communication-preferences",
-                                            verify=False).text):
+        for pref in json.loads(requests.get(f"https://localhost:44381/communication-preferences", headers={
+                    f"Accept-Language": self.app_language}, verify=False).text):
             self.communication_pref[pref["id"]] = pref["name"].strip()
 
     def suggest_languages(self, language):

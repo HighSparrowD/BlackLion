@@ -89,7 +89,7 @@ class AdminCabinet:
                     self.managed_user_data = json.loads(requests.get(f"https://localhost:44381/user-partial-data/{self.current_request['userId']}", verify=False).text)
                     media = self.managed_user_data["media"]
 
-                    if self.managed_user_data["isPhoto"]:
+                    if self.managed_user_data["mediaType"] == "Photo":
                         self.bot.send_photo(self.current_user, media, "That is how the user looks like")
                     else:
                         self.bot.send_video(self.current_user, video=media, caption="That is how the user looks like")

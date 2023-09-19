@@ -1,4 +1,5 @@
 ﻿using System.Text.Json.Serialization;
+using WebApi.Enums;
 
 namespace WebApi.Entities.AdventureEntities
 {
@@ -10,8 +11,8 @@ namespace WebApi.Entities.AdventureEntities
         public string Description { get; set; }
         [JsonPropertyName("media")]
         public string Media { get; set; }
-        [JsonPropertyName("isMediaPhoto")]
-        public bool IsMediaPhoto { get; set; }
+        [JsonPropertyName("mediaType")]
+        public MediaType MediaType { get; set; }
         [JsonPropertyName("autoReply")]
         public string AutoReply { get; set; }
         [JsonPropertyName("isAutoReplyText")]

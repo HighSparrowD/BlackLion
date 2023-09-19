@@ -147,7 +147,7 @@ class Requester:
         if isLikedBack:
             bonus = f"<b>{self.current_request['description']}</b>"
 
-        if self.current_managed_user["isMediaPhoto"]:
+        if self.current_managed_user["mediaType"] == "Photo":
             self.bot.send_photo(self.current_user, self.current_managed_user["userMedia"],
                                 f"{bonus}{self.current_managed_user['userDescription']}",
                                 reply_markup=self.markup)

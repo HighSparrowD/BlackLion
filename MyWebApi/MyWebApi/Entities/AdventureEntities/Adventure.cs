@@ -22,7 +22,7 @@ namespace WebApi.Entities.AdventureEntities
         public AppLanguage? CountryLang { get; set; }
         public AppLanguage? CityCountryLang { get; set; }
         public string? Media { get; set; }
-        public bool IsMediaPhoto { get; set; }
+        public MediaType MediaType { get; set; }
         public string? Description { get; set; }
         public string? Experience { get; set; }
         public string? AttendeesDescription { get; set; }

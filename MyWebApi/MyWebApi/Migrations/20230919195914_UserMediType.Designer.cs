@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WebApi.Data;
@@ -12,9 +13,11 @@ using WebApi.Data;
 namespace WebApi.Migrations
 {
     [DbContext(typeof(UserContext))]
-    partial class UserContextModelSnapshot : ModelSnapshot
+    [Migration("20230919195914_UserMediType")]
+    partial class UserMediType
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -242,14 +245,14 @@ namespace WebApi.Migrations
                     b.Property<bool>("IsAwaiting")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsMediaPhoto")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("IsOffline")
                         .HasColumnType("boolean");
 
                     b.Property<string>("Media")
                         .HasColumnType("text");
-
-                    b.Property<short>("MediaType")
-                        .HasColumnType("smallint");
 
                     b.Property<string>("Name")
                         .HasColumnType("text");

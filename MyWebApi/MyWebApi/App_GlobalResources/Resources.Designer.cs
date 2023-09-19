@@ -304,6 +304,15 @@ namespace WebApi.App_GlobalResources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to &lt;b&gt;Today&apos;s Random Achievements&lt;/b&gt;\n\n.
+        /// </summary>
+        public static string RandomAchievements_Message {
+            get {
+                return ResourceManager.GetString("RandomAchievements_Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Spam.
         /// </summary>
         public static string ReportReason_Spam {
