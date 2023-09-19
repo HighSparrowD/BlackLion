@@ -30,6 +30,11 @@ def set_stripe_key(key):
     stripe_key = key
 
 
+def format_tags(tag_string: str) -> str:
+    tags = tag_string.lower().strip()
+
+
+
 def check_user_exists(userId):
     return bool(json.loads(requests.get(f"{api_address}/CheckUserExists/{userId}", verify=False).text))
 

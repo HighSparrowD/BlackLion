@@ -1,15 +1,48 @@
-import math
-
 import pandas
-import pandas as pd
 
 
 def create_registration_resources():
+    create_generic_resources("Registration")
+
+
+def create_settings_resources():
+    create_generic_resources("Settings")
+
+
+def create_shop_resources():
+    create_generic_resources("Shop")
+
+
+def create_rt_resources():
+    create_generic_resources("RT")
+
+
+def create_feedback_module_resources():
+    create_generic_resources("FeedbackModule")
+
+
+def create_report_module_resources():
+    create_generic_resources("ReportModule")
+
+
+def create_requester_module_resources():
+    create_generic_resources("Requester")
+
+
+def create_familiator_resources():
+    create_generic_resources("Familiator")
+
+
+def create_adventurer_resources():
+    create_generic_resources("Adventurer")
+
+
+def create_generic_resources(location):
     en = {}
     ru = {}
     uk = {}
 
-    file = pandas.read_csv("./Inputs/Registration.csv", usecols=["Name", "ENG", "RUS", "UKR"])
+    file = pandas.read_csv(f"./Inputs/{location}.csv", usecols=["Name", "ENG", "RUS", "UKR"])
     resources = file.drop_duplicates().values.tolist()
 
     for res in resources:
@@ -22,9 +55,9 @@ def create_registration_resources():
     uk_dataframe = pandas.DataFrame(uk, index=[0])
 
     # Save output
-    en_dataframe.to_csv("./Outputs/RegistrationEN.csv", index=False)
-    ru_dataframe.to_csv("./Outputs/RegistrationRU.csv", index=False)
-    uk_dataframe.to_csv("./Outputs/RegistrationUK.csv", index=False)
+    en_dataframe.to_csv(f"./Outputs/{location}EN.csv", index=False)
+    ru_dataframe.to_csv(f"./Outputs/{location}RU.csv", index=False)
+    uk_dataframe.to_csv(f"./Outputs/{location}UK.csv", index=False)
 
 
 def create_prices_resource():

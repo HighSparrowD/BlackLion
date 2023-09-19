@@ -2,6 +2,7 @@ import requests
 
 from Common.Menues import go_back_to_main_menu
 from Requester import *
+import Core.HelpersMethodes as Helpers
 
 
 class Familiator:
@@ -18,10 +19,10 @@ class Familiator:
         self.current_user = cr_user
         self.active_user = None
         self.active_user_id = 0
-        self.markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add(self.btnYes, self.btnNo, self.btnLeave)
-        self.YNmarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("Yes", "No")
+        self.markup = ReplyKeyboardMarkup(resize_keyboard=True).add(self.btnYes, self.btnNo, self.btnLeave)
+        self.YNmarkup = InlineKeyboardMarkup().add(InlineKeyboardButton("Yes", callback_data="5"), InlineKeyboardButton("No", callback_data="6"))
 
-        self.goBackmarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("Go Back")
+        self.goBackmarkup = InlineKeyboardMarkup().add(InlineKeyboardButton("Go Back", callback_data="-20"))
 
         self.actions_markup = InlineKeyboardMarkup().add(InlineKeyboardButton("⚠ Report ⚠", callback_data=self.active_user_id)) \
             .add(InlineKeyboardButton("🔖 Help 🔖", callback_data="11"))
@@ -34,105 +35,55 @@ class Familiator:
 
         self.wasPersonalityTurnedOff = False
 
-        self.start_message = "1. Normal search\n2. Search by tags\n3. Free search\n4.Exit"
         self.free_search_message = "Up for meeting someone today?"
 
-        self.startMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("1", "2", "3", "4")
+        self.startMarkup = InlineKeyboardMarkup().add(InlineKeyboardButton("Normal search", callback_data="1")) \
+            .add(InlineKeyboardButton("Search by tags", callback_data="2")) \
+            .add(InlineKeyboardButton("Free search", callback_data="3")) \
+            .add(InlineKeyboardButton("Go Back", callback_data="4"))
+
+        self.active_message = None
+        self.secondary_message = None
+        self.nextHandler = None
 
         self.report_reasons = {}
         self.people = []
-        self.reasons_markup = None
 
         # self.eh = self.bot.register_message_handler(self.exit_handler, commands=["exit"], user_id=self.current_user)
         # self.helpHandler = self.bot.register_message_handler(self.help_handler, commands=["help"], user_id=self.current_user)
         self.ch = self.bot.register_callback_query_handler("", self.callback_handler, user_id=self.current_user)
 
         if self.user_data["isFree"] is None:
-            self.free_search_switch(msg)
+            self.free_search_switch()
         else:
             self.start(msg)
 
-    def free_search_switch(self, message, acceptMode=False):
-        if not acceptMode:
-            self.bot.send_message(self.current_user, self.free_search_message, reply_markup=self.YNmarkup)
-            self.bot.register_next_step_handler(message, self.free_search_switch, acceptMode=True, chat_id=self.current_user)
-        else:
-            if message.text == "Yes":
-                response = requests.get(f"https://localhost:44381/SetUserFreeSearchParam/{self.current_user}/{True}", verify=False)
+    def free_search_switch(self):
+        self.send_active_message(self.free_search_message, markup=self.YNmarkup)
 
-                if response.status_code == 200:
-                    self.bot.send_message(self.current_user, "Done. You can change this parameter at any time in settings")
-                else:
-                    self.bot.send_message(self.current_user, "Something went wrong. Please try again later")
-
-                self.start(message)
-            elif message.text == "No":
-                response = requests.get(f"https://localhost:44381/SetUserFreeSearchParam/{self.current_user}/{False}",
-                                        verify=False)
-
-                if response.status_code == 200:
-                    self.bot.send_message(self.current_user,
-                                          "Done. You can change this parameter at any time in settings")
-                else:
-                    self.bot.send_message(self.current_user, "Something went wrong. Please try again later")
-
-                self.start(message)
-            else:
-                self.bot.send_message(self.current_user, "No such option", reply_markup=self.YNmarkup)
-                self.bot.register_next_step_handler(message, self.free_search_switch, acceptMode=True, chat_id=self.current_user)
-
-    def start(self, message, acceptMode=False):
-        if not acceptMode:
-            self.bot.send_message(self.current_user, self.start_message, reply_markup=self.startMarkup)
-            self.bot.register_next_step_handler(message, self.start, acceptMode=True, chat_id=self.current_user)
-        else:
-            if message.text == "1":
-                if self.limitations["actualProfileViews"] < self.limitations["maxProfileViews"]:
-                    self.normal_search_handler(message)
-                else:
-                    self.inform_about_limitations_with_message("Sorry, you have run out of profile searches for today.\nYou can still use Card Deck Mini or Card Deck Premium to replenish your views, buy premium and thus double your view count, or wait until tomorrow :)")
-            elif message.text == "2":
-                if self.limitations["actualTagViews"] < self.limitations["maxTagViews"]:
-                    self.search_by_tags(message)
-                else:
-                    self.inform_about_limitations_with_message("Sorry, you have run out of tag searches for today.\nYou can still use Card Deck Mini or Card Deck Premium to replenish your views, buy premium and thus double your view count, or wait until tomorrow :)")
-            elif message.text == "3":
-                if self.limitations["actualProfileViews"] < self.limitations["maxProfileViews"]:
-                    self.free_search()
-                else:
-                    self.inform_about_limitations_with_message("Sorry, you have run out of profile searches for today.\nYou can still use Card Deck Mini or Card Deck Premium to replenish your views, buy premium and thus double your view count, or wait until tomorrow :)")
-            elif message.text == "4":
-                self.destruct()
-            else:
-                self.bot.send_message(self.current_user, "No such option", reply_markup=self.startMarkup)
-                self.bot.register_next_step_handler(message, self.start, acceptMode=acceptMode, chat_id=self.current_user)
+    def start(self, message=None):
+        self.send_active_message("Please, select a search", markup=self.startMarkup)
 
     def inform_about_limitations_with_message(self, msg):
-        self.bot.send_message(self.current_user, msg)
-        self.start(msg)
+        self.send_secondary_message(msg)
+        self.start()
 
-    def normal_search_handler(self, message):
+    def normal_search_handler(self, message=None):
         response = Helpers.get_user_list(self.current_user)
         self.people = response["users"]
         if self.set_active_person():
             self.show_person(message)
         else:
-            #TODO: Remove
-            self.personalityOff_handler(message)
+            self.proceed(message)
 
-    def search_by_tags(self, message, acceptMode=False):
+    def search_by_tags(self, message=None, acceptMode=False):
         if not acceptMode:
-            self.bot.send_message(self.current_user, f"Send me up to {self.tagLimit} tags to conduct the search", reply_markup=self.goBackmarkup)
-            self.bot.register_next_step_handler(message, self.search_by_tags, acceptMode=True, chat_id=self.current_user)
+            self.send_active_message(f"Send me up to {self.tagLimit} tags to conduct the search", markup=self.goBackmarkup)
+            self.nextHandler = self.bot.register_next_step_handler(message, self.search_by_tags, acceptMode=True, chat_id=self.current_user)
         else:
-            if message.text == "Go Back":
-                self.start(message)
-                return
-
-            # TODO: check tags formatting
             tags = message.text
             if 0 < len(tags) <= self.tagLimit:
-                tags = tags.lower().strip()
+                tags = Helpers.format_tags(tags)
                 data = {
                     "userId": self.current_user,
                     "tags": tags
@@ -141,43 +92,19 @@ class Familiator:
                 response = Helpers.get_user_list_by_tags(data)
                 self.people = response["users"]
                 if not self.people:
-                    self.bot.send_message(self.current_user, "No users matches your request yet. Try again with another tag list :)")
+                    self.send_secondary_message("No users matches your request yet. Try again with another tag list :)")
                     self.bot.register_next_step_handler(message, self.search_by_tags, acceptMode=True, chat_id=self.current_user)
                     return
 
                 self.proceed()
             else:
-                self.bot.send_message(self.current_user, f"Invalid tag count")
-                self.bot.register_next_step_handler(message, self.search_by_tags, acceptMode=True, chat_id=self.current_user)
+                self.send_secondary_message(f"Invalid tag count")
+                self.nextHandler = self.bot.register_next_step_handler(message, self.search_by_tags, acceptMode=True, chat_id=self.current_user)
 
     def free_search(self):
         response = Helpers.get_free_user_list(self.current_user)
         self.people = response["users"]
         self.proceed()
-
-    #TODO: remove
-    def personalityOff_handler(self, message, acceptMode=False):
-        if not acceptMode:
-            if Helpers.check_should_turn_off_personality(self.current_user) and not self.wasPersonalityTurnedOff:
-                self.wasPersonalityTurnedOff = True
-                self.bot.send_message(self.current_user,
-                                      "We cant find anyone who matches your search parameters. Would you like to temporarily turn off PERSONALITY and continue search without it?",
-                                      reply_markup=self.YNmarkup)
-                self.bot.register_next_step_handler(message, self.personalityOff_handler, acceptMode=True, chat_id=self.current_user)
-            else:
-                self.proceed()
-        else:
-            if message.text == "Yes":
-                Helpers.get_user_list_turnOffPersonality(self.current_user)
-                if self.set_active_person():
-                    self.show_person(message)
-                else:
-                    self.proceed()
-            elif message.text == "No":
-                self.proceed()
-            else:
-                self.bot.send_message(self.current_user, "No such option", reply_markup=self.YNmarkup)
-                self.bot.register_next_step_handler(message, self.personalityOff_handler, acceptMode=acceptMode, chat_id=self.current_user)
 
     def set_active_person(self, msg=None):
         if self.people:
@@ -253,12 +180,56 @@ class Familiator:
         if self.set_active_person():
             self.show_person(self.msg)
         else:
-            self.bot.send_message(self.current_user, self.finish_message)
+            self.send_secondary_message(self.finish_message)
             #Go back to search options
             self.start(self.msg)
 
     def callback_handler(self, call):
-        if call.data == "11":
+        self.bot.answer_callback_query(call.id, "")
+        if call.data == "1":
+            if self.limitations["actualProfileViews"] < self.limitations["maxProfileViews"]:
+                self.normal_search_handler()
+            else:
+                self.inform_about_limitations_with_message(
+                    "Sorry, you have run out of profile searches for today.\nYou can still use Card Deck Mini or Card Deck Premium to replenish your views, buy premium and thus double your view count, or wait until tomorrow :)")
+        elif call.data == "2":
+            if self.limitations["actualTagViews"] < self.limitations["maxTagViews"]:
+                self.search_by_tags()
+            else:
+                self.inform_about_limitations_with_message(
+                    "Sorry, you have run out of tag searches for today.\nYou can still use Card Deck Mini or Card Deck Premium to replenish your views, buy premium and thus double your view count, or wait until tomorrow :)")
+        elif call.data == "3":
+            if self.limitations["actualProfileViews"] < self.limitations["maxProfileViews"]:
+                self.free_search()
+            else:
+                self.inform_about_limitations_with_message(
+                    "Sorry, you have run out of profile searches for today.\nYou can still use Card Deck Mini or Card Deck Premium to replenish your views, buy premium and thus double your view count, or wait until tomorrow :)")
+        elif call.data == "4":
+            self.destruct()
+        elif call.data == "5":
+            response = requests.get(f"https://localhost:44381/SetUserFreeSearchParam/{self.current_user}/{True}",
+                                    verify=False)
+
+            if response.status_code == 200:
+                self.send_secondary_message("Done. You can change this parameter at any time in settings")
+            else:
+                self.send_secondary_message("Something went wrong. Please try again later")
+
+            self.start()
+        elif call.data == "6":
+            response = requests.get(f"https://localhost:44381/SetUserFreeSearchParam/{self.current_user}/{False}",
+                                    verify=False)
+
+            if response.status_code == 200:
+                self.send_secondary_message("Done. You can change this parameter at any time in settings")
+            else:
+                self.send_secondary_message("Something went wrong. Please try again later")
+
+            self.start()
+        elif call.data == "-20":
+            self.remove_next_step_handler_local()
+            self.start()
+        elif call.data == "11":
             self.help_handler(self.msg)
         else:
             if self.reactToCallback:
@@ -281,13 +252,57 @@ class Familiator:
         if self.set_active_person():
             self.show_person(message)
         else:
-            self.bot.send_message(self.current_user, self.finish_message)
+            self.send_secondary_message(self.finish_message)
             self.destruct()
 
     def set_report_button_value(self):
         self.actions_markup.keyboard[0][0].callback_data = self.active_user_id
 
+    def send_active_message(self, text, markup=None):
+        try:
+            if self.active_message:
+                self.bot.edit_message_text(text, self.current_user, self.active_message, reply_markup=markup)
+                return
+
+            self.active_message = self.bot.send_message(self.current_user, text, reply_markup=markup).id
+        except Exception as ex:
+            self.delete_active_message()
+            self.send_active_message(text, markup)
+
+    def send_secondary_message(self, text, markup=None):
+        try:
+            if self.secondary_message:
+                self.bot.edit_message_text(text, self.current_user, self.secondary_message, reply_markup=markup)
+                return
+
+            self.secondary_message = self.bot.send_message(self.current_user, text, reply_markup=markup).id
+        except:
+            self.delete_secondary_message()
+            self.send_secondary_message(text, markup)
+
+    def delete_active_message(self):
+        if self.active_message:
+            self.bot.delete_message(self.current_user, self.active_message)
+            self.active_message = None
+
+    def delete_secondary_message(self):
+        if self.secondary_message:
+            self.bot.delete_message(self.current_user, self.secondary_message)
+            self.secondary_message = None
+
+    def remove_next_step_handler_local(self):
+        if self.nextHandler:
+            try:
+                self.bot.remove_next_step_handler(self.current_user, self.nextHandler)
+                self.nextHandler = None
+            except:
+                pass
+
     def destruct(self):
         self.bot.callback_query_handlers.remove(self.ch)
+
+        self.delete_active_message()
+        self.delete_secondary_message()
+
         go_back_to_main_menu(self.bot, self.current_user, self.msg)
         del self

@@ -24,7 +24,9 @@ class Registrator:
         self.okMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(KeyboardButton(self.localization['OkButton']))
         self.YNmarkup = InlineKeyboardMarkup().add(InlineKeyboardButton(self.localization['YesButton'], callback_data="1"),
                                                    InlineKeyboardButton(self.localization['NoButton'], callback_data="2"))
-        self.goBackInlineMarkup = InlineKeyboardMarkup().add(InlineKeyboardButton("🔙 Go Back", callback_data="-10"))
+        self.registration_typeMarkup = InlineKeyboardMarkup().add(InlineKeyboardButton(self.localization["ShortReg"], callback_data="1"))\
+            .add(InlineKeyboardButton(self.localization["FullReg"], callback_data="2"))
+        self.goBackInlineMarkup = InlineKeyboardMarkup().add(InlineKeyboardButton(self.localization["GoBackButton"], callback_data="-10"))
 
         self.chCode = self.bot.register_callback_query_handler(message, self.callback_handler, user_id=self.current_user)
         self.next_handler = None
@@ -46,7 +48,6 @@ class Registrator:
         self.markup_page = 1
         self.markup_pages_count = 0
 
-        self.app_languages_markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
         self.gender_markup = InlineKeyboardMarkup()
         self.reason_markup = InlineKeyboardMarkup()
         self.communication_pref_markup = InlineKeyboardMarkup()
@@ -57,13 +58,13 @@ class Registrator:
 
         self.app_languages_markup = InlineKeyboardMarkup()
 
-        self.create_markup = InlineKeyboardMarkup().add(InlineKeyboardButton("App langauge", callback_data="1"), InlineKeyboardButton("Preferred gender", callback_data="17"))\
-            .add(InlineKeyboardButton("Description", callback_data="3"), InlineKeyboardButton("Spoken languages", callback_data="4"), InlineKeyboardButton("Auto-Reply", callback_data="17"))\
-            .add(InlineKeyboardButton("Name", callback_data="2"), InlineKeyboardButton("Country", callback_data="5"), InlineKeyboardButton("City", callback_data="6"))\
-            .add(InlineKeyboardButton("Usage reason", callback_data="7"), InlineKeyboardButton("Preferred age", callback_data="13"))\
-            .add(InlineKeyboardButton("Age", callback_data="8"), InlineKeyboardButton("Gender", callback_data="9"), InlineKeyboardButton("Tags", callback_data="16"))\
-            .add(InlineKeyboardButton("Preferred languages", callback_data="11"), InlineKeyboardButton("Preferred country", callback_data="12"))\
-            .add(InlineKeyboardButton("Profile media", callback_data="10"), InlineKeyboardButton("Preferred Communication", callback_data="15"))\
+        self.create_markup = InlineKeyboardMarkup().add(InlineKeyboardButton(self.localization["AppLang"], callback_data="1"), InlineKeyboardButton(self.localization["PrefGender"], callback_data="17"))\
+            .add(InlineKeyboardButton(self.localization["Desc"], callback_data="3"), InlineKeyboardButton(self.localization["SpokenLangs"], callback_data="4"), InlineKeyboardButton(self.localization["AutoReply"], callback_data="17"))\
+            .add(InlineKeyboardButton(self.localization["Name"], callback_data="2"), InlineKeyboardButton(self.localization["Country"], callback_data="5"), InlineKeyboardButton(self.localization["City"], callback_data="6"))\
+            .add(InlineKeyboardButton(self.localization["UsageReason"], callback_data="7"), InlineKeyboardButton(self.localization["PrefAge"], callback_data="13"))\
+            .add(InlineKeyboardButton(self.localization["Age"], callback_data="8"), InlineKeyboardButton(self.localization["Gender"], callback_data="9"), InlineKeyboardButton(self.localization["Tags"], callback_data="16"))\
+            .add(InlineKeyboardButton(self.localization["PrefLangs"], callback_data="11"), InlineKeyboardButton(self.localization["PrefCountries"], callback_data="12"))\
+            .add(InlineKeyboardButton(self.localization["Media"], callback_data="10"), InlineKeyboardButton(self.localization["PrefComm"], callback_data="15"))\
             .add(InlineKeyboardButton(self.localization["DoneButton"], callback_data="18"))
 
         self.change_markup = copy.copy(self.create_markup)
@@ -101,18 +102,19 @@ class Registrator:
         self.current_section = None
 
         self.editMode = False
+        self.isShortReg = False
 
         app_languages = Helpers.get_app_languages()
 
         for lang in app_languages:
             self.app_languages_markup.add(InlineKeyboardButton(lang["name"], callback_data=lang["name"]))
 
-        self.app_languages_markup.add(InlineKeyboardButton("🔙 Go Back", callback_data="-10"))
+        self.app_languages_markup.add(InlineKeyboardButton(self.localization["GoBackButton"], callback_data="-10"))
 
         if not hasVisited:
             self.get_localisations()
             self.current_section = self.destruct
-            self.spoken_language_step(message)
+            self.start()
         else:
             self.current_user_data = Helpers.get_user_info(self.current_user)
             if self.current_user_data:
@@ -168,7 +170,11 @@ class Registrator:
 
                 self.checkout_step(message)
             else:
-                self.spoken_language_step(message)
+                self.start()
+
+    def start(self):
+        self.question_index = 0
+        self.send_active_message(self.localization["LocTypeQ"], markup=self.registration_typeMarkup)
 
     def app_language_step(self, message=None, acceptMode=False, shouldInsert=True):
         if not acceptMode:
@@ -177,10 +183,10 @@ class Registrator:
             self.configure_registration_step(self.app_language_step, shouldInsert)
 
             self.delete_secondary_message()
-            self.send_active_message("Please select a language", markup=self.app_languages_markup)
+            self.send_active_message(self.localization["LangQ"], markup=self.app_languages_markup)
         else:
-            self.checkout_step(message)
             self.data["userAppLanguageId"] = self.app_language
+            self.checkout_step(message)
 
     def spoken_language_step(self, message=None, acceptMode=False, shouldInsert=True):
         if not acceptMode:
@@ -275,7 +281,7 @@ class Registrator:
         for g in genders.keys():
             self.gender_markup.add(InlineKeyboardButton(self.genders[g], callback_data=f"{g}"))
 
-        self.gender_markup.add(InlineKeyboardButton("🔙 Go Back", callback_data="-10"))
+        self.gender_markup.add(InlineKeyboardButton(self.localization["GoBackButton"], callback_data="-10"))
 
         self.send_active_message(question_counter + self.localization['GenderQuestionMessage'], markup=self.gender_markup)
 
@@ -292,7 +298,7 @@ class Registrator:
         for reason in self.reasons.keys():
             self.reason_markup.add(InlineKeyboardButton(self.reasons[reason], callback_data=f"{reason}"))
 
-        self.reason_markup.add(InlineKeyboardButton("🔙 Go Back", callback_data="-10"))
+        self.reason_markup.add(InlineKeyboardButton(self.localization["GoBackButton"], callback_data="-10"))
 
         self.send_active_message(question_counter + self.localization['SearchQuestionMessage'], markup=self.reason_markup)
 
@@ -308,7 +314,7 @@ class Registrator:
         for pref in self.communication_pref:
             self.communication_pref_markup.add(InlineKeyboardButton(self.communication_pref[pref], callback_data=f"{pref}"))
 
-        self.communication_pref_markup.add(InlineKeyboardButton("🔙 Go Back", callback_data="-10"))
+        self.communication_pref_markup.add(InlineKeyboardButton(self.localization["GoBackButton"], callback_data="-10"))
 
         self.send_active_message(question_counter + self.localization['CommunicationQuestionMessage'], markup=self.communication_pref_markup)
 
@@ -324,7 +330,7 @@ class Registrator:
 
             reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page,
                         self.markup_pages_count)
-            count_pages(self.countries, self.current_markup_elements, self.markup_pages_count, additionalButton=True, buttonText="🔙 Go Back", buttonData="-10")
+            count_pages(self.countries, self.current_markup_elements, self.markup_pages_count, additionalButton=True, buttonText=self.localization["GoBackButton"], buttonData="-10")
             markup = assemble_markup(self.markup_page, self.current_markup_elements, 0)
 
             self.previous_item = ''
@@ -431,7 +437,7 @@ class Registrator:
                 self.cities[city["id"]] = city["cityName"].lower()
 
             reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page, self.markup_pages_count)
-            count_pages(self.cities, self.current_markup_elements, self.markup_pages_count, additionalButton=True, buttonText="🔙 Go Back", buttonData="-10")
+            count_pages(self.cities, self.current_markup_elements, self.markup_pages_count, additionalButton=True, buttonText=self.localization["GoBackButton"], buttonData="-10")
             markup = assemble_markup(self.markup_page, self.current_markup_elements, 0)
 
             self.send_active_message(question_counter + self.localization['ChooseCityMessage'], markup=markup)
@@ -634,11 +640,11 @@ class Registrator:
                 else:
                     self.gender_preferences_step(message)
 
-            elif message.text == "Use photo from profile":
+            elif message.text == self.localization["UsePhotoFromProfile"]:
                 photos = self.bot.get_user_profile_photos(self.current_user, limit=1)
 
                 if photos is None or len(photos.photos) == 0:
-                    self.send_error_message("No photos found. Please, check your profile permissions in telegram settings and try again", markup=self.photo_Markup)
+                    self.send_error_message(self.localization["PhotoNotFound"], markup=self.photo_Markup)
                     self.next_handler = self.bot.register_next_step_handler(message, self.photo_step, acceptMode=acceptMode, chat_id=self.current_user)
                     return
 
@@ -668,7 +674,7 @@ class Registrator:
         for g in self.genders.keys():
             self.gender_markup.add(InlineKeyboardButton(self.genders[g], callback_data=f"{g}"))
 
-        self.gender_markup.add(InlineKeyboardButton("🔙 Go Back", callback_data="-10"))
+        self.gender_markup.add(InlineKeyboardButton(self.localization["GoBackButton"], callback_data="-10"))
 
         self.send_active_message(question_counter + self.localization['GenderPrefsQuestionMessage'], markup=self.gender_markup)
 
@@ -683,7 +689,7 @@ class Registrator:
 
             reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page,
                         self.markup_pages_count)
-            count_pages(self.languages, self.current_markup_elements, self.markup_pages_count, True, additionalButton=True, buttonText="🔙 Go Back", buttonData="-10")
+            count_pages(self.languages, self.current_markup_elements, self.markup_pages_count, True, additionalButton=True, buttonText=self.localization["GoBackButton"], buttonData="-10")
             markup = assemble_markup(self.markup_page, self.current_markup_elements, 0)
 
             self.send_active_message(question_counter + self.localization['LanguagesQuestionMessage'], markup=markup)
@@ -764,7 +770,7 @@ class Registrator:
 
             reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page,
                         self.markup_pages_count)
-            count_pages(self.countries, self.current_markup_elements, self.markup_pages_count, True, additionalButton=True, buttonText="🔙 Go Back", buttonData="-10")
+            count_pages(self.countries, self.current_markup_elements, self.markup_pages_count, True, additionalButton=True, buttonText=self.localization["GoBackButton"], buttonData="-10")
             markup = assemble_markup(self.markup_page, self.current_markup_elements, 0)
 
             self.send_active_message(question_counter + self.localization['LocationPrefsQuestionMessage'], markup=markup)
@@ -788,7 +794,7 @@ class Registrator:
             message_text = message.text.lower().strip()
             if message_text != self.localization['OkButton']:
                 country = self.country_convertor(message_text)
-                if country:  # TODO: Get string, separate by , and process it
+                if country:
                     if country not in self.pref_countries:
                         if len(self.pref_countries) + 1 > self.premium_limit:
                             self.send_error_message(self.localization['CountriesPremiumErrorMessage'].format(self.premium_limit), markup=self.okMarkup)
@@ -881,10 +887,11 @@ class Registrator:
                 else:
                     self.checkout_step(message)
             else:
-                if message.text:
+                tags = message.text
+                if tags:
                     try:
-                        if len(message.text.split()) <= self.maxTagCount:
-                            self.tags = message.text.lower().strip()
+                        if len(tags.split()) <= self.maxTagCount:
+                            self.tags = Helpers.format_tags(tags)
                             self.data["tags"] = self.tags
 
                             if not self.editMode:
@@ -957,7 +964,7 @@ class Registrator:
                 self.send_error_message(self.localization['EmptyErrorMessage'], markup=self.skip_markup)
                 self.next_handler = self.bot.register_next_step_handler(message, self.auto_reply_step, acceptMode=acceptMode, chat_id=self.current_user)
 
-    def change_something_step(self, message):
+    def change_something_step(self, message=None):
         self.question_index = 13
         if self.data["isMediaPhoto"]:
             self.send_active_message_with_photo(self.localization['CheckoutMessage'].format(self.profile_constructor()), self.data["userMedia"])
@@ -1144,7 +1151,7 @@ class Registrator:
 
     def send_additional_actions_message(self):
         self.delete_additional_message()
-        self.additional_message = self.bot.send_message(self.current_user, "Additional actions",
+        self.additional_message = self.bot.send_message(self.current_user, self.localization["AddtActions"],
                                                         reply_markup=self.goBackInlineMarkup).id
 
     def delete_additional_message(self):
@@ -1208,6 +1215,11 @@ class Registrator:
         elif call.data == "-10":
             self.go_back_to_previous_registration_step()
 
+        elif self.question_index == 0:
+            self.isShortReg = call.data == "1"
+            self.max_questions_count = 10
+            self.spoken_language_step()
+
         elif self.question_index == 1:
             self.app_language_step(acceptMode=True)
 
@@ -1270,6 +1282,12 @@ class Registrator:
             self.data["reasonId"] = call.data
 
             if not self.editMode:
+                if self.isShortReg:
+                    # "Does not matter is always the last one"
+                    self.data["communicationPrefs"] = self.communication_pref[len(self.communication_pref.values())].replace(" ", "")
+                    self.location_step()
+                    return
+
                 self.communication_preferences_step()
             else:
                 self.checkout_step(call.message)
@@ -1292,6 +1310,15 @@ class Registrator:
             self.data["userGenderPrefs"] = gender
 
             if not self.editMode:
+                if self.isShortReg:
+                    self.pref_langs.extend(self.chosen_langs)
+                    self.pref_countries.append(self.country)
+
+                    self.data["userLanguagePreferences"] = self.pref_langs
+                    self.data["userLocationPreferences"] = self.pref_countries
+                    self.data["agePrefs"] = list(range(self.data["userAge"] - 3, self.data["userAge"] + 5))
+                    self.change_something_step()
+                    return
                 self.language_preferences_step(call.message)
             else:
                 self.checkout_step(call.message)
