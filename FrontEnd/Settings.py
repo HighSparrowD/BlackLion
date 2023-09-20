@@ -46,21 +46,21 @@ class Settings:
         self.markup_page = 1
         self.markup_pages_count = 0
         self.current_callback_handler = None
-        self.current_user_data = Helpers.get_user_info(self.current_user)
+        self.current_user_data = Helpers.get_user_settings(self.current_user)
 
         self.gestures = ["👍","👎","💪","✊","👊","🖐","✋","👋","👌","✌","🤘","🤟 ","🤙","🤞","🖕","🖖","☝","👆", "👇", "👉","👈"]
         self.gesture = None
 
         #TODO: check this parameter instead of calling API every time
-        self.uses_ocean = self.current_user_data["settings"]["usesOcean"]
+        self.uses_ocean = self.current_user_data["usesOcean"]
         self.has_Premium = self.current_user_data["hasPremium"]
-        self.language_cons_status = self.current_user_data["settings"]["shouldConsiderLanguages"]
-        self.free_status = self.current_user_data["settings"]["isFree"]
-        self.comments_status = self.current_user_data["settings"]["shouldComment"]
-        self.hints_status = self.current_user_data["settings"]["shouldSendHints"]
-        self.real_photo_filter_status = self.current_user_data["settings"]["shouldFilterUsersWithoutRealPhoto"]
-        self.increased_familiarity_status = self.current_user_data["settings"]["increasedFamiliarity"]
-        self.user_language = self.current_user_data["data"]["language"]
+        self.language_cons_status = self.current_user_data["shouldConsiderLanguages"]
+        self.free_status = self.current_user_data["isFree"]
+        self.comments_status = self.current_user_data["shouldComment"]
+        self.hints_status = self.current_user_data["shouldSendHints"]
+        self.real_photo_filter_status = self.current_user_data["shouldFilterUsersWithoutRealPhoto"]
+        self.increased_familiarity_status = self.current_user_data["increasedFamiliarity"]
+        self.user_language = self.current_user_data["language"]
 
         self.userBalance = Helpers.get_active_user_balance(self.current_user)
         self.requestStatus = requests.get(f"https://localhost:44381/CheckTickRequestStatus/{self.current_user}", verify=False).text
@@ -1432,7 +1432,7 @@ class Settings:
         user = Helpers.get_user_info(self.current_managed_user)
 
         self.delete_active_message()
-        self.send_active_message_with_photo(f"{user['userBaseInfo']['userDescription']}\n\n<b><i>Please, choose an option from a list below</i></b>", self.encounterOptionMarkup, user["userBaseInfo"]["userMedia"])
+        self.send_active_message_with_photo(f"{user['userDescription']}\n\n<b><i>Please, choose an option from a list below</i></b>", self.encounterOptionMarkup, user["userMedia"])
         # self.bot.send_photo(self.current_user, user["userBaseInfo"]["userMedia"], user["userBaseInfo"]["userDescription"], reply_markup=self.encounterOptionMarkup)
         self.bot.register_next_step_handler(self.message, self.encounter_list_management, acceptMode=True, chat_id=self.current_user)
 

@@ -118,39 +118,37 @@ class Registrator:
         else:
             self.current_user_data = Helpers.get_user_info(self.current_user)
             if self.current_user_data:
-                data = self.current_user_data["data"]
 
-                self.pref_countries = data["locationPreferences"]
-                self.pref_langs = data["languagePreferences"]
-                self.chosen_langs = data["userLanguages"]
-                self.app_language = data["language"]
+                self.pref_countries = self.current_user_data["locationPreferences"]
+                self.pref_langs = self.current_user_data["languagePreferences"]
+                self.chosen_langs = self.current_user_data["userLanguages"]
+                self.app_language = self.current_user_data["language"]
 
-                if "location" in self.current_user_data:
-                    self.country = self.current_user_data["location"]["countryId"]
-                    self.city = self.current_user_data["location"]["cityId"]
+                self.country = self.current_user_data["countryId"]
+                self.city = self.current_user_data["cityId"]
 
-                if "tags" in self.data.keys():
+                if "tags" in self.current_user_data.keys():
                     self.tags = ' '.join(self.current_user_data["tags"])
 
                 self.data["appLanguage"] = self.app_language
-                self.data["userName"] = data["userName"]
+                self.data["userName"] = self.current_user_data["userName"]
                 self.data["id"] = self.current_user
-                self.data["userRealName"] = data["userRealName"]
-                self.data["userDescription"] = data["userRawDescription"]
-                self.data["userMedia"] = data["userMedia"]
-                self.data["reasonId"] = data["reason"]
-                self.data["userAge"] = data["userAge"]
+                self.data["userRealName"] = self.current_user_data["userRealName"]
+                self.data["userDescription"] = self.current_user_data["userRawDescription"]
+                self.data["userMedia"] = self.current_user_data["userMedia"]
+                self.data["reasonId"] = self.current_user_data["reason"]
+                self.data["userAge"] = self.current_user_data["userAge"]
                 self.data["userLanguages"] = self.chosen_langs
                 self.data["userCountryCode"] = self.country
                 self.data["userCityCode"] = self.city
-                self.data["userGender"] = data["userGender"]
+                self.data["userGender"] = self.current_user_data["userGender"]
                 self.data["userLanguagePreferences"] = self.pref_langs
                 self.data["userLocationPreferences"] = self.pref_countries
-                self.data["agePrefs"] = data["agePrefs"]
-                self.data["communicationPrefs"] = data["communicationPrefs"]
-                self.data["userGenderPrefs"] = data["userGenderPrefs"]
+                self.data["agePrefs"] = self.current_user_data["agePrefs"]
+                self.data["communicationPrefs"] = self.current_user_data["communicationPrefs"]
+                self.data["userGenderPrefs"] = self.current_user_data["userGenderPrefs"]
                 self.data["tags"] = self.tags
-                self.data["mediaType"] = data["mediaType"]
+                self.data["mediaType"] = self.current_user_data["mediaType"]
 
                 self.get_localisations()
 

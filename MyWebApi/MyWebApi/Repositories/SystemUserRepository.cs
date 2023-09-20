@@ -201,22 +201,68 @@ namespace WebApi.Repositories
             return model.Id;
         }
 
-        public async Task<User> GetUserInfoAsync(long id)
+        public async Task<GetUserInfo> GetUserInfoAsync(long id)
         {
             //Actualize premium information
             await CheckUserHasPremiumAsync(id);
 
-            return await _contx.Users.Where(u => u.Id == id)
-                .Include(u => u.Data)
-                .Include(u => u.Location)
-                .Include(u => u.Settings)
-                .AsNoTracking()
-                .FirstOrDefaultAsync();
+            return await _contx.Users.Where(u => u.Id == id).Select(u => new GetUserInfo
+            {
+               Id = u.Data.Id,
+               UserName = u.Data.UserName,
+               AgePrefs = u.Data.AgePrefs,
+               AutoReplyText = u.Data.AutoReplyText,
+               AutoReplyVoice = u.Data.AutoReplyVoice,
+               UserAge = u.Data.UserAge,
+               UserDescription = u.Data.UserDescription,
+               UserRawDescription = u.Data.UserRawDescription,
+               CommunicationPrefs = u.Data.CommunicationPrefs,
+               Language = u.Data.Language,
+               LanguagePreferences = u.Data.LanguagePreferences,
+               LocationPreferences = u.Data.LocationPreferences,
+               MediaType = u.Data.MediaType,
+               UserMedia = u.Data.UserMedia,
+               Reason = u.Data.Reason,
+               UserGender = u.Data.UserGender,
+               UserGenderPrefs = u.Data.UserGenderPrefs,
+               UserLanguages = u.Data.UserLanguages,
+               UserRealName = u.Data.UserRealName,
+               CityId = u.Location.CityId,
+               CountryId = u.Location.CountryId,
+               CityCountryLang = u.Data.Language,
+               CountryLang = u.Data.Language,
+               IdentityType = u.IdentityType,
+               HasPremium = u.HasPremium
+            }).FirstOrDefaultAsync();
+        }
+
+        public async Task<GetUserSettings> GetUserSettingsAsync(long id)
+        {
+            //Actualize premium information
+            await CheckUserHasPremiumAsync(id);
+
+            return await _contx.Users.Where(u => u.Id == id).Select(s => new GetUserSettings
+            {
+                ShouldComment = s.Settings.ShouldComment,
+                ShouldConsiderLanguages = s.Settings.ShouldConsiderLanguages,
+                ShouldFilterUsersWithoutRealPhoto = s.Settings.ShouldFilterUsersWithoutRealPhoto,
+                ShouldSendHints = s.Settings.ShouldSendHints,
+                IncreasedFamiliarity = s.Settings.IncreasedFamiliarity,
+                IsFree = s.Settings.IsFree,
+                Language = s.Data.Language,
+                UsesOcean = s.Settings.UsesOcean,
+                HasPremium = s.HasPremium,
+            }).FirstOrDefaultAsync();
         }
 
         public async Task<SearchResponse> GetUsersAsync(long userId, bool isRepeated=false, bool isFreeSearch = false)
         {
-            var currentUser = await GetUserInfoAsync(userId);
+            var currentUser = await _contx.Users.Where(u => u.Id == userId)
+                .Include(u => u.Data)
+                .Include(u => u.Settings)
+                .Include(u => u.Location)
+                .FirstOrDefaultAsync();
+
             var returnData = new List<GetUserData>();
 
             if (currentUser.ProfileViewsCount >= currentUser.MaxProfileViewsCount)
@@ -1263,7 +1309,11 @@ namespace WebApi.Repositories
 
             if (points > 0 && userParentId != null && userParentId > 0)
             {
-                var parent = await GetUserInfoAsync((long)userParentId);
+                var parent = await _contx.Users.Where(u => u.Id == userParentId)
+                    .Include(u => u.Data)
+                    .Include(u => u.Settings)
+                    .Include(u => u.Location)
+                    .FirstOrDefaultAsync();
 
                 if (parent != null)
                     await TopUpPointBalance((long)userParentId, (int)(points + points * parent.InvitedUsersBonus), $"Referential reward for user's {userId} action");
@@ -1965,7 +2015,11 @@ namespace WebApi.Repositories
 
         public async Task<string> ClaimDailyReward(long userId)
         {
-            var user = await GetUserInfoAsync(userId);
+            var user = await _contx.Users.Where(u => u.Id == userId)
+                .Include(u => u.Data)
+                .Include(u => u.Settings)
+                .Include(u => u.Location)
+                .FirstOrDefaultAsync();
 
             try
             {
@@ -1991,7 +2045,8 @@ namespace WebApi.Repositories
 
         public async Task<bool> CheckUserCanClaimReward(long userId)
         {
-            var user = await GetUserInfoAsync(userId);
+            var user = await _contx.Users.Where(u => u.Id == userId)
+                .FirstOrDefaultAsync();
 
             if (user != null)
             {
@@ -2676,12 +2731,34 @@ namespace WebApi.Repositories
                 var userTest = await _contx.UserTests.Where(t => t.UserId == model.UserId && t.TestId == model.TestId)
                     .FirstOrDefaultAsync();
 
-                //Give user 1 OP for passing the test for the first time
                 if (userTest.PassedOn == null)
                 {
+                    //Give user 1 OP for passing the test for the first time
                     var userBalance = await GetUserWalletBalance(model.UserId);
                     userBalance.OceanPoints++;
                     await _contx.SaveChangesAsync();
+                }
+                else
+                {
+                    // Remove old tags related to this test
+                    var tagsToRemove = await (
+                        from tq in _contx.TestsQuestions
+                        where tq.TestId == model.TestId
+                        from ta in _contx.TestsAnswers
+                        where ta.TestQuestionId == tq.Id
+                        from ut in _contx.UserTags
+                        where ut.TagType == TagType.Tests && ut.UserId == model.UserId && ta.Tags.Any(t => t == ut.TagId)
+                        select ut).ToListAsync();
+
+                    var resultTags = await (
+                        from tr in _contx.TestsResults
+                        where tr.TestId == model.TestId
+                        from ut in _contx.UserTags
+                        where ut.TagType == TagType.Tests && ut.UserId == model.UserId && tr.Tags.Any(t => t == ut.TagId)
+                        select ut).ToListAsync();
+
+                    _contx.UserTags.RemoveRange(tagsToRemove);
+                    _contx.UserTags.RemoveRange(resultTags);
                 }
 
                 userTest.PassedOn = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
@@ -2724,7 +2801,12 @@ namespace WebApi.Repositories
 
         public async Task<SearchResponse> GetUserByTagsAsync(GetUserByTags model)
         {
-            var currentUser = await GetUserInfoAsync(model.UserId);
+            var currentUser = await _contx.Users.Where(u => u.Id == model.UserId)
+                .Include(u => u.Data)
+                .Include(u => u.Settings)
+                .Include(u => u.Location)
+                .FirstOrDefaultAsync();
+
             var hasActiveDetector = await CheckEffectIsActiveAsync(currentUser.Id, Currency.TheDetector);
             
             //Actualize premium property
@@ -4169,7 +4251,7 @@ namespace WebApi.Repositories
                 existingTemplate.Experience = model.Experience;
                 existingTemplate.Gratitude = model.Gratitude;
                 existingTemplate.Media = model.Media;
-                existingTemplate.IsMediaPhoto = model.IsMediaPhoto;
+                existingTemplate.MediaType = model.MediaType;
                 existingTemplate.AutoReply = model.AutoReply;
                 existingTemplate.IsAutoReplyText = model.IsAutoReplyText;
 
@@ -4196,7 +4278,7 @@ namespace WebApi.Repositories
                 Experience = model.Experience,
                 Gratitude = model.Gratitude,
                 Media = model.Media,
-                IsMediaPhoto = model.IsMediaPhoto,
+                MediaType = model.MediaType,
                 AutoReply = model.AutoReply,
                 IsAutoReplyText = model.IsAutoReplyText
             };
@@ -4231,7 +4313,7 @@ namespace WebApi.Repositories
                 AutoReply = t.AutoReply,
                 IsAutoReplyText = t.IsAutoReplyText,
                 Media = t.Media,
-                IsMediaPhoto = t.IsMediaPhoto,
+                MediaType = t.MediaType,
                 CityId = t.CityId,
                 CountryId = t.CountryId,
                 Experience = t.Experience,

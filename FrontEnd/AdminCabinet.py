@@ -11,7 +11,7 @@ class AdminCabinet:
         self.bot = bot
         self.message = message
         self.current_user = message.from_user.id
-        Helpers.switch_user_busy_status(self.current_user)
+        Helpers.switch_user_busy_status(self.current_user, 12)
         self.admin_greet_message = "Hello, dear admin. Commencing brief command description:\n\n/sendmessage is used to send a message to user by id. It should be consisting of 3 parts -> /sendmessage USERID MESSAGE. All should be written throw a space separator" \
                                    "\n\n/viewreports command is used to view all recent reports IF specified like that: /vievreports USERID -> retrieves recent reports about specific user" \
                                    "\n\n/getuserbyid command allows you to get and then manage user by his id: /getuserbyid USERID" \
@@ -204,7 +204,7 @@ class AdminCabinet:
 
     def manage_user(self, user):
         if user:
-            self.current_managed_user = user['userId']
+            self.current_managed_user = user['id']
             self.bot.send_message(self.current_user, self.manage_user_message)
             self.show_user(user)
         else:
@@ -453,12 +453,9 @@ class AdminCabinet:
 
     def construct_user_data_message(self, user):
         isSponsor = Helpers.check_user_is_sponsor(user['userBaseInfoId'])
-        b = user['userBaseInfo']
-        d = user['userDataInfo']
-        p = user['userPreferences']
         balance = Helpers.get_active_user_balance(user['userBaseInfoId'])
 
-        info = f"<b>Id: \n{b['id']}\nUsername: {b['userName']}\nReal Name: {b['userRealName']}\nDescription: {b['userDescription']}\nIsSponsor: {isSponsor}\n\n</b>" #TODO: Lengthen message by using data from other extracted entities
+        info = f"<b>Id: \n{user['id']}\nUsername: {user['userName']}\nReal Name: {user['userRealName']}\nDescription: {user['userDescription']}\nIsSponsor: {isSponsor}\n\n</b>" #TODO: Lengthen message by using data from other extracted entities
         if balance:
             info += f"UserBalance: {balance['amount']}\nLastBalancePurchase: {balance['pointInTime']}"
 
@@ -494,7 +491,7 @@ class AdminCabinet:
         return message.strip()
 
     def destruct(self):
-        Helpers.switch_user_busy_status(self.current_user)
+        Helpers.switch_user_busy_status(self.current_user, 14)
         Coms.show_admin_markup(self.bot, self.current_user)
         self.bot.message_handlers.remove(self.mh)
         self.bot.callback_query_handlers.remove(self.ch)

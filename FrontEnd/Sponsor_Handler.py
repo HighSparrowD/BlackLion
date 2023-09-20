@@ -185,11 +185,11 @@ class SponsorHandler:
                 self.dat = {
                     "id": self.current_user,
                     "codeWord": message.text,
-                    "age": data["userDataInfo"]["userAge"],
-                    "username": data["userBaseInfo"]["userName"],
-                    "userAppLanguage": data["userDataInfo"]["languageId"],
-                    "userCountryId": data["userDataInfo"]["location"]["countryId"],
-                    "userCityId": data["userDataInfo"]["location"]["cityId"],
+                    "age": data["userAge"],
+                    "username": data["userName"],
+                    "userAppLanguage": data["languageId"],
+                    "userCountryId": data["countryId"],
+                    "userCityId": data["cityId"],
                     "languages": data["userLanguages"]
                 }
 

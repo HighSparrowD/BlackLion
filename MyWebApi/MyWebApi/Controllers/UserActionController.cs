@@ -72,10 +72,16 @@ namespace WebApi.Controllers
             return await _repository.GetUserAppLanguage(userId);
         }
 
-        [HttpGet("/UserInfo/{userId}")]
-        public async Task<ActionResult<User>> GetUserInfo(long userId)
+        [HttpGet("/user-info/{userId}")]
+        public async Task<ActionResult<GetUserInfo>> GetUserInfo(long userId)
         {
             return Ok(await _repository.GetUserInfoAsync(userId));
+        }
+
+        [HttpGet("/user-settings/{userId}")]
+        public async Task<ActionResult<GetUserSettings>> GetUserSettings(long userId)
+        {
+            return Ok(await _repository.GetUserSettingsAsync(userId));
         }
 
         [HttpPost("/UpdateUserProfile")]
