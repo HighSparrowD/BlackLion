@@ -2729,12 +2729,34 @@ namespace WebApi.Repositories
                 var userTest = await _contx.UserTests.Where(t => t.UserId == model.UserId && t.TestId == model.TestId)
                     .FirstOrDefaultAsync();
 
-                //Give user 1 OP for passing the test for the first time
                 if (userTest.PassedOn == null)
                 {
+                    //Give user 1 OP for passing the test for the first time
                     var userBalance = await GetUserWalletBalance(model.UserId);
                     userBalance.OceanPoints++;
                     await _contx.SaveChangesAsync();
+                }
+                else
+                {
+                    // Remove old tags related to this test
+                    var tagsToRemove = await (
+                        from tq in _contx.TestsQuestions
+                        where tq.TestId == model.TestId
+                        from ta in _contx.TestsAnswers
+                        where ta.TestQuestionId == tq.Id
+                        from ut in _contx.UserTags
+                        where ut.TagType == TagType.Tests && ut.UserId == model.UserId && ta.Tags.Any(t => t == ut.TagId)
+                        select ut).ToListAsync();
+
+                    var resultTags = await (
+                        from tr in _contx.TestsResults
+                        where tr.TestId == model.TestId
+                        from ut in _contx.UserTags
+                        where ut.TagType == TagType.Tests && ut.UserId == model.UserId && tr.Tags.Any(t => t == ut.TagId)
+                        select ut).ToListAsync();
+
+                    _contx.UserTags.RemoveRange(tagsToRemove);
+                    _contx.UserTags.RemoveRange(resultTags);
                 }
 
                 userTest.PassedOn = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);

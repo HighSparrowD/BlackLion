@@ -5,7 +5,7 @@ namespace WebApi.Entities.UserActionEntities
 {
     public class GetUserSettings
     {
-        [JsonPropertyName("userOcean")]
+        [JsonPropertyName("usesOcean")]
         public bool UsesOcean { get; set; }
         [JsonPropertyName("shouldFilterUsersWithoutRealPhoto")]
         public bool ShouldFilterUsersWithoutRealPhoto { get; set; }
