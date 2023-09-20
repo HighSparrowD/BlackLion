@@ -1,5 +1,5 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
+using WebApi.Enums;
 
 namespace WebApi.Entities.AdventureEntities
 {
@@ -13,7 +13,7 @@ namespace WebApi.Entities.AdventureEntities
         public int? CountryId { get; set; }
         public int? CityId { get; set; }
         public string Media { get; set; }
-        public bool IsMediaPhoto { get; set; }
+        public MediaType MediaType { get; set; }
         public string Description { get; set; }
         public string Experience { get; set; }
         public string AttendeesDescription { get; set; }

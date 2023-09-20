@@ -4251,7 +4251,7 @@ namespace WebApi.Repositories
                 existingTemplate.Experience = model.Experience;
                 existingTemplate.Gratitude = model.Gratitude;
                 existingTemplate.Media = model.Media;
-                existingTemplate.IsMediaPhoto = model.IsMediaPhoto;
+                existingTemplate.MediaType = model.MediaType;
                 existingTemplate.AutoReply = model.AutoReply;
                 existingTemplate.IsAutoReplyText = model.IsAutoReplyText;
 
@@ -4278,7 +4278,7 @@ namespace WebApi.Repositories
                 Experience = model.Experience,
                 Gratitude = model.Gratitude,
                 Media = model.Media,
-                IsMediaPhoto = model.IsMediaPhoto,
+                MediaType = model.MediaType,
                 AutoReply = model.AutoReply,
                 IsAutoReplyText = model.IsAutoReplyText
             };
@@ -4313,7 +4313,7 @@ namespace WebApi.Repositories
                 AutoReply = t.AutoReply,
                 IsAutoReplyText = t.IsAutoReplyText,
                 Media = t.Media,
-                IsMediaPhoto = t.IsMediaPhoto,
+                MediaType = t.MediaType,
                 CityId = t.CityId,
                 CountryId = t.CountryId,
                 Experience = t.Experience,
