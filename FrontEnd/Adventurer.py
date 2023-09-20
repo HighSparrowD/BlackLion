@@ -20,7 +20,7 @@ class Adventurer:
         self.hasVisited = hasVisited
         self.hasPremium = self.user_info["hasPremium"]
         self.isIdentityConfirmed = self.user_info["identityType"] != "None"
-        self.user_localization = self.user_info["data"]["language"]
+        self.user_localization = self.user_info["language"]
 
         #Indicates whether if user is managing his own adventures (1), subscribed adventures (2), a template (3), create from template (4)
         self.manageMode = 1
@@ -57,9 +57,8 @@ class Adventurer:
         self.country = None
         self.city = None
 
-        if self.user_info["location"]:
-            self.country = self.user_info["location"]["countryId"]
-            self.city = self.user_info["location"]["cityId"]
+        self.country = self.user_info["countryId"]
+        self.city = self.user_info["cityId"]
 
         #Used for adventure search
         self.adventures = None
@@ -502,7 +501,7 @@ class Adventurer:
             self.delete_message(message)
             if message.photo:
                 self.data["media"] = message.photo[len(message.photo) - 1].file_id
-                self.data["MediaType"] = "Photo"
+                self.data["mediaType"] = "Photo"
             elif message.video:
                 if message.video.duration > 180:
                     self.send_secondary_message("Video is to long")

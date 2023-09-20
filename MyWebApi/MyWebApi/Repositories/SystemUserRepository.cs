@@ -230,7 +230,9 @@ namespace WebApi.Repositories
                CityId = u.Location.CityId,
                CountryId = u.Location.CountryId,
                CityCountryLang = u.Data.Language,
-               CountryLang = u.Data.Language
+               CountryLang = u.Data.Language,
+               IdentityType = u.IdentityType,
+               HasPremium = u.HasPremium
             }).FirstOrDefaultAsync();
         }
 

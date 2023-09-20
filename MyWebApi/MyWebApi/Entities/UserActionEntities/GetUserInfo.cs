@@ -56,5 +56,11 @@ namespace WebApi.Entities.UserActionEntities
         public AppLanguage? CountryLang { get; set; }
         [JsonPropertyName("cityCountryLang")]
         public AppLanguage? CityCountryLang { get; set; }
+
+        // Other 
+        [JsonPropertyName("identityType")]
+        public IdentityConfirmationType IdentityType  { get; set; }
+        [JsonPropertyName("hasPremium")]
+        public bool HasPremium { get; set; }
     }
 }
