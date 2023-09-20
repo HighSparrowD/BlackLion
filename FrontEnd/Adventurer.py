@@ -1551,7 +1551,7 @@ class Adventurer:
         self.previous_section()
 
     def get_attendee_contact(self):
-        username = self.current_attendee_data["data"]["userName"]
+        username = self.current_attendee_data["userName"]
 
         if username:
             self.send_secondary_message("User does not have a username :(")
@@ -1559,12 +1559,11 @@ class Adventurer:
         self.send_secondary_message(f"{username}")
 
     def display_current_attendee_data(self):
-        base = self.current_attendee_data["data"]
 
-        if base["mediaType"] == "Photo":
-            self.send_active_message_with_photo(base["userDescription"], base["userMedia"])
+        if self.current_attendee_data["mediaType"] == "Photo":
+            self.send_active_message_with_photo(self.current_attendee_data["userDescription"], self.current_attendee_data["userMedia"])
         else:
-            self.send_active_message_with_video(base["userDescription"], base["userMedia"])
+            self.send_active_message_with_video(self.current_attendee_data["userDescription"], self.current_attendee_data["userMedia"])
 
     def send_active_message(self, text, markup=None):
         try:

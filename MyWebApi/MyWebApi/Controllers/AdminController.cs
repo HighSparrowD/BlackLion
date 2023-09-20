@@ -169,25 +169,25 @@ namespace WebApi.Controllers
                     var initialUser = await userRepo.GetUserInfoAsync(userId);
                     await userRepo.RegisterUserAsync(new Entities.UserActionEntities.UserRegistrationModel
                     {
-                        UserName = initialUser.Data.UserName,
-                        Age = initialUser.Data.UserAge,
-                        AgePrefs = initialUser.Data.AgePrefs,
-                        AppLanguage = initialUser.Data.Language,
+                        UserName = initialUser.UserName,
+                        Age = initialUser.UserAge,
+                        AgePrefs = initialUser.AgePrefs,
+                        AppLanguage = initialUser.Language,
                         UsesOcean = false,
-                        CityCode = initialUser.Location.CityId,
-                        CountryCode = initialUser.Location.CountryId,
-                        CommunicationPrefs = initialUser.Data.CommunicationPrefs,
-                        Description = initialUser.Data.UserDescription,
-                        Gender = initialUser.Data.UserGender,
-                        GenderPrefs = initialUser.Data.UserGenderPrefs,
-                        MediaType = initialUser.Data.MediaType,
+                        CityCode = initialUser.CityId,
+                        CountryCode = initialUser.CountryId,
+                        CommunicationPrefs = initialUser.CommunicationPrefs,
+                        Description = initialUser.UserDescription,
+                        Gender = initialUser.UserGender,
+                        GenderPrefs = initialUser.UserGenderPrefs,
+                        MediaType = initialUser.MediaType,
                         Id = initialUser.Id + i,
-                        LanguagePreferences = initialUser.Data.LanguagePreferences,
-                        Languages = initialUser.Data.UserLanguages,
-                        Media = initialUser.Data.UserMedia,
-                        RealName = initialUser.Data.UserRealName,
-                        Reason = initialUser.Data.Reason,
-                        UserLocationPreferences = initialUser.Data.LocationPreferences
+                        LanguagePreferences = initialUser.LanguagePreferences,
+                        Languages = initialUser.UserLanguages,
+                        Media = initialUser.UserMedia,
+                        RealName = initialUser.UserRealName,
+                        Reason = initialUser.Reason,
+                        UserLocationPreferences = initialUser.LocationPreferences
                     });
                     System.Console.WriteLine($"Registered users count: {i}");
                 }

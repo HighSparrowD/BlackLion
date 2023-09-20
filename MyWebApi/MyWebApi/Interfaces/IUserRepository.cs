@@ -24,7 +24,8 @@ namespace WebApi.Interfaces
         Task<bool> CheckUserIsBanned(long userId);
         Task<bool> CheckUserIsDeleted(long userId);
         Task<bool> SetDebugProperties(); //TODO: remove in production
-        Task<User> GetUserInfoAsync(long id);
+        Task<GetUserInfo> GetUserInfoAsync(long id);
+        Task<GetUserSettings> GetUserSettingsAsync(long id);
         Task<List<UserNotification>> GetUserRequests(long userId);
         Task<UserNotification> GetUserRequest(long requestId);
         bool CheckRequestExists(long senderId, long recieverId);

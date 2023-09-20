@@ -234,7 +234,14 @@ def get_user_request(requestId):
 
 def get_user_info(userId):
     try:
-        return json.loads(requests.get(f"{api_address}/UserInfo/{userId}", verify=False).text)
+        return json.loads(requests.get(f"{api_address}/user-info/{userId}", verify=False).text)
+    except:
+        return None
+
+
+def get_user_settings(userId):
+    try:
+        return json.loads(requests.get(f"{api_address}/user-settings/{userId}", verify=False).text)
     except:
         return None
 
