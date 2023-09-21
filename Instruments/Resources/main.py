@@ -102,5 +102,6 @@ def create_prices_resource():
     points_dataframe.to_csv("./Outputs/PricesPoints.csv", index=False)
 
 
-create_registration_resources()
+# create_registration_resources()
 # create_prices_resource()
+create_settings_resources()
