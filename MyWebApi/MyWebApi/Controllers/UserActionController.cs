@@ -747,7 +747,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/PurchasePoints")]
-        public async Task<IActionResult> PurchasePoints([FromQuery] long userId, [FromQuery]int cost, 
+        public async Task<IActionResult> PurchasePoints([FromQuery] long userId, [FromQuery]float cost, 
             [FromQuery] Currency currency, [FromQuery] int amount)
         {
             await _repository.PurchasePointsAsync(userId, cost, currency, amount);
@@ -774,7 +774,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/PurchesPPForPoints/{userId}/{price}/{count?}")]
-        public async Task<bool> PurchesPPForPoints(long userId, int price, short count=1)
+        public async Task<bool> PurchesPPForPoints(long userId, float price, short count=1)
         {
             return await _repository.PurchasePersonalityPointsAsync(userId, price, Currency.Points, count);
         }

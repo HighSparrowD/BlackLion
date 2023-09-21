@@ -308,11 +308,7 @@ class Shop:
         self.bot.message_handlers.remove(self.mh)
         self.bot.message_handlers.remove(self.hHandler)
 
-        # TODO: Find out why throws an exception
-        try:
-            self.bot.pre_checkout_query_handlers.remove(self.pre_checkout_h)
-        except:
-            pass
+        self.bot.pre_checkout_query_handlers.remove(self.pre_checkout_h)
 
         self.ch = None
         self.mh = None
@@ -411,11 +407,14 @@ class Shop:
                 elif is_final:
                     result = Helpers.purchase_points_for_real_money(self.current_user, self.chosen_pack_price, self.user_currency, self.active_pack)
 
-            if result:
+            if type(result) is not bool and result.status_code == 200:
                 if not is_final:
                     self.userBalance["points"] -= self.chosen_pack_price
                 #self.display_user_balance()
                 self.proceed(self.message)
+
+                if currency != "2":
+                    self.send_active_transaction_message("Successful!")
 
                 # self.send_active_transaction_message("Transaction was successful")
 
@@ -424,8 +423,7 @@ class Shop:
                 #     self.destruct()
 
             else:
-                #TODO: tell what had gone wrong
-                if currency != "2": #TODO: Remove when payment system is fully integrated
+                if currency != "2":
                     self.send_active_transaction_message("Something went wrong")
         else:
             self.send_active_transaction_message("You dont have enough Coins to buy this item")
@@ -591,11 +589,11 @@ class Shop:
 
         if charge_info.status == "succeeded":
             self.delete_price_invoice()
-            self.delete_active_message()
             self.process_transaction(self.current_transaction, None, is_final=True)
             self.send_active_transaction_message("Payment was successful!")
-        else:
-            # TODO: Find out what gone wrong ?
+        # elif charge_info.status == "processing":
+        #     pass
+        elif charge_info.status == "payment_failed":
             self.send_active_transaction_message("Payment failed. Please try again or contact the administration")
 
     def construct_active_pack_markup(self):
@@ -636,7 +634,6 @@ class Shop:
             self.send_active_message(text, markup)
 
     def send_price_invoice(self, title: str, description: str, price: str, invoice_payload: str):
-        # TODO: achieve the same result using another method
         priceTag = LabeledPrice("Price", int(price.replace(",", "")))
         self.delete_price_invoice()
         self.current_invoice_id = self.bot.send_invoice(chat_id=self.current_user, currency=self.user_currency,
@@ -712,12 +709,7 @@ class Shop:
         self.bot.callback_query_handlers.remove(self.ch)
         self.bot.message_handlers.remove(self.mh)
         self.bot.message_handlers.remove(self.hHandler)
-
-        #TODO: Find out why throws an exception
-        try:
-            self.bot.pre_checkout_query_handlers.remove(self.pre_checkout_h)
-        except:
-            pass
+        self.bot.pre_checkout_query_handlers.remove(self.pre_checkout_h)
 
         self.delete_price_invoice()
         self.delete_active_message()

@@ -3655,7 +3655,7 @@ namespace WebApi.Repositories
             return new GetUserData(sender, bonus);
         }
 
-        public async Task<bool> PurchasePersonalityPointsAsync(long userId, int amount, Currency currency, short count = 1)
+        public async Task<bool> PurchasePersonalityPointsAsync(long userId, float amount, Currency currency, short count = 1)
         {
             try
             {
@@ -4481,7 +4481,7 @@ namespace WebApi.Repositories
             return new AdventureSearchResponse(adventures);
         }
 
-        public async Task PurchasePointsAsync(long userId, int cost, Currency currency, int amount)
+        public async Task PurchasePointsAsync(long userId, float cost, Currency currency, int amount)
         {
             var balance = await GetUserWalletBalance(userId);
             balance.Points += amount;
