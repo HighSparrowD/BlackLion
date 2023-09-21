@@ -449,26 +449,28 @@ def check_promo_is_valid(userId, promo, isActivatedBeforeRegistration):
 
 
 def grant_premium_for_points(userId, cost, dayDuration):
-    return json.loads(requests.get(f"{api_address}/GrantPremiumToUser/{userId}/{float(cost.replace(',', '.'))}/{dayDuration}/{points}",
-                                   verify=False).text)
+    return requests.get(f"{api_address}/GrantPremiumToUser/{userId}/{float(cost)}/{dayDuration}/{points}", verify=False)
 
 
 def grant_premium_for_real_money(userId, cost, dayDuration, currency):
     c = float(cost.replace(',', '.'))
-    return json.loads(requests.get(f"{api_address}/GrantPremiumToUser/{userId}/{c}/{dayDuration}/{currency}",
-                                   verify=False).text)
+    return requests.get(f"{api_address}/GrantPremiumToUser/{userId}/{c}/{dayDuration}/{currency}", verify=False)
 
 
 def purchase_effect_for_points(userId, effectId, cost, count=1):
-    return json.loads(
-        requests.get(f"{api_address}/PurchaseEffect/{userId}/{effectId}/{float(cost.replace(',', '.'))}/{points}/{count}", verify=False).text)
+    return requests.get(f"{api_address}/PurchaseEffect/{userId}/{effectId}/{float(cost)}/{points}/{count}", verify=False)
 
 
 def purchase_test(userId, testId, cost, currency, language):
+    price = cost
+
+    if type(cost) is str:
+        price = cost.replace(',', '.')
+
     return requests.get(f"{api_address}/purchase-test", params={
         "userId": userId,
         "testId": testId,
-        "cost": float(cost.replace(',', '.')),
+        "cost": float(price),
         "currency": currency,
         "language": language
     }, verify=False)
@@ -479,20 +481,16 @@ def check_user_has_effect(userId, effectId):
         json.loads(requests.get(f"{api_address}/CheckUserHasEffect/{userId}/{effectId}", verify=False).text))
 
 
-# TODO: Change called API endpoint
 def purchase_effect_for_real_money(userId, effectId, cost, currency, count=1):
-    return json.loads(
-        requests.get(f"{api_address}/PurchaseEffect/{userId}/{effectId}/{float(cost.replace(',', '.'))}/{currency}/{count}", verify=False).text)
+    return requests.get(f"{api_address}/PurchaseEffect/{userId}/{effectId}/{float(cost.replace(',', '.'))}/{currency}/{count}", verify=False)
 
 
 def purchase_PP_for_points(userId, cost, count=1):
-    return json.loads(
-        requests.get(f"{api_address}/PurchesPPForPoints/{userId}/{float(cost.replace(',', '.'))}/{count}", verify=False).text)
+    return requests.get(f"{api_address}/PurchesPPForPoints/{userId}/{float(cost)}/{count}", verify=False)
 
 
 def purchase_PP_for_real_money(userId, cost, currency, count=1):
-    return json.loads(
-        requests.get(f"{api_address}/PurchesPPForRealMoney/{userId}/{float(cost.replace(',', '.'))}/{currency}/{count}", verify=False).text)
+    return requests.get(f"{api_address}/PurchesPPForRealMoney/{userId}/{float(cost.replace(',', '.'))}/{currency}/{count}", verify=False)
 
 
 def purchase_points_for_real_money(userId, cost, currency, amount):

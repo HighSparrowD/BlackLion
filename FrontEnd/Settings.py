@@ -1488,7 +1488,7 @@ class Settings:
         msg = ""
 
         if balance:
-            return f"💎Coins: {balance['points']}\n💎Ocean Points: {balance['oceanPoints']}\n💥Second Chances{balance['secondChances']}\n💥Valentines: {balance['valentines']}\n💥Detectors: {balance['detectors']}\n💥Nullifiers: {balance['nullifiers']}\n💥Card Decks Mini: {balance['cardDecksMini']}\n💥Card Decks Platinum: {balance['cardDecksPlatinum']}"
+            return f"💎Coins: {balance['points']}\n💎Ocean Points: {balance['oceanPoints']}\n💥Second Chances: {balance['secondChances']}\n💥Valentines: {balance['valentines']}\n💥Detectors: {balance['detectors']}\n💥Nullifiers: {balance['nullifiers']}\n💥Card Decks Mini: {balance['cardDecksMini']}\n💥Card Decks Platinum: {balance['cardDecksPlatinum']}"
 
         return "Something went wrong"
 
