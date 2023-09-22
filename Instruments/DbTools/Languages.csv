@@ -1,11 +1,11 @@
-639-1 ,639-2/T ,639-2/B ,Language name,Native name
+639-1 ,639-2/T ,639-2/B ,Language name,Native name,Priority
 aa ,aar ,aar ,Afar ,Afaraf 
 ab ,abk ,abk ,Abkhaz ,"аҧсуа бызшәа, аҧсшәа "
 ae ,ave ,ave ,Avestan ,avesta 
 af ,afr ,afr ,Afrikaans ,Afrikaans 
 ak ,aka ,aka ,Akan ,Akan 
 am ,amh ,amh ,Amharic ,አማርኛ 
-an ,arg ,arg ,Aragonese ,aragonés 
+an ,arg ,arg ,Aragonese ,aragonés
 ar ,ara ,ara ,Arabic ,العربية 
 as ,asm ,asm ,Assamese ,অসমীয়া 
 av ,ava ,ava ,Avaric ,"авар мацӀ, магӀарул мацӀ "
@@ -31,15 +31,15 @@ cs ,ces ,cze ,Czech ,"čeština, český jazyk ", 1
 cu ,chu ,chu ,"Old Church Slavonic, Church Slavonic, Old Bulgarian ",ѩзыкъ словѣньскъ 
 cv ,chv ,chv ,Chuvash ,чӑваш чӗлхи 
 cy ,cym ,wel ,Welsh ,Cymraeg 
-da ,dan ,dan ,Danish ,dansk 
-de ,deu ,ger ,German ,Deutsch, 1
+da ,dan ,dan ,Danish ,dansk,3
+de ,deu ,ger ,German ,Deutsch, 3
 dv ,div ,div ,Divehi; Dhivehi; Maldivian; ,ދިވެހި 
 dz ,dzo ,dzo ,Dzongkha ,རྫོང་ཁ 
 ee ,ewe ,ewe ,Ewe ,Eʋegbe 
 el ,ell ,gre ,"Greek, Modern ",ελληνικά 
 en ,eng ,eng ,English ,English, 2
 eo ,epo ,epo ,Esperanto ,Esperanto 
-es ,spa ,spa ,Spanish; Castilian ,"español, castellano "
+es ,spa ,spa ,Spanish; Castilian ,"español, castellano ",3
 et ,est ,est ,Estonian ,"eesti, eesti keel "
 eu ,eus ,baq ,Basque ,"euskara, euskera "
 fa ,fas ,per ,Persian (Farsi) ,فارسی 
@@ -47,7 +47,7 @@ ff ,ful ,ful ,Fula; Fulah; Pulaar; Pular ,"Fulfulde, Pulaar, Pular "
 fi ,fin ,fin ,Finnish ,"suomi, suomen kieli "
 fj ,fij ,fij ,Fijian ,vosa Vakaviti 
 fo ,fao ,fao ,Faroese ,føroyskt 
-fr ,fra ,fre ,French ,"français, langue française "
+fr ,fra ,fre ,French ,"français, langue française ",3
 fy ,fry ,fry ,Western Frisian ,Frysk 
 ga ,gle ,gle ,Irish ,Gaeilge 
 gd ,gla ,gla ,Scottish Gaelic; Gaelic ,Gàidhlig 
@@ -76,7 +76,7 @@ it ,ita ,ita ,Italian ,italiano
 iu ,iku ,iku ,Inuktitut ,ᐃᓄᒃᑎᑐᑦ 
 ja ,jpn ,jpn ,Japanese ,日本語 (にほんご) 
 jv ,jav ,jav ,Javanese ,basa Jawa 
-ka ,kat ,geo ,Georgian ,ქართული 
+ka ,kat ,geo ,Georgian ,ქართული,4
 kg ,kon ,kon ,Kongo ,KiKongo 
 ki ,kik ,kik ,"Kikuyu, Gikuyu ",Gĩkũyũ 
 kj ,kua ,kua ,"Kwanyama, Kuanyama ",Kuanyama 
@@ -128,7 +128,7 @@ or ,ori ,ori ,Oriya ,ଓଡ଼ିଆ
 os ,oss ,oss ,"Ossetian, Ossetic ",ирон æвзаг 
 pa ,pan ,pan ,"Panjabi, Punjabi ","ਪੰਜਾਬੀ, پنجابی‎ "
 pi ,pli ,pli ,Pāli ,पाऴि 
-pl ,pol ,pol ,Polish ,"język polski, polszczyzna "
+pl ,pol ,pol ,Polish ,"język polski, polszczyzna ",2
 ps ,pus ,pus ,"Pashto, Pushto ",پښتو 
 pt ,por ,por ,Portuguese ,português 
 qu ,que ,que ,Quechua ,"Runa Simi, Kichwa "
@@ -143,13 +143,13 @@ sd ,snd ,snd ,Sindhi ,"सिन्धी, سنڌي، سندھی‎ "
 se ,sme ,sme ,Northern Sami ,Davvisámegiella 
 sg ,sag ,sag ,Sango ,yângâ tî sängö 
 si ,sin ,sin ,"Sinhala, Sinhalese ",සිංහල 
-sk ,slk ,slo ,Slovak ,"slovenčina, slovenský jazyk "
+sk ,slk ,slo ,Slovak ,"slovenčina, slovenský jazyk ",3
 sl ,slv ,slv ,Slovene ,"slovenski jezik, slovenščina "
 sm ,smo ,smo ,Samoan ,gagana fa'a Samoa 
 sn ,sna ,sna ,Shona ,chiShona 
 so ,som ,som ,Somali ,"Soomaaliga, af Soomaali "
 sq ,sqi ,alb ,Albanian ,gjuha shqipe 
-sr ,srp ,srp ,Serbian ,српски језик 
+sr ,srp ,srp ,Serbian ,српски језик,4
 ss ,ssw ,ssw ,Swati ,SiSwati 
 st ,sot ,sot ,Southern Sotho ,Sesotho 
 su ,sun ,sun ,Sundanese ,Basa Sunda 

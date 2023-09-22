@@ -1,69 +1,69 @@
 Id,Name,Native Name,Language,Priority
 1,здалеку,afar,UK,5
 2,абхазька,abkhaz,UK,5
-3,авестійський,avestan,UK,5
+3,авестійська,avestan,UK,5
 4,африкаанс,afrikaans,UK,5
 5,акан,akan,UK,5
 6,амхарська,amharic,UK,5
 7,арагонська,aragonese,UK,5
 8,арабська,arabic,UK,5
-9,ассамська,assamese,UK,5
-10,аварний,avaric,UK,5
+9,асамська,assamese,UK,5
+10,аварський,avaric,UK,5
 11,аймара,aymara,UK,5
-12,азербайджанський,azerbaijani,UK,5
-13,південний азербайджанський,south azerbaijani,UK,5
-14,башкир,bashkir,UK,5
+12,азербайджанська,azerbaijani,UK,5
+13,південноазербайджанський,south azerbaijani,UK,5
+14,башкирська,bashkir,UK,5
 15,білоруська,belaUKsian,UK,5
 16,болгарська,bulgarian,UK,5
 17,біхарі,bihari,UK,5
 18,біслама,bislama,UK,5
 19,бамбара,bambara,UK,5
-20,бенгальська; бангла,bengali; bangla,UK,5
+20,бенгальська; бенгальська,bengali; bangla,UK,5
 21,"тибетський стандарт, тибетський, центральний","tibetan standard, tibetan, central",UK,5
 22,бретонський,breton,UK,5
-23,боснійська,bosnian,UK,5
-24,каталонський; валенсійський,catalan; valencian,UK,5
+23,боснійський,bosnian,UK,5
+24,каталонська; валенсійський,catalan; valencian,UK,5
 25,чеченський,chechen,UK,5
 26,чаморро,chamorro,UK,5
-27,корсиканський,corsican,UK,5
+27,корсиканець,corsican,UK,5
 28,кри,cree,UK,5
-29,чеська,czech,UK,5
-30,"старослов'янська, церковнослов'янська, староболг","old church slavonic, church slavonic, old bulgarian",UK,5
-31,чуваський,chuvash,UK,5
+29,чеська,czech,UK,1
+30,"старослов'янська, церковнослов'янська, староболгарська","old church slavonic, church slavonic, old bulgarian",UK,5
+31,чуваська,chuvash,UK,5
 32,валлійська,welsh,UK,5
-33,датський,danish,UK,5
-34,німецький,german,UK,5
-35,дивехі; dhivehi; мальдівський;,divehi; dhivehi; maldivian;,UK,5
+33,датська,danish,UK,3
+34,німецький,german,UK,3
+35,дівехі; dhivehi; мальдівський;,divehi; dhivehi; maldivian;,UK,5
 36,дзонгха,dzongkha,UK,5
-37,вівця,ewe,UK,5
+37,еве,ewe,UK,5
 38,"грецька, сучасна","greek, modern",UK,5
-39,англійська,english,UK,5
+39,англійська,english,UK,2
 40,есперанто,esperanto,UK,5
-41,іспанська; кастильський,spanish; castilian,UK,5
+41,іспанська; кастильська,spanish; castilian,UK,3
 42,естонська,estonian,UK,5
-43,баскський,basque,UK,5
+43,баскська,basque,UK,5
 44,перська (фарсі),persian (farsi),UK,5
-45,фула; фула; пулаар; пулярний,fula; fulah; pulaar; pular,UK,5
+45,фула; фула; пулаар; пулар,fula; fulah; pulaar; pular,UK,5
 46,фінська,finnish,UK,5
 47,фіджійський,fijian,UK,5
 48,фарерська,faroese,UK,5
-49,французька,french,UK,5
-50,західно-фризька,western frisian,UK,5
+49,французька,french,UK,3
+50,західнофризька,western frisian,UK,5
 51,ірландський,irish,UK,5
 52,шотландська гельська; гельська,scottish gaelic; gaelic,UK,5
 53,галицький,galician,UK,5
 54,гуарані,guaraní,UK,5
 55,гуджараті,gujarati,UK,5
-56,manx,manx,UK,5
+56,менська,manx,UK,5
 57,хауса,hausa,UK,5
 58,іврит (сучасний),hebrew (modern),UK,5
-59,гінді,hindi,UK,5
-60,hiri motu,hiri motu,UK,5
+59,хінді,hindi,UK,5
+60,хірі моту,hiri motu,UK,5
 61,хорватська,croatian,UK,5
-62,гаїтянський; гаїтянський креольський,haitian; haitian creole,UK,5
+62,гаїтянський; гаїтянська креольська,haitian; haitian creole,UK,5
 63,угорська,hungarian,UK,5
-64,вірменська,armenian,UK,5
-65,герой,herero,UK,5
+64,вірменський,armenian,UK,5
+65,гереро,herero,UK,5
 66,інтерлінгва,interlingua,UK,5
 67,індонезійська,indonesian,UK,5
 68,інтерлінгва,interlingue,UK,5
@@ -76,83 +76,83 @@ Id,Name,Native Name,Language,Priority
 75,інуктитут,inuktitut,UK,5
 76,японський,japanese,UK,5
 77,яванський,javanese,UK,5
-78,грузинський,georgian,UK,5
+78,грузинський,georgian,UK,4
 79,конго,kongo,UK,5
 80,"kikuyu, gikuyu","kikuyu, gikuyu",UK,5
 81,"кваньяма, куаньяма","kwanyama, kuanyama",UK,5
 82,казахська,kazakh,UK,5
-83,"калаалісут, гренландський","kalaallisut, greenlandic",UK,5
-84,кхмерський,khmer,UK,5
+83,"калаалісут, гренландська","kalaallisut, greenlandic",UK,5
+84,кхмерська,khmer,UK,5
 85,каннада,kannada,UK,5
 86,корейська,korean,UK,5
 87,канурі,kanuri,UK,5
-88,Кашмірі,kashmiri,UK,5
+88,кашмірі,kashmiri,UK,5
 89,курдська,kurdish,UK,5
 90,комі,komi,UK,5
 91,корніш,cornish,UK,5
 92,киргизький,kyrgyz,UK,5
-93,латинська мова,latin,UK,5
-94,"люксембурзький, летцебурзький","luxembourgish, letzeburgesch",UK,5
-95,ganda,ganda,UK,5
-96,"лімбурзький, лімбурган, лімбургер","limburgish, limburgan, limburger",UK,5
+93,латинь,latin,UK,5
+94,"люксембурзька, letzeburgesch","luxembourgish, letzeburgesch",UK,5
+95,ганда,ganda,UK,5
+96,"лімбурзький, лімбурзький, лімбурзький","limburgish, limburgan, limburger",UK,5
 97,лінгала,lingala,UK,5
 98,лаоський,lao,UK,5
 99,литовський,lithuanian,UK,5
-100,луба-катанга,luba-katanga,UK,5
+100,люба-катанга,luba-katanga,UK,5
 101,латиська,latvian,UK,5
 102,малагасійська,malagasy,UK,5
 103,маршальський,marshallese,UK,5
 104,маорі,māori,UK,5
 105,македонська,macedonian,UK,5
 106,малаялам,malayalam,UK,5
-107,монгольський,mongolian,UK,5
+107,монгольська,mongolian,UK,5
 108,маратхі (marāṭhī),marathi (marāṭhī),UK,5
 109,малайська,malay,UK,5
-110,мальтійський,maltese,UK,5
-111,бірманський,burmese,UK,5
-112,Науру,nauUK,UK,5
-113,норвезький букмол,norwegian bokmål,UK,5
-114,північ ндебеле,north ndebele,UK,5
+110,мальтійська,maltese,UK,5
+111,бірманська,burmese,UK,5
+112,науру,nauUK,UK,5
+113,норвезька букмол,norwegian bokmål,UK,5
+114,північний ндебеле,north ndebele,UK,5
 115,непальська,nepali,UK,5
 116,ндонга,ndonga,UK,5
-117,голландський,dutch,UK,5
+117,голландська,dutch,UK,5
 118,норвезький нюнорск,norwegian nynorsk,UK,5
 119,норвезька,norwegian,UK,5
-120,південне дебеле,south ndebele,UK,5
+120,південний ндебеле,south ndebele,UK,5
 121,"навахо, навахо","navajo, navaho",UK,5
-122,чичева; chewa; nyanja,chichewa; chewa; nyanja,UK,5
-123,окситанець,occitan,UK,5
+122,чічева; chewa; ньяня,chichewa; chewa; nyanja,UK,5
+123,окситанська,occitan,UK,5
 124,"оджибве, оджибва","ojibwe, ojibwa",UK,5
 125,оромо,oromo,UK,5
 126,орія,oriya,UK,5
-127,"осетинський, осетин","ossetian, ossetic",UK,5
-128,"пенджабі, панджабі","panjabi, punjabi",UK,5
-129,pāli,pāli,UK,5
-130,полірувати,polish,UK,5
-131,"пушту, пушто","pashto, pushto",UK,5
+127,"осетин, осетин","ossetian, ossetic",UK,5
+128,"панджабі, панджабі","panjabi, punjabi",UK,5
+129,палі,pāli,UK,5
+130,польський,polish,UK,2
+131,"пушту, пушту","pashto, pushto",UK,5
 132,португальська,portuguese,UK,5
 133,кечуа,quechua,UK,5
-134,романш,romansh,UK,5
+134,ретороманська,romansh,UK,5
 135,кірунді,kiUKndi,UK,5
 136,румунська,romanian,UK,5
-137,російський,UKssian,UK,5
+137,російський,UKssian,UK,1
 138,кіньяруанда,kinyarwanda,UK,5
 139,санскрит (saṁskṛta),sanskrit (saṁskṛta),UK,5
 140,сардинський,sardinian,UK,5
-141,синдхі,sindhi,UK,5
-142,північні самі,northern sami,UK,5
+141,сіндхі,sindhi,UK,5
+142,північні саами,northern sami,UK,5
 143,санго,sango,UK,5
 144,"сингальська, сингальська","sinhala, sinhalese",UK,5
-145,словацька,slovak,UK,5
-146,слов'янець,slovene,UK,5
-147,самоанський,samoan,UK,5
+145,словацький,slovak,UK,3
+146,словенська,slovene,UK,5
+147,самоанська,samoan,UK,5
 148,шона,shona,UK,5
-149,сомалійський,somali,UK,5
-150,албанський,albanian,UK,5
-151,сербська,serbian,UK,5
+149,сомалі,somali,UK,5
+150,албанець,albanian,UK,5
+151,сербська,serbian,UK,4
 152,свати,swati,UK,5
 153,південний сото,southern sotho,UK,5
-154,суданський,sundanese,UK,5
+154,сунданська,sundanese,UK,5
 155,шведська,swedish,UK,5
 156,суахілі,swahili,UK,5
 157,тамільська,tamil,UK,5
@@ -163,22 +163,22 @@ Id,Name,Native Name,Language,Priority
 162,туркменський,turkmen,UK,5
 163,тагальська,tagalog,UK,5
 164,тсвана,tswana,UK,5
-165,Тонга (острови Тонга),tonga (tonga islands),UK,5
+165,тонга (острови тонга),tonga (tonga islands),UK,5
 166,турецька,turkish,UK,5
-167,тсонга,tsonga,UK,5
+167,цонга,tsonga,UK,5
 168,татарський,tatar,UK,5
-169,twi,twi,UK,5
+169,тві,twi,UK,5
 170,таїтянський,tahitian,UK,5
 171,"уйгурський, уйгурський","uyghur, uighur",UK,5
-172,українська,ukrainian,UK,5
+172,українська,ukrainian,UK,1
 173,урду,urdu,UK,5
 174,узбецький,uzbek,UK,5
 175,венда,venda,UK,5
-176,в'єтнамський,vietnamese,UK,5
+176,в'єтнамська,vietnamese,UK,5
 177,волапюк,volapük,UK,5
 178,валлонський,walloon,UK,5
 179,волоф,wolof,UK,5
-180,xhosa,xhosa,UK,5
+180,коса,xhosa,UK,5
 181,ідиш,yiddish,UK,5
 182,йоруба,yoUKba,UK,5
 183,"zhuang, chuang","zhuang, chuang",UK,5
