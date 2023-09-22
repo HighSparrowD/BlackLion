@@ -31,15 +31,15 @@ Id,Name,Native Name,Language,Priority
 30,"old church slavonic, church slavonic, old bulgarian","old church slavonic, church slavonic, old bulgarian",EN,5
 31,chuvash,chuvash,EN,5
 32,welsh,welsh,EN,5
-33,danish,danish,EN,5
-34,german,german,EN,5
+33,danish,danish,EN,3
+34,german,german,EN,3
 35,divehi; dhivehi; maldivian;,divehi; dhivehi; maldivian;,EN,5
 36,dzongkha,dzongkha,EN,5
 37,ewe,ewe,EN,5
 38,"greek, modern","greek, modern",EN,5
-39,english,english,EN,1
+39,english,english,EN,2
 40,esperanto,esperanto,EN,5
-41,spanish; castilian,spanish; castilian,EN,5
+41,spanish; castilian,spanish; castilian,EN,3
 42,estonian,estonian,EN,5
 43,basque,basque,EN,5
 44,persian (farsi),persian (farsi),EN,5
@@ -47,7 +47,7 @@ Id,Name,Native Name,Language,Priority
 46,finnish,finnish,EN,5
 47,fijian,fijian,EN,5
 48,faroese,faroese,EN,5
-49,french,french,EN,5
+49,french,french,EN,3
 50,western frisian,western frisian,EN,5
 51,irish,irish,EN,5
 52,scottish gaelic; gaelic,scottish gaelic; gaelic,EN,5
@@ -76,7 +76,7 @@ Id,Name,Native Name,Language,Priority
 75,inuktitut,inuktitut,EN,5
 76,japanese,japanese,EN,5
 77,javanese,javanese,EN,5
-78,georgian,georgian,EN,5
+78,georgian,georgian,EN,4
 79,kongo,kongo,EN,5
 80,"kikuyu, gikuyu","kikuyu, gikuyu",EN,5
 81,"kwanyama, kuanyama","kwanyama, kuanyama",EN,5
@@ -128,7 +128,7 @@ Id,Name,Native Name,Language,Priority
 127,"ossetian, ossetic","ossetian, ossetic",EN,5
 128,"panjabi, punjabi","panjabi, punjabi",EN,5
 129,pāli,pāli,EN,5
-130,polish,polish,EN,1
+130,polish,polish,EN,2
 131,"pashto, pushto","pashto, pushto",EN,5
 132,portuguese,portuguese,EN,5
 133,quechua,quechua,EN,5
@@ -143,13 +143,13 @@ Id,Name,Native Name,Language,Priority
 142,northern sami,northern sami,EN,5
 143,sango,sango,EN,5
 144,"sinhala, sinhalese","sinhala, sinhalese",EN,5
-145,slovak,slovak,EN,5
+145,slovak,slovak,EN,3
 146,slovene,slovene,EN,5
 147,samoan,samoan,EN,5
 148,shona,shona,EN,5
 149,somali,somali,EN,5
 150,albanian,albanian,EN,5
-151,serbian,serbian,EN,5
+151,serbian,serbian,EN,4
 152,swati,swati,EN,5
 153,southern sotho,southern sotho,EN,5
 154,sundanese,sundanese,EN,5

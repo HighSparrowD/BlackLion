@@ -25,10 +25,6 @@ currencies = {
     18: "Points"
 }
 
-prioritized_langs = ["English", "Russian", "Ukrainian", "Czech", "Polish"]
-prioritized_countries = ["Ukraine", "Russia", "Czechia", "Poland", "United States"]
-
-
 
 initial_prompt = """У меня есть вопрос из психологического теста. Он звучит так: '{}' ответы на него: {}.
 Мне нужно чтобы ты описал информацию полученную о человеке которую мы получим в случае если он ответит каждым из возможных вариантов ответа. 
@@ -86,7 +82,7 @@ def create_countries_resource(language, start_index=0, loc_index=0):
     else:
         file = pandas.read_csv(f"worldcitiesEN.csv", usecols=["country", "priority"])
 
-    countries = sorted(file.drop_duplicates().values.tolist())
+    countries = sorted(file.drop_duplicates(subset="country").values.tolist())
     i = start_index
 
     if loc_index == 0:
@@ -94,7 +90,7 @@ def create_countries_resource(language, start_index=0, loc_index=0):
             ids.append(i)
             countryNames.append(country[0].lower())
             languages.append(langs[loc_index])
-            priorities.append(5 if isinstance(country[1], float) else int(country[1]))
+            priorities.append(5 if (isinstance(country[1], float) and country[1] not in range(1, 5)) else int(country[1]))
 
             i += 1
     else:
@@ -103,7 +99,7 @@ def create_countries_resource(language, start_index=0, loc_index=0):
             ids.append(i)
             countryNames.append(translator.translate(country[0]).lower())
             languages.append(langs[loc_index])
-            priorities.append(5 if isinstance(country[1], float) else int(country[1]))
+            priorities.append(5 if (isinstance(country[1], float) and country[1] not in range(1, 5)) else int(country[1]))
 
             i += 1
 
@@ -237,7 +233,7 @@ def create_languages_resource(language, start_index=0, loc_index=0):
     priorities = []
 
     languages = pandas.read_csv("Languages.csv",
-                                usecols=["Language name", "Native name"]).drop_duplicates().values.tolist()
+                                usecols=["Language name", "Native name", "Priority"]).drop_duplicates().values.tolist()
     d = []
     i = start_index
 
@@ -247,7 +243,7 @@ def create_languages_resource(language, start_index=0, loc_index=0):
             languageNames.append(lang[0].strip().lower())
             languageNativeNames.append(lang[0].strip().lower())  # lang[1] TODO: Make it work with a native one
             languages_translation.append(langs[loc_index])
-            priorities.append(5 if lang[0].strip() not in prioritized_langs else 1)
+            priorities.append(5 if (isinstance(lang[2], float) and lang[2] not in range(1, 5)) else int(lang[2]))
 
             i += 1
 
@@ -260,7 +256,7 @@ def create_languages_resource(language, start_index=0, loc_index=0):
             languageNames.append(translated_lang)
             languageNativeNames.append(lang[0].strip().lower())  # lang[1] TODO: Make it work with a native one
             languages_translation.append(langs[loc_index])
-            priorities.append(5 if lang[0] not in prioritized_langs else 1)
+            priorities.append(5 if (isinstance(lang[2], float) and lang[2] not in range(1, 5)) else int(lang[2]))
 
             d.append({
                 "Id": i,
@@ -290,7 +286,7 @@ def create_languages_resource(language, start_index=0, loc_index=0):
 
 def update_countries(language):
     file = pandas.read_csv(f"./Output/Countries{language.upper()}.csv", usecols=["Id", "Name", "Language", "Priority"])
-    countries = sorted(file.drop_duplicates().values.tolist())
+    countries = sorted(file.drop_duplicates(subset="Name").values.tolist())
     countries_dicts = []
 
     for country in countries:
@@ -298,7 +294,7 @@ def update_countries(language):
             "id": country[0],
             "countryName": country[1],
             "lang": country[2],
-            "priority": country[3] or 5,
+            "priority": country[3],
         }
 
         countries_dicts.append(d)
@@ -313,7 +309,7 @@ def update_countries(language):
 
 def update_cities(language):
     file = pandas.read_csv(f"./Output/Cities{language.upper()}.csv", usecols=["Id", "Name", "Country Id", "Language"])
-    cities = sorted(file.drop_duplicates().values.tolist())
+    cities = sorted(file.drop_duplicates(subset="Name").values.tolist())
     cities_dict = []
 
     for city in cities:
@@ -336,7 +332,7 @@ def update_cities(language):
 def update_languages(language):
     file = pandas.read_csv(f"./Output/Languages{language.upper()}.csv",
                            usecols=["Id", "Name", "Native Name", "Language", "Priority"])
-    languages = sorted(file.drop_duplicates().values.tolist())
+    languages = sorted(file.drop_duplicates(subset="Name").values.tolist())
     languages_dict = []
 
     for lang in languages:
@@ -567,8 +563,8 @@ def get_file_data(file):
 # create_ru_localization()
 # create_uk_localization()
 
-# load_eng_localization()
-# load_ru_localization()
-# load_uk_localization()
+load_eng_localization()
+load_ru_localization()
+load_uk_localization()
 
-generate_tag_prompt()
+# generate_tag_prompt()
