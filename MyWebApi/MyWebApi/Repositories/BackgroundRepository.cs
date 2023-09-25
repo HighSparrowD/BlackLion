@@ -16,6 +16,7 @@ namespace WebApi.Repositories
         private const short _oldEncountersSpan = 3;
         private const short _oldFeedbacksSpan = 30;
         private const short _oldReportsSpan = 30;
+        private const short _oldRequestsSpan = 30;
         private const short _oldUsersSpan = 0;
         private const short _oldAdventuresSpan = 15;
 
@@ -59,6 +60,12 @@ namespace WebApi.Repositories
         public async Task DeleteOldReportsAsync()
         {
             var sql = $"DELETE FROM \"user_reports\" WHERE EXTRACT(DAY FROM (NOW() - \"InsertedUtc\")) >= {_oldReportsSpan} AND \"AdminId\" IS NOT NULL";
+            await _context.Database.ExecuteSqlRawAsync(sql);
+        }
+
+        public async Task DeleteOldRequestsAsync()
+        {
+            var sql = $"DELETE FROM \"requests\" WHERE EXTRACT(DAY FROM (NOW() - \"AnsweredTimeStamp\")) >= {_oldRequestsSpan} AND \"Answer\" IS NOT NULL";
             await _context.Database.ExecuteSqlRawAsync(sql);
         }
 

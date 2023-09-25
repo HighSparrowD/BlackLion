@@ -12,6 +12,7 @@ namespace WebApi.Interfaces
         Task DeleteOldEncountersAsync();
         Task DeleteOldFeedbacksAsync();
         Task DeleteOldReportsAsync();
+        Task DeleteOldRequestsAsync();
         Task DeleteOldUsersAsync();
         Task DeleteOldAdventuresWithReportsAsync();
     }

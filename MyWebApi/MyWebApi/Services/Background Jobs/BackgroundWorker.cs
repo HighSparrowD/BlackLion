@@ -146,6 +146,9 @@ namespace WebApi.Services.Background
 
             //Remove old reports
             await backgroundRepo.DeleteOldReportsAsync();
+
+            // Remove old requests
+            await backgroundRepo.DeleteOldRequestsAsync();
             
             //Remove old deleted users
             await backgroundRepo.DeleteOldUsersAsync();
