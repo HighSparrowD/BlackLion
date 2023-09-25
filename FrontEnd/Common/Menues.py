@@ -15,11 +15,12 @@ def go_back_to_main_menu(bot, user, message, shouldSwitch=True):
     if shouldSwitch:
         response = Helpers.switch_user_busy_status(user, 14)
 
-        request_list = Helpers.get_user_requests(user)
+        response = Helpers.get_user_requests(user)
+        request_list = response["requests"]
 
         if request_list:
             if message:
-                Requester(bot, message, user, request_list)
+                Requester(bot, message, user, request_list, response["notification"])
             return False
 
     notification_list = Helpers.get_user_notifications(user)
@@ -28,7 +29,7 @@ def go_back_to_main_menu(bot, user, message, shouldSwitch=True):
             bot.send_message(notif["userId"], notif["description"])
             Helpers.delete_user_notification(notif["id"])
     else:
-        if response and response["comment"]:
+        if response and "comment" in response:
             bot.send_message(user, response["comment"])
     bot.send_message(user, "What are we doing next? 😊", reply_markup=menu_markup)
 

@@ -26,7 +26,7 @@ namespace WebApi.Interfaces
         Task<bool> SetDebugProperties(); //TODO: remove in production
         Task<GetUserInfo> GetUserInfoAsync(long id);
         Task<GetUserSettings> GetUserSettingsAsync(long id);
-        Task<List<GetRequests>> GetUserRequests(long userId);
+        Task<GetRequests> GetUserRequests(long userId);
         Task<UserNotification> GetUserRequest(long requestId);
         Task<bool> CheckRequestExists(long senderId, long recieverId);
         Task<string> RegisterUserRequestAsync(AddRequest request);

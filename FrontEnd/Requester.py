@@ -1,3 +1,4 @@
+from telebot import TeleBot
 from telebot.types import KeyboardButton, ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
 from Core import HelpersMethodes as Helpers
 from Helper import Helper
@@ -6,7 +7,7 @@ from Common.Keyboards import menu_markup
 
 
 class Requester:
-    def __init__(self, bot, message, receiver, request_list, returnMethod=None):
+    def __init__(self, bot: TeleBot, message: any, receiver: int, request_list: list, notification: str, returnMethod=None):
         self.bot = bot
         self.message = message
         self.current_user = receiver
@@ -36,13 +37,13 @@ class Requester:
         self.actions_markup = InlineKeyboardMarkup().add(InlineKeyboardButton("⚠ Report ⚠", callback_data=self.active_user_id)) \
             .add(InlineKeyboardButton("🔖 Help 🔖", callback_data="11"))
 
-        self.start_message = "Some people have liked you!"
+        self.start_message = notification
 
         if len(self.request_list) > 1:
             self.start_message = self.request_list[0]["description"]
             self.request_list.pop(0)
 
-        self.ch = self.bot.register_callback_query_handler("", self.callback_handler, user_id=self.current_user)
+        self.ch = self.bot.register_callback_query_handler(message, self.callback_handler, user_id=self.current_user)
 
         self.start(message)
 

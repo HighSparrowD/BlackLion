@@ -344,7 +344,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/user-requests/{userId}")]
-        public async Task<List<GetRequests>> GetUserRequests(long userId)
+        public async Task<GetRequests> GetUserRequests(long userId)
         {
             return await _repository.GetUserRequests(userId);
         }
