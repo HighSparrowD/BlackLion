@@ -10,15 +10,12 @@ namespace WebApi.Entities.UserActionEntities
     {
         [Key]
         public long Id { get; set; }
-        [ForeignKey("Sender")]
-        public long? SenderId { get; set; }
         [ForeignKey("Receiver")]
         public long UserId { get; set; }
-        public bool IsLikedBack { get; set; }
         public NotificationType Type { get; set; }
         public Section Section { get; set; }
         public string? Description { get; set; }
-        public virtual User? Sender { get; set; }
+
         public virtual User? Receiver { get; set; }
     }
 }

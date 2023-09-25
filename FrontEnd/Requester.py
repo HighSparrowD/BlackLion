@@ -1,11 +1,13 @@
+from telebot import TeleBot
 from telebot.types import KeyboardButton, ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
 from Core import HelpersMethodes as Helpers
 from Helper import Helper
 from ReportModule import ReportModule
+from Common.Keyboards import menu_markup
 
 
 class Requester:
-    def __init__(self, bot, message, receiver, request_list, returnMethod=None):
+    def __init__(self, bot: TeleBot, message: any, receiver: int, request_list: list, notification: str, returnMethod=None):
         self.bot = bot
         self.message = message
         self.current_user = receiver
@@ -35,19 +37,13 @@ class Requester:
         self.actions_markup = InlineKeyboardMarkup().add(InlineKeyboardButton("⚠ Report ⚠", callback_data=self.active_user_id)) \
             .add(InlineKeyboardButton("🔖 Help 🔖", callback_data="11"))
 
-        self.start_message = "Some people have liked you!"
+        self.start_message = notification
 
         if len(self.request_list) > 1:
             self.start_message = self.request_list[0]["description"]
             self.request_list.pop(0)
 
-        self.menu_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True) \
-            .add(KeyboardButton("/search"),
-                 KeyboardButton("/random"),
-                 KeyboardButton("/feedback"),
-                 KeyboardButton("/settings"))
-
-        self.ch = self.bot.register_callback_query_handler("", self.callback_handler, user_id=self.current_user)
+        self.ch = self.bot.register_callback_query_handler(message, self.callback_handler, user_id=self.current_user)
 
         self.start(message)
 
@@ -75,7 +71,7 @@ class Requester:
 
                 self.get_request_sender_data()
 
-                if self.current_request["isLikedBack"]:
+                if self.current_request["isMatch"]:
                     # self.bot.send_photo(self.current_user, self.current_managed_user["userMedia"], f"<b>{self.current_request['description']}</b>\n\n{self.current_managed_user['userDescription']}", reply_markup=self.markup, parse_mode=telegram.ParseMode.HTML)
                     self.send_user_media(True)
                     Helpers.delete_user_request(self.current_request_id)
@@ -105,7 +101,7 @@ class Requester:
                 self.bot.register_next_step_handler(message, self.process_request, acceptMode=acceptMode, chat_id=self.current_user)
 
     def accept_request(self, message):
-        msg = Helpers.register_user_request(self.current_user, self.current_managed_user["id"], True)
+        msg = Helpers.answer_user_request(self.current_request_id, "Accept")
         self.bot.send_message(self.current_user, msg)
         self.request_list.pop(0)
         self.process_request(message)
@@ -124,7 +120,7 @@ class Requester:
         self.destruct()
 
     def decline_request(self, message):
-        sadMessage = Helpers.decline_user_request(self.current_user, self.current_managed_user_id)
+        sadMessage = Helpers.answer_user_request(self.current_request_id, "Decline")
 
         if sadMessage:
             self.bot.send_message(self.current_user, sadMessage)
@@ -141,11 +137,11 @@ class Requester:
             return True
         return False
 
-    def send_user_media(self, isLikedBack):
+    def send_user_media(self, isMatch):
         bonus = "<b>Someone had liked you</b>\n\n"
 
-        if isLikedBack:
-            bonus = f"<b>{self.current_request['description']}</b>"
+        if isMatch:
+            bonus = f"<b>{self.current_request['systemMessage']}</b>"
 
         if self.current_managed_user["mediaType"] == "Photo":
             self.bot.send_photo(self.current_user, self.current_managed_user["userMedia"],
@@ -164,7 +160,7 @@ class Requester:
     def get_request_sender_data(self):
         response = Helpers.get_request_sender(self.active_user_id)
         self.current_managed_user_id = response["userId"]
-        self.current_managed_user = response["userDataInfo"]
+        self.current_managed_user = response["userData"]
         self.comment = response["comment"]
 
     def help_handler(self, message):
@@ -187,11 +183,11 @@ class Requester:
 
         self.bot.callback_query_handlers.remove(self.ch)
 
-        Helpers.switch_user_busy_status(self.current_user, 12)
+        Helpers.switch_user_busy_status(self.current_user, 14)
 
         if self.returnMethod:
             self.returnMethod(self.message)
             return
 
-        self.bot.send_message(self.current_user, "What are we doing next? 😊", reply_markup=self.menu_markup)
+        self.bot.send_message(self.current_user, "What are we doing next? 😊", reply_markup=menu_markup)
         return

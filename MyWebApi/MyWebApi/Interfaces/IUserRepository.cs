@@ -26,13 +26,14 @@ namespace WebApi.Interfaces
         Task<bool> SetDebugProperties(); //TODO: remove in production
         Task<GetUserInfo> GetUserInfoAsync(long id);
         Task<GetUserSettings> GetUserSettingsAsync(long id);
-        Task<List<UserNotification>> GetUserRequests(long userId);
+        Task<GetRequests> GetUserRequests(long userId);
         Task<UserNotification> GetUserRequest(long requestId);
-        bool CheckRequestExists(long senderId, long recieverId);
-        Task<string> RegisterUserRequestAsync(AddNotification request);
-        Task<string> DeclineRequestAsync(long user1, long user2);
+        Task<bool> CheckRequestExists(long senderId, long recieverId);
+        Task<string> RegisterUserRequestAsync(AddRequest request);
+        Task<string> DeclineRequestAsync(long user, long encounteredUser);
+        Task<string> AnswerUserRequestAsync(long rquestId, RequestAnswer reaction);
         Task<byte> DeleteUserRequests(long userId);
-        Task<byte> DeleteUserRequest(long requestId);
+        Task DeleteUserRequest(long requestId);
         Task<User> GetUserInfoByUsrnameAsync(string username);
         Task<BasicUserInfo> GetUserBasicInfo(long userId);
         Task<UserPartialData> GetUserPartialData(long userId);

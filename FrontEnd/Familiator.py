@@ -119,7 +119,7 @@ class Familiator:
 
     def show_person(self, message, acceptMode=False):
         if not acceptMode:
-            user = self.active_user["userDataInfo"]
+            user = self.active_user["userData"]
 
             if user["mediaType"] == "Photo":
                 self.bot.send_photo(self.current_user, user["userMedia"], user["userDescription"], reply_markup=self.markup)
@@ -152,8 +152,11 @@ class Familiator:
 
                 try:
                     if not Helpers.check_user_is_busy(self.active_user_id):
-                        req_list = Helpers.get_user_requests(self.active_user_id)
-                        Requester(self.bot, message, self.active_user_id, req_list)
+                        response = Helpers.get_user_requests(self.active_user_id)
+
+                        request_list = response["requests"]
+
+                        Requester(self.bot, message, self.active_user_id, request_list, response["notification"])
                 except:
                     pass
             elif message.text == self.btnNo:
@@ -170,9 +173,11 @@ class Familiator:
                 self.bot.register_next_step_handler(message, self.show_person, acceptMode=acceptMode, chat_id=self.current_user)
 
             #Interception between Requester and Familiator
-            requests = Helpers.get_user_requests(self.current_user)
-            if requests:
-                Requester(self.bot, self.msg, self.current_user, requests, self.proceed)
+            response = Helpers.get_user_requests(self.current_user)
+            request_list = response["requests"]
+
+            if request_list:
+                Requester(self.bot, self.msg, self.current_user, request_list, response["notification"], self.proceed)
                 return
             self.proceed()
 

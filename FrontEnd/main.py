@@ -12,6 +12,7 @@ import Core.HelpersMethodes as Helpers
 # from SponsorHandlerAdmin import SponsorHandlerAdmin
 from AdminCabinet import AdminCabinet
 from StartModule import StartModule
+from Common.Keyboards import register_markup
 
 import os
 from dotenv import load_dotenv
@@ -299,7 +300,7 @@ def create_admin_cabinet(message):
 
 
 def send_registration_warning(userId):
-    bot.send_message(userId, "Please register before entering this section", reply_markup=Menus.register_markup)
+    bot.send_message(userId, "Please register before entering this section", reply_markup=register_markup)
 
 
 bot.polling()

@@ -21,8 +21,8 @@ namespace WebApi.Entities.UserActionEntities
         public bool UsesOcean { get; set; }
         [JsonPropertyName("identityType")]
         public IdentityConfirmationType IdentityType { get; set; }
-        [JsonPropertyName("userDataInfo")]
-        public UserData UserDataInfo { get; set; }
+        [JsonPropertyName("userData")]
+        public UserData UserData { get; set; }
 
         public GetUserData(User userModel, string descriptionBonus = "")
         {
@@ -31,22 +31,22 @@ namespace WebApi.Entities.UserActionEntities
             HasPremium = userModel.HasPremium;
             UsesOcean = userModel.Settings!.UsesOcean;
             IdentityType = userModel.IdentityType;
-            UserDataInfo = userModel.Data!;
+            UserData = userModel.Data!;
 
             if (userModel.Location != null)
                 CityId = userModel.Location.CityId;
 
-            UserDataInfo.UserDescription = $"{descriptionBonus}\n{UserDataInfo.UserDescription}";
+            UserData.UserDescription = $"{descriptionBonus}\n{UserData.UserDescription}";
         }
 
         public void AddDescriptionUpwards(string bonus)
         {
-            UserDataInfo!.UserDescription = $"{bonus}\n{UserDataInfo.UserDescription}";
+            UserData!.UserDescription = $"{bonus}\n{UserData.UserDescription}";
         }
 
         public void AddDescriptionBonusDownwards(string bonus)
         {
-            UserDataInfo!.UserDescription = $"{UserDataInfo.UserDescription}\n{bonus}";
+            UserData!.UserDescription = $"{UserData.UserDescription}\n{bonus}";
         }
     }
 }

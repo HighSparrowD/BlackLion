@@ -176,7 +176,7 @@ namespace WebApi.Repositories
 
                 //User instantly receives a like by an invitor if he approves it
                 if (invitor.Settings.IncreasedFamiliarity)
-                    await RegisterUserRequestAsync(new UserNotification { SenderId = invitor.Id, UserId = model.Id, IsLikedBack = false });
+                    await RegisterUserRequestAsync(new AddRequest { SenderId = invitor.Id, UserId = model.Id, IsMatch = false });
 
                 //Invitor is notified about referential registration
                 await NotifyUserAboutReferentialRegistrationAsync(invitor.Id, model.Id);
@@ -287,7 +287,7 @@ namespace WebApi.Repositories
                 .Where(u => u.Encounters.Where(e => e.Section == Section.Requester || e.Section == Section.Familiator)
                     .All(e => e.EncounteredUserId != currentUser.Id)) //May casuse errors
                 //Check if request already exists
-                .Where(u => u.Notifications.All(n => n.SenderId != currentUser.Id && n.UserId != currentUser.Id)) //May casuse errors
+                .Where(u => u.Requests.All(n => n.SenderId != currentUser.Id && n.UserId != currentUser.Id)) //May casuse errors
                 .Include(u => u.Data)
                 .Include(u => u.Location)
                 .Include(u => u.Settings)
@@ -973,7 +973,6 @@ namespace WebApi.Repositories
             await AddUserNotificationAsync(new UserNotification
             {
                 UserId = userId,
-                IsLikedBack = false,
                 Section = (Section)achievement.Achievement.SectionId,
                 Type = NotificationType.Other,
                 Description = achievement.AcquireMessage
@@ -1051,12 +1050,12 @@ namespace WebApi.Repositories
                 await _contx.SaveChangesAsync();
             }
 
-            var userNotifications = await _contx.Notifications.Where(u => u.SenderId == userId)
+            var userRequests = await _contx.Requests.Where(u => u.SenderId == userId)
                 .ToListAsync();
 
-            if (userNotifications.Count > 0 && userNotifications != null)
+            if (userRequests.Count > 0 && userRequests != null)
             {
-                _contx.Notifications.RemoveRange(userNotifications);
+                _contx.Requests.RemoveRange(userRequests);
                 await _contx.SaveChangesAsync();
             }
 
@@ -1492,7 +1491,7 @@ namespace WebApi.Repositories
             _contx.Update(user);
             await _contx.SaveChangesAsync();
 
-            await AddUserNotificationAsync(new UserNotification { UserId = user.Id, IsLikedBack = false, Type = NotificationType.PremiumAcquire, Section = Section.Neutral, Description = $"You have been granted premium access. Enjoy your benefits :)\nPremium expiration {user.PremiumExpirationDate.Value.ToString("dd.MM.yyyy")}" });
+            await AddUserNotificationAsync(new UserNotification { UserId = user.Id, Type = NotificationType.PremiumAcquire, Section = Section.Neutral, Description = $"You have been granted premium access. Enjoy your benefits :)\nPremium expiration {user.PremiumExpirationDate.Value.ToString("dd.MM.yyyy")}" });
 
             return user.PremiumExpirationDate.Value;
         }
@@ -1683,22 +1682,39 @@ namespace WebApi.Repositories
             };
         }
 
-        public async Task<List<UserNotification>> GetUserRequests(long userId)
+        public async Task<GetRequests> GetUserRequests(long userId)
         {
-            var requests = await _contx.Notifications
-                .Where(r => r.UserId == userId)
-                .Where(r => r.Type == NotificationType.Like || r.Type == NotificationType.LikeNotification)
+            var requests = await _contx.Requests
+                .Where(r => r.UserId == userId && r.Answer == null)
                 .OrderByDescending(r => r.Type)
+                .AsNoTracking()
+                .Select(r => new GetRequest
+                {
+                    Id = r.Id,
+                    SenderId = r.SenderId,
+                    Message = r.Message,
+                    SystemMessage = r.SystemMessage,
+                    IsMatch = r.IsMatch,
+                    Type = r.Type,
+                    UserId = r.UserId
+                })
                 .ToListAsync();
 
-            if (requests.Count > 1)
+            var model = new GetRequests(requests);
+
+            var notification = await _contx.Notifications.Where(n => n.UserId == userId
+             && n.Type == NotificationType.LikeNotification)
+                .FirstOrDefaultAsync();
+
+            if (notification != null)
             {
-                //Remove intoduction message
-                _contx.Notifications.Remove(requests[0]);
+                model.Notification = notification.Description;
+
+                _contx.Notifications.Remove(notification);
                 await _contx.SaveChangesAsync();
             }
 
-            return requests;
+            return model;
         }
 
         public async Task<UserNotification> GetUserRequest(long requestId)
@@ -1709,113 +1725,62 @@ namespace WebApi.Repositories
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<string> RegisterUserRequestAsync(AddNotification model)
+        public async Task<string> RegisterUserRequestAsync(AddRequest model)
         {
-            return await RegisterUserRequestAsync(new UserNotification
+            var notification = new UserNotification
             {
-                Section = model.Section,
-                SenderId = model.SenderId,
-                Description = model.Description,
-                IsLikedBack = model.IsLikedBack,
-                Type = model.Type,
-                UserId = model.UserId
-            });
-        }
+                UserId = model.UserId,
+                Type = NotificationType.LikeNotification,
+                Description = "<b>Someone had liked you</b>"
+            };
 
-        private async Task<string> RegisterUserRequestAsync(UserNotification request)
-        {
-            request.Type = NotificationType.Like;
+            var request = new Request
+            {
+                UserId = model.UserId,
+                SenderId = model.SenderId,
+                IsMatch = model.IsMatch,
+                Message = model.Message,
+                Type = model.MessageType
+            };
+
             var returnMessage = "";
 
-            if (request.IsLikedBack)
-            {
-                request.Section = Section.Requester;
-
-                if (new Random().Next(0, 2) == 0)
-                {
-                    var senderUserName = await _contx.UserData.Where(d => d.Id == request.SenderId)
-                        .Select(d => d.UserName)
-                        .FirstOrDefaultAsync();
-
-                    //Delete request, user had just responded to
-                    var requestId = await _contx.Notifications.Where(n => n.SenderId == request.UserId && n.UserId == request.SenderId)
-                        .AsNoTracking()
-                        .Select(n => n.Id)
-                        .FirstOrDefaultAsync();
-
-                    await DeleteUserRequest(requestId);
-
-                    //TODO: Get message from localizer based on users`s localization 
-                    request.Description = $"Hey! I have got a match for you. This person was notified about it, but did not receive your username, thus he / she cannot write you first everything is in your hands, do not miss your chance!\n\n@{senderUserName}";
-                    returnMessage = "Hey! I have a match for you. Right now this person is deciding whether or not to write you Just wait for it!\n\n";
-                }
-                else
-                {
-                    var receiverUserName = await _contx.UserData
-                        .Where(d => d.Id == request.UserId)
-                        .AsNoTracking()
-                        .Select(d => d.UserName)
-                        .FirstOrDefaultAsync();
-
-                    //Delete request, user had just answered
-                    var requestId = await _contx.Notifications.Where(n => n.SenderId == request.UserId && n.UserId == request.SenderId)
-                        .AsNoTracking()
-                        .Select(n => n.Id)
-                        .FirstOrDefaultAsync();
-
-                    await DeleteUserRequest(requestId);
-
-                    //TODO: Get message from localizer based on users`s localization 
-                    request.Description = "Hey! I have a match for you. Right now this person is deciding whether or not to write you Just wait for it!\n\n";
-                    returnMessage = $"Hey! I have got a match for you. This person was notified about it, but he did not receive your username, thus he cannot write you first everything is in your hands, do not miss your chance!\n\n@{receiverUserName}";
-                }
-            }
-            else
-                request.Section = Section.Familiator;
+            notification.Section = Section.Familiator;
 
 
-            await RegisterUserEncounter(new RegisterEncounter { UserId = (long)request.SenderId, EncounteredUserId = request.UserId, Section = Section.Requester });
+            await RegisterUserEncounter(new RegisterEncounter { UserId = (long)model.SenderId, EncounteredUserId = model.UserId, Section = Section.Familiator});
+
 
             //Register request
-            await AddUserNotificationAsync(request);
+            await _contx.Requests.AddAsync(request);
 
             var requestsCount = await _contx.Notifications.Where(n => n.Type == NotificationType.Like)
                 .AsNoTracking()
                 .CountAsync();
 
-            var model = new UserNotification
-            {
-                Section = request.Section,
-                SenderId = request.SenderId,
-                Description = "Someone had liked your profile",
-                IsLikedBack = request.IsLikedBack,
-                UserId = request.UserId,
-                Type = NotificationType.LikeNotification
-            };
-
             if (requestsCount > 3 && requestsCount < 7)
-                model.Description = "Your profile got some attention! See who has shown interest in you!";
+                notification.Description = "Your profile got some attention! See who has shown interest in you!";
             else if (requestsCount > 7 && requestsCount < 10)
-                model.Description = "Your attractiveness has not gone unnoticed! See who's interested in you";
+                notification.Description = "Your attractiveness has not gone unnoticed! See who's interested in you";
             else if (requestsCount > 10)
-                model.Description = "Your profile is the center of attention! Check out who's showing interest in you!";
+                notification.Description = "Your profile is the center of attention! Check out who's showing interest in you!";
 
             //Register notification
-            await AddUserNotificationAsync(model);
+            await AddUserNotificationAsync(notification);
 
             return returnMessage;
         }
 
         //TODO: Make more informative and interesting
-        public async Task<string> DeclineRequestAsync(long user1, long user2)
+        public async Task<string> DeclineRequestAsync(long user, long encounteredUser)
         {
-            var sim = await GetSimilarityBetweenUsersAsync(user1, user2);
+            var sim = await GetSimilarityBetweenUsersAsync(user, encounteredUser);
 
             //Encounter is not registered anywhere but here in that case
             await RegisterUserEncounter(new RegisterEncounter
             {
-                UserId = user1,
-                EncounteredUserId = user2,
+                UserId = user,
+                EncounteredUserId = encounteredUser,
                 Section = Section.Familiator
             });
 
@@ -1832,6 +1797,104 @@ namespace WebApi.Repositories
             }
         }
 
+        private async Task<string> AcceptUserRequestAsync(long userId, long requesSenderId)
+        {
+            var returnMessage = "";
+            var request = new Request
+            {
+                SenderId = userId,
+                UserId = requesSenderId,
+                IsMatch = true
+            };
+
+            var notification = new UserNotification
+            {
+                Description = "<b>Someone had liked you</b>",
+                UserId = requesSenderId,
+                Section = Section.Requester,
+                Type = NotificationType.LikeNotification
+            };
+
+            if (new Random().Next(0, 2) == 0)
+            {
+                var senderUserName = await _contx.UserData.Where(d => d.Id == userId)
+                    .AsNoTracking()
+                    .Select(d => d.UserName)
+                    .FirstOrDefaultAsync();
+
+                //Delete request, user had just responded to
+                //var requestId = await _contx.Requests.Where(n => n.SenderId == model.UserId && n.UserId == model.SenderId)
+                //    .AsNoTracking()
+                //    .Select(n => n.Id)
+                //    .FirstOrDefaultAsync();
+                //await DeleteUserRequest(requestId);
+
+
+                //TODO: Get message from localizer based on users`s localization 
+                request.SystemMessage = $"Hey! I have got a match for you. This person was notified about it, but did not receive your username, thus he / she cannot write you first everything is in your hands, do not miss your chance!\n\n@{senderUserName}";
+                returnMessage = "Hey! I have a match for you. Right now this person is deciding whether or not to write you Just wait for it!\n\n";
+            }
+            else
+            {
+                var receiverUserName = await _contx.UserData
+                    .Where(d => d.Id == requesSenderId)
+                    .AsNoTracking()
+                    .Select(d => d.UserName)
+                    .FirstOrDefaultAsync();
+
+                //Delete request, user had just answered
+                //var requestId = await _contx.Notifications.Where(n => n.SenderId == model.UserId && n.UserId == model.SenderId)
+                //    .AsNoTracking()
+                //    .Select(n => n.Id)
+                //    .FirstOrDefaultAsync();
+                //await DeleteUserRequest(requestId);
+
+
+                //TODO: Get message from localizer based on users`s localization 
+                request.SystemMessage = "Hey! I have a match for you. Right now this person is deciding whether or not to write you Just wait for it!\n\n";
+                returnMessage = $"Hey! I have got a match for you. This person was notified about it, but he did not receive your username, thus he cannot write you first everything is in your hands, do not miss your chance!\n\n@{receiverUserName}";
+            }
+
+            var requestsCount = await _contx.Notifications.Where(n => n.Type == NotificationType.Like)
+                .AsNoTracking()
+                .CountAsync();
+
+            if (requestsCount > 3 && requestsCount < 7)
+                notification.Description = "Your profile got some attention! See who has shown interest in you!";
+            else if (requestsCount > 7 && requestsCount < 10)
+                notification.Description = "Your attractiveness has not gone unnoticed! See who's interested in you";
+            else if (requestsCount > 10)
+                notification.Description = "Your profile is the center of attention! Check out who's showing interest in you!";
+
+            //Register notification
+            await AddUserNotificationAsync(notification);
+
+            await _contx.Requests.AddAsync(request);
+            await _contx.SaveChangesAsync();
+
+            return returnMessage;
+        }
+
+        public async Task<string> AnswerUserRequestAsync(long requestId, RequestAnswer reaction)
+        {
+            var request = await _contx.Requests.Where(r => r.Id == requestId)
+                .FirstOrDefaultAsync();
+
+            request.Answer = reaction;
+            request.AnsweredTimeStamp = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
+            await _contx.SaveChangesAsync();
+
+            switch (reaction)
+            {
+                case RequestAnswer.Accept:
+                    return await AcceptUserRequestAsync(request.UserId, request.SenderId);
+                case RequestAnswer.Decline:
+                    return await DeclineRequestAsync(request.UserId, request.SenderId);
+                default:
+                    return "";
+            }
+        }
+
         public async Task<byte> DeleteUserRequests(long userId)
         {
             var requests = await _contx.Notifications
@@ -1845,21 +1908,17 @@ namespace WebApi.Repositories
             return 1;
         }
 
-        public async Task<byte> DeleteUserRequest(long requestId)
+        public async Task DeleteUserRequest(long requestId)
         {
-            var request = await _contx.Notifications
+            var request = await _contx.Requests
                 .Where(r => r.Id == requestId)
-                .Where(r => r.Section == Section.Familiator || r.Section == Section.Requester)
                 .FirstOrDefaultAsync();
 
             if (request != null)
             {
                 _contx.Remove(request);
                 await _contx.SaveChangesAsync();
-                return 1;
             }
-
-            return 0;
         }
 
         public async Task<bool> CheckUserHasRequests(long userId)
@@ -1927,12 +1986,11 @@ namespace WebApi.Repositories
             return encounters != null ? encounters : new List<Encounter>();
         }
 
-        public bool CheckRequestExists(long senderId, long recieverId)
+        public async Task<bool> CheckRequestExists(long senderId, long recieverId)
         {
-            return _contx.Notifications
+            return await _contx.Requests
                 .Where(r => r.SenderId == senderId && r.UserId == recieverId)
-                .Where(r => r.Section == Section.Requester || r.Section == Section.Familiator)
-                .FirstOrDefault() != null;
+                .AnyAsync();
         }
 
         public async Task<int> AddUserTrustProgressAsync(long userId, double progress)
@@ -2216,7 +2274,6 @@ namespace WebApi.Repositories
                 await AddUserNotificationAsync(new UserNotification
                 {
                     UserId = userId,
-                    IsLikedBack = false,
                     Description = $"Hey! new user had been registered via your link. Thanks for helping us grow!\nSo far, you have invited: {invitedUsersCount} people. \nYou receive 1p for every action they are maiking ;-)",
                     Section = Section.Registration,
                     Type = NotificationType.ReferentialRegistration
@@ -2252,7 +2309,7 @@ namespace WebApi.Repositories
                     model.Type == NotificationType.LikeNotification ||
                     model.Type == NotificationType.ReferentialRegistration)
                 {
-                    var notification = await _contx.Notifications.Where(n => n.Type == model.Type)
+                    var notification = await _contx.Notifications.Where(n => n.UserId == model.UserId && n.Type == model.Type)
                         .FirstOrDefaultAsync();
 
                     if (notification != null)
@@ -2265,7 +2322,7 @@ namespace WebApi.Repositories
 
                 else if (model.Type == NotificationType.AdventureParticipation)
                 {
-                    var notification = await _contx.Notifications.Where(n => n.Type == model.Type)
+                    var notification = await _contx.Notifications.Where(n => n.UserId == model.UserId && n.Type == model.Type)
                         .FirstOrDefaultAsync();
 
                     if (notification != null)
@@ -2287,7 +2344,7 @@ namespace WebApi.Repositories
 
                 else if (model.Type == NotificationType.AdventureParticipationByCode)
                 {
-                    var notification = await _contx.Notifications.Where(n => n.Type == model.Type)
+                    var notification = await _contx.Notifications.Where(n => n.UserId == model.UserId && n.Type == model.Type)
                         .FirstOrDefaultAsync();
 
                     if (notification != null)
@@ -2313,9 +2370,6 @@ namespace WebApi.Repositories
                     await _contx.SaveChangesAsync();
                 }
 
-                if (model.SenderId != null)
-                    await AddUserTrustProgressAsync((long)model.SenderId, 0.000002);
-
                 return model.Id;
             }
             catch { throw new Exception("Something went wrong while adding notification"); }
@@ -2339,7 +2393,7 @@ namespace WebApi.Repositories
         {
             return await _contx.Notifications
                 .Where(n => n.UserId == userId)
-                .Where(n => n.Type != NotificationType.Like && n.Type != NotificationType.LikeNotification)
+                .Where(n => n.Type != NotificationType.Like)
                 .ToListAsync();
         }
 
@@ -2829,7 +2883,7 @@ namespace WebApi.Repositories
                     .Where(u => u.BlackList.All(l => l.BannedUserId != currentUser.Id))
                     //.Where(u => currentUser.BlackList.Where(l => l.BannedUserId == u.Id).FirstOrDefault() == null)
                     //Check if request already exists
-                    .Where(u => u.Notifications.All(n => n.SenderId != currentUser.Id && n.UserId != currentUser.Id)) //May casuse errors
+                    .Where(u => u.Requests.All(n => n.SenderId != currentUser.Id && n.UserId != currentUser.Id)) //May casuse errors
                     //.Where(u => u.Tags.Intersect(u.Tags).Count() >= 1)
                     .Include(u => u.Data)
                     .Include(u => u.Settings)
@@ -3111,14 +3165,11 @@ namespace WebApi.Repositories
                         if (userBalance.SecondChances > 0)
                         {
                             userBalance.SecondChances--;
-                            await RegisterUserRequestAsync(new UserNotification
+                            await RegisterUserRequestAsync(new AddRequest
                             {
                                 SenderId = userId,
                                 UserId = (long)user2Id,
-                                IsLikedBack = false,
-                                Description = description,
-                                Section = Section.Familiator,
-                                Type = NotificationType.Like
+                                IsMatch = false
                             });
                             _contx.Update(userBalance);
                             await _contx.SaveChangesAsync();
@@ -3638,6 +3689,7 @@ namespace WebApi.Repositories
         public async Task<GetUserData> GetRequestSenderAsync(long senderId)
         {
             var sender = await _contx.Users.Where(u => u.Id == senderId)
+                .Include(s => s.Settings)
                 .Include(s => s.Data)
                 .AsNoTracking()
                 .FirstOrDefaultAsync();
@@ -3890,14 +3942,14 @@ namespace WebApi.Repositories
             var description = "Someone had requested participation in your adventure";
 
             if (notificationType == NotificationType.AdventureParticipationByCode)
-                description = "Someone had requested participation in your adventure by a unique code";
+                description = "Someone had requested participation in your adventure via a unique code";
 
             await AddUserNotificationAsync(new UserNotification
             {
                 Section = Section.Adventurer,
                 Type = notificationType,
                 Description = description,
-                SenderId = userId,
+                //SenderId = userId,
                 UserId = adventure.UserId
             });
 
@@ -3930,7 +3982,6 @@ namespace WebApi.Repositories
                 {
                     Section = Section.Adventurer,
                     UserId = attendee.UserId,
-                    IsLikedBack = false,
                     Type = NotificationType.Other,
                     Description = $"We are very sorry. Adventure {attendee.Adventure.Name} had been deleted. Please, contact creator if the reason is unknown to you"
                 });

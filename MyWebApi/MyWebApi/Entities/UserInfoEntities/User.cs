@@ -56,6 +56,7 @@ namespace WebApi.Entities.UserInfoEntities
         public virtual List<UserTag>? Tags { get; set; }
         public virtual List<Encounter>? Encounters { get; set; }
         public virtual List<UserNotification>? Notifications { get; set; }
+        public virtual List<Request>? Requests { get; set; }
         //public virtual UserTrustLevel? TrustLevel { get; set; }
         //public virtual List<Encounter>? UserEncounters { get; set; }
 
