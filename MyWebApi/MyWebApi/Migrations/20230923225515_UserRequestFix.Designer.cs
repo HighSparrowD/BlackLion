@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WebApi.Data;
@@ -12,9 +13,11 @@ using WebApi.Data;
 namespace WebApi.Migrations
 {
     [DbContext(typeof(UserContext))]
-    partial class UserContextModelSnapshot : ModelSnapshot
+    [Migration("20230923225515_UserRequestFix")]
+    partial class UserRequestFix
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1323,7 +1326,7 @@ namespace WebApi.Migrations
                     b.Property<int?>("Answer")
                         .HasColumnType("integer");
 
-                    b.Property<DateTime?>("AnsweredTimeStamp")
+                    b.Property<DateTime>("AnsweredTimeStamp")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsMatch")
@@ -1334,9 +1337,6 @@ namespace WebApi.Migrations
 
                     b.Property<long>("SenderId")
                         .HasColumnType("bigint");
-
-                    b.Property<string>("SystemMessage")
-                        .HasColumnType("text");
 
                     b.Property<short>("Type")
                         .HasColumnType("smallint");

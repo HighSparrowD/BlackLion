@@ -7,7 +7,7 @@ namespace WebApi.Entities.UserActionEntities
     public class AddNotification
     {
         [JsonPropertyName("senderId")]
-        public long? SenderId { get; set; }
+        public long SenderId { get; set; }
         [JsonPropertyName("userId")]
         public long UserId { get; set; }
         [JsonPropertyName("isLikedBack")]

@@ -31,8 +31,8 @@ def set_stripe_key(key):
 
 
 def format_tags(tag_string: str) -> str:
-    tags = tag_string.lower().strip()
-
+    tags = tag_string.lower().replace("_", "").replace("-", "").replace(" ", "")
+    return tags
 
 
 def check_user_exists(userId):
@@ -269,14 +269,14 @@ def get_user_base_info(userId):
 
 def get_user_requests(userId):
     try:
-        return json.loads(requests.get(f"{api_address}/GetUserRequests/{userId}", verify=False).text)
+        return json.loads(requests.get(f"{api_address}/user-requests/{userId}", verify=False).text)
     except:
         return None
 
 
 def get_user_notifications(userId):
     try:
-        return json.loads(requests.get(f"{api_address}/GetUserNotifications/{userId}", verify=False).text)
+        return json.loads(requests.get(f"{api_address}/user-notifications/{userId}", verify=False).text)
     except:
         return None
 
@@ -364,19 +364,25 @@ def register_user_request(senderId, receiverId, isLikedBack, description=""):
         }
 
         d = json.dumps(data)
-        return requests.post(f"{api_address}/RegisterUserRequest", d,
+        return requests.post(f"{api_address}/user-request", d,
                              headers={"Content-Type": "application/json"},
                              verify=False).text
     except:
         return None
 
 
-def decline_user_request(user1, user2):
-    try:
-        return requests.get(f"{api_address}/DeclineRequest/{user1}/{user2}",
-                            verify=False).text
-    except:
-        return None
+def answer_user_request(requestId, reaction) -> str:
+    return requests.get(f"{api_address}/answer-user-request", params={
+        "requestId": requestId,
+        "reaction": reaction,
+    }, verify=False).text
+
+
+def decline_user_request(userId, encounteredUser):
+    return requests.get(f"{api_address}/decline-user-request", params={
+        "userId": userId,
+        "encounteredUser": encounteredUser,
+    }, verify=False)
 
 
 def register_user_encounter(current_user_id, user_id, section_id):

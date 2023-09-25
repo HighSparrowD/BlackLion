@@ -2,24 +2,11 @@ import copy
 from math import ceil
 
 from Core import HelpersMethodes as Helpers
-from telebot.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardButton, InlineKeyboardMarkup
+from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
+
+from Common.Keyboards import menu_markup, admin_menu_markup
 
 from Requester import Requester
-menu_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True) \
-    .add(KeyboardButton("/search"),
-         KeyboardButton("/random"),
-         KeyboardButton("/feedback"),
-         KeyboardButton("/settings"),
-         KeyboardButton("/adventure"),
-         KeyboardButton("/shop"))
-
-admin_menu_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True) \
-    .add(KeyboardButton("/switchstatus"),
-         KeyboardButton("/showstatus"),
-         KeyboardButton("/enteradmincabinet"))
-
-register_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True) \
-    .add(KeyboardButton("/registration"))
 
 
 def go_back_to_main_menu(bot, user, message, shouldSwitch=True):

@@ -25,6 +25,7 @@ namespace WebApi.Data
         public DbSet<Visit> UserVisits => Set<Visit>();
         public DbSet<Country> Countries => Set<Country>();
         public DbSet<City> Cities => Set<City>();
+        public DbSet<Request> Requests => Set<Request>();
         public DbSet<Tag> Tags => Set<Tag>();
         public DbSet<Language> Languages => Set<Language>();
         public DbSet<BlackList> UserBlacklists => Set<BlackList>();
@@ -95,6 +96,7 @@ namespace WebApi.Data
             ConfigureFeedbacks(builder);
             ConfigureInvitations(builder);
             ConfigureNotifications(builder);
+            ConfigureRequests(builder);
             ConfigureReports(builder);
             ConfigureTickRequests(builder);
             ConfigureTransactions(builder);
@@ -115,6 +117,7 @@ namespace WebApi.Data
             builder.Entity<User>().HasMany(u => u.Tags);
             builder.Entity<User>().HasMany(u => u.Encounters);
             builder.Entity<User>().HasMany(u => u.Notifications);
+            builder.Entity<User>().HasMany(u => u.Requests);
             builder.Entity<Location>().HasOne(u => u.Country);
             builder.Entity<Location>().HasOne(u => u.City);
 
@@ -150,7 +153,9 @@ namespace WebApi.Data
             builder.Entity<SponsorLanguage>().HasOne(s => s.Language);
 
             builder.Entity<UserNotification>().HasOne(un => un.Receiver);
-            builder.Entity<UserNotification>().HasOne(un => un.Sender);
+            
+            builder.Entity<Request>().HasOne(un => un.Sender);
+            builder.Entity<Request>().HasOne(un => un.Receiver);
 
             builder.Entity<UserAchievement>().HasOne(un => un.Achievement)
                 .WithMany()
@@ -210,6 +215,7 @@ namespace WebApi.Data
             builder.Entity<AdventureAttendee>().ToTable("adventure_attendees");
             builder.Entity<PromoCode>().ToTable("promocodes");
             builder.Entity<Hint>().ToTable("hints");
+            builder.Entity<Request>().ToTable("requests");
         }
 
         //Hilo configuration
@@ -363,6 +369,20 @@ namespace WebApi.Data
                 .IncrementsBy(1);
 
             builder.Entity<UserNotification>(b =>
+            {
+                b.Property(a => a.Id).UseHiLo(sequenceName);
+            });
+        }
+
+        private void ConfigureRequests(ModelBuilder builder)
+        {
+            const string sequenceName = "requests_hilo";
+
+            builder.HasSequence<int>(sequenceName)
+                .StartsAt(1)
+                .IncrementsBy(1);
+
+            builder.Entity<Request>(b =>
             {
                 b.Property(a => a.Id).UseHiLo(sequenceName);
             });

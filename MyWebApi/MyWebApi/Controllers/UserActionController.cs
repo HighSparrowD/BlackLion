@@ -343,8 +343,8 @@ namespace WebApi.Controllers
             return await _repository.GetUserRequest(requestId);
         }
 
-        [HttpGet("/GetUserRequests/{userId}")]
-        public async Task<List<UserNotification>> GetUserRequests(long userId)
+        [HttpGet("/user-requests/{userId}")]
+        public async Task<List<GetRequests>> GetUserRequests(long userId)
         {
             return await _repository.GetUserRequests(userId);
         }
@@ -355,22 +355,28 @@ namespace WebApi.Controllers
             return await _repository.CheckUserHasRequests(userId);
         }
 
-        [HttpPost("/RegisterUserRequest")]
-        public async Task<string> RegisterUserRequest(AddNotification request)
+        [HttpPost("/user-request")]
+        public async Task<string> RegisterUserRequest([FromBody] AddRequest request)
         {
             return await _repository.RegisterUserRequestAsync(request);
         }
 
-        [HttpGet("/DeclineRequest/{user1}/{user2}")]
-        public async Task<string> DeclineRequest(long user1, long user2)
+        [HttpGet("/answer-user-request")]
+        public async Task<string> AnswerUserRequest([FromQuery] long requestId, [FromQuery] RequestAnswer reaction)
         {
-            return await _repository.DeclineRequestAsync(user1, user2);
+            return await _repository.AnswerUserRequestAsync(requestId, reaction);
+        }
+
+        [HttpGet("/decline-user-request")]
+        public async Task<string> DeclineUserRequest([FromQuery] long userId, [FromQuery] long encounteredUser)
+        {
+            return await _repository.DeclineRequestAsync(userId, encounteredUser);
         }
 
         [HttpDelete("/DeleteUserRequest/{requestId}")]
-        public async Task<byte> DeleteUserRequest(long requestId)
+        public async Task DeleteUserRequest(long requestId)
         {
-            return await _repository.DeleteUserRequest(requestId);
+            await _repository.DeleteUserRequest(requestId);
         }
 
         [HttpDelete("/DeleteUserRequests/{userId}")]
@@ -472,7 +478,7 @@ namespace WebApi.Controllers
             return await _repository.CheckUserHasNotificationsAsync(userId);
         }
 
-        [HttpGet("/GetUserNotifications/{userId}")]
+        [HttpGet("/user-notifications/{userId}")]
         public async Task<List<UserNotification>> GetUserNotifications(long userId)
         {
             return await _repository.GetUserNotifications(userId);
@@ -767,10 +773,7 @@ namespace WebApi.Controllers
         {
             var sender = await _repository.GetRequestSenderAsync(requestId);
 
-            if (ModelState.IsValid)
-                return Ok(sender);
-
-            return BadRequest();
+            return Ok(sender);
         }
 
         [HttpGet("/PurchesPPForPoints/{userId}/{price}/{count?}")]

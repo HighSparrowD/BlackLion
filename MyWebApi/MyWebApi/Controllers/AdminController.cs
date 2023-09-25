@@ -87,12 +87,6 @@ namespace WebApi.Controllers
             return await _repository.GetAdminStatus(userId);
         }
 
-        [HttpGet("/DeleteUserForever/{userId}")]
-        public async Task<long> DeleteUser(long userId)
-        {
-            return await _repository.DeleteUser(userId);
-        }
-
         [HttpGet("/DeleteAllUsersForever")]
         public async Task<int> DeleteAllUsers()
         {

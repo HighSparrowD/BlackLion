@@ -119,7 +119,7 @@ class Familiator:
 
     def show_person(self, message, acceptMode=False):
         if not acceptMode:
-            user = self.active_user["userDataInfo"]
+            user = self.active_user["userData"]
 
             if user["mediaType"] == "Photo":
                 self.bot.send_photo(self.current_user, user["userMedia"], user["userDescription"], reply_markup=self.markup)

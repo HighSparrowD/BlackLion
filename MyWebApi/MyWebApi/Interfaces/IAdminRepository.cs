@@ -20,7 +20,6 @@ namespace WebApi.Interfaces
         Task<byte> UploadTestsAsync(List<UploadTest> model);
         //Task<long> UploadInTest(UploadInTest model);
         Task<List<Feedback>> GetFeedbacks ();
-        Task<long> DeleteUser (long userId);
         Task<int> DeleteAllUsers ();
         Task<byte> UploadAchievements(List<Achievement> achievements);
         Task<byte> AddNewAchievements(List<Achievement> achievements);

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WebApi.Data;
@@ -12,9 +13,11 @@ using WebApi.Data;
 namespace WebApi.Migrations
 {
     [DbContext(typeof(UserContext))]
-    partial class UserContextModelSnapshot : ModelSnapshot
+    [Migration("20230922131416_RequestsTable")]
+    partial class RequestsTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1320,12 +1323,6 @@ namespace WebApi.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<long>("Id"), "requests_hilo");
 
-                    b.Property<int?>("Answer")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("AnsweredTimeStamp")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<bool>("IsMatch")
                         .HasColumnType("boolean");
 
@@ -1350,7 +1347,7 @@ namespace WebApi.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("requests", (string)null);
+                    b.ToTable("Requests");
                 });
 
             modelBuilder.Entity("WebApi.Entities.UserInfoEntities.Transaction", b =>
