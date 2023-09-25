@@ -82,7 +82,7 @@ namespace WebApi.Interfaces
         Task<List<Encounter>> GetUserEncounters(long userId, Section section);
         Task<int> AddUserTrustProgressAsync(long userId, double progress);
         Task<int> UpdateUserTrustLevelAsync(long userId, int level);
-        Task<UserTrustLevel> GetUserTrustLevel(long userId);
+        Task<TrustLevel> GetUserTrustLevel(long userId);
         Task<bool> UpdateUserNickname(long userId, string nickname);
         Task<string> GetUserNickname(long userId);
         Task<string> ClaimDailyReward(long userId);

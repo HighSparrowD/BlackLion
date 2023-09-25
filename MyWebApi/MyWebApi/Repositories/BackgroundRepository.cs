@@ -16,7 +16,7 @@ namespace WebApi.Repositories
         private const short _oldEncountersSpan = 3;
         private const short _oldFeedbacksSpan = 30;
         private const short _oldReportsSpan = 30;
-        private const short _oldRequestsSpan = 30;
+        private const short _oldRequestsSpan = 2;
         private const short _oldUsersSpan = 0;
         private const short _oldAdventuresSpan = 15;
 

@@ -83,7 +83,7 @@ namespace WebApi.Repositories
                 UserRealName = model.RealName,
             };
 
-            var uSettings = new UserSettings(model.Id, model.UsesOcean);
+            var uSettings = new Settings(model.Id, model.UsesOcean);
 
             user.LocationId = location.Id;
 
@@ -2034,7 +2034,7 @@ namespace WebApi.Repositories
             return model.Level;
         }
 
-        public async Task<UserTrustLevel> GetUserTrustLevel(long userId)
+        public async Task<TrustLevel> GetUserTrustLevel(long userId)
         {
             return await _contx.TrustLevels
                 .FindAsync(userId);
@@ -2042,7 +2042,7 @@ namespace WebApi.Repositories
 
         private async Task<long> AddUserTrustLevel(long userId)
         {
-            await _contx.TrustLevels.AddAsync(UserTrustLevel.CreateDefaultTrustLevel(userId));
+            await _contx.TrustLevels.AddAsync(TrustLevel.CreateDefaultTrustLevel(userId));
             await _contx.SaveChangesAsync();
             return userId;
         }

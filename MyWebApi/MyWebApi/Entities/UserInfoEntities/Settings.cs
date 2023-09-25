@@ -2,7 +2,7 @@
 
 namespace WebApi.Entities.UserInfoEntities
 {
-    public class UserSettings
+    public class Settings
     {
         [Key]
         public long Id { get; set; }
@@ -14,10 +14,10 @@ namespace WebApi.Entities.UserInfoEntities
         public bool IncreasedFamiliarity { get; set; }
         public bool? IsFree { get; set; }
 
-        public UserSettings()
+        public Settings()
         {}
 
-        public UserSettings(long id, bool shouldUserPersonality = false)
+        public Settings(long id, bool shouldUserPersonality = false)
         {
             Id = id;
             UsesOcean = shouldUserPersonality;

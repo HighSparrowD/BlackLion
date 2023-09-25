@@ -401,7 +401,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/GetUserTrustLevel/{userId}")]
-        public async Task<UserTrustLevel> GetUserTrustLevel(long userId)
+        public async Task<TrustLevel> GetUserTrustLevel(long userId)
         {
             return await _repository.GetUserTrustLevel(userId);
         }
