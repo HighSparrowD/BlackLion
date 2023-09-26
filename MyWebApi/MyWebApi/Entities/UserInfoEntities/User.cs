@@ -52,6 +52,7 @@ namespace WebApi.Entities.UserInfoEntities
         public virtual UserData? Data  { get; set; }
         public virtual Settings? Settings  { get; set; }
         public virtual Location? Location  { get; set; }
+        public virtual Statistics? Statistics { get; set; }
         public virtual List<BlackList>? BlackList { get; set; }
         public virtual List<UserTag>? Tags { get; set; }
         public virtual List<Encounter>? Encounters { get; set; }

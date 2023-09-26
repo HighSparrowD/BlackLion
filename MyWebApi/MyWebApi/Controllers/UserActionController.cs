@@ -121,21 +121,10 @@ namespace WebApi.Controllers
             throw new NotImplementedException();
         }
 
-
-
         [HttpGet("/GetCountry/{id}")]
         public async Task<Country> GetBaseUserInfo(long id)
         {
             return await _repository.GetCountryAsync(id);
-        }
-
-        [HttpGet("/GetReportReasons/{localisationId}")]
-        public List<string> GetReportReasons(int localisationId)
-        {
-            var reasons = new List<string>();
-
-            reasons.Add(ReportReason.Spam.ToString());
-            return reasons;
         }
 
         [HttpPost("/feedback")]
@@ -250,7 +239,7 @@ namespace WebApi.Controllers
         [HttpGet("/GrantAchievementToUser/{userId}/{achievementId}")]
         public async Task<string> GrantAchievementToUser(long userId, long achievementId)
         {
-            return await _repository.GrantAchievementToUser(userId, achievementId);
+            return await _repository.GrantAchievementAsync(userId, achievementId);
         }
 
         [HttpGet("/GetUserAchievements/{userId}")]

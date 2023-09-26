@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WebApi.Data;
@@ -12,9 +13,11 @@ using WebApi.Data;
 namespace WebApi.Migrations
 {
     [DbContext(typeof(UserContext))]
-    partial class UserContextModelSnapshot : ModelSnapshot
+    [Migration("20230926000700_UserStatistics")]
+    partial class UserStatistics
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -86,7 +89,10 @@ namespace WebApi.Migrations
                     b.Property<string>("Name")
                         .HasColumnType("text");
 
-                    b.Property<int>("Reward")
+                    b.Property<int>("SectionId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Value")
                         .HasColumnType("integer");
 
                     b.HasKey("Id", "Language");
@@ -105,11 +111,17 @@ namespace WebApi.Migrations
                     b.Property<byte>("AchievementLanguage")
                         .HasColumnType("smallint");
 
+                    b.Property<string>("AcquireMessage")
+                        .HasColumnType("text");
+
                     b.Property<bool>("IsAcquired")
                         .HasColumnType("boolean");
 
                     b.Property<int>("Progress")
                         .HasColumnType("integer");
+
+                    b.Property<string>("ShortDescription")
+                        .HasColumnType("text");
 
                     b.HasKey("UserId", "AchievementId");
 

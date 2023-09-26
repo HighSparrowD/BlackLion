@@ -21,8 +21,7 @@ namespace WebApi.Interfaces
         //Task<long> UploadInTest(UploadInTest model);
         Task<List<Feedback>> GetFeedbacks ();
         Task<int> DeleteAllUsers ();
-        Task<byte> UploadAchievements(List<Achievement> achievements);
-        Task<byte> AddNewAchievements(List<Achievement> achievements);
+        Task AddAchievementsAsync(List<UploadAchievement> achievements);
         Task<List<TickRequest>> GetTickRequestsAsync();
         Task<TickRequest> GetTickRequestAsync(long? requestId = null);
         Task<string> GetNewNotificationsCountAsync(long adminId);

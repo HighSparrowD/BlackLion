@@ -22,6 +22,7 @@ using WebApi.Entities;
 using OceanStats = WebApi.Enums.OceanStats;
 using WebApi.Entities.SystemEntitires;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Binders;
+using WebApi.App_GlobalResources;
 
 namespace WebApi.Repositories
 {
@@ -84,6 +85,7 @@ namespace WebApi.Repositories
             };
 
             var uSettings = new Settings(model.Id, model.UsesOcean);
+            var uStats = new Statistics(model.Id);
 
             user.LocationId = location.Id;
 
@@ -91,6 +93,7 @@ namespace WebApi.Repositories
             await _contx.UserData.AddAsync(uData);
             await _contx.UsersSettings.AddAsync(uSettings);
             await _contx.UserLocations.AddAsync(location);
+            await _contx.UserStatistics.AddAsync(uStats);
             await _contx.SaveChangesAsync();
 
             await GenerateUserAchievementList(user.Id, uData.Language, wasRegistered);
@@ -120,9 +123,13 @@ namespace WebApi.Repositories
             {
                 var invitor = await _contx.Users.Where(u => u.Id == invitation.InviterCredentials.UserId)
                     .Include(u => u.Settings)
+                    .Include(u => u.Statistics)
                     .FirstOrDefaultAsync();
 
                 invitor.InvitedUsersCount++;
+                
+                // TODO: Grand "Register by referal achievement"
+                // TODO: Grand "Invite X users achievement"
 
                 var bonus = invitor.HasPremium ? 0.05f : 0f;
                 var multiplier = 1;
@@ -196,7 +203,8 @@ namespace WebApi.Repositories
             await PurchaseTestAsync(model.Id, 54, 0, Currency.Points, AppLanguage.RU); // Approved
             await PurchaseTestAsync(model.Id, 29, 0, Currency.Points, AppLanguage.RU); // Approved
             await PurchaseTestAsync(model.Id, 49, 0, Currency.Points, AppLanguage.RU); // Approved
-            await PurchaseTestAsync(model.Id, 34, 0, Currency.Points, AppLanguage.RU);
+
+            await GrantAchievementAsync(model.Id, 1);
 
             return model.Id;
         }
@@ -944,45 +952,46 @@ namespace WebApi.Repositories
             var achievement = await _contx.UserAchievements
                 .Where(a => a.UserId == userId && a.AchievementId == achievementId)
                 .Include(a => a.Achievement)
-                .SingleOrDefaultAsync();
+                .FirstOrDefaultAsync();
 
             achievement.Progress += progress;
             _contx.UserAchievements.Update(achievement);
             await _contx.SaveChangesAsync();
 
             if (achievement.Progress >= achievement.Achievement.ConditionValue)
-                return achievement.AcquireMessage;
+                return $"{Resources.ResourceManager.GetString("AchievementGrant_Message")}\n\n{achievement.Achievement.Description}\n{achievement.Achievement.Reward}p";
 
             return "";
         }
 
-        public async Task<string> GrantAchievementToUser(long userId, long achievementId)
+        public async Task<string> GrantAchievementAsync(long userId, long achievementId)
         {
             var achievement = await _contx.UserAchievements
                 .Where(a => a.UserId == userId && a.AchievementId == achievementId && !a.IsAcquired)
                 .Include(a => a.Achievement)
-                .SingleOrDefaultAsync();
+                .FirstOrDefaultAsync();
+
+            var acquireMessage = $"{Resources.ResourceManager.GetString("AchievementGrant_Message")}\n\n{achievement.Achievement.Description}\n{achievement.Achievement.Reward}p";
 
             if (achievement == null)
                 throw new Exception($"User have already acquired achievement #{achievementId} or it does not exist");
 
             achievement.IsAcquired = true;
 
-            await TopUpPointBalance(userId, achievement.Achievement.Value, "Achievement acquiring");
+            await TopUpPointBalance(userId, achievement.Achievement.Reward, "Achievement acquiring");
 
             await AddUserNotificationAsync(new UserNotification
             {
                 UserId = userId,
-                Section = (Section)achievement.Achievement.SectionId,
+                Section = Section.Neutral,
                 Type = NotificationType.Other,
-                Description = achievement.AcquireMessage
+                Description = acquireMessage
             });
-
 
             _contx.UserAchievements.Update(achievement);
             await _contx.SaveChangesAsync();
 
-            return achievement.AcquireMessage;
+            return acquireMessage;
         }
 
         public async Task<List<UserAchievement>> GetUserAchievements(long userId)
@@ -1136,11 +1145,12 @@ namespace WebApi.Repositories
             return 1;
         }
 
-        public async Task<byte> GenerateUserAchievementList(long userId, AppLanguage localisationId, bool wasRegistered=false)
+        public async Task GenerateUserAchievementList(long userId, AppLanguage localisationId, bool wasRegistered=false)
         {
 
             List<UserAchievement> userAchievements;
-
+            
+            // TODO: Remove
             if (wasRegistered)
             {
                 userAchievements = await  _contx.UserAchievements
@@ -1150,13 +1160,13 @@ namespace WebApi.Repositories
             }
 
             userAchievements = new List<UserAchievement>();
-            var sysAchievements = await _contx.Achievements.Where(a => a.Language == localisationId).ToListAsync();
-            sysAchievements.ForEach(a => userAchievements.Add(new UserAchievement(a.Id, userId, a.Language, a.Name, a.Description, a.Value, a.Language)));
+            var sysAchievements = await _contx.Achievements.Where(a => a.Language == localisationId)
+                .ToListAsync();
+
+            sysAchievements.ForEach(a => userAchievements.Add(new UserAchievement(a.Id, userId, a.Language)));
 
             await _contx.UserAchievements.AddRangeAsync(userAchievements);
             await _contx.SaveChangesAsync();
-
-            return 1;
         }
 
         public async Task<List<UserAchievement>> GetUserAchievementsAsAdmin(long userId)
@@ -1525,8 +1535,6 @@ namespace WebApi.Repositories
                         var achievement = await _contx.Achievements
                         .Where(achievement => achievement.Id == a.AchievementId && achievement.Language == appLanguage)
                         .SingleOrDefaultAsync();
-
-                        a.RetranslateAquireMessage(achievement, appLanguage);
                     });
                     _contx.UserAchievements.UpdateRange(userAchievements);
                     await _contx.SaveChangesAsync();
@@ -2418,7 +2426,7 @@ namespace WebApi.Repositories
             var achievents = await _contx.UserAchievements
                 .Where(a => a.UserId == userId)
                 .Where(a => !a.IsAcquired)
-                .Select(a => $"{a.Achievement.Name}\n{a.Achievement.Description}\n\n{a.Achievement.ConditionValue} / {a.Achievement.Value}")
+                .Select(a => $"{a.Achievement.Name}\n{a.Achievement.Description}\n\n{a.Achievement.ConditionValue} / {a.Achievement.Reward}")
                 .ToListAsync();
 
             //Shuffle achievement list

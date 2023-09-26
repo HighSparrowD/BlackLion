@@ -22,6 +22,7 @@ namespace WebApi.Data
         public DbSet<UserData> UserData => Set<UserData>();
         public DbSet<Settings> UsersSettings => Set<Settings>();
         public DbSet<Location> UserLocations => Set<Location>();
+        public DbSet<Statistics> UserStatistics => Set<Statistics>();
         public DbSet<Visit> UserVisits => Set<Visit>();
         public DbSet<Country> Countries => Set<Country>();
         public DbSet<City> Cities => Set<City>();
@@ -113,6 +114,7 @@ namespace WebApi.Data
             builder.Entity<User>().HasOne(u => u.Data);
             builder.Entity<User>().HasOne(u => u.Settings);
             builder.Entity<User>().HasOne(u => u.Location);
+            builder.Entity<User>().HasOne(u => u.Statistics);
             builder.Entity<User>().HasMany(u => u.BlackList);
             builder.Entity<User>().HasMany(u => u.Tags);
             builder.Entity<User>().HasMany(u => u.Encounters);
@@ -172,6 +174,7 @@ namespace WebApi.Data
             builder.Entity<UserData>().ToTable("user_data");
             builder.Entity<Settings>().ToTable("user_settings");
             builder.Entity<Location>().ToTable("user_locations");
+            builder.Entity<Statistics>().ToTable("user_statistics");
             builder.Entity<Visit>().ToTable("user_visits");
             builder.Entity<Country>().ToTable("countries");
             builder.Entity<City>().ToTable("cities");

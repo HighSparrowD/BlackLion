@@ -1,0 +1,35 @@
+Id,Name,Description,Condition,Reward
+1,👤Personality,"Fill out the registration form for the first time
+",1,50
+2,👮‍♀️🕵️‍♂️👨‍🍳🧑‍💻Split,Fill out the questionnaire 25 times,25,100
+3,👔👖Changed clothes,"Fill out the questionnaire 10 times
+",10,50
+4,🧊Icebreaker,"Pass the first psychological test
+",1,30
+5,🎙 Interview,Pass 5 psychological tests,5,70
+6,📚Biography,"Pass 10 psychological tests",10,100
+7,❄️🥶Cold,Weed out 10 profiles,10,20
+8,❄️🌨🥶Frost,Weed out 50 profiles,50,50
+9,🌨❄️☃️🥶 Winter storm,"Weed out 100 profiles",100,100
+10,🌨❄️☃️🥶🧊Sub- Zero,"Weed out 250 profiles",250,250
+11,⚽️ Bail on them,Refuse10 people who liked you,10,30
+12, ⚽️🏃Give up on,"Refuse 50 people who liked you.",50,100
+13,👤❄️I'm not for everyone,"Reject 200 people who liked you.",200,200
+14,💓 Sympathy,Get the first like,1,20
+15,💖💝💘 Adoration,Get 100 likes,100,150
+16,🧲❤️‍🔥Love magnet,Get 50 likes,50,70
+17,💧Like two drops of water,"Find the first person with high similarity.",1,50
+18,🕺👯‍♀️🕺Brothers in mind,"Find 10 people with high similarity",10,100
+19,👨👩👱‍♀️👨‍🦰 Clones,"Find 100 people with high similarity",100,200
+20,👹 Our name is legion,"Find 200 people with high similarity.
+",200,300
+21,🛣 According to the well-known path,"Register using the referral link",1,50
+22,🫵🚷 Reckless,Get the first report,1,30
+23,👨‍💻🧠 An intellectual investment,"Write an idea about the development of the bot",1,50
+24,🧠💰 Intellectual capital,Write 5 ideas about bot development,5,200
+25,✉️ Dealer,"Invite 6 people via QR code
+",6,100
+26,Interest," Log in to the bot for 5 days in a row",5,50
+27,Attendance ,"Log into the bot for 10 days in a row",10,100
+28,The habit,"Logging into the bot for 20 days in a row
+",20,250
