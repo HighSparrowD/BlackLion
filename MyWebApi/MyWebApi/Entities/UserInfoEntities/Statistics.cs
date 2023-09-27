@@ -5,13 +5,14 @@ namespace WebApi.Entities.UserInfoEntities
     public class Statistics
     {
         [Key]
-        public long Id { get; set; }
+        public long UserId { get; set; }
         public int ProfileRegistrations { get; set; }
         public int TestsPassed { get; set; }
         public int DislikedProfiles { get; set; }
         public int DiscardedMatches { get; set; }
         public int LikesReceived { get; set; }
         public int Likes { get; set; }
+        public int Match { get; set; }
         public int HighSimilarityMatches { get; set; }
         public int UseStreak { get; set; }
         public int IdeasGiven { get; set; }
@@ -21,7 +22,7 @@ namespace WebApi.Entities.UserInfoEntities
 
         public Statistics(long userId)
         {
-            Id = userId;
+            UserId = userId;
             ProfileRegistrations = 1;
         }
     }

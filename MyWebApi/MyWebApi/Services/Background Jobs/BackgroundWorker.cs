@@ -64,6 +64,9 @@ namespace WebApi.Services.Background
 
             var isMoreToTake = true;
 
+            // Remove use streaks
+            await backgroundRepo.RemoveStreakAsync();
+
             while (isMoreToTake)
             {
                 var batch = await backgroundRepo.GetBatchToUpdate(BatchSize);
@@ -96,7 +99,7 @@ namespace WebApi.Services.Background
                         await userRepo.AddUserNotificationAsync(new UserNotification
                         {
                             
-                            Description = Resources.ResourceManager.GetString("RandomAchievements_Message") + string.Join("\n\n", achievements),
+                            Description = Resources.ResourceManager.GetString("RandomAchievements_Message") + string.Join(".", achievements),
                             UserId = user.Id,
                             Type = NotificationType.Other,
                             Section = Section.Neutral
@@ -128,6 +131,20 @@ namespace WebApi.Services.Background
                                 Description = "Your premium access ends today !"
                             });
                         }
+                    }
+
+                    user.Statistics.UseStreak++;
+
+                    switch (user.Statistics.UseStreak)
+                    {   case 5:
+                            await userRepo.GrantAchievementAsync(user.Id, 26);
+                            break;
+                        case 10:
+                            await userRepo.GrantAchievementAsync(user.Id, 27);
+                            break;
+                        case 20:
+                            await userRepo.GrantAchievementAsync(user.Id, 28);
+                            break;
                     }
 
                     user.IsUpdated = true;

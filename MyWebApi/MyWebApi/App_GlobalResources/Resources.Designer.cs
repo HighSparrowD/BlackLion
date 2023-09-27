@@ -313,7 +313,7 @@ namespace WebApi.App_GlobalResources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to &lt;b&gt;Today&apos;s Random Achievements&lt;/b&gt;\n\n.
+        ///   Looks up a localized string similar to &lt;b&gt;Today&apos;s Random Achievements&lt;/b&gt;.
         /// </summary>
         public static string RandomAchievements_Message {
             get {

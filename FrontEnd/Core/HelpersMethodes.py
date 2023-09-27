@@ -418,7 +418,11 @@ def register_user_encounter_rt(current_user_id, user_id):
 
 
 def get_all_user_achievements(userId):
-    return json.loads(requests.get(f"{api_address}/GetUserAchievements/{userId}", verify=False).text)
+    return json.loads(requests.get(f"{api_address}/user-achievements/{userId}", verify=False).text)
+
+
+def get_user_achievement(userId, achievementId):
+    return json.loads(requests.get(f"{api_address}/user-achievement/{userId}/{achievementId}", verify=False).text)
 
 
 def get_all_user_achievements_admin(userId):

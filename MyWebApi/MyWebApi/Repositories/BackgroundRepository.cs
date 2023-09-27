@@ -30,7 +30,14 @@ namespace WebApi.Repositories
             return await _context.Users.Where(u => !u.IsUpdated)
                 .Take(batchSize)
                 .Include(u => u.Settings)
+                .Include(u => u.Statistics)
                 .ToListAsync(); ;
+        }
+
+        public async Task RemoveStreakAsync()
+        {
+            var sql = $"UPDATE user_statistics SET \"UseStreak\" = 0 WHERE \"UserId\" IN (SELECT \"Id\" FROM users WHERE \"IsUpdated\" = True);";
+            await _context.Database.ExecuteSqlRawAsync(sql);
         }
 
         public async Task SaveBatchChanges(List<User> batch)
@@ -101,7 +108,7 @@ namespace WebApi.Repositories
             sql += $"DELETE FROM \"feedbacks\" WHERE \"UserId\" IN ({formattedIds});";
             sql += $"DELETE FROM \"invitation_credentials\" WHERE \"UserId\" IN ({formattedIds});";
             sql += $"DELETE FROM \"invitations\" WHERE \"InvitedUserId\" IN ({formattedIds});";
-            sql += $"DELETE FROM \"notifications\" WHERE \"SenderId\" IN ({formattedIds});";
+            sql += $"DELETE FROM \"notifications\" WHERE \"UserId\" IN ({formattedIds});";
 
             //sql += $"DELETE FROM \"personality_points\" WHERE \"UserId\" IN ({formattedIds});";
             //sql += $"DELETE FROM \"personality_stats\" WHERE \"UserId\" IN ({formattedIds});";

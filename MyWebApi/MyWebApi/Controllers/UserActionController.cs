@@ -242,8 +242,8 @@ namespace WebApi.Controllers
             return await _repository.GrantAchievementAsync(userId, achievementId);
         }
 
-        [HttpGet("/GetUserAchievements/{userId}")]
-        public async Task<List<UserAchievement>> GetUserAchievements(long userId)
+        [HttpGet("/user-achievements/{userId}")]
+        public async Task<List<GetShortAchievement>> GetUserAchievements([FromRoute] long userId)
         {
             return await _repository.GetUserAchievements(userId);
         }
@@ -254,8 +254,8 @@ namespace WebApi.Controllers
             return await _repository.GetUserAchievementsAsAdmin(userId);
         }
 
-        [HttpGet("/GetSingleUserAchievement/{userId}/{achievementId}")]
-        public async Task<UserAchievement> GetSingleUserAchievement(long userId, long achievementId)
+        [HttpGet("/user-achievement/{userId}/{achievementId}")]
+        public async Task<GetUserAchievement> GetSingleUserAchievement([FromRoute] long userId, [FromRoute] long achievementId)
         {
             return await _repository.GetSingleUserAchievement(userId, achievementId);
         }

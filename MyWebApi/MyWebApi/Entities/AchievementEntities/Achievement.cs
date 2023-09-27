@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using WebApi.Entities.AdminEntities;
 using WebApi.Enums;
 

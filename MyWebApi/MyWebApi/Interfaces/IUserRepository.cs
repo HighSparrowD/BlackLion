@@ -64,9 +64,9 @@ namespace WebApi.Interfaces
         Task GenerateUserAchievementList(long userId, AppLanguage localisationId, bool wasRegistered);
         Task<string> AddAchievementProgress(long userId, long achievementId, int progress);
         Task<string> GrantAchievementAsync(long userId, long achievementId);
-        Task<List<UserAchievement>> GetUserAchievements(long userId);
+        Task<List<GetShortAchievement>> GetUserAchievements(long userId);
         Task<List<UserAchievement>> GetUserAchievementsAsAdmin(long userId);
-        Task<UserAchievement> GetSingleUserAchievement(long userId, long achievementId);
+        Task<GetUserAchievement> GetSingleUserAchievement(long userId, long achievementId);
         Task<bool> SetUserRtLanguagePrefs(long userId, bool shouldBeConcidered);
         Task<bool> CheckUsersAreCombinableRT(long user1, long user2);
         Task<Balance> GetUserWalletBalance(long userId);
