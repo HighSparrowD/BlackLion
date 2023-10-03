@@ -964,5 +964,13 @@ namespace WebApi.Controllers
         {
             return await _repository.GetAdventuresAsync(userId);
         }
+
+        // TODO: Finish up
+        [HttpPost("/questioner-data")]
+        public async Task<IActionResult> ReceiveQuestioner([FromBody] QuestionerPayload payload)
+        {
+            await _repository.ProcessInterestsDataAsync(payload);
+            return Ok();
+        }
     }
 }

@@ -1389,7 +1389,7 @@ namespace WebApi.Migrations
                     b.Property<int>("DislikedProfiles")
                         .HasColumnType("integer");
 
-                    b.Property<int>("HighSimilarityMatches")
+                    b.Property<int>("HighSimilarityEncounters")
                         .HasColumnType("integer");
 
                     b.Property<int>("IdeasGiven")
@@ -1405,6 +1405,9 @@ namespace WebApi.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int>("ProfileRegistrations")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("QuestionerPasses")
                         .HasColumnType("integer");
 
                     b.Property<int>("TestsPassed")

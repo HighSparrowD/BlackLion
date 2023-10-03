@@ -12,10 +12,11 @@ namespace WebApi.Entities.UserInfoEntities
         public int DiscardedMatches { get; set; }
         public int LikesReceived { get; set; }
         public int Likes { get; set; }
-        public int Match { get; set; }
-        public int HighSimilarityMatches { get; set; }
+        public int Matches { get; set; }
+        public int HighSimilarityEncounters { get; set; }
         public int UseStreak { get; set; }
         public int IdeasGiven { get; set; }
+        public int QuestionerPasses { get; set; }
 
         public Statistics()
         {}

@@ -21,10 +21,8 @@ using System.Threading.Tasks;
 using WebApi.Entities;
 using OceanStats = WebApi.Enums.OceanStats;
 using WebApi.Entities.SystemEntitires;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Binders;
 using WebApi.App_GlobalResources;
-using Microsoft.OpenApi.Validations;
-using System.Runtime.InteropServices;
+using WebApi.Entities.SponsorEntities;
 
 namespace WebApi.Repositories
 {
@@ -346,7 +344,7 @@ namespace WebApi.Repositories
             {
                 for (int i = 0; i < data.Count; i++)
                 {
-                    returnData.Add(await GetOceanMatchResult(userId, currentUser, data[i], isRepeated));
+                    returnData.Add(await GetOceanMatchResult(currentUser, data[i], isRepeated));
                 }
             }
             else
@@ -405,11 +403,11 @@ namespace WebApi.Repositories
             return outputUser;
         }
 
-        private async Task<GetUserData> GetOceanMatchResult(long userId, User currentUser, GetUserData managedUser, bool isRepeated)
+        private async Task<GetUserData> GetOceanMatchResult(User currentUser, GetUserData managedUser, bool isRepeated)
         {
             var returnUser = await AssembleProfileAsync(currentUser, managedUser);
 
-            var userActiveEffects = await GetUserActiveEffects(userId);
+            var userActiveEffects = await GetUserActiveEffects(currentUser.Id);
             var deviation = 0.15;
             var minDeviation = 0.05;
 
@@ -627,7 +625,52 @@ namespace WebApi.Repositories
             if (importantMatches < 1 && secondaryMatches < 3)
             {
                 bonus = "";
-            };
+            }
+            else
+            {
+                var cUserStats = await _contx.UserStatistics.Where(u => u.UserId == currentUser.Id)
+                    .FirstOrDefaultAsync();
+
+                var mUserStats = await _contx.UserStatistics.Where(u => u.UserId == managedUser.UserId)
+                    .FirstOrDefaultAsync();
+
+                cUserStats.HighSimilarityEncounters++;
+                mUserStats.HighSimilarityEncounters++;
+
+                switch (cUserStats.HighSimilarityEncounters)
+                {
+                    case 1:
+                        await GrantAchievementAsync(cUserStats.UserId, 17);
+                        break;
+                    case 10:
+                        await GrantAchievementAsync(cUserStats.UserId, 18);
+                        break;
+                    case 100:
+                        await GrantAchievementAsync(cUserStats.UserId, 19);
+                        break;
+                    case 200:
+                        await GrantAchievementAsync(cUserStats.UserId, 20);
+                        break;
+                }
+
+                switch (mUserStats.HighSimilarityEncounters)
+                {
+                    case 1:
+                        await GrantAchievementAsync(mUserStats.UserId, 17);
+                        break;
+                    case 10:
+                        await GrantAchievementAsync(mUserStats.UserId, 18);
+                        break;
+                    case 100:
+                        await GrantAchievementAsync(mUserStats.UserId, 19);
+                        break;
+                    case 200:
+                        await GrantAchievementAsync(mUserStats.UserId, 20);
+                        break;
+                }
+
+                await _contx.SaveChangesAsync();
+            }
 
             //Add comment if user wants to see them
             if (currentUser.Settings.ShouldComment)
@@ -782,6 +825,9 @@ namespace WebApi.Repositories
                     .FirstOrDefaultAsync();
 
                 reportedUser.ReportCount++;
+
+                if (reportedUser.ReportCount == 1)
+                    await GrantAchievementAsync(reportedUser.Id, 22);
 
                 //Ban user if dailly report count is too high
                 if (reportedUser.ReportCount >= 5)
@@ -1798,14 +1844,37 @@ namespace WebApi.Repositories
             //Register notification
             await AddUserNotificationAsync(notification);
 
-            if (!model.IsMatch)
-            {
-                var userStats = await _contx.UserStatistics.Where(s => s.UserId == model.UserId)
+            var userStats = await _contx.UserStatistics.Where(s => s.UserId == model.UserId)
                     .FirstOrDefaultAsync();
 
-                userStats.Likes++;
+            var senderStats = await _contx.UserStatistics.Where(s => s.UserId == model.SenderId)
+                .FirstOrDefaultAsync();
 
-                switch (userStats.Likes)
+            if (!model.IsMatch)
+            {
+                senderStats.Likes++;
+
+                switch (senderStats.Likes)
+                {
+                    case 10:
+                        await GrantAchievementAsync(model.SenderId, 33);
+                        break;
+                    case 50:
+                        await GrantAchievementAsync(model.SenderId, 34);
+                        break;
+                    case 100:
+                        await GrantAchievementAsync(model.SenderId, 35);
+                        break;
+                    case 250:
+                        await GrantAchievementAsync(model.SenderId, 36);
+                        break;
+                    default:
+                        break;
+                }
+
+                userStats.LikesReceived++;
+
+                switch (userStats.LikesReceived)
                 {
                     case 1:
                         await GrantAchievementAsync(model.UserId, 14);
@@ -1822,6 +1891,47 @@ namespace WebApi.Repositories
 
                 await _contx.SaveChangesAsync();
             }
+            else
+            {
+                userStats.Matches++;
+                senderStats.Matches++;
+
+                switch (userStats.Matches)
+                {
+                    case 10:
+                        await GrantAchievementAsync(model.UserId, 29);
+                        break;
+                    case 50:
+                        await GrantAchievementAsync(model.UserId, 30);
+                        break;
+                    case 100:
+                        await GrantAchievementAsync(model.UserId, 31);
+                        break;
+                    case 250:
+                        await GrantAchievementAsync(model.UserId, 32);
+                        break;  
+                    default:
+                        break;
+                }
+
+                switch (senderStats.Matches)
+                {
+                    case 10:
+                        await GrantAchievementAsync(model.SenderId, 29);
+                        break;
+                    case 50:
+                        await GrantAchievementAsync(model.SenderId, 30);
+                        break;
+                    case 100:
+                        await GrantAchievementAsync(model.SenderId, 31);
+                        break;
+                    case 250:
+                        await GrantAchievementAsync(model.SenderId, 32);
+                        break;
+                    default:
+                        break;
+                }
+            }
 
             return returnMessage;
         }
@@ -1830,6 +1940,8 @@ namespace WebApi.Repositories
         public async Task<string> DeclineRequestAsync(long user, long encounteredUser)
         {
             var sim = await GetSimilarityBetweenUsersAsync(user, encounteredUser);
+
+            var doesExist = await _contx.Requests.AnyAsync(r => r.UserId == user && r.SenderId == encounteredUser);
 
             //Encounter is not registered anywhere but here in that case
             await RegisterUserEncounter(new RegisterEncounter
@@ -1841,21 +1953,45 @@ namespace WebApi.Repositories
 
             var userStats = await _contx.UserStatistics.Where(s => s.UserId == user)
                 .FirstOrDefaultAsync();
-
-            userStats.DiscardedMatches++;
-            switch (userStats.DiscardedMatches)
+            
+            if (doesExist)
             {
-                case 1:
-                    await GrantAchievementAsync(user, 10);
-                    break;
-                case 50:
-                    await GrantAchievementAsync(user, 50);
-                    break;
-                case 100:
-                    await GrantAchievementAsync(user, 200);
-                    break;
-                default:
-                    break;
+                userStats.DiscardedMatches++;
+                switch (userStats.DiscardedMatches)
+                {
+                    case 10:
+                        await GrantAchievementAsync(user, 11);
+                        break;
+                    case 50:
+                        await GrantAchievementAsync(user, 12);
+                        break;
+                    case 200:
+                        await GrantAchievementAsync(user, 13);
+                        break;
+                    default:
+                        break;
+                }
+            }
+            else
+            {
+                userStats.DislikedProfiles++;
+                switch (userStats.DislikedProfiles)
+                {
+                    case 10:
+                        await GrantAchievementAsync(user, 7);
+                        break;
+                    case 50:
+                        await GrantAchievementAsync(user, 8);
+                        break;
+                    case 100:
+                        await GrantAchievementAsync(user, 9);
+                        break;
+                    case 250:
+                        await GrantAchievementAsync(user, 10);
+                        break;
+                    default:
+                        break;
+                }
             }
 
             await _contx.SaveChangesAsync();
@@ -1894,12 +2030,12 @@ namespace WebApi.Repositories
             var userStats = await _contx.UserStatistics.Where(s => s.UserId == userId)
                 .FirstOrDefaultAsync();
 
-            userStats.Match++;
+            userStats.Matches++;
 
             var senderStats = await _contx.UserStatistics.Where(s => s.UserId == requesSenderId)
                 .FirstOrDefaultAsync();
 
-            senderStats.Match++;
+            senderStats.Matches++;
 
             // TODO: Create related achievements and implement check
             //switch (userStats.Match)
@@ -3045,7 +3181,7 @@ namespace WebApi.Repositories
             GetUserData outputUser;
 
             if (currentUser.Settings.UsesOcean)
-                outputUser = await GetOceanMatchResult(model.UserId, currentUser, user, false);
+                outputUser = await GetOceanMatchResult(currentUser, user, false);
             else
                 outputUser = await AssembleProfileAsync(currentUser, user);
 
@@ -4718,6 +4854,27 @@ namespace WebApi.Repositories
             }
 
             return tagIds;
+        }
+
+        // TODO: Finish up
+        public async Task ProcessInterestsDataAsync(QuestionerPayload model)
+        {
+            var userId = await _contx.UserData.Where(u => u.UserName == model.Username)
+                .Select(u => u.Id)
+                .FirstOrDefaultAsync();
+
+            if (userId == 0)
+                throw new NullReferenceException("User with such username does not exist !");
+
+            var userStats = await _contx.UserStatistics.Where(s => s.UserId == userId)
+                .FirstOrDefaultAsync();
+
+            // TODO: Achievements
+            switch (userStats.QuestionerPasses)
+            {
+                default:
+                    break;
+            }
         }
     }
 }
