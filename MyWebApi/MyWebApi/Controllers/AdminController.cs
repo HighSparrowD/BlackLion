@@ -93,16 +93,10 @@ namespace WebApi.Controllers
             return await _repository.DeleteAllUsers();
         }
 
-        [HttpPost("/UploadAchievements")]
-        public async Task<int> UploadAchievements(List<Achievement> achievements)
+        [HttpPost("/upload-achievements")]
+        public async Task AddNewAchievements([FromBody] List<UploadAchievement> achievements)
         {
-            return await _repository.UploadAchievements(achievements);
-        }
-
-        [HttpPost("/AddNewAchievements")]
-        public async Task<int> AddNewAchievements(List<Achievement> achievements)
-        {
-            return await _repository.AddNewAchievements(achievements);
+            await _repository.AddAchievementsAsync(achievements);
         }
 
         [HttpGet("/GetTickRequests")]

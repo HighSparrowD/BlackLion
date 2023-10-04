@@ -117,6 +117,9 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="AchievementGrant_Message" xml:space="preserve">
+    <value>✨✨Поздравляем! Вы разблокировали новое достижение!✨✨</value>
+  </data>
   <data name="AppLanguage_Eng" xml:space="preserve">
     <value>Английский</value>
   </data>
@@ -178,7 +181,7 @@
     <value>Неважно</value>
   </data>
   <data name="RandomAchievements_Message" xml:space="preserve">
-    <value>&lt;b&gt;Сегодняшние случайные достижения&lt;/b&gt;\n\n</value>
+    <value>&lt;b&gt;Сегодняшние случайные достижения&lt;/b&gt;</value>
   </data>
   <data name="ReportReason_Spam" xml:space="preserve">
     <value>Спам</value>

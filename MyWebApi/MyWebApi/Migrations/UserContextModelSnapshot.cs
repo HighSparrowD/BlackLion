@@ -86,10 +86,7 @@ namespace WebApi.Migrations
                     b.Property<string>("Name")
                         .HasColumnType("text");
 
-                    b.Property<int>("SectionId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Value")
+                    b.Property<int>("Reward")
                         .HasColumnType("integer");
 
                     b.HasKey("Id", "Language");
@@ -108,17 +105,11 @@ namespace WebApi.Migrations
                     b.Property<byte>("AchievementLanguage")
                         .HasColumnType("smallint");
 
-                    b.Property<string>("AcquireMessage")
-                        .HasColumnType("text");
-
                     b.Property<bool>("IsAcquired")
                         .HasColumnType("boolean");
 
                     b.Property<int>("Progress")
                         .HasColumnType("integer");
-
-                    b.Property<string>("ShortDescription")
-                        .HasColumnType("text");
 
                     b.HasKey("UserId", "AchievementId");
 
@@ -1353,6 +1344,83 @@ namespace WebApi.Migrations
                     b.ToTable("requests", (string)null);
                 });
 
+            modelBuilder.Entity("WebApi.Entities.UserInfoEntities.Settings", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<bool>("IncreasedFamiliarity")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool?>("IsFree")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ShouldComment")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ShouldConsiderLanguages")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ShouldFilterUsersWithoutRealPhoto")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ShouldSendHints")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("UsesOcean")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("user_settings", (string)null);
+                });
+
+            modelBuilder.Entity("WebApi.Entities.UserInfoEntities.Statistics", b =>
+                {
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("DiscardedMatches")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("DislikedProfiles")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("HighSimilarityEncounters")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdeasGiven")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Likes")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("LikesReceived")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Matches")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ProfileRegistrations")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("QuestionerPasses")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TestsPassed")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UseStreak")
+                        .HasColumnType("integer");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("user_statistics", (string)null);
+                });
+
             modelBuilder.Entity("WebApi.Entities.UserInfoEntities.Transaction", b =>
                 {
                     b.Property<long>("Id")
@@ -1379,6 +1447,28 @@ namespace WebApi.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("transactions", (string)null);
+                });
+
+            modelBuilder.Entity("WebApi.Entities.UserInfoEntities.TrustLevel", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<double>("Goal")
+                        .HasColumnType("double precision");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("integer");
+
+                    b.Property<double>("Progress")
+                        .HasColumnType("double precision");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("trust_levels", (string)null);
                 });
 
             modelBuilder.Entity("WebApi.Entities.UserInfoEntities.User", b =>
@@ -1563,40 +1653,6 @@ namespace WebApi.Migrations
                     b.ToTable("user_data", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Entities.UserInfoEntities.UserSettings", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<bool>("IncreasedFamiliarity")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool?>("IsFree")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("ShouldComment")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("ShouldConsiderLanguages")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("ShouldFilterUsersWithoutRealPhoto")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("ShouldSendHints")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("UsesOcean")
-                        .HasColumnType("boolean");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("user_settings", (string)null);
-                });
-
             modelBuilder.Entity("WebApi.Entities.UserInfoEntities.UserTag", b =>
                 {
                     b.Property<long>("TagId")
@@ -1642,28 +1698,6 @@ namespace WebApi.Migrations
                     b.HasIndex("TestId", "TestLanguage");
 
                     b.ToTable("user_tests", (string)null);
-                });
-
-            modelBuilder.Entity("WebApi.Entities.UserInfoEntities.UserTrustLevel", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<double>("Goal")
-                        .HasColumnType("double precision");
-
-                    b.Property<int>("Level")
-                        .HasColumnType("integer");
-
-                    b.Property<double>("Progress")
-                        .HasColumnType("double precision");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("trust_levels", (string)null);
                 });
 
             modelBuilder.Entity("WebApi.Entities.UserInfoEntities.Visit", b =>
@@ -2003,6 +2037,15 @@ namespace WebApi.Migrations
                     b.Navigation("Sender");
                 });
 
+            modelBuilder.Entity("WebApi.Entities.UserInfoEntities.Statistics", b =>
+                {
+                    b.HasOne("WebApi.Entities.UserInfoEntities.User", null)
+                        .WithOne("Statistics")
+                        .HasForeignKey("WebApi.Entities.UserInfoEntities.Statistics", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("WebApi.Entities.UserInfoEntities.User", b =>
                 {
                     b.HasOne("WebApi.Entities.UserInfoEntities.UserData", "Data")
@@ -2017,7 +2060,7 @@ namespace WebApi.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("WebApi.Entities.UserInfoEntities.UserSettings", "Settings")
+                    b.HasOne("WebApi.Entities.UserInfoEntities.Settings", "Settings")
                         .WithMany()
                         .HasForeignKey("SettingsId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -2098,6 +2141,8 @@ namespace WebApi.Migrations
                     b.Navigation("Notifications");
 
                     b.Navigation("Requests");
+
+                    b.Navigation("Statistics");
 
                     b.Navigation("Tags");
                 });

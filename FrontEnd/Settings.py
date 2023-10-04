@@ -26,7 +26,6 @@ class Settings:
         self.bot = bot
         self.message = message
         self.current_user = message.from_user.id
-        self.old_queries = []
         self.black_list = {}
         self.encounter_list = {}
 
@@ -200,6 +199,8 @@ class Settings:
             .add(InlineKeyboardButton(self.localization["Link"], callback_data="223")) \
             .add(InlineKeyboardButton(self.localization["QRCode"], callback_data="224")) \
             .add(InlineKeyboardButton(self.localization["GoBack"], callback_data="-20")) \
+
+        self.goBackMarkup = InlineKeyboardMarkup().add(InlineKeyboardButton(self.localization["GoBack"], callback_data="-20"))
 
         self.activate_effectMarkup = InlineKeyboardMarkup().add(InlineKeyboardButton(self.localization["Activate"], callback_data="-10"))
         self.buy_effectMarkup = InlineKeyboardMarkup().add(InlineKeyboardButton(self.localization["Buy"], callback_data="-5"))
@@ -457,27 +458,35 @@ class Settings:
         self.notInMenu = True
 
         self.previous_section = self.my_statistics_settings_choice
-        achievements = Helpers.get_all_user_achievements(self.current_user)
+        self.achievements = Helpers.get_all_user_achievements(self.current_user)
 
-        for achievement in achievements:
-            name = achievement["achievement"]["name"]
+        elements = {}
 
+        for achievement in self.achievements:
             #Add a tick if a user has acquired an achievement
             if achievement["isAcquired"]:
-                name = "✅" + name
+                achievement["name"] = "✅" + achievement["name"] + "✅"
 
-            self.achievements[achievement["id"]] = name
-            self.achievements_data[achievements["id"]] = achievement
+            elements[achievement["id"]] = achievement["name"]
 
         reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page, self.markup_pages_count)
-        count_pages(self.achievements, self.current_markup_elements, self.markup_pages_count)
+        count_pages(elements, self.current_markup_elements, self.markup_pages_count, additionalButton=True, buttonText=self.localization["GoBack"], buttonData="-20")
         markup = assemble_markup(self.markup_page, self.current_markup_elements, 0)
         self.markup_page = 1
 
         # self.current_callback_handler = self.bot.register_callback_query_handler("", self.achievement_callback_handler)
         self.subscribe_callback_handler(self.achievement_callback_handler)
-        self.bot.send_message(self.current_user, self.localization["AchievementList"], reply_markup=markup)
-        self.bot.send_message(self.current_user, self.localization["AcquiredAchievementsM"])
+        self.send_active_message(self.localization["AchievementList"], markup=markup)
+        self.send_secondary_message(self.localization["AcquiredAchievementsM"])
+
+    def show_achievement(self, achievementId):
+        try:
+            self.previous_section = self.achievement_manager
+            self.achievements_data = Helpers.get_user_achievement(self.current_user, achievementId)
+            self.send_active_message(self.construct_achievement_message(achievementId), markup=self.goBackMarkup)
+        except:
+            self.send_error_message(self.localization["AchivementDataE"])
+            self.proceed()
 
     def effects_manager(self, message):
         self.previous_section = self.my_statistics_settings_choice
@@ -797,28 +806,27 @@ class Settings:
                 self.bot.register_next_step_handler(message, self.set_profile_status, acceptMode=acceptMode, chat_id=self.current_user)
 
     def black_list_callback_handler(self, call):
-        if call.message.id not in self.old_queries:
-            self.current_query = call.message.id
+        self.current_query = call.message.id
 
-            if call.data == "-1" or call.data == "-2":
-                index = index_converter(call.data)
-                if self.markup_page + index <= self.markup_pages_count or self.markup_page + index >= 1:
-                    markup = assemble_markup(self.markup_page, self.current_markup_elements, index)
-                    self.bot.edit_message_reply_markup(chat_id=call.message.chat.id, reply_markup=markup,
-                                                       message_id=call.message.id)
-                    self.markup_page += index
+        if call.data == "-1" or call.data == "-2":
+            index = index_converter(call.data)
+            if self.markup_page + index <= self.markup_pages_count or self.markup_page + index >= 1:
+                markup = assemble_markup(self.markup_page, self.current_markup_elements, index)
+                self.bot.edit_message_reply_markup(chat_id=call.message.chat.id, reply_markup=markup,
+                                                   message_id=call.message.id)
+                self.markup_page += index
 
-            elif call.data == "-20":
-                self.proceed()
+        elif call.data == "-20":
+            self.proceed()
 
-            else:
-                try:
-                    self.current_managed_user = int(call.data)
-                    self.send_secondary_message(self.localization["DeleteFromBlackListQ"], markup=self.YNMarkup)
-                    self.bot.register_next_step_handler(call.message, self.black_list_management, acceptMode=True, chat_id=self.current_user)
-                except:
-                    self.send_secondary_message(self.localization["SomethingWrong"])
-                    # self.proceed()
+        else:
+            try:
+                self.current_managed_user = int(call.data)
+                self.send_secondary_message(self.localization["DeleteFromBlackListQ"], markup=self.YNMarkup)
+                self.bot.register_next_step_handler(call.message, self.black_list_management, acceptMode=True, chat_id=self.current_user)
+            except:
+                self.send_secondary_message(self.localization["SomethingWrong"])
+                # self.proceed()
 
     def choose_confirmation_request(self, message):
         self.previous_section = self.additional_actions_settings_choice
@@ -900,119 +908,117 @@ class Settings:
             self.bot.register_next_step_handler(message, self.send_confirmation_request, acceptMode=acceptMode, chat_id=self.current_user)
 
     def encounters_callback_handler(self, call):
-        if call.message.id not in self.old_queries:
-            self.current_query = call.message.id
+        self.current_query = call.message.id
 
-            if call.data == "-1" or call.data == "-2":
-                index = index_converter(call.data)
-                if self.markup_page + index <= self.markup_pages_count or self.markup_page + index >= 1:
-                    markup = assemble_markup(self.markup_page, self.current_markup_elements, index)
-                    self.bot.edit_message_reply_markup(chat_id=call.message.chat.id, reply_markup=markup,
-                                                       message_id=call.message.id)
-                    self.markup_page += index
+        if call.data == "-1" or call.data == "-2":
+            index = index_converter(call.data)
+            if self.markup_page + index <= self.markup_pages_count or self.markup_page + index >= 1:
+                markup = assemble_markup(self.markup_page, self.current_markup_elements, index)
+                self.bot.edit_message_reply_markup(chat_id=call.message.chat.id, reply_markup=markup,
+                                                   message_id=call.message.id)
+                self.markup_page += index
 
-            elif call.data == "-20":
-                self.delete_active_message()
-                self.delete_error_message()
-                self.delete_secondary_message()
-                self.proceed()
+        elif call.data == "-20":
+            self.delete_active_message()
+            self.delete_error_message()
+            self.delete_secondary_message()
+            self.proceed()
 
-            elif call.data == "100":
-                if self.userBalance['secondChances'] > 0:
-                    requests.get(f"https://localhost:44381/ActivateToggleEffect/{self.current_user}/{5}/{self.current_managed_user}", verify=False)
-                    self.send_error_message(self.localization["Done"])
-                    self.userBalance['secondChances'] = int(self.userBalance['secondChances'] - 1)
-                else:
-                    self.send_error_message(self.localization["NoEffectE"])
-
-            elif call.data == "101":
-                ReportModule(self.bot, self.message, self.current_managed_user, self.proceed_with_encounters, dontAddToBlackList=True)
-            elif call.data == "102":
-                if not self.isInBlackList:
-                    self.add_to_black_list(self.message)
-                else:
-                    self.send_secondary_message(self.localization["DeleteFromBlackListQ"], markup=self.YNMarkup)
-                    self.bot.register_next_step_handler(self.message, self.black_list_management, acceptMode=True, isEncounter=True, chat_id=self.current_user)
+        elif call.data == "100":
+            if self.userBalance['secondChances'] > 0:
+                requests.get(f"https://localhost:44381/ActivateToggleEffect/{self.current_user}/{5}/{self.current_managed_user}", verify=False)
+                self.send_error_message(self.localization["Done"])
+                self.userBalance['secondChances'] = int(self.userBalance['secondChances'] - 1)
             else:
-                try:
-                    self.current_managed_user = int(call.data)
-                    self.proceed_with_encounters()
-                except:
-                    #TODO: probably delete encounter from db afterwards (If it is not deleted automatically)
-                    self.send_error_message(self.localization["UserNotFoundE"])
+                self.send_error_message(self.localization["NoEffectE"])
+
+        elif call.data == "101":
+            ReportModule(self.bot, self.message, self.current_managed_user, self.proceed_with_encounters, dontAddToBlackList=True)
+        elif call.data == "102":
+            if not self.isInBlackList:
+                self.add_to_black_list(self.message)
+            else:
+                self.send_secondary_message(self.localization["DeleteFromBlackListQ"], markup=self.YNMarkup)
+                self.bot.register_next_step_handler(self.message, self.black_list_management, acceptMode=True, isEncounter=True, chat_id=self.current_user)
+        else:
+            try:
+                self.current_managed_user = int(call.data)
+                self.proceed_with_encounters()
+            except:
+                #TODO: probably delete encounter from db afterwards (If it is not deleted automatically)
+                self.send_error_message(self.localization["UserNotFoundE"])
 
     def effects_callback_handler(self, call):
         self.bot.answer_callback_query(call.id, "")
-        if call.message.id not in self.old_queries:
 
-            if call.data == "5":
-                self.effect_index = call.data
-                if self.secondChances > 0:
-                    self.send_secondary_message(self.secondChanceDescription)
-                else:
-                    self.effect_to_buy = "16"
-                    self.send_secondary_message(self.secondChanceDescription, markup=self.buy_effectMarkup)
-            elif call.data == "6":
-                self.effect_index = call.data
-                if self.uses_ocean:
-                    if self.valentines > 0:
-                        self.usedEffectAmount = self.valentines
-                        #Warn user if effect is already active
-                        if bool(json.loads(requests.get(f"https://localhost:44381/CheckEffectIsActive/{self.current_user}/{call.data}", verify=False).text)):
-                            self.send_secondary_message(f"{self.localization['TheValentine']} {self.valentineDescription}\n\n{self.effect_is_active_Warning}", markup=self.activate_effectMarkup)
-                        else:
-                            self.send_secondary_message(self.valentineDescription, markup=self.activate_effectMarkup)
+        if call.data == "5":
+            self.effect_index = call.data
+            if self.secondChances > 0:
+                self.send_secondary_message(self.secondChanceDescription)
+            else:
+                self.effect_to_buy = "16"
+                self.send_secondary_message(self.secondChanceDescription, markup=self.buy_effectMarkup)
+        elif call.data == "6":
+            self.effect_index = call.data
+            if self.uses_ocean:
+                if self.valentines > 0:
+                    self.usedEffectAmount = self.valentines
+                    #Warn user if effect is already active
+                    if bool(json.loads(requests.get(f"https://localhost:44381/CheckEffectIsActive/{self.current_user}/{call.data}", verify=False).text)):
+                        self.send_secondary_message(f"{self.localization['TheValentine']} {self.valentineDescription}\n\n{self.effect_is_active_Warning}", markup=self.activate_effectMarkup)
                     else:
-                        self.effect_to_buy = "17"
-                        self.send_secondary_message(self.valentineDescription, markup=self.buy_effectMarkup)
+                        self.send_secondary_message(self.valentineDescription, markup=self.activate_effectMarkup)
                 else:
-                    self.send_secondary_message(self.localization["OceanIsOffE"])
-            elif call.data == "7":
-                self.effect_index = call.data
-                if self.uses_ocean:
-                    if self.detectors > 0:
-                        self.usedEffectAmount = self.detectors
-                        if bool(json.loads(requests.get(f"https://localhost:44381/CheckEffectIsActive/{self.current_user}/{call.data}", verify=False).text)):
-                            self.send_secondary_message(f"{self.localization['TheDetector']}{self.detectorDescription}\n\n{self.effect_is_active_Warning}", markup=self.activate_effectMarkup)
-                        else:
-                            self.send_secondary_message(self.detectorDescription, markup=self.activate_effectMarkup)
+                    self.effect_to_buy = "17"
+                    self.send_secondary_message(self.valentineDescription, markup=self.buy_effectMarkup)
+            else:
+                self.send_secondary_message(self.localization["OceanIsOffE"])
+        elif call.data == "7":
+            self.effect_index = call.data
+            if self.uses_ocean:
+                if self.detectors > 0:
+                    self.usedEffectAmount = self.detectors
+                    if bool(json.loads(requests.get(f"https://localhost:44381/CheckEffectIsActive/{self.current_user}/{call.data}", verify=False).text)):
+                        self.send_secondary_message(f"{self.localization['TheDetector']}{self.detectorDescription}\n\n{self.effect_is_active_Warning}", markup=self.activate_effectMarkup)
                     else:
-                        self.effect_to_buy = "18"
-                        self.send_secondary_message(self.detectorDescription, markup=self.buy_effectMarkup)
+                        self.send_secondary_message(self.detectorDescription, markup=self.activate_effectMarkup)
                 else:
-                    self.send_secondary_message(self.localization["OceanIsOffE"])
-            elif call.data == "8":
-                self.effect_index = call.data
-                if self.nullifiers > 0:
-                    self.send_secondary_message(self.nullifierDescription)
-                else:
-                    self.effect_to_buy = "19"
-                    self.send_secondary_message(self.nullifierDescription, markup=self.buy_effectMarkup)
-            elif call.data == "9":
-                self.effect_index = call.data
-                if self.cardDecksMini > 0:
-                    self.usedEffectAmount = self.cardDecksMini
-                    self.send_secondary_message(self.cardDeckMiniDescription, markup=self.activate_effectMarkup)
-                else:
-                    self.effect_to_buy = "20"
-                    self.send_secondary_message(self.cardDeckMiniDescription, markup=self.buy_effectMarkup)
-            elif call.data == "10":
-                self.effect_index = call.data
-                if self.cardDecksPlatinum > 0:
-                    self.usedEffectAmount = self.cardDecksPlatinum
-                    self.send_secondary_message(self.cardDeckPlatinumDescription, markup=self.activate_effectMarkup)
-                else:
-                    self.effect_to_buy = ""
-                    self.send_secondary_message(self.cardDeckPlatinumDescription, markup=self.buy_effectMarkup)
+                    self.effect_to_buy = "18"
+                    self.send_secondary_message(self.detectorDescription, markup=self.buy_effectMarkup)
+            else:
+                self.send_secondary_message(self.localization["OceanIsOffE"])
+        elif call.data == "8":
+            self.effect_index = call.data
+            if self.nullifiers > 0:
+                self.send_secondary_message(self.nullifierDescription)
+            else:
+                self.effect_to_buy = "19"
+                self.send_secondary_message(self.nullifierDescription, markup=self.buy_effectMarkup)
+        elif call.data == "9":
+            self.effect_index = call.data
+            if self.cardDecksMini > 0:
+                self.usedEffectAmount = self.cardDecksMini
+                self.send_secondary_message(self.cardDeckMiniDescription, markup=self.activate_effectMarkup)
+            else:
+                self.effect_to_buy = "20"
+                self.send_secondary_message(self.cardDeckMiniDescription, markup=self.buy_effectMarkup)
+        elif call.data == "10":
+            self.effect_index = call.data
+            if self.cardDecksPlatinum > 0:
+                self.usedEffectAmount = self.cardDecksPlatinum
+                self.send_secondary_message(self.cardDeckPlatinumDescription, markup=self.activate_effectMarkup)
+            else:
+                self.effect_to_buy = ""
+                self.send_secondary_message(self.cardDeckPlatinumDescription, markup=self.buy_effectMarkup)
 
-            elif call.data == "-10":
-                self.use_effect_manager(self.effect_index)
+        elif call.data == "-10":
+            self.use_effect_manager(self.effect_index)
 
-            elif call.data == "-5":
-                self.buy_effect_manager()
+        elif call.data == "-5":
+            self.buy_effect_manager()
 
-            elif call.data == "-20":
-                self.proceed()
+        elif call.data == "-20":
+            self.proceed()
 
     def use_effect_manager(self, effectId):
         text = self.localization["ActivatedM"]
@@ -1184,199 +1190,189 @@ class Settings:
 
     def ocean_callback_handler(self, call):
         self.bot.answer_callback_query(call.id, "")
-        if call.message.id not in self.old_queries:
 
-            if call.data == "1":
-                if self.ocean_caps["canO"]:
-                    if self.user_free_points > 0:
-                        self.user_free_points -= 1
-                        self.user_points["openness"] += 1
-                        self.free_points_indicator.text = self.user_free_points
-                        self.ocean_updated_points["openness"] = self.user_points["openness"]
+        if call.data == "1":
+            if self.ocean_caps["canO"]:
+                if self.user_free_points > 0:
+                    self.user_free_points -= 1
+                    self.user_points["openness"] += 1
+                    self.free_points_indicator.text = self.user_free_points
+                    self.ocean_updated_points["openness"] = self.user_points["openness"]
 
-                        self.o_indicator.text = f"{self.user_points['openness']}"
-                        self.update_ocean_markup()
-                        return False
-                    self.bot.send_message(self.current_user, self.localization["NoOceanPointsE"])
+                    self.o_indicator.text = f"{self.user_points['openness']}"
+                    self.update_ocean_markup()
                     return False
-                self.bot.send_message(self.current_user, self.localization["NoTestsPassedE"])
-            elif call.data == "-1":
-                if self.ocean_caps["canO"]:
-                    if self.user_points["openness"] > 0:
-                        self.user_free_points += 1
-                        self.user_points["openness"] -= 1
-                        self.free_points_indicator.text = self.user_free_points
-                        self.ocean_updated_points["openness"] = self.user_points["openness"]
+                self.bot.send_message(self.current_user, self.localization["NoOceanPointsE"])
+                return False
+            self.bot.send_message(self.current_user, self.localization["NoTestsPassedE"])
+        elif call.data == "-1":
+            if self.ocean_caps["canO"]:
+                if self.user_points["openness"] > 0:
+                    self.user_free_points += 1
+                    self.user_points["openness"] -= 1
+                    self.free_points_indicator.text = self.user_free_points
+                    self.ocean_updated_points["openness"] = self.user_points["openness"]
 
-                        self.o_indicator.text = f"{self.user_points['openness']}"
-                        self.update_ocean_markup()
-                        return False
-                    self.bot.send_message(self.current_user, self.localization["NoOceanPointsE"])
+                    self.o_indicator.text = f"{self.user_points['openness']}"
+                    self.update_ocean_markup()
                     return False
-                self.bot.send_message(self.current_user, self.localization["NoTestsPassedE"])
-            elif call.data == "2":
-                if self.ocean_caps["canC"]:
-                    if self.user_free_points > 0:
-                        self.user_free_points -= 1
-                        self.user_points["conscientiousness"] += 1
-                        self.free_points_indicator.text = self.user_free_points
-                        self.ocean_updated_points["conscientiousness"] = self.user_points["conscientiousness"]
+                self.bot.send_message(self.current_user, self.localization["NoOceanPointsE"])
+                return False
+            self.bot.send_message(self.current_user, self.localization["NoTestsPassedE"])
+        elif call.data == "2":
+            if self.ocean_caps["canC"]:
+                if self.user_free_points > 0:
+                    self.user_free_points -= 1
+                    self.user_points["conscientiousness"] += 1
+                    self.free_points_indicator.text = self.user_free_points
+                    self.ocean_updated_points["conscientiousness"] = self.user_points["conscientiousness"]
 
-                        self.c_indicator.text = self.user_points["conscientiousness"]
-                        self.update_ocean_markup()
-                        return False
-                    self.bot.send_message(self.current_user, self.localization["NoOceanPointsE"])
+                    self.c_indicator.text = self.user_points["conscientiousness"]
+                    self.update_ocean_markup()
                     return False
-                self.bot.send_message(self.current_user, self.localization["NoTestsPassedE"])
-            elif call.data == "-2":
-                if self.ocean_caps["canC"]:
-                    if self.user_points["conscientiousness"] > 0:
-                        self.user_free_points += 1
-                        self.user_points["conscientiousness"] -= 1
-                        self.free_points_indicator.text = self.user_free_points
-                        self.ocean_updated_points["conscientiousness"] = self.user_points["conscientiousness"]
+                self.bot.send_message(self.current_user, self.localization["NoOceanPointsE"])
+                return False
+            self.bot.send_message(self.current_user, self.localization["NoTestsPassedE"])
+        elif call.data == "-2":
+            if self.ocean_caps["canC"]:
+                if self.user_points["conscientiousness"] > 0:
+                    self.user_free_points += 1
+                    self.user_points["conscientiousness"] -= 1
+                    self.free_points_indicator.text = self.user_free_points
+                    self.ocean_updated_points["conscientiousness"] = self.user_points["conscientiousness"]
 
-                        self.c_indicator.text = self.user_points["conscientiousness"]
-                        self.update_ocean_markup()
-                        return False
+                    self.c_indicator.text = self.user_points["conscientiousness"]
+                    self.update_ocean_markup()
                     return False
-                self.bot.send_message(self.current_user, self.localization["NoTestsPassedE"])
-            elif call.data == "3":
-                if self.ocean_caps["canE"]:
-                    if self.user_free_points > 0:
-                        self.user_free_points -= 1
-                        self.user_points["extroversion"] += 1
-                        self.free_points_indicator.text = self.user_free_points
-                        self.ocean_updated_points["extroversion"] = self.user_points["extroversion"]
+                return False
+            self.bot.send_message(self.current_user, self.localization["NoTestsPassedE"])
+        elif call.data == "3":
+            if self.ocean_caps["canE"]:
+                if self.user_free_points > 0:
+                    self.user_free_points -= 1
+                    self.user_points["extroversion"] += 1
+                    self.free_points_indicator.text = self.user_free_points
+                    self.ocean_updated_points["extroversion"] = self.user_points["extroversion"]
 
-                        self.e_indicator.text = self.user_points["extroversion"]
-                        self.update_ocean_markup()
-                        return False
-                    self.bot.send_message(self.current_user, self.localization["NoOceanPointsE"])
+                    self.e_indicator.text = self.user_points["extroversion"]
+                    self.update_ocean_markup()
                     return False
-                self.bot.send_message(self.current_user, self.localization["NoTestsPassedE"])
-            elif call.data == "-3":
-                if self.ocean_caps["canE"]:
-                    if self.user_points["extroversion"] > 0:
-                        self.user_free_points += 1
-                        self.user_points["extroversion"] -= 1
-                        self.free_points_indicator.text = self.user_free_points
-                        self.ocean_updated_points["extroversion"] = self.user_points["extroversion"]
+                self.bot.send_message(self.current_user, self.localization["NoOceanPointsE"])
+                return False
+            self.bot.send_message(self.current_user, self.localization["NoTestsPassedE"])
+        elif call.data == "-3":
+            if self.ocean_caps["canE"]:
+                if self.user_points["extroversion"] > 0:
+                    self.user_free_points += 1
+                    self.user_points["extroversion"] -= 1
+                    self.free_points_indicator.text = self.user_free_points
+                    self.ocean_updated_points["extroversion"] = self.user_points["extroversion"]
 
-                        self.e_indicator.text = self.user_points["extroversion"]
-                        self.update_ocean_markup()
-                        return False
-                    self.bot.send_message(self.current_user, self.localization["NoOceanPointsE"])
+                    self.e_indicator.text = self.user_points["extroversion"]
+                    self.update_ocean_markup()
                     return False
-                self.bot.send_message(self.current_user, self.localization["NoTestsPassedE"])
-            elif call.data == "4":
-                if self.ocean_caps["canA"]:
-                    if self.user_free_points > 0:
-                        self.user_free_points -= 1
-                        self.user_points["agreeableness"] += 1
-                        self.free_points_indicator.text = self.user_free_points
-                        self.ocean_updated_points["agreeableness"] = self.user_points["agreeableness"]
+                self.bot.send_message(self.current_user, self.localization["NoOceanPointsE"])
+                return False
+            self.bot.send_message(self.current_user, self.localization["NoTestsPassedE"])
+        elif call.data == "4":
+            if self.ocean_caps["canA"]:
+                if self.user_free_points > 0:
+                    self.user_free_points -= 1
+                    self.user_points["agreeableness"] += 1
+                    self.free_points_indicator.text = self.user_free_points
+                    self.ocean_updated_points["agreeableness"] = self.user_points["agreeableness"]
 
-                        self.a_indicator.text = self.user_points["agreeableness"]
-                        self.update_ocean_markup()
-                        return False
-                    self.bot.send_message(self.current_user, self.localization["NoOceanPointsE"])
+                    self.a_indicator.text = self.user_points["agreeableness"]
+                    self.update_ocean_markup()
                     return False
-                self.bot.send_message(self.current_user, self.localization["NoTestsPassedE"])
-            elif call.data == "-4":
-                if self.ocean_caps["canA"]:
-                    if self.user_points["agreeableness"] > 0:
-                        self.user_free_points += 1
-                        self.user_points["agreeableness"] -= 1
-                        self.free_points_indicator.text = self.user_free_points
-                        self.ocean_updated_points["agreeableness"] = self.user_points["agreeableness"]
+                self.bot.send_message(self.current_user, self.localization["NoOceanPointsE"])
+                return False
+            self.bot.send_message(self.current_user, self.localization["NoTestsPassedE"])
+        elif call.data == "-4":
+            if self.ocean_caps["canA"]:
+                if self.user_points["agreeableness"] > 0:
+                    self.user_free_points += 1
+                    self.user_points["agreeableness"] -= 1
+                    self.free_points_indicator.text = self.user_free_points
+                    self.ocean_updated_points["agreeableness"] = self.user_points["agreeableness"]
 
-                        self.a_indicator.text = self.user_points["agreeableness"]
-                        self.update_ocean_markup()
-                        return False
+                    self.a_indicator.text = self.user_points["agreeableness"]
+                    self.update_ocean_markup()
                     return False
-                self.bot.send_message(self.current_user, self.localization["NoTestsPassedE"])
-            elif call.data == "5":
-                if self.ocean_caps["canN"]:
-                    if self.user_free_points > 0:
-                        self.user_free_points -= 1
-                        self.user_points["neuroticism"] += 1
-                        self.free_points_indicator.text = self.user_free_points
-                        self.ocean_updated_points["neuroticism"] = self.user_points["neuroticism"]
+                return False
+            self.bot.send_message(self.current_user, self.localization["NoTestsPassedE"])
+        elif call.data == "5":
+            if self.ocean_caps["canN"]:
+                if self.user_free_points > 0:
+                    self.user_free_points -= 1
+                    self.user_points["neuroticism"] += 1
+                    self.free_points_indicator.text = self.user_free_points
+                    self.ocean_updated_points["neuroticism"] = self.user_points["neuroticism"]
 
-                        self.n_indicator.text = self.user_points["neuroticism"]
-                        self.update_ocean_markup()
-                        return False
-                    self.bot.send_message(self.current_user, self.localization["NoOceanPointsE"])
+                    self.n_indicator.text = self.user_points["neuroticism"]
+                    self.update_ocean_markup()
                     return False
-                self.bot.send_message(self.current_user, self.localization["NoTestsPassedE"])
-            elif call.data == "-5":
-                if self.ocean_caps["canN"]:
-                    if self.user_points["neuroticism"] > 0:
-                        self.user_free_points += 1
-                        self.user_points["neuroticism"] -= 1
-                        self.free_points_indicator.text = self.user_free_points
-                        self.ocean_updated_points["neuroticism"] = self.user_points["neuroticism"]
+                self.bot.send_message(self.current_user, self.localization["NoOceanPointsE"])
+                return False
+            self.bot.send_message(self.current_user, self.localization["NoTestsPassedE"])
+        elif call.data == "-5":
+            if self.ocean_caps["canN"]:
+                if self.user_points["neuroticism"] > 0:
+                    self.user_free_points += 1
+                    self.user_points["neuroticism"] -= 1
+                    self.free_points_indicator.text = self.user_free_points
+                    self.ocean_updated_points["neuroticism"] = self.user_points["neuroticism"]
 
-                        self.n_indicator.text = self.user_points["neuroticism"]
-                        self.update_ocean_markup()
-                        return False
+                    self.n_indicator.text = self.user_points["neuroticism"]
+                    self.update_ocean_markup()
                     return False
-                self.bot.send_message(self.current_user, self.localization["NoTestsPassedE"])
-            elif call.data == "6":
-                if self.ocean_caps["canP"]:
-                    if self.user_free_points > 0:
-                        self.user_free_points -= 1
-                        self.user_points["nature"] += 1
-                        self.free_points_indicator.text = self.user_free_points
-                        self.ocean_updated_points["nature"] = self.user_points["nature"]
+                return False
+            self.bot.send_message(self.current_user, self.localization["NoTestsPassedE"])
+        elif call.data == "6":
+            if self.ocean_caps["canP"]:
+                if self.user_free_points > 0:
+                    self.user_free_points -= 1
+                    self.user_points["nature"] += 1
+                    self.free_points_indicator.text = self.user_free_points
+                    self.ocean_updated_points["nature"] = self.user_points["nature"]
 
-                        self.p_indicator.text = self.user_points["nature"]
-                        self.update_ocean_markup()
-                        return False
-                    self.bot.send_message(self.current_user, self.localization["NoOceanPointsE"])
+                    self.p_indicator.text = self.user_points["nature"]
+                    self.update_ocean_markup()
                     return False
-                self.bot.send_message(self.current_user, self.localization["NoTestsPassedE"])
-            elif call.data == "-6":
-                if self.ocean_caps["canP"]:
-                    if self.user_points["nature"]:
-                        self.user_free_points += 1
-                        self.user_points["nature"] -= 1
-                        self.free_points_indicator.text = self.user_free_points
-                        self.ocean_updated_points["nature"] = self.user_points["nature"]
+                self.bot.send_message(self.current_user, self.localization["NoOceanPointsE"])
+                return False
+            self.bot.send_message(self.current_user, self.localization["NoTestsPassedE"])
+        elif call.data == "-6":
+            if self.ocean_caps["canP"]:
+                if self.user_points["nature"]:
+                    self.user_free_points += 1
+                    self.user_points["nature"] -= 1
+                    self.free_points_indicator.text = self.user_free_points
+                    self.ocean_updated_points["nature"] = self.user_points["nature"]
 
-                        self.p_indicator.text = self.user_points["nature"]
-                        self.update_ocean_markup()
-                        return False
+                    self.p_indicator.text = self.user_points["nature"]
+                    self.update_ocean_markup()
                     return False
-                self.bot.send_message(self.current_user, self.localization["NoTestsPassedE"])
-            elif call.data == "7":
-                self.ocean_points_save()
+                return False
+            self.bot.send_message(self.current_user, self.localization["NoTestsPassedE"])
+        elif call.data == "7":
+            self.ocean_points_save()
 
     def achievement_callback_handler(self, call):
-        if call.message.id not in self.old_queries:
-            self.current_query = call.message.id
+        self.current_query = call.message.id
 
-            if call.data == "-1" or call.data == "-2":
-                index = index_converter(call.data)
-                if self.markup_page + index <= self.markup_pages_count or self.markup_page + index >= 1:
-                    markup = assemble_markup(self.markup_page, self.current_markup_elements, index)
-                    self.bot.edit_message_reply_markup(chat_id=call.message.chat.id, reply_markup=markup,
-                                                       message_id=call.message.id)
-                    self.markup_page += index
+        if call.data == "-20":
+            self.proceed()
 
-            else:
-                try:
-                    if self.active_message:
-                        self.bot.edit_message_text(self.construct_achievement_message(call.data), self.current_user, self.active_message,
-                                                   reply_markup=self.abortMarkup)
-                        return
-
-                    self.active_message = self.bot.send_message(self.current_user, self.construct_achievement_message(call.data), reply_markup=self.abortMarkup).id
-                    self.bot.send_message(self.current_user, self.localization["GoBackHintM"])
-                except:
-                    self.bot.send_message(self.current_user, self.localization["AchivementDataE"])
-                    self.proceed()
+        elif call.data == "-1" or call.data == "-2":
+            index = index_converter(call.data)
+            if self.markup_page + index <= self.markup_pages_count or self.markup_page + index >= 1:
+                markup = assemble_markup(self.markup_page, self.current_markup_elements, index)
+                self.bot.edit_message_reply_markup(chat_id=call.message.chat.id, reply_markup=markup,
+                                                   message_id=call.message.id)
+                self.markup_page += index
+        else:
+            self.show_achievement(call.data)
 
     def update_ocean_markup(self):
         try:
@@ -1434,13 +1430,13 @@ class Settings:
         self.bot.register_next_step_handler(self.message, self.encounter_list_management, acceptMode=True, chat_id=self.current_user)
 
     def construct_achievement_message(self, achievementId) -> str:
-        achievement = self.achievements_data[achievementId]
-        name = achievement["achievement"]["name"]
+        name = self.achievements_data["name"]
 
-        if achievement["isAcquired"]:
+        if self.achievements_data["isAcquired"]:
             name = "✅" + name + "✅"
 
-        return f"{name}\n\n{achievement['achievement']['description']}\nProgress: {achievement['progress']} / {['achievement']['condition']}\n\nReward:{achievement['value']} Coins"
+        # TODO: Translate 'Coins' :)
+        return f"{name}\n\n{self.achievements_data['description']}\nProgress: {self.achievements_data['progress']} / {self.achievements_data['conditionValue']}\n\nReward: {self.achievements_data['reward']} Coins"
 
     def construct_effects_markup(self, balance):
         self.secondChances = balance["secondChances"]

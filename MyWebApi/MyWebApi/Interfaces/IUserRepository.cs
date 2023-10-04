@@ -8,7 +8,6 @@ using System;
 using WebApi.Entities.UserActionEntities;
 using WebApi.Enums;
 using WebApi.Entities.TestEntities;
-using WebApi.Entities.EffectEntities;
 using WebApi.Entities.AdventureEntities;
 using WebApi.Entities;
 using OceanStats = WebApi.Enums.OceanStats;
@@ -59,15 +58,14 @@ namespace WebApi.Interfaces
         Task<bool> AddUserToBlackListAsync(long userId, long bannedUserId);
         Task<bool> RemoveUserFromBlackListAsync(long userId, long bannedUserId);
         Task<List<BlackList>> GetBlackList (long userId);
-        Task<byte> ReRegisterUser(long userId);
         Task<byte> BanUserAsync(long userId);
         Task<byte> UnbanUserAsync(long userId);
-        Task<byte> GenerateUserAchievementList(long userId, AppLanguage localisationId, bool wasRegistered);
+        Task GenerateUserAchievementList(long userId, AppLanguage localisationId, bool wasRegistered);
         Task<string> AddAchievementProgress(long userId, long achievementId, int progress);
-        Task<string> GrantAchievementToUser(long userId, long achievementId);
-        Task<List<UserAchievement>> GetUserAchievements(long userId);
+        Task<string> GrantAchievementAsync(long userId, long achievementId);
+        Task<List<GetShortAchievement>> GetUserAchievements(long userId);
         Task<List<UserAchievement>> GetUserAchievementsAsAdmin(long userId);
-        Task<UserAchievement> GetSingleUserAchievement(long userId, long achievementId);
+        Task<GetUserAchievement> GetSingleUserAchievement(long userId, long achievementId);
         Task<bool> SetUserRtLanguagePrefs(long userId, bool shouldBeConcidered);
         Task<bool> CheckUsersAreCombinableRT(long user1, long user2);
         Task<Balance> GetUserWalletBalance(long userId);
@@ -82,7 +80,7 @@ namespace WebApi.Interfaces
         Task<List<Encounter>> GetUserEncounters(long userId, Section section);
         Task<int> AddUserTrustProgressAsync(long userId, double progress);
         Task<int> UpdateUserTrustLevelAsync(long userId, int level);
-        Task<UserTrustLevel> GetUserTrustLevel(long userId);
+        Task<TrustLevel> GetUserTrustLevel(long userId);
         Task<bool> UpdateUserNickname(long userId, string nickname);
         Task<string> GetUserNickname(long userId);
         Task<string> ClaimDailyReward(long userId);
@@ -187,5 +185,6 @@ namespace WebApi.Interfaces
         Task<DeleteResult> DeleteAdventureAttendeeAsync(long adventureId, long attendeeId);
         Task<SetGroupIdResult> SetAdventureGroupIdAsync(SetGroupIdRequest request);
         List<GetLocalizedEnum> GetPaymentCurrencies();
+        Task ProcessInterestsDataAsync(QuestionerPayload model);
     }
 }

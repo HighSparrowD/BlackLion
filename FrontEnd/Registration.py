@@ -183,7 +183,7 @@ class Registrator:
             self.delete_secondary_message()
             self.send_active_message(self.localization["LangQ"], markup=self.app_languages_markup)
         else:
-            self.data["userAppLanguageId"] = self.app_language
+            self.data["userAppLanguage"] = self.app_language
             self.checkout_step(message)
 
     def spoken_language_step(self, message=None, acceptMode=False, shouldInsert=True):
@@ -252,7 +252,7 @@ class Registrator:
                 if not self.editMode:
                     self.data["id"] = self.current_user
                     self.data["userName"] = message.from_user.username
-                    self.data["userAppLanguageId"] = self.app_language
+                    self.data["userAppLanguage"] = self.app_language
                     self.data["promo"] = self.promo
 
                     self.gender_step()
@@ -1048,7 +1048,7 @@ class Registrator:
     def finish_step(self, message=None):
         if self.hasVisited:
             d = json.dumps(self.data)
-            response = requests.post("https://localhost:44381/UpdateUserProfile", d, headers={
+            response = requests.post("https://localhost:44381/update-user", d, headers={
                 "Content-Type": "application/json"}, verify=False)
 
             if response.text == "1":

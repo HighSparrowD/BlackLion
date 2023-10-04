@@ -164,72 +164,49 @@ namespace WebApi.Repositories
             catch { return -1; }
         }
 
-        //DO NOT use that method in production
-        public async Task<byte> UploadAchievements(List<Achievement> achievements)
+        public async Task AddAchievementsAsync(List<UploadAchievement> achievements)
         {
-            try
+            var existingAchievement = await _contx.Achievements.Select(a => new { Id = a.Id, Lang = a.Language})
+                .ToListAsync();
+
+            var achievementList = new List<Achievement>();
+
+            foreach (var ach in achievements)
             {
-                var ach = await _contx.Achievements.ToListAsync();
-
-                if (ach != null)
-                    _contx.Achievements.RemoveRange(ach);
-
-                await _contx.Achievements.AddRangeAsync(achievements);
-                await _contx.SaveChangesAsync();
-
-                if (await UpdateUsersAchievements(achievements, shouldDeleteAll:true))
-                    return 1;
-
-                return 0;
+                if (!existingAchievement.Contains(new { Id = ach.Id, Lang = ach.Language }) )
+                    achievementList.Add(new Achievement(ach));
             }
-            catch { return 0; }
-        }
 
-        public async Task<byte> AddNewAchievements(List<Achievement> achievements)
-        {
-            try
-            {
-                await _contx.Achievements.AddRangeAsync(achievements);
-                await _contx.SaveChangesAsync();
+            await _contx.AddRangeAsync(achievementList);
+            await _contx.SaveChangesAsync();
 
-                if (await UpdateUsersAchievements(achievements))
-                    return 1;
-
-                return 0;
-            }
-            catch { return 0; }
+            await UpdateUserAchievementsAsync(achievementList);
         }
 
         //Used when new achievements added to DB
-        private async Task<bool> UpdateUsersAchievements(List<Achievement> achievements, bool shouldDeleteAll=false)
+        private async Task UpdateUserAchievementsAsync(List<Achievement> achievements, bool shouldDeleteAll=false)
         {
-            try
+            if (shouldDeleteAll)
             {
-                if (shouldDeleteAll)
-                {
-                    _contx.UserAchievements.RemoveRange(await _contx.UserAchievements.ToListAsync());
-                    await _contx.SaveChangesAsync();
-                }
-
-                await Task.Run(async() => {             
-                    foreach (var achievement in achievements)
-                    {
-                        var users = await _contx.UserData.ToListAsync();
-                        foreach (var user in users)
-                        {
-                            if (achievement.Language == user.Language)
-                            {
-                                var a = new UserAchievement(achievement.Id, user.Id, achievement.Language, achievement.Name, achievement.Description, achievement.Value, achievement.Language);
-                                _contx.UserAchievements.Add(a);
-                                await _contx.SaveChangesAsync();
-                            }
-                        }
-                    }
-                });
-
-                return true;
+                _contx.UserAchievements.RemoveRange(await _contx.UserAchievements.ToListAsync());
+                await _contx.SaveChangesAsync();
             }
-            catch { return false; }
+         
+            foreach (var achievement in achievements)
+            {
+                var users = await _contx.UserData.Select(u => new {Id = u.Id, Lang = u.Language})
+                    .ToListAsync();
+
+                foreach (var user in users)
+                {
+                    if (achievement.Language == user.Lang)
+                    {
+                        var a = new UserAchievement(achievement.Id, user.Id, achievement.Language);
+                        await _contx.UserAchievements.AddAsync(a);
+                        await _contx.SaveChangesAsync();
+                    }
+                }
+            }
         }
 
         public async Task<List<TickRequest>> GetTickRequestsAsync()

@@ -7,6 +7,7 @@ namespace WebApi.Interfaces
     public interface IBackgroundRepository
     {
         Task SaveBatchChanges(List<User> batch);
+        Task RemoveStreakAsync();
         Task<List<User>> GetBatchToUpdate(int batchSize);
         Task DeleteOldTransactionsAsync();
         Task DeleteOldEncountersAsync();

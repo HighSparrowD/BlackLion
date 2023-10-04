@@ -84,7 +84,7 @@ namespace WebApi.Controllers
             return Ok(await _repository.GetUserSettingsAsync(userId));
         }
 
-        [HttpPost("/UpdateUserProfile")]
+        [HttpPost("/update-user")]
         public async Task UpdateUserProfile(UpdateUserProfile model)
         {
             if (model.WasChanged)
@@ -121,21 +121,10 @@ namespace WebApi.Controllers
             throw new NotImplementedException();
         }
 
-
-
         [HttpGet("/GetCountry/{id}")]
         public async Task<Country> GetBaseUserInfo(long id)
         {
             return await _repository.GetCountryAsync(id);
-        }
-
-        [HttpGet("/GetReportReasons/{localisationId}")]
-        public List<string> GetReportReasons(int localisationId)
-        {
-            var reasons = new List<string>();
-
-            reasons.Add(ReportReason.Spam.ToString());
-            return reasons;
         }
 
         [HttpPost("/feedback")]
@@ -167,12 +156,6 @@ namespace WebApi.Controllers
         {
 
             return await _repository.RegisterUserAsync(model);
-        }
-
-        [HttpGet("/ReRegisterUser/{userId}")]
-        public async Task<long> ReRegisterUser(long userId)
-        {
-            return await _repository.ReRegisterUser(userId);
         }
 
         [HttpGet("/GetRecentFeedbacks")]
@@ -250,11 +233,11 @@ namespace WebApi.Controllers
         [HttpGet("/GrantAchievementToUser/{userId}/{achievementId}")]
         public async Task<string> GrantAchievementToUser(long userId, long achievementId)
         {
-            return await _repository.GrantAchievementToUser(userId, achievementId);
+            return await _repository.GrantAchievementAsync(userId, achievementId);
         }
 
-        [HttpGet("/GetUserAchievements/{userId}")]
-        public async Task<List<UserAchievement>> GetUserAchievements(long userId)
+        [HttpGet("/user-achievements/{userId}")]
+        public async Task<List<GetShortAchievement>> GetUserAchievements([FromRoute] long userId)
         {
             return await _repository.GetUserAchievements(userId);
         }
@@ -265,8 +248,8 @@ namespace WebApi.Controllers
             return await _repository.GetUserAchievementsAsAdmin(userId);
         }
 
-        [HttpGet("/GetSingleUserAchievement/{userId}/{achievementId}")]
-        public async Task<UserAchievement> GetSingleUserAchievement(long userId, long achievementId)
+        [HttpGet("/user-achievement/{userId}/{achievementId}")]
+        public async Task<GetUserAchievement> GetSingleUserAchievement([FromRoute] long userId, [FromRoute] long achievementId)
         {
             return await _repository.GetSingleUserAchievement(userId, achievementId);
         }
@@ -401,7 +384,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/GetUserTrustLevel/{userId}")]
-        public async Task<UserTrustLevel> GetUserTrustLevel(long userId)
+        public async Task<TrustLevel> GetUserTrustLevel(long userId)
         {
             return await _repository.GetUserTrustLevel(userId);
         }
@@ -974,6 +957,14 @@ namespace WebApi.Controllers
         public async Task<AdventureSearchResponse> GetAdventures([FromQuery] long userId)
         {
             return await _repository.GetAdventuresAsync(userId);
+        }
+
+        // TODO: Finish up
+        [HttpPost("/questioner-data")]
+        public async Task<IActionResult> ReceiveQuestioner([FromBody] QuestionerPayload payload)
+        {
+            await _repository.ProcessInterestsDataAsync(payload);
+            return Ok();
         }
     }
 }

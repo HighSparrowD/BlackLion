@@ -20,8 +20,9 @@ namespace WebApi.Data
     {
         public DbSet<User> Users => Set<User>();
         public DbSet<UserData> UserData => Set<UserData>();
-        public DbSet<UserSettings> UsersSettings => Set<UserSettings>();
+        public DbSet<Settings> UsersSettings => Set<Settings>();
         public DbSet<Location> UserLocations => Set<Location>();
+        public DbSet<Statistics> UserStatistics => Set<Statistics>();
         public DbSet<Visit> UserVisits => Set<Visit>();
         public DbSet<Country> Countries => Set<Country>();
         public DbSet<City> Cities => Set<City>();
@@ -56,7 +57,7 @@ namespace WebApi.Data
         public DbSet<SponsorNotification> SponsorNotifications => Set<SponsorNotification>();
         public DbSet<SponsorRating> SponsorRatings => Set<SponsorRating>();
         public DbSet<Stats> SponsorStats => Set<Stats>();
-        public DbSet<UserTrustLevel> TrustLevels => Set<UserTrustLevel>();
+        public DbSet<TrustLevel> TrustLevels => Set<TrustLevel>();
         public DbSet<DailyReward> DailyRewards => Set<DailyReward>();
         public DbSet<InvitationCredentials> InvitationCredentials => Set<InvitationCredentials>();
         public DbSet<Invitation> Invitations => Set<Invitation>();
@@ -113,6 +114,7 @@ namespace WebApi.Data
             builder.Entity<User>().HasOne(u => u.Data);
             builder.Entity<User>().HasOne(u => u.Settings);
             builder.Entity<User>().HasOne(u => u.Location);
+            builder.Entity<User>().HasOne(u => u.Statistics);
             builder.Entity<User>().HasMany(u => u.BlackList);
             builder.Entity<User>().HasMany(u => u.Tags);
             builder.Entity<User>().HasMany(u => u.Encounters);
@@ -170,8 +172,9 @@ namespace WebApi.Data
         {
             builder.Entity<User>().ToTable("users");
             builder.Entity<UserData>().ToTable("user_data");
-            builder.Entity<UserSettings>().ToTable("user_settings");
+            builder.Entity<Settings>().ToTable("user_settings");
             builder.Entity<Location>().ToTable("user_locations");
+            builder.Entity<Statistics>().ToTable("user_statistics");
             builder.Entity<Visit>().ToTable("user_visits");
             builder.Entity<Country>().ToTable("countries");
             builder.Entity<City>().ToTable("cities");
@@ -201,7 +204,7 @@ namespace WebApi.Data
             builder.Entity<SponsorNotification>().ToTable("sponsor_notifications");
             builder.Entity<SponsorRating>().ToTable("sponsor_ratings");
             builder.Entity<Stats>().ToTable("sponsor_stats");
-            builder.Entity<UserTrustLevel>().ToTable("trust_levels");
+            builder.Entity<TrustLevel>().ToTable("trust_levels");
             builder.Entity<DailyReward>().ToTable("daily_rewards");
             builder.Entity<InvitationCredentials>().ToTable("invitation_credentials");
             builder.Entity<Invitation>().ToTable("invitations");

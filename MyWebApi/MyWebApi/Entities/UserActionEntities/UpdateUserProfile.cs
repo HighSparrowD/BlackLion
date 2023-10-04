@@ -15,8 +15,8 @@ namespace WebApi.Entities.UserActionEntities
         public string? RealName { get; set; }
         [JsonPropertyName("userDescription")]
         public string? Description { get; set; }
-        [JsonPropertyName("userAppLanguageId")]
-        public AppLanguage AppLanguageId { get; set; }
+        [JsonPropertyName("userAppLanguage")]
+        public AppLanguage AppLanguage { get; set; }
         [JsonPropertyName("userMedia")]
         public string? Media { get; set; }
         [JsonPropertyName("mediaType")]

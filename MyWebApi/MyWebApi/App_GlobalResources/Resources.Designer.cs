@@ -61,6 +61,15 @@ namespace WebApi.App_GlobalResources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to ✨✨Congrats! You have unlocked a new achievement!✨✨.
+        /// </summary>
+        public static string AchievementGrant_Message {
+            get {
+                return ResourceManager.GetString("AchievementGrant_Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to English.
         /// </summary>
         public static string AppLanguage_Eng {
@@ -304,7 +313,7 @@ namespace WebApi.App_GlobalResources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to &lt;b&gt;Today&apos;s Random Achievements&lt;/b&gt;\n\n.
+        ///   Looks up a localized string similar to &lt;b&gt;Today&apos;s Random Achievements&lt;/b&gt;.
         /// </summary>
         public static string RandomAchievements_Message {
             get {

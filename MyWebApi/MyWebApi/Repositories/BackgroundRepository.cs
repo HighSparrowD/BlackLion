@@ -16,7 +16,7 @@ namespace WebApi.Repositories
         private const short _oldEncountersSpan = 3;
         private const short _oldFeedbacksSpan = 30;
         private const short _oldReportsSpan = 30;
-        private const short _oldRequestsSpan = 30;
+        private const short _oldRequestsSpan = 2;
         private const short _oldUsersSpan = 0;
         private const short _oldAdventuresSpan = 15;
 
@@ -30,7 +30,14 @@ namespace WebApi.Repositories
             return await _context.Users.Where(u => !u.IsUpdated)
                 .Take(batchSize)
                 .Include(u => u.Settings)
+                .Include(u => u.Statistics)
                 .ToListAsync(); ;
+        }
+
+        public async Task RemoveStreakAsync()
+        {
+            var sql = $"UPDATE user_statistics SET \"UseStreak\" = 0 WHERE \"UserId\" IN (SELECT \"Id\" FROM users WHERE \"IsUpdated\" = True);";
+            await _context.Database.ExecuteSqlRawAsync(sql);
         }
 
         public async Task SaveBatchChanges(List<User> batch)
@@ -82,6 +89,7 @@ namespace WebApi.Repositories
 
             var sql = $"DELETE FROM \"users\" WHERE EXTRACT(DAY FROM (NOW() - \"DeleteDate\")) >= {_oldUsersSpan};";
             sql += $"DELETE FROM \"user_data\" WHERE \"Id\" IN ({formattedIds});";
+            sql += $"DELETE FROM \"user_statistics\" WHERE \"Id\" IN ({formattedIds});";
             sql += $"DELETE FROM \"user_settings\" WHERE \"Id\" IN ({formattedIds});";
             sql += $"DELETE FROM \"active_effects\" WHERE \"UserId\" IN ({formattedIds});";
 
@@ -100,7 +108,7 @@ namespace WebApi.Repositories
             sql += $"DELETE FROM \"feedbacks\" WHERE \"UserId\" IN ({formattedIds});";
             sql += $"DELETE FROM \"invitation_credentials\" WHERE \"UserId\" IN ({formattedIds});";
             sql += $"DELETE FROM \"invitations\" WHERE \"InvitedUserId\" IN ({formattedIds});";
-            sql += $"DELETE FROM \"notifications\" WHERE \"SenderId\" IN ({formattedIds});";
+            sql += $"DELETE FROM \"notifications\" WHERE \"UserId\" IN ({formattedIds});";
 
             //sql += $"DELETE FROM \"personality_points\" WHERE \"UserId\" IN ({formattedIds});";
             //sql += $"DELETE FROM \"personality_stats\" WHERE \"UserId\" IN ({formattedIds});";
