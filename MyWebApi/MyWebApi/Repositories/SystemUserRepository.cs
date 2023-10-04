@@ -1078,141 +1078,6 @@ namespace WebApi.Repositories
                 }).FirstOrDefaultAsync();
         }
 
-        public async Task<byte> ReRegisterUser(long userId)
-        {
-
-            var sUser = await _contx.Users.Where(u => u.Id == userId)
-                .Include(u => u.Data)
-                .Include(u => u.Settings)
-                .Include(u => u.Location)
-                .AsNoTracking()
-                .FirstOrDefaultAsync();
-
-            var sData = sUser.Data;
-            var sSettings = sUser.Settings;
-
-            var userBalance = await _contx.Balances.Where(u => u.UserId == userId)
-                .FirstOrDefaultAsync();
-
-            if (userBalance != null)
-            {
-                _contx.Balances.Remove(userBalance);
-                await _contx.SaveChangesAsync();
-            }
-
-            var userAchievements = await _contx.UserAchievements.Where(u => u.UserId == userId)
-                .ToListAsync();
-
-            if (userAchievements.Count > 0 && userAchievements != null)
-            {
-                _contx.UserAchievements.RemoveRange(userAchievements);
-                await _contx.SaveChangesAsync();
-            }
-
-            var userPurchases = await _contx.Transaction.Where(u => u.UserId == userId)
-                .ToListAsync();
-
-            if (userPurchases.Count > 0 && userPurchases != null)
-            {
-                _contx.Transaction.RemoveRange(userPurchases);
-                await _contx.SaveChangesAsync();
-            }
-
-            var userVisits = await _contx.UserVisits.Where(u => u.UserId == userId)
-                .ToListAsync();
-
-            if (userVisits.Count > 0 && userVisits != null)
-            {
-                _contx.UserVisits.RemoveRange(userVisits);
-                await _contx.SaveChangesAsync();
-            }
-
-            var userRequests = await _contx.Requests.Where(u => u.SenderId == userId)
-                .ToListAsync();
-
-            if (userRequests.Count > 0 && userRequests != null)
-            {
-                _contx.Requests.RemoveRange(userRequests);
-                await _contx.SaveChangesAsync();
-            }
-
-            var userNotifications1 = await _contx.Notifications.Where(u => u.UserId == userId)
-                .ToListAsync();
-
-            if (userNotifications1.Count > 0 && userNotifications1 != null)
-            {
-                _contx.Notifications.RemoveRange(userNotifications1);
-                await _contx.SaveChangesAsync();
-            }
-
-            var sponsorRatings = await _contx.SponsorRatings.Where(u => u.UserId == userId)
-                .ToListAsync();
-
-            if (sponsorRatings.Count > 0 && sponsorRatings != null)
-            {
-                _contx.SponsorRatings.RemoveRange(sponsorRatings);
-                await _contx.SaveChangesAsync();
-            }
-
-            var userTrustLevel = await _contx.TrustLevels.Where(u => u.Id == userId)
-                .FirstOrDefaultAsync();
-
-            if (userTrustLevel != null)
-            {
-                _contx.TrustLevels.Remove(userTrustLevel);
-                await _contx.SaveChangesAsync();
-            }
-
-            if (userTrustLevel != null)
-            {
-                _contx.TrustLevels.Remove(userTrustLevel);
-                await _contx.SaveChangesAsync();
-            }
-
-            var user = await _contx.Users.Where(u => u.Id == userId)
-                .Include(u => u.Data)
-                .Include(u => u.Settings)
-                .Include(u => u.Location)
-                .FirstOrDefaultAsync();
-
-            if (user != null)
-            {
-                _contx.UserLocations.Remove(user.Location);
-                _contx.UserData.Remove(user.Data);
-                _contx.UsersSettings.Remove(user.Settings);
-                _contx.Users.Remove(user);
-            }
-
-            await _contx.SaveChangesAsync();
-
-            if (sUser != null)
-            {
-
-                await RegisterUserAsync(new UserRegistrationModel{
-                    UserName = sData.UserName,
-                    RealName = sData.UserRealName,
-                    Age = sData.UserAge,
-                    AgePrefs = sData.AgePrefs,
-                    AppLanguage = sData.Language,
-                    CityCode = sUser.Location.CityId,
-                    CountryCode = sUser.Location.CountryId,
-                    CommunicationPrefs = sData.CommunicationPrefs,
-                    Description = sData.UserDescription,
-                    Gender = sData.UserGender,
-                    GenderPrefs = sData.UserGenderPrefs,
-                    MediaType = sData.MediaType,
-                    Media = sData.UserMedia,
-                    LanguagePreferences = sData.LanguagePreferences,
-                    Languages = sData.UserLanguages,
-                    UserLocationPreferences = sData.LocationPreferences,
-                    Reason = sData.Reason,
-                    UsesOcean = sSettings.UsesOcean,
-                });
-            }
-
-            return 1;
-        }
-
         public async Task GenerateUserAchievementList(long userId, AppLanguage localisationId, bool wasRegistered=false)
         {
 
@@ -1670,10 +1535,19 @@ namespace WebApi.Repositories
             user.Data.CommunicationPrefs = model.CommunicationPrefs;
             user.Data.UserGenderPrefs = model.GenderPrefs;
 
+            if (model.AppLanguage != user.Data.Language)
+            {
+                await _contx.UserAchievements.Where(a => a.UserId == model.Id)
+                    .ExecuteUpdateAsync(a => a.SetProperty(s => s.AchievementLanguage, s => model.AppLanguage));
+
+                await _contx.UserTests.Where(a => a.UserId == model.Id)
+                    .ExecuteUpdateAsync(a => a.SetProperty(s => s.TestLanguage, s => model.AppLanguage));
+            }
+
             location.CountryId = model.CountryCode;
-            location.CityCountryLang = model.CountryCode != null? model.AppLanguageId : null;
+            location.CityCountryLang = model.CountryCode != null? model.AppLanguage : null;
             location.CityId = model.CityCode;
-            location.CountryLang = model.CityCode != null? model.AppLanguageId : null;
+            location.CountryLang = model.CityCode != null? model.AppLanguage : null;
 
             // Set tags
             if (!string.IsNullOrEmpty(model.Tags))

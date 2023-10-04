@@ -58,7 +58,6 @@ namespace WebApi.Interfaces
         Task<bool> AddUserToBlackListAsync(long userId, long bannedUserId);
         Task<bool> RemoveUserFromBlackListAsync(long userId, long bannedUserId);
         Task<List<BlackList>> GetBlackList (long userId);
-        Task<byte> ReRegisterUser(long userId);
         Task<byte> BanUserAsync(long userId);
         Task<byte> UnbanUserAsync(long userId);
         Task GenerateUserAchievementList(long userId, AppLanguage localisationId, bool wasRegistered);

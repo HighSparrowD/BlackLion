@@ -84,7 +84,7 @@ namespace WebApi.Controllers
             return Ok(await _repository.GetUserSettingsAsync(userId));
         }
 
-        [HttpPost("/UpdateUserProfile")]
+        [HttpPost("/update-user")]
         public async Task UpdateUserProfile(UpdateUserProfile model)
         {
             if (model.WasChanged)
@@ -156,12 +156,6 @@ namespace WebApi.Controllers
         {
 
             return await _repository.RegisterUserAsync(model);
-        }
-
-        [HttpGet("/ReRegisterUser/{userId}")]
-        public async Task<long> ReRegisterUser(long userId)
-        {
-            return await _repository.ReRegisterUser(userId);
         }
 
         [HttpGet("/GetRecentFeedbacks")]
