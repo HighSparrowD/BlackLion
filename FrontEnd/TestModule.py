@@ -28,6 +28,8 @@ class TestModule:
         self.justEntered = True
         self.returnMethod = returnMethod
 
+        self.user_language = Helpers.get_user_app_language(self.current_user)
+
         self.current_question_index = -1
         self.previous_question = None
         self.answer_array = {}
@@ -108,7 +110,7 @@ class TestModule:
         self.get_user_balance()
 
         if self.user_currency is None:
-            Settings.CurrencySetter(self.bot, self.current_user, self.first_time_handler)
+            Settings.CurrencySetter(self.bot, self.current_user, self.first_time_handler, self.user_language)
         else:
             self.proceed_to_start(message)
 
