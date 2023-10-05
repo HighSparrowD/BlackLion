@@ -103,7 +103,7 @@ namespace WebApi.Controllers
             return await _repository.GetUserInfoByUsrnameAsync(username);
         }
 
-        [HttpGet("/GetUserList")]
+        [HttpGet("/user-list")]
         public async Task<SearchResponse> GetUserList([FromQuery] long userId)
         {
             return await _repository.GetUsersAsync(userId);
@@ -964,6 +964,20 @@ namespace WebApi.Controllers
         public async Task<IActionResult> ReceiveQuestioner([FromBody] QuestionerPayload payload)
         {
             await _repository.ProcessInterestsDataAsync(payload);
+            return Ok();
+        }
+
+        [HttpPost("/user-story")]
+        public async Task<IActionResult> SetUserStory([FromBody] SetStory model)
+        {
+            await _repository.SetUserStoryAsync(model);
+            return Ok();
+        }
+
+        [HttpDelete("/user-story")]
+        public async Task<IActionResult> RemoveUserStory([FromQuery] long userId)
+        {
+            await _repository.RemoveUserStoryAsync(userId);
             return Ok();
         }
     }

@@ -4750,5 +4750,31 @@ namespace WebApi.Repositories
                     break;
             }
         }
+
+        public async Task SetUserStoryAsync(SetStory model)
+        {
+            var userData = await _contx.UserData.Where(d => d.Id == model.UserId)
+                .FirstOrDefaultAsync();
+
+            if (userData == null)
+                return;
+
+            userData.UserStory = model.Story;
+
+            await _contx.SaveChangesAsync();
+        }
+
+        public async Task RemoveUserStoryAsync(long userId)
+        {
+            var userData = await _contx.UserData.Where(d => d.Id == userId)
+                .FirstOrDefaultAsync();
+
+            if (userData == null)
+                return;
+
+            userData.UserStory = null;
+
+            await _contx.SaveChangesAsync();
+        }
     }
 }

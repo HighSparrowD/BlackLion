@@ -9,6 +9,10 @@ def create_settings_resources():
     create_generic_resources("Settings")
 
 
+def create_currency_setter_resources():
+    create_generic_resources("CurrencySetter")
+
+
 def create_shop_resources():
     create_generic_resources("Shop")
 

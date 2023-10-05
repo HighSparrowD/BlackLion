@@ -1,3 +1,5 @@
+import copy
+
 import requests
 
 from Common.Menues import go_back_to_main_menu
@@ -27,6 +29,9 @@ class Familiator:
         self.actions_markup = InlineKeyboardMarkup().add(InlineKeyboardButton("⚠ Report ⚠", callback_data=self.active_user_id)) \
             .add(InlineKeyboardButton("🔖 Help 🔖", callback_data="11"))
 
+        self.hide_story_markup = InlineKeyboardMarkup()\
+            .add(InlineKeyboardButton("Hide User's story", callback_data="12"))
+
         self.reactToCallback = True
 
         self.user_data = Helpers.get_user_basic_info(self.current_user)
@@ -43,6 +48,7 @@ class Familiator:
             .add(InlineKeyboardButton("Go Back", callback_data="4"))
 
         self.active_message = None
+        self.active_story_message = None
         self.secondary_message = None
         self.nextHandler = None
 
@@ -117,16 +123,20 @@ class Familiator:
             return True
         return False
 
-    def show_person(self, message, acceptMode=False):
+    def show_person(self, message=None, acceptMode=False):
         if not acceptMode:
             user = self.active_user["userData"]
+
+            markup = copy.deepcopy(self.actions_markup)
+            if user["userStory"]:
+                markup.add(InlineKeyboardButton("✨Show story✨", callback_data=f"2,{user['id']}"))
 
             if user["mediaType"] == "Photo":
                 self.bot.send_photo(self.current_user, user["userMedia"], user["userDescription"], reply_markup=self.markup)
             else:
                 self.bot.send_video(self.current_user, video=user["userMedia"], caption=user["userDescription"], reply_markup=self.markup)
 
-            self.bot.send_message(self.current_user, "Additional Actions:", reply_markup=self.actions_markup)
+            self.bot.send_message(self.current_user, "Additional Actions:", reply_markup=markup)
 
             if self.active_user["comment"]:
                 self.bot.send_message(self.current_user, self.active_user["comment"])
@@ -236,9 +246,17 @@ class Familiator:
             self.start()
         elif call.data == "11":
             self.help_handler(self.msg)
+        elif call.data == "12":
+            # Hide user's story
+            self.delete_story_message()
         else:
             if self.reactToCallback:
-                ReportModule(self.bot, self.msg, call.data, self.proceed)
+                indexed_data = call.data.split(",")
+
+                if indexed_data[0] == "1":
+                    ReportModule(self.bot, self.msg, call.data, self.proceed)
+                elif indexed_data[0] == "2":
+                    self.active_story_message = self.bot.send_message(self.current_user, self.active_user["userData"]["userStory"], reply_markup=self.hide_story_markup).id
 
     def help_handler(self, message):
         self.reactToCallback = False
@@ -253,6 +271,12 @@ class Familiator:
         # else:
         #     self.start(message)
 
+    def delete_story_message(self):
+        try:
+            self.bot.delete_message(self.current_user, self.active_story_message)
+        except Exception as ex:
+            pass
+
     def move_to_next_user(self, message):
         if self.set_active_person():
             self.show_person(message)
@@ -261,7 +285,7 @@ class Familiator:
             self.destruct()
 
     def set_report_button_value(self):
-        self.actions_markup.keyboard[0][0].callback_data = self.active_user_id
+        self.actions_markup.keyboard[0][0].callback_data = f"1,{self.active_user_id}"
 
     def send_active_message(self, text, markup=None):
         try:
@@ -270,7 +294,7 @@ class Familiator:
                 return
 
             self.active_message = self.bot.send_message(self.current_user, text, reply_markup=markup).id
-        except Exception as ex:
+        except:
             self.delete_active_message()
             self.send_active_message(text, markup)
 

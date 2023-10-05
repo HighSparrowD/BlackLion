@@ -186,5 +186,7 @@ namespace WebApi.Interfaces
         Task<SetGroupIdResult> SetAdventureGroupIdAsync(SetGroupIdRequest request);
         List<GetLocalizedEnum> GetPaymentCurrencies();
         Task ProcessInterestsDataAsync(QuestionerPayload model);
+        Task SetUserStoryAsync(SetStory model);
+        Task RemoveUserStoryAsync(long userId);
     }
 }

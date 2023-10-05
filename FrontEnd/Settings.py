@@ -50,7 +50,6 @@ class Settings:
         self.gestures = ["👍","👎","💪","✊","👊","🖐","✋","👋","👌","✌","🤘","🤟 ","🤙","🤞","🖕","🖖","☝","👆", "👇", "👉","👈"]
         self.gesture = None
 
-        #TODO: check this parameter instead of calling API every time
         self.uses_ocean = self.current_user_data["usesOcean"]
         self.has_Premium = self.current_user_data["hasPremium"]
         self.language_cons_status = self.current_user_data["shouldConsiderLanguages"]
@@ -101,6 +100,8 @@ class Settings:
 
         self.requestType = 0
 
+        self.question_index = 0
+
         self.turnedOnSticker = "✅"
         self.turnedOffSticker = "❌"
 
@@ -120,11 +121,13 @@ class Settings:
             .add(InlineKeyboardButton(self.localization["AdditionalActions"], callback_data="204")) \
             .add(InlineKeyboardButton(self.localization["Exit"], callback_data="-20"))
 
+        # TODO: localize
         # self.settingMyProfileMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4", "5", "6", "7")
         self.settingMyProfileMarkup = InlineKeyboardMarkup().add(InlineKeyboardButton(self.localization["ViewBlacklist"], callback_data="225")) \
             .add(InlineKeyboardButton(self.localization["ManageEncounters"], callback_data="226")) \
             .add(InlineKeyboardButton(self.localization["ChangeProfile"], callback_data="227")) \
             .add(InlineKeyboardButton(self.localization["SetStatus"], callback_data="228")) \
+            .add(InlineKeyboardButton("My Story", callback_data="232")) \
             .add(InlineKeyboardButton(self.localization["SetAutoReply"], callback_data="229")) \
             .add(InlineKeyboardButton(self.localization["ChangeCurrency"], callback_data="230")) \
             .add(InlineKeyboardButton(self.localization["GoBack"], callback_data="-20")) \
@@ -205,10 +208,13 @@ class Settings:
         self.activate_effectMarkup = InlineKeyboardMarkup().add(InlineKeyboardButton(self.localization["Activate"], callback_data="-10"))
         self.buy_effectMarkup = InlineKeyboardMarkup().add(InlineKeyboardButton(self.localization["Buy"], callback_data="-5"))
 
-        self.YNMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add(self.localization["YesB"], self.localization["NoB"])
+        self.YNMarkup = ReplyKeyboardMarkup(one_time_keyboard=False, resize_keyboard=True).add(self.localization["YesB"], self.localization["NoB"])
         self.skipMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add(self.localization["Skip"], self.localization["GoBack"])
         self.abortMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add(self.localization["GoBack"])
-        self.currency_choiceMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3", "4", "5", "6", "7")
+
+        self.manageStoryMarkup = InlineKeyboardMarkup().add(InlineKeyboardButton("Set Story", callback_data="233")) \
+            .add(InlineKeyboardButton("Remove Story", callback_data="234")) \
+            .add(InlineKeyboardButton(self.localization["GoBack"], callback_data="-20"))
 
         self.effect_is_active_Warning = self.localization["EffectActivatedWarning"]
 
@@ -257,6 +263,50 @@ class Settings:
         self.clear_callback_handler()
         CurrencySetter(self.bot, self.current_user, self.go_back_from_currency_change)
 
+    def user_story_setting_choice(self, message=None):
+        self.previous_section = self.my_profile_settings_choice
+        self.active_section = self.user_story_setting_choice
+
+        self.send_active_message(self.localization["SelectOption"], self.manageStoryMarkup)
+
+    # TODO: Set character limitations
+    def set_user_story(self, message, acceptMode=False):
+        if not acceptMode:
+            self.previous_section = self.user_story_setting_choice
+            self.active_section = self.set_user_story
+
+            self.delete_error_message()
+
+            self.send_active_message("Please, tell me your story. It can be a story of your life, or story that goes even deeper about your profile description or just something funny", self.goBackMarkup)
+            self.add_next_step_handler_local(self.set_user_story, acceptMode=True)
+        else:
+            if len(message.text) == 0:
+                self.send_error_message("Message is empty")
+                self.add_next_step_handler_local(self.set_user_story, acceptMode=True)
+                return
+
+            Helpers.set_user_story(self.current_user, message.text)
+            self.bot.delete_message(self.current_user, message.id)
+            self.send_secondary_message("Story is set")
+            self.proceed(message)
+
+    def remove_user_story(self, message, acceptMode=False):
+        if not acceptMode:
+            self.previous_section = self.user_story_setting_choice
+            self.active_section = self.remove_user_story
+
+            self.question_index = 1
+
+            self.send_secondary_message("Are you sure you want to delete story from your profile", self.YNMarkup)
+            self.add_next_step_handler_local(self.remove_user_story, acceptMode=True)
+        else:
+            self.bot.delete_message(self.current_user, message.id)
+            if message.text == self.localization["YesB"]:
+                Helpers.remove_user_story(self.current_user)
+                self.send_secondary_message("Story is removed")
+
+            self.proceed(message)
+
     def go_back_from_currency_change(self, message):
         self.subscribe_callback_handler(self.menu_callback_handler)
         self.previous_section(message)
@@ -273,11 +323,11 @@ class Settings:
                     self.send_secondary_message(voice=auto_reply['autoReply'], text=self.localization["AutoReplyM"], markup=self.abortMarkup)
                 else:
                     self.send_secondary_message(self.localization["AutoReplyM2"], markup=self.abortMarkup)
-                self.bot.register_next_step_handler(message, self.auto_reply_manager, acceptMode=True, chat_id=self.current_user)
+                self.add_next_step_handler_local(self.auto_reply_manager, acceptMode=True)
                 return
 
             self.send_secondary_message(self.localization["AutoReplyM"], markup=self.abortMarkup)
-            self.bot.register_next_step_handler(message, self.auto_reply_manager, acceptMode=True, chat_id=self.current_user)
+            self.add_next_step_handler_local(self.auto_reply_manager, acceptMode=True)
 
         else:
             self.bot.delete_message(self.current_user, message.id)
@@ -296,10 +346,10 @@ class Settings:
                         self.proceed()
                     else:
                         self.send_error_message(self.localization["LimitationM"], markup=self.abortMarkup)
-                        self.bot.register_next_step_handler(message, self.auto_reply_manager, acceptMode=acceptMode, chat_id=self.current_user)
+                        self.add_next_step_handler_local(self.auto_reply_manager, acceptMode=acceptMode)
                 else:
                     self.send_error_message(self.localization["PremiumM"], markup=self.abortMarkup)
-                    self.bot.register_next_step_handler(message, self.auto_reply_manager, acceptMode=acceptMode, chat_id=self.current_user)
+                    self.add_next_step_handler_local(self.auto_reply_manager, acceptMode=acceptMode)
             elif message.text:
                 if len(message.text) < 300:
                     if message.text == self.localization["AbortB"]:
@@ -313,10 +363,10 @@ class Settings:
                     self.proceed()
                 else:
                     self.send_error_message(self.localization["AutoReplyLimitations"], markup=self.abortMarkup)
-                    self.bot.register_next_step_handler(message, self.auto_reply_manager, acceptMode=acceptMode, chat_id=self.current_user)
+                    self.add_next_step_handler_local(self.auto_reply_manager, acceptMode=acceptMode)
             else:
                 self.send_error_message(self.localization["TypeE"], markup=self.abortMarkup)
-                self.bot.register_next_step_handler(message, self.auto_reply_manager, acceptMode=acceptMode, chat_id=self.current_user)
+                self.add_next_step_handler_local(self.auto_reply_manager, acceptMode=acceptMode)
 
     def ocean_settings_choice(self, message, acceptMode=False):
         self.previous_section = self.setting_choice
@@ -426,7 +476,7 @@ class Settings:
         if not acceptMode:
             self.previous_section = self.additional_actions_settings_choice
             self.send_secondary_message(self.localization["DeleteProfileQ"], self.YNMarkup)
-            self.bot.register_next_step_handler(message, self.delete_profile, acceptMode=True, chat_id=self.current_user)
+            self.add_next_step_handler_local(self.delete_profile, acceptMode=True)
         else:
             if message.text == self.localization["YesB"]:
                 self.delete_profile_checkout(message)
@@ -436,7 +486,7 @@ class Settings:
     def delete_profile_checkout(self, message, acceptMode=False):
         if not acceptMode:
             self.send_secondary_message(self.localization["ProfileDeletedQ"], self.skipMarkup)
-            self.bot.register_next_step_handler(message, self.delete_profile_checkout, acceptMode=True, chat_id=self.current_user)
+            self.add_next_step_handler_local(self.delete_profile_checkout, acceptMode=True)
         else:
             if message.text == self.localization["GoBack"]:
                 self.proceed(message)
@@ -656,7 +706,7 @@ class Settings:
                     self.add_to_black_list(message)
                 else:
                     self.send_secondary_message(self.localization["DeleteFromBlackListQ"], markup=self.YNMarkup)
-                    self.bot.register_next_step_handler(message, self.black_list_management, acceptMode=True, isEncounter=True, chat_id=self.current_user)
+                    self.nextHandler = self.bot.register_next_step_handler(message, self.black_list_management, acceptMode=True, isEncounter=True, chat_id=self.current_user)
             elif message.text == "4":
                 self.proceed()
 
@@ -664,7 +714,7 @@ class Settings:
         self.active_section = self.add_to_black_list
         if not acceptMode:
             self.send_secondary_message(self.localization["AddFromBlackListQ"], markup=self.YNMarkup)
-            self.bot.register_next_step_handler(message, self.add_to_black_list, acceptMode=True, chat_id=self.current_user)
+            self.add_next_step_handler_local(self.add_to_black_list, acceptMode=True)
         else:
             self.bot.delete_message(self.current_user, message.id)
 
@@ -683,7 +733,7 @@ class Settings:
                 self.proceed()
             else:
                 self.send_error_message(self.localization["NoSuchOption"], markup=self.abortMarkup)
-                self.bot.register_next_step_handler(message, self.add_to_black_list, acceptMode=acceptMode, chat_id=self.current_user)
+                self.add_next_step_handler_local(self.add_to_black_list, acceptMode=acceptMode)
 
     def black_list_management(self, message, acceptMode=False, isEncounter=False):
         self.previous_section = self.my_profile_settings_choice
@@ -742,7 +792,7 @@ class Settings:
                 self.proceed()
             else:
                 self.bot.send_message(self.current_user, self.localization["NoSuchOption"], reply_markup=self.abortMarkup)
-                self.bot.register_next_step_handler(message, self.black_list_management, acceptMode=acceptMode, isEncounter=isEncounter, chat_id=self.current_user)
+                self.nextHandler = self.bot.register_next_step_handler(message, self.black_list_management, acceptMode=acceptMode, isEncounter=isEncounter, chat_id=self.current_user)
 
     def ocean_switch(self, message, acceptMode=False):
         self.previous_section = self.ocean_settings_choice
@@ -760,7 +810,7 @@ class Settings:
                 switchMessage = self.localization["TurnOnM"]
 
             self.send_secondary_message(f"{self.ocean_description}{self.localization['OceanStatus']} {status}\n{switchMessage}", markup=self.YNMarkup)
-            self.bot.register_next_step_handler(message, self.ocean_switch, acceptMode=True, chat_id=self.current_user)
+            self.add_next_step_handler_local(self.ocean_switch, acceptMode=True)
 
         else:
             self.bot.delete_message(self.current_user, message.id)
@@ -777,7 +827,7 @@ class Settings:
                 self.proceed()
             else:
                 self.send_error_message(self.localization["NoSuchOption"], markup=self.YNMarkup)
-                self.bot.register_next_step_handler(message, self.ocean_switch, acceptMode=acceptMode, chat_id=self.current_user)
+                self.add_next_step_handler_local(self.ocean_switch, acceptMode=acceptMode)
 
     def set_profile_status(self, message, acceptMode=False):
         self.previous_section = self.my_profile_settings_choice
@@ -786,7 +836,7 @@ class Settings:
         if not acceptMode:
             if self.has_Premium:
                 self.send_secondary_message(self.localization["StatusQ"], markup=self.abortMarkup)
-                self.bot.register_next_step_handler(message, self.set_profile_status, acceptMode=True, chat_id=self.current_user)
+                self.add_next_step_handler_local(self.set_profile_status, acceptMode=True)
             else:
                 self.send_secondary_message(self.localization["PremiumRestrictionM"])
         else:
@@ -803,7 +853,7 @@ class Settings:
                 self.proceed()
             else:
                 self.send_error_message(self.localization["StatusLengthE"], markup=self.abortMarkup)
-                self.bot.register_next_step_handler(message, self.set_profile_status, acceptMode=acceptMode, chat_id=self.current_user)
+                self.add_next_step_handler_local(self.set_profile_status, acceptMode=acceptMode)
 
     def black_list_callback_handler(self, call):
         self.current_query = call.message.id
@@ -823,7 +873,7 @@ class Settings:
             try:
                 self.current_managed_user = int(call.data)
                 self.send_secondary_message(self.localization["DeleteFromBlackListQ"], markup=self.YNMarkup)
-                self.bot.register_next_step_handler(call.message, self.black_list_management, acceptMode=True, chat_id=self.current_user)
+                self.add_next_step_handler_local(self.black_list_management, acceptMode=True)
             except:
                 self.send_secondary_message(self.localization["SomethingWrong"])
                 # self.proceed()
@@ -857,7 +907,7 @@ class Settings:
             else:
                 self.send_secondary_message(self.localization["UpdateByM"].format(action))
 
-            self.nextHandler = self.bot.register_next_step_handler(message, self.send_confirmation_request, acceptMode=True, chat_id=self.current_user)
+            self.add_next_step_handler_local(self.send_confirmation_request, acceptMode=True)
         else:
             try:
                 self.bot.delete_message(self.current_user, message.id)
@@ -874,7 +924,7 @@ class Settings:
                 if message.video:
                     if message.video.duration > 15:
                         self.send_secondary_message(self.localization["ToLongVideoE"])
-                        self.bot.register_next_step_handler(message, self.send_confirmation_request, acceptMode=acceptMode, chat_id=self.current_user)
+                        self.add_next_step_handler_local(self.send_confirmation_request, acceptMode=acceptMode)
                         return
 
                     data["video"] = message.video[len(message.video) - 1].file_id
@@ -886,7 +936,7 @@ class Settings:
                 elif message.video_note:
                     if message.video_note.duration > 15:
                         self.send_error_message(self.current_user, self.localization["ToLongVideoE"])
-                        self.bot.register_next_step_handler(message, self.send_confirmation_request, acceptMode=acceptMode, chat_id=self.current_user)
+                        self.add_next_step_handler_local(self.send_confirmation_request, acceptMode=acceptMode)
                         return
 
                     data["circle"] = message.video_note.file_id
@@ -905,7 +955,7 @@ class Settings:
                         return
 
             self.send_error_message(self.localization["InvalidDataTypeE"])
-            self.bot.register_next_step_handler(message, self.send_confirmation_request, acceptMode=acceptMode, chat_id=self.current_user)
+            self.add_next_step_handler_local(self.send_confirmation_request, acceptMode=acceptMode)
 
     def encounters_callback_handler(self, call):
         self.current_query = call.message.id
@@ -939,7 +989,7 @@ class Settings:
                 self.add_to_black_list(self.message)
             else:
                 self.send_secondary_message(self.localization["DeleteFromBlackListQ"], markup=self.YNMarkup)
-                self.bot.register_next_step_handler(self.message, self.black_list_management, acceptMode=True, isEncounter=True, chat_id=self.current_user)
+                self.nextHandler = self.bot.register_next_step_handler(self.message, self.black_list_management, acceptMode=True, isEncounter=True, chat_id=self.current_user)
         else:
             try:
                 self.current_managed_user = int(call.data)
@@ -1152,6 +1202,12 @@ class Settings:
                 self.auto_reply_manager(call.message)
             elif call.data == "230":
                 self.currency_change_manager(call.message)
+            elif call.data == "232":
+                self.user_story_setting_choice()
+            elif call.data == "233":
+                self.set_user_story(call.message)
+            elif call.data == "234":
+                self.remove_user_story(call.message)
             elif call.data == "240":
                 if self.requestType != 1:
                     self.delete_secondary_message()
@@ -1427,7 +1483,7 @@ class Settings:
         self.delete_active_message()
         self.send_active_message_with_photo(f"{user['userDescription']}\n\n{self.localization['ChooseOption']}", self.encounterOptionMarkup, user["userMedia"])
         # self.bot.send_photo(self.current_user, user["userBaseInfo"]["userMedia"], user["userBaseInfo"]["userDescription"], reply_markup=self.encounterOptionMarkup)
-        self.bot.register_next_step_handler(self.message, self.encounter_list_management, acceptMode=True, chat_id=self.current_user)
+        self.add_next_step_handler_local(self.encounter_list_management, acceptMode=True)
 
     def construct_achievement_message(self, achievementId) -> str:
         name = self.achievements_data["name"]
@@ -1517,7 +1573,7 @@ class Settings:
 
     def send_message_with_confirmation(self, text):
         msgId = self.bot.send_message(self.current_user, text, reply_markup=self.okMarkup).id
-        self.bot.register_next_step_handler(self.message, self.delete_message_with_confirmation, messageToDelete=msgId, chat_id=self.current_user)
+        self.nextHandler = self.bot.register_next_step_handler(self.message, self.delete_message_with_confirmation, messageToDelete=msgId, chat_id=self.current_user)
 
     def delete_message_with_confirmation(self, message, messageToDelete):
         try:
@@ -1594,6 +1650,9 @@ class Settings:
                 self.active_error_message = None
         except:
             self.active_error_message = None
+
+    def add_next_step_handler_local(self, method, acceptMode):
+        self.nextHandler = self.bot.register_next_step_handler(self.message, method, acceptMode=acceptMode, chat_id=self.current_user)
 
     def remove_next_step_handler_local(self):
         if self.nextHandler:

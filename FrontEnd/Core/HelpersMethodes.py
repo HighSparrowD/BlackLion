@@ -317,14 +317,9 @@ def get_request_sender(requestId):
 
 def get_user_list(userId):
     try:
-        return json.loads(requests.get(f"{api_address}/GetUserList?userId={userId}", verify=False).text)
-    except:
-        return None
-
-
-def get_user_list_turnOffPersonality(userId):
-    try:
-        return json.loads(requests.get(f"{api_address}/GetUserList/TurnOffP/{userId}", verify=False).text)
+        return json.loads(requests.get(f"{api_address}/user-list", params={
+            "userId": userId
+        }, verify=False).text)
     except:
         return None
 
@@ -774,4 +769,24 @@ def get_active_effect(user_id):
     try:
         return json.loads(requests.get(f"https://localhost:44381/active-effects/{user_id}", verify=False).text)
     except:
+        return None
+
+
+def set_user_story(userId, story):
+    try:
+        d = json.dumps({
+            "userId": userId,
+            "story": story
+        })
+
+        return requests.post(f"{api_address}/user-story", d,
+                             headers={"Content-Type": "application/json"},
+                             verify=False).status_code
+    except:
+        return None
+
+def remove_user_story(userId):
+    try:
+        return requests.delete(f"{api_address}/user-story", verify=False, params={"userId": userId})
+    except Exception as ex:
         return None

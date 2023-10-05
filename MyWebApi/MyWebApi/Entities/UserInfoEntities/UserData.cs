@@ -27,5 +27,6 @@ namespace WebApi.Entities.UserInfoEntities
         public string? UserRawDescription { get; set; }
         public string? UserMedia { get; set; }
         public MediaType MediaType { get; set; }
+        public string? UserStory { get; set; }
     }
 }
