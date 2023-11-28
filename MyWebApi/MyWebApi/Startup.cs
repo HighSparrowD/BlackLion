@@ -48,7 +48,7 @@ namespace WebApi
             });
 
             services.AddHostedService<BackgroundWorker>();
-
+            
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
@@ -78,16 +78,15 @@ namespace WebApi
                 app.UseDeveloperExceptionPage();
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "WebApi v1"));
-            }
+			}
 
             app.UseHttpsRedirection();
-
 
             app.UseRouting();
 
             app.UseAuthorization();
 
-            //Actualize Database
+            // Update Database
             using (var serviceScope = app.ApplicationServices.GetService<IServiceScopeFactory>().CreateScope())
             {
                 var context = serviceScope.ServiceProvider.GetRequiredService<UserContext>();

@@ -180,7 +180,7 @@ namespace WebApi.Repositories
                 {
                     await TopUpPointBalance(invitor.Id, (int)(200 + (200 * bonus) * multiplier), $"User {model.Id} was invited by user {invitor.Id}");
                 }
-
+                    
                 user.BonusIndex = 1.5f;
                 user.ParentId = invitor.Id;
 
@@ -3511,7 +3511,7 @@ namespace WebApi.Repositories
         {
             // TODO: Add localization when tests are localized
             return await _contx.Tests.Where(t => t.Id == testId) // && t.Language == localisation
-                .Select(t => new GetFullTestData {Id = t.Id, Name = t.Name, Description = t.Description, Price = t.Price, TestType = t.TestType})
+                .Select(t => new GetFullTestData {Id = t.Id, Name = t.Name, Description = t.Description, TestType = t.TestType})
                 .FirstOrDefaultAsync();
         }
 
@@ -3519,7 +3519,7 @@ namespace WebApi.Repositories
         {
             var test = await _contx.UserTests.Where(t => t.UserId == userId && t.TestId == testId)
                 .Include(t => t.Test)
-                .SingleOrDefaultAsync();
+                .FirstOrDefaultAsync();
 
             if (test == null)
                 throw new NullReferenceException($"User {userId} does not have Test {testId}");
@@ -3575,7 +3575,7 @@ namespace WebApi.Repositories
             await _contx.SaveChangesAsync();
         }
 
-        public async Task<List<GetTestShortData>> GetUserTestDataByPropertyAsync(long userId, OceanStats param)
+        public async Task<List<GetTestShortData>> GetUserTestDataByPropertyAsync(long userId, OceanStats? param)
         {
             //Get users tests
             return await _contx.UserTests.Where(t => t.UserId == userId && t.TestType == param)

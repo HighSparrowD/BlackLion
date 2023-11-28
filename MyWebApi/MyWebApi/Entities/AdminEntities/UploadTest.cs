@@ -17,9 +17,7 @@ namespace WebApi.Entities.TestEntities
         [JsonPropertyName("description")]
         public string? Description { get; set; }
         [JsonPropertyName("testType")]
-        public OceanStats TestType { get; set; }
-        [JsonPropertyName("price")]
-        public int Price{ get; set; }
+        public OceanStats? TestType { get; set; }
         [JsonPropertyName("canBePassedInDays")]
         public int CanBePassedInDays { get; set; }
         [JsonPropertyName("questions")]

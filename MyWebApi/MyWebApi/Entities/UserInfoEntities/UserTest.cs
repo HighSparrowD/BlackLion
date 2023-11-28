@@ -17,7 +17,7 @@ namespace WebApi.Entities.UserInfoEntities
         [NotNull]
         public AppLanguage TestLanguage { get; set; }
         [NotNull]
-        public Enums.OceanStats TestType { get; set; }
+        public Enums.OceanStats? TestType { get; set; }
         public float Result { get; set; }
         public DateTime? PassedOn { get; set; }
         public virtual Test Test { get; set; }

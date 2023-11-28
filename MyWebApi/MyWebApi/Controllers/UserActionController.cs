@@ -314,7 +314,7 @@ namespace WebApi.Controllers
             return await _repository.SetDebugProperties();
         }
 
-        [HttpGet("/SwhitchUserBusyStatus/{userId}/{section}")]
+        [HttpGet("/switch-busy-status/{userId}/{section}")]
         public async Task<SwitchBusyStatusResponse> SwhitchUserBusyStatus([FromRoute] long userId, [FromRoute]Section section)
         {
             return await _repository.SwhitchUserBusyStatus(userId, section);
@@ -613,14 +613,14 @@ namespace WebApi.Controllers
             return await _repository.GetUserFilteringByPhotoStatusAsync(userId);
         }
 
-        [HttpGet("/non-possest-test/{userId}/{param}")]
-        public async Task<List<GetTestShortData>> GetTestDataByProperty(long userId, OceanStats param)
+        [HttpGet("/non-possest-test")]
+        public async Task<List<GetTestShortData>> GetTestDataByProperty([FromQuery] long userId, [FromQuery] OceanStats param)
         {
             return await _repository.GetTestDataByPropertyAsync(userId, param);
         }
 
-        [HttpGet("/test-data-by-prop/{userId}/{param}")]
-        public async Task<List<GetTestShortData>> GetUserTestDataByProperty(long userId, OceanStats param)
+        [HttpGet("/test-data-by-prop")]
+        public async Task<List<GetTestShortData>> GetUserTestDataByProperty([FromQuery] long userId, [FromQuery] OceanStats? param)
         {
             return await _repository.GetUserTestDataByPropertyAsync(userId, param);
         }

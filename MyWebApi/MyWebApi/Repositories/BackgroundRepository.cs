@@ -89,7 +89,7 @@ namespace WebApi.Repositories
 
             var sql = $"DELETE FROM \"users\" WHERE EXTRACT(DAY FROM (NOW() - \"DeleteDate\")) >= {_oldUsersSpan};";
             sql += $"DELETE FROM \"user_data\" WHERE \"Id\" IN ({formattedIds});";
-            sql += $"DELETE FROM \"user_statistics\" WHERE \"Id\" IN ({formattedIds});";
+            sql += $"DELETE FROM \"user_statistics\" WHERE \"UserId\" IN ({formattedIds});";
             sql += $"DELETE FROM \"user_settings\" WHERE \"Id\" IN ({formattedIds});";
             sql += $"DELETE FROM \"active_effects\" WHERE \"UserId\" IN ({formattedIds});";
 

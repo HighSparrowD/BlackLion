@@ -19,8 +19,13 @@ namespace WebApi.Repositories
         public async Task<List<string>> SuggestLanguagesAsync(string incorrectLanguage)
         {
             return await _contx.Languages
-                .Where(t => EF.Functions.FuzzyStringMatchLevenshteinLessEqual(t.LanguageName, incorrectLanguage, 2) <= 2)
-                .OrderBy(t => EF.Functions.FuzzyStringMatchLevenshteinLessEqual(t.LanguageName, incorrectLanguage, 2))
+                .Select(l => new
+                {
+                    Distance = EF.Functions.FuzzyStringMatchLevenshteinLessEqual(l.LanguageName, incorrectLanguage, 2),
+                    LanguageName = l.LanguageName
+                })
+                .Where(t => t.Distance <= 2)
+                .OrderBy(t => t.Distance)
                 .Select(t => t.LanguageName)
                 .Take(3)
                 .ToListAsync();

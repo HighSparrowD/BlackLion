@@ -19,9 +19,7 @@ namespace WebApi.Entities.TestEntities
         [NotNull]
         public string Description { get; set; }
         [NotNull]
-        public OceanStats TestType { get; set; }
-        [NotNull]
-        public int Price { get; set; }
+        public OceanStats? TestType { get; set; }
         [NotNull]
         public int CanBePassedInDays { get; set; }
         [NotNull]

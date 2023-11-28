@@ -134,7 +134,7 @@ namespace WebApi.Interfaces
         Task<bool> SwitchUserFilteringByPhotoAsync(long userId);
         Task<bool> GetUserFilteringByPhotoStatusAsync(long userId);
         Task<List<GetTestShortData>> GetTestDataByPropertyAsync(long userId, OceanStats param);
-        Task<List<GetTestShortData>> GetUserTestDataByPropertyAsync(long userId, OceanStats param);
+        Task<List<GetTestShortData>> GetUserTestDataByPropertyAsync(long userId, OceanStats? param);
         Task<GetFullTestData> GetTestFullDataByIdAsync(long testId, AppLanguage localisation);
         Task<GetUserTest> GetUserTestAsync(long userId, long testId);
         Task<int> GetPossibleTestPassRangeAsync(long userId, long testId);

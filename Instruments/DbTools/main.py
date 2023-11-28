@@ -432,17 +432,14 @@ def load_test_data(testTemplate, lang) -> dict:
     file = get_file_data(file)
 
     for test in file:
-        # if test[0] != 49:
-        #     continue
 
         test_data = {
             "id": test[0],
             "language": lang,
             "name": test[1],
-            "description": test[2],
-            "testType": test[3],
+            "description": test[2] if type(test[2]) is not float else None,
+            "testType": test[3] if type(test[3]) is not float else None,
             "canBePassedInDays": test[4],
-            "price": 0, # TODO: Set the price
             "questions": load_questions(test[0], lang),
             "results": load_results(test[0], lang),
             "scales": load_scales(test[0], lang)
@@ -541,7 +538,7 @@ def load_scales(testId, lang) -> list:
 
             s = {
                 "scale": scale[0],
-                "minValue": scale[2]
+                "minValue": scale[2] if type(scale[2]) is not float else None,
             }
 
             scales.append(s)
@@ -554,7 +551,7 @@ def get_file_data(file):
 
 
 # add_tests(langs[0])
-# add_tests(langs[1])
+add_tests(langs[1])
 # add_tests(langs[2])
 
 # generate_test_prices()
@@ -563,8 +560,8 @@ def get_file_data(file):
 # create_ru_localization()
 # create_uk_localization()
 
-load_eng_localization()
-load_ru_localization()
-load_uk_localization()
+# load_eng_localization()
+# load_ru_localization()
+# load_uk_localization()
 
 # generate_tag_prompt()

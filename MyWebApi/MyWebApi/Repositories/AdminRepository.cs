@@ -312,7 +312,6 @@ namespace WebApi.Repositories
                         Name = model.Name,
                         Description = model.Description,
                         TestType = model.TestType,
-                        Price = model.Price,
                         CanBePassedInDays = model.CanBePassedInDays
                     };
 

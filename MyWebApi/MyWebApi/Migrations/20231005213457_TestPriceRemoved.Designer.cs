@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WebApi.Data;
@@ -12,9 +13,11 @@ using WebApi.Data;
 namespace WebApi.Migrations
 {
     [DbContext(typeof(UserContext))]
-    partial class UserContextModelSnapshot : ModelSnapshot
+    [Migration("20231005213457_TestPriceRemoved")]
+    partial class TestPriceRemoved
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -926,7 +929,7 @@ namespace WebApi.Migrations
                     b.Property<string>("Name")
                         .HasColumnType("text");
 
-                    b.Property<int?>("TestType")
+                    b.Property<int>("TestType")
                         .HasColumnType("integer");
 
                     b.HasKey("Id", "Language");
@@ -1690,7 +1693,7 @@ namespace WebApi.Migrations
                     b.Property<byte>("TestLanguage")
                         .HasColumnType("smallint");
 
-                    b.Property<int?>("TestType")
+                    b.Property<int>("TestType")
                         .HasColumnType("integer");
 
                     b.HasKey("TestId", "UserId");
