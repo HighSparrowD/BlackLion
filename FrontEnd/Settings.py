@@ -261,7 +261,7 @@ class Settings:
         self.delete_secondary_message()
 
         self.clear_callback_handler()
-        CurrencySetter(self.bot, self.current_user, self.go_back_from_currency_change)
+        CurrencySetter(self.bot, self.current_user, self.go_back_from_currency_change, self.user_language)
 
     def user_story_setting_choice(self, message=None):
         self.previous_section = self.my_profile_settings_choice
@@ -1677,7 +1677,7 @@ class Settings:
 
 
 class CurrencySetter:
-    def __init__(self, bot: TeleBot, user_id: any, return_method: any):
+    def __init__(self, bot: TeleBot, user_id: any, return_method: any, language: any):
         self.bot = bot
         self.return_method = return_method
         self.current_user = user_id
@@ -1695,8 +1695,7 @@ class CurrencySetter:
 
         currencies = Helpers.get_payment_currencies()
 
-        # TODO: retrieve localization
-        self.localization = {}
+        self.localization = Resources.get_currency_setter_localization(language)
 
         for currency in currencies:
             self.currency_markup.add(InlineKeyboardButton(currency["name"], callback_data=f"{currency['id']}"))

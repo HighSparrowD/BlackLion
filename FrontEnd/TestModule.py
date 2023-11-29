@@ -28,6 +28,8 @@ class TestModule:
         self.justEntered = True
         self.returnMethod = returnMethod
 
+        self.user_language = Helpers.get_user_app_language(self.current_user)
+
         self.current_question_index = -1
         self.previous_question = None
         self.answer_array = {}
@@ -74,6 +76,7 @@ class TestModule:
                 .add(InlineKeyboardButton("Agreeableness", callback_data="4")) \
                 .add(InlineKeyboardButton("Neuroticism", callback_data="5")) \
                 .add(InlineKeyboardButton("Nature", callback_data="6")) \
+                .add(InlineKeyboardButton("Express Test", callback_data="7")) \
                 .add(InlineKeyboardButton("🔙Go Back", callback_data="-15"))
 
         self.buy_markup = InlineKeyboardMarkup()
@@ -108,7 +111,7 @@ class TestModule:
         self.get_user_balance()
 
         if self.user_currency is None:
-            Settings.CurrencySetter(self.bot, self.current_user, self.first_time_handler)
+            Settings.CurrencySetter(self.bot, self.current_user, self.first_time_handler, self.user_language)
         else:
             self.proceed_to_start(message)
 
@@ -151,6 +154,7 @@ class TestModule:
             return
 
         self.isOnStart = False
+
         reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page, self.markup_pages_count)
         count_pages(self.tests, self.current_markup_elements, self.markup_pages_count, additionalButton=True, buttonText="🔙Go Back", buttonData=-10)
         markup = assemble_markup(self.markup_page, self.current_markup_elements, 0)
@@ -159,7 +163,11 @@ class TestModule:
 
     def load_new_tests_data_by_param(self, param):
         try:
-            self.current_tests = json.loads(requests.get(f"https://localhost:44381/non-possest-test/{self.current_user}/{param}", verify=False).text)
+            self.current_tests = json.loads(requests.get(f"https://localhost:44381/non-possest-test",
+                                                         params={
+                                                             "userId": self.current_user,
+                                                             "param": param
+                                                         }, verify=False).text)
             self.tests.clear()
             for test in self.current_tests:
                 self.tests[test["id"]] = test["name"]
@@ -168,7 +176,11 @@ class TestModule:
 
     def load_owned_tests_data_by_param(self, param):
         try:
-            self.current_tests = json.loads(requests.get(f"https://localhost:44381/test-data-by-prop/{self.current_user}/{param}", verify=False).text)
+            self.current_tests = json.loads(requests.get(f"https://localhost:44381/test-data-by-prop",
+                                                         params={
+                                                             "userId": self.current_user,
+                                                             "param": param
+                                                         }, verify=False).text)
             self.tests.clear()
             for test in self.current_tests:
                 self.tests[test["id"]] = test["name"]
@@ -321,6 +333,14 @@ class TestModule:
                 data = self.create_test_payload(score)
                 tags = result["tags"]
                 active_answer = result["result"]
+            elif self.current_test == 1:
+                o_result = self.answer_array["O"]
+                c_result = self.answer_array["C"]
+                e_result = self.answer_array["E"]
+                a_result = self.answer_array["A"]
+                n_result = self.answer_array["N"]
+
+
             else:
                 self.user_total = sum(self.answer_array.values())
                 score = float(self.user_total) / float(results[-1]["score"])
@@ -453,6 +473,11 @@ class TestModule:
             except:
                 pass
 
+        elif call.data == "7":
+            self.current_test = int(1)
+            self.isOnStart = False
+            self.show_current_test(call.message)
+
         #Buy test for RM
         elif call.data == "-3":
             self.show_current_test(call.message, acceptMode=True, decisionIndex=call.data)
@@ -505,8 +530,8 @@ class TestModule:
                     if self.current_question["scale"] == "L":
                         self.lie_scale[self.current_question_index] = answer_weight
                     else:
-                        # Nature test is so different, it requires its own condition...
-                        if self.current_test == 49:
+                        # Nature and express tests are so different, they require their own condition...
+                        if self.current_test == 49 or self.current_test == 1:
                             self.answer_array[self.current_question["scale"]][self.current_question_index] = answer_weight
                         else:
                             self.answer_array[self.current_question_index] = answer_weight

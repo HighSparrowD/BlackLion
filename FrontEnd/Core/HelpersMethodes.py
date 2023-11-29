@@ -104,7 +104,7 @@ def check_user_is_busy(userId):
 def switch_user_busy_status(userId, sectionId):
     try:
         return json.loads(
-            requests.get(f"{api_address}/SwhitchUserBusyStatus/{userId}/{sectionId}", verify=False).text)
+            requests.get(f"{api_address}/switch-busy-status/{userId}/{sectionId}", verify=False).text)
     except:
         return None
 

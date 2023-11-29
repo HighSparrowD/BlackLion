@@ -9,6 +9,10 @@ def get_settings_localization(lang) -> dict[str, str]:
     return get_generic_localization("Settings", lang)
 
 
+def get_currency_setter_localization(lang) -> dict[str, str]:
+    return get_generic_localization("CurrencySetter", lang)
+
+
 def get_adventurer_localization(lang) -> dict[str, str]:
     return get_generic_localization("Adventurer", lang)
 
