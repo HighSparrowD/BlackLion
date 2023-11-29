@@ -88,6 +88,7 @@ def load_achievement_resource(lang):
     data = json.dumps(achievement_list)
     requests.post("https://localhost:44381/upload-achievements", data, headers={"Content-Type": "application/json"}, verify=False)
 
+    print(f"Achievements {lang} are loaded")
 # generate_achievement_resource()
 
 load_achievement_resource("en")

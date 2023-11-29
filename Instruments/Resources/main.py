@@ -59,9 +59,9 @@ def create_generic_resources(location):
     uk_dataframe = pandas.DataFrame(uk, index=[0])
 
     # Save output
-    en_dataframe.to_csv(f"./Outputs/{location}EN.csv", index=False)
-    ru_dataframe.to_csv(f"./Outputs/{location}RU.csv", index=False)
-    uk_dataframe.to_csv(f"./Outputs/{location}UK.csv", index=False)
+    en_dataframe.to_csv(f"../../FrontEnd/Core/Resources/{location}/{location}EN.csv", index=False)
+    ru_dataframe.to_csv(f"../../FrontEnd/Core/Resources/{location}/{location}RU.csv", index=False)
+    uk_dataframe.to_csv(f"../../FrontEnd/Core/Resources/{location}/{location}UK.csv", index=False)
 
 
 def create_prices_resource():
@@ -98,15 +98,17 @@ def create_prices_resource():
     points_dataframe = pandas.DataFrame(points, index=[0])
 
     # Save output
-    usd_dataframe.to_csv("./Outputs/PricesUSD.csv", index=False)
-    eur_dataframe.to_csv("./Outputs/PricesEUR.csv", index=False)
-    uah_dataframe.to_csv("./Outputs/PricesUAH.csv", index=False)
-    czk_dataframe.to_csv("./Outputs/PricesCZK.csv", index=False)
-    pln_dataframe.to_csv("./Outputs/PricesPLN.csv", index=False)
-    points_dataframe.to_csv("./Outputs/PricesPoints.csv", index=False)
+    usd_dataframe.to_csv("../../FrontEnd/Core/Resources/Prices/PricesUSD.csv", index=False)
+    eur_dataframe.to_csv("../../FrontEnd/Core/Resources/Prices/PricesEUR.csv", index=False)
+    uah_dataframe.to_csv("../../FrontEnd/Core/Resources/Prices/PricesUAH.csv", index=False)
+    czk_dataframe.to_csv("../../FrontEnd/Core/Resources/Prices/PricesCZK.csv", index=False)
+    pln_dataframe.to_csv("../../FrontEnd/Core/Resources/Prices/PricesPLN.csv", index=False)
+    points_dataframe.to_csv("../../FrontEnd/Core/Resources/Prices/PricesPoints.csv", index=False)
 
 
-# create_registration_resources()
-# create_prices_resource()
-# create_settings_resources()
+create_registration_resources()
+create_prices_resource()
+create_settings_resources()
 create_currency_setter_resources()
+
+print(f"Resources are loaded")

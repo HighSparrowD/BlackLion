@@ -4,5 +4,11 @@
 # Build Api
 dotnet build
 
-# Run Api
-dotnet run --project "MyWebApi" --urls "https://localhost:44381/"
+# Specify the path to the API project folder
+$apiPath = "C:\Git\BlackLion\WebApi\WebApi"
+
+# Navigate to the API project folder
+set-location $apiPath
+
+# Run the .NET API in the background using `dotnet run`
+Start-Process -FilePath "dotnet" -ArgumentList "run", "--urls=https://localhost:44381/" -NoNewWindow -PassThru
