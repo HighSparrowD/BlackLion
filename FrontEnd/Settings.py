@@ -9,7 +9,7 @@ import Core.HelpersMethodes as Helpers
 
 from Shop import Shop
 
-
+#This is settings
 class Settings:
     def __init__(self, bot: TeleBot, message: any, verificationOnly: bool = False, activeMessage=0, returnMethod=None):
         self.isInBlackList = False
