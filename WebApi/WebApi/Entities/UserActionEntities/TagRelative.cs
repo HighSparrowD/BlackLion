@@ -1,4 +1,4 @@
-﻿using WebApi.Enums;
+﻿using WebApi.Main.Enums.Tag;
 
 namespace WebApi.Entities.UserActionEntities
 {

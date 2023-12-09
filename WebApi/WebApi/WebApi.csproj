@@ -32,6 +32,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="..\.editorconfig" Link=".editorconfig" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WebApi.Main\WebApi.Main.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Update="App_GlobalResources\Resources.uk.Designer.cs">
       <DependentUpon>Resources.uk.resx</DependentUpon>
       <DesignTime>True</DesignTime>

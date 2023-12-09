@@ -1,4 +1,5 @@
 ﻿using WebApi.Entities.UserInfoEntities;
+using WebApi.Main.Models.User;
 
 namespace WebApi.Entities.UserActionEntities
 {

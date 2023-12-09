@@ -1,6 +1,7 @@
 ﻿using WebApi.Entities.UserInfoEntities;
 using System.Text.Json.Serialization;
-using WebApi.Enums;
+using WebApi.Main.Models.User;
+using WebApi.Main.Enums.User;
 #nullable enable
 
 namespace WebApi.Entities.UserActionEntities

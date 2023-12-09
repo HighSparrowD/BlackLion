@@ -1,6 +1,8 @@
 ﻿using WebApi.Entities.TestEntities;
 using WebApi.Entities.UserInfoEntities;
-    
+using WebApi.Main.Models.Test;
+using WebApi.Main.Models.User;
+
 #nullable enable
 namespace WebApi.Entities.UserActionEntities
 {

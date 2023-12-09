@@ -5,15 +5,20 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using WebApi.Entities.UserInfoEntities;
-using WebApi.Entities.ReportEntities;
-using WebApi.Entities.LocationEntities;
 using WebApi.Entities.AchievementEntities;
 using WebApi.Entities.UserActionEntities;
 using WebApi.Entities.TestEntities;
 using WebApi.Entities.AdventureEntities;
-using WebApi.Enums;
 using WebApi.Entities;
-using OceanStats = WebApi.Enums.OceanStats;
+using WebApi.Main.Models.User;
+using WebApi.Main.Models.Location;
+using WebApi.Main.Models.Report;
+using WebApi.Main.Models.Achievement;
+using WebApi.Main.Models.Adventure;
+using WebApi.Main.Enums.General;
+using WebApi.Main.Enums.User;
+using RegisterEncounter = WebApi.Main.Models.User.RegisterEncounter;
+using WebApi.Main.Enums.Adventure;
 
 namespace WebApi.Controllers
 {
@@ -614,13 +619,13 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/non-possest-test")]
-        public async Task<List<GetTestShortData>> GetTestDataByProperty([FromQuery] long userId, [FromQuery] OceanStats param)
+        public async Task<List<GetTestShortData>> GetTestDataByProperty([FromQuery] long userId, [FromQuery] Main.Enums.User.OceanStats param)
         {
             return await _repository.GetTestDataByPropertyAsync(userId, param);
         }
 
         [HttpGet("/test-data-by-prop")]
-        public async Task<List<GetTestShortData>> GetUserTestDataByProperty([FromQuery] long userId, [FromQuery] OceanStats? param)
+        public async Task<List<GetTestShortData>> GetUserTestDataByProperty([FromQuery] long userId, [FromQuery] Main.Enums.User.OceanStats? param)
         {
             return await _repository.GetUserTestDataByPropertyAsync(userId, param);
         }

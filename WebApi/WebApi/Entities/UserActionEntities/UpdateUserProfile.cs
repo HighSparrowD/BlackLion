@@ -1,6 +1,8 @@
-﻿using WebApi.Enums;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using WebApi.Main.Enums.User;
+using WebApi.Main.Enums.General;
+using WebApi.Main.Enums.Media;
 
 namespace WebApi.Entities.UserActionEntities
 {

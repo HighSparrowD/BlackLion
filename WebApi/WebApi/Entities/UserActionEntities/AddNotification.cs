@@ -1,5 +1,6 @@
 ﻿using System.Text.Json.Serialization;
-using WebApi.Enums;
+using WebApi.Main.Enums.General;
+using WebApi.Main.Enums.Notification;
 
 #nullable enable
 namespace WebApi.Entities.UserActionEntities

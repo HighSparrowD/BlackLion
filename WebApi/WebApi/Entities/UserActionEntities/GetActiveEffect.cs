@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Drawing;
 using System.Text.Json.Serialization;
-using WebApi.Entities.EffectEntities;
-using WebApi.Enums;
+using WebApi.Main.Enums.General;
+using WebApi.Main.Models.Effect;
 using WebApi.Utilities;
 
 namespace WebApi.Entities.UserActionEntities

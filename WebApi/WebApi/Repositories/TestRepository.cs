@@ -4,13 +4,16 @@ using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using WebApi.Entities.TestEntities;
-using WebApi.Entities.SecondaryEntities;
 using System.Linq;
-using WebApi.Entities.LocationEntities;
 using System;
 using WebApi.Entities.UserActionEntities;
-using WebApi.Enums;
 using WebApi.Utilities;
+using WebApi.Main.Models.Test;
+using WebApi.Main.Enums.General;
+using WebApi.Main.Models.Language;
+using WebApi.Main.Enums.User;
+using WebApi.Main.Enums.Report;
+using WebApi.Main.Models.Location;
 
 namespace WebApi.Repositories
 {

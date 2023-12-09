@@ -5,8 +5,10 @@ using WebApi.Interfaces;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using WebApi.Enums;
 using WebApi.App_GlobalResources;
+using WebApi.Main.Models.User;
+using WebApi.Main.Enums.General;
+using WebApi.Main.Enums.Notification;
 
 namespace WebApi.Services.Background
 {

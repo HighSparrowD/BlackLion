@@ -1,14 +1,13 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using WebApi.Entities.AchievementEntities;
 using WebApi.Entities.AdminEntities;
-using WebApi.Entities.ReportEntities;
 using WebApi.Entities.TestEntities;
 using WebApi.Interfaces;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using WebApi.Entities;
-using WebApi.Entities.LocationEntities;
+using WebApi.Main.Models.Report;
+using WebApi.Main.Models.Admin;
 
 namespace WebApi.Controllers
 {

@@ -1,5 +1,7 @@
 ﻿using WebApi.App_GlobalResources;
-using WebApi.Enums;
+using WebApi.Main.Enums.General;
+using WebApi.Main.Enums.Report;
+using WebApi.Main.Enums.User;
 
 namespace WebApi.Utilities
 {

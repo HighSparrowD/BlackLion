@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
-using WebApi.Enums;
+using WebApi.Main.Enums.General;
 
 namespace WebApi.Entities.UserActionEntities
 {

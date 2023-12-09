@@ -1,4 +1,4 @@
-﻿using WebApi.Enums;
+﻿using WebApi.Main.Enums.User;
 
 namespace WebApi.Entities.UserActionEntities
 {

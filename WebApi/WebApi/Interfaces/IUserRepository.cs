@@ -1,16 +1,23 @@
 ﻿using System.Threading.Tasks;
 using System.Collections.Generic;
 using WebApi.Entities.UserInfoEntities;
-using WebApi.Entities.ReportEntities;
-using WebApi.Entities.LocationEntities;
 using WebApi.Entities.AchievementEntities;
 using System;
 using WebApi.Entities.UserActionEntities;
-using WebApi.Enums;
 using WebApi.Entities.TestEntities;
 using WebApi.Entities.AdventureEntities;
 using WebApi.Entities;
-using OceanStats = WebApi.Enums.OceanStats;
+using WebApi.Main.Models.User;
+using WebApi.Main.Models.Adventure;
+using WebApi.Main.Models.Achievement;
+using WebApi.Main.Models.Report;
+using WebApi.Main.Models.Location;
+using WebApi.Main.Enums.General;
+using WebApi.Main.Enums.User;
+using WebApi.Main.Enums.Tag;
+using WebApi.Main.Enums.Adventure;
+using WebApi.Main.Enums.Notification;
+using RegisterEncounter = WebApi.Main.Models.User.RegisterEncounter;
 
 namespace WebApi.Interfaces
 {
@@ -133,8 +140,8 @@ namespace WebApi.Interfaces
         Task<bool> SendTickRequestAsync(SendTickRequest request);
         Task<bool> SwitchUserFilteringByPhotoAsync(long userId);
         Task<bool> GetUserFilteringByPhotoStatusAsync(long userId);
-        Task<List<GetTestShortData>> GetTestDataByPropertyAsync(long userId, OceanStats param);
-        Task<List<GetTestShortData>> GetUserTestDataByPropertyAsync(long userId, OceanStats? param);
+        Task<List<GetTestShortData>> GetTestDataByPropertyAsync(long userId, Main.Enums.User.OceanStats param);
+        Task<List<GetTestShortData>> GetUserTestDataByPropertyAsync(long userId, Main.Enums.User.OceanStats? param);
         Task<GetFullTestData> GetTestFullDataByIdAsync(long testId, AppLanguage localisation);
         Task<GetUserTest> GetUserTestAsync(long userId, long testId);
         Task<int> GetPossibleTestPassRangeAsync(long userId, long testId);

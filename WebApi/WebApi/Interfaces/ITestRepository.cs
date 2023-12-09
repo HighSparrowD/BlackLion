@@ -1,10 +1,11 @@
-﻿using WebApi.Entities.LocationEntities;
-using WebApi.Entities.SecondaryEntities;
-using WebApi.Entities.TestEntities;
+﻿using WebApi.Entities.TestEntities;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using WebApi.Entities.UserActionEntities;
-using WebApi.Enums;
+using WebApi.Main.Models.Location;
+using WebApi.Main.Enums.General;
+using WebApi.Main.Models.Language;
+using WebApi.Main.Models.Test;
 
 namespace WebApi.Interfaces
 {

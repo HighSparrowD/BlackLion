@@ -1,5 +1,5 @@
-﻿using WebApi.Enums;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
+using WebApi.Main.Enums.Report;
 
 namespace WebApi.Entities.UserActionEntities
 {

@@ -1,5 +1,5 @@
-﻿using WebApi.Enums;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using WebApi.Main.Enums.Tag;
 
 namespace WebApi.Entities.UserActionEntities
 {
