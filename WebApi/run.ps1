@@ -5,7 +5,7 @@
 dotnet build
 
 # Specify the path to the API project folder
-$apiPath = "C:\Git\BlackLion\WebApi\WebApi"
+$apiPath = "D:\Git\BlackLion\WebApi\WebApi"
 
 # Navigate to the API project folder
 set-location $apiPath
