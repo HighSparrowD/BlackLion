@@ -637,7 +637,6 @@ class Shop:
 
     def send_price_invoice(self, title: str, description: str, price: str, invoice_payload: str):
         priceTag = LabeledPrice(self.localization["Price"], int(price.replace(",", "")))
-        # priceTag = LabeledPrice("Price", int(price.replace(",", "")))
         self.delete_price_invoice()
         self.current_invoice_id = self.bot.send_invoice(chat_id=self.current_user, currency=self.user_currency,
                          title=title,
