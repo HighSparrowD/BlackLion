@@ -58,8 +58,8 @@ class Shop:
         self.valentineDescription = self.localization["V_Description"]
         self.detectorDescription = self.localization["D_Description"]
         self.nullifierDescription = self.localization["N_Description"]
-        self.cardDeckMiniDescription = self.localization["CDM_Description"]  # old text іs different from the text from .csv: "<i><b>Instantly adds 20 profile views to your daily views</b></i>"
-        self.cardDeckPlatinumDescription = self.localization["CdDP+Description"]  # old text іs different from the text from .csv: "<i><b>Instantly adds 50 profile views to your daily views</b></i>"
+        self.cardDeckMiniDescription = self.localization["CDM_Description"]
+        self.cardDeckPlatinumDescription = self.localization["CdDP+Description"]
 
         self.YNmarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("yes", "no")
         self.currency_purchaseMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3")
@@ -636,7 +636,7 @@ class Shop:
             self.send_active_message(text, markup)
 
     def send_price_invoice(self, title: str, description: str, price: str, invoice_payload: str):
-        priceTag = LabeledPrice(self.localization["Prices"], int(price.replace(",", "")))
+        priceTag = LabeledPrice(self.localization["Price"], int(price.replace(",", "")))
         # priceTag = LabeledPrice("Price", int(price.replace(",", "")))
         self.delete_price_invoice()
         self.current_invoice_id = self.bot.send_invoice(chat_id=self.current_user, currency=self.user_currency,
