@@ -23,6 +23,7 @@ class Shop:
         self.activatedElsewhere = True
         self.user_language = Helpers.get_user_app_language(self.current_user)
 
+        self.localization = Resources.get_shop_module_localization(self.user_language)
         if returnMethod is None:
             self.activatedElsewhere = False
 
@@ -53,22 +54,22 @@ class Shop:
         # Load price list in points
         self.points_prices = Resources.get_prices("Points")
 
-        self.secondChanceDescription = "<i><b>Second chance allows you to 'like' another user once again. It can be used in the 'encounters' section</b></i>"
-        self.valentineDescription = "<i><b>Doubles your OCEAN+ points for an hour</b></i>"
-        self.detectorDescription = "<i><b>When matched, shows which OCEAN+ parameters were matched. Works for 1 hour</b></i>"
-        self.nullifierDescription = "<i><b>Allows you to pass any test one more time, without waiting</b></i>"
-        self.cardDeckMiniDescription = "<i><b>Instantly adds 20 profile views to your daily views</b></i>"
-        self.cardDeckPlatinumDescription = "<i><b>Instantly adds 50 profile views to your daily views</b></i>"
+        self.secondChanceDescription = self.localization["SC_Description"]
+        self.valentineDescription = self.localization["V_Description"]
+        self.detectorDescription = self.localization["D_Description"]
+        self.nullifierDescription = self.localization["N_Description"]
+        self.cardDeckMiniDescription = self.localization["CDM_Description"]
+        self.cardDeckPlatinumDescription = self.localization["CdDP+Description"]
 
         self.YNmarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("yes", "no")
         self.currency_purchaseMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3")
 
-        self.start_markup = InlineKeyboardMarkup().add(InlineKeyboardButton("Premium", callback_data="1"))\
-            .add(InlineKeyboardButton("Coins", callback_data="2"), InlineKeyboardButton("Effects", callback_data="3"))\
-            .add(InlineKeyboardButton("OCEAN+ Points", callback_data="4"))\
-            .add(InlineKeyboardButton("Tests", callback_data="5"))\
-            .add(InlineKeyboardButton("Support us :)", callback_data="6"))\
-            .add(InlineKeyboardButton("Exit", callback_data="-1"))
+        self.start_markup = InlineKeyboardMarkup().add(InlineKeyboardButton(self.localization["Premium"], callback_data="1"))\
+            .add(InlineKeyboardButton(self.localization["Coinds"], callback_data="2"), InlineKeyboardButton(self.localization["Effects"], callback_data="3"))\
+            .add(InlineKeyboardButton(self.localization["OP_Points"], callback_data="4"))\
+            .add(InlineKeyboardButton(self.localization["Tests"], callback_data="5"))\
+            .add(InlineKeyboardButton(self.localization["Support_Us"], callback_data="6"))\
+            .add(InlineKeyboardButton(self.localization["Exit"], callback_data="-1"))
 
         self.premiumBtn1 = InlineKeyboardButton("0", callback_data="10")
         self.premiumBtn2 = InlineKeyboardButton("0", callback_data="12")
@@ -82,28 +83,28 @@ class Shop:
         self.pointsBtn2 = InlineKeyboardButton("0", callback_data="37")
         self.pointsBtn3 = InlineKeyboardButton("0", callback_data="38")
 
-        self.buy_premium_markup = InlineKeyboardMarkup().add(InlineKeyboardButton("3 days", callback_data="0"), InlineKeyboardButton(f"{self.points_prices['Premium7']} Coins", callback_data="9"), self.premiumBtn1)\
-                                                        .add(InlineKeyboardButton("21 days", callback_data="0"), InlineKeyboardButton(f"{self.points_prices['Premium21']} Coins", callback_data="11"), self.premiumBtn2)\
-                                                        .add(InlineKeyboardButton("30 days", callback_data="0"), InlineKeyboardButton(f"{self.points_prices['Premium30']} Coins", callback_data="13"), self.premiumBtn3)\
-                                                        .add(InlineKeyboardButton("Go Back", callback_data="-1"))
+        self.buy_premium_markup = InlineKeyboardMarkup().add(InlineKeyboardButton(self.localization["3Days"], callback_data="0"), InlineKeyboardButton(f"{self.points_prices['Premium7']} Coins", callback_data="9"), self.premiumBtn1)\
+                                                        .add(InlineKeyboardButton(self.localization["21Days"], callback_data="0"), InlineKeyboardButton(f"{self.points_prices['Premium21']} Coins", callback_data="11"), self.premiumBtn2)\
+                                                        .add(InlineKeyboardButton(self.localization["30Days"], callback_data="0"), InlineKeyboardButton(f"{self.points_prices['Premium30']} Coins", callback_data="13"), self.premiumBtn3)\
+                                                        .add(InlineKeyboardButton(self.localization["GoBack"], callback_data="-1"))
 
-        self.buyPP_markup = InlineKeyboardMarkup().add(InlineKeyboardButton("Buy 3", callback_data="0"), InlineKeyboardButton(f"{self.points_prices['OCP3']} Coins", callback_data="30"), self.OCbutton1) \
-            .add(InlineKeyboardButton("Buy 7", callback_data="0"), InlineKeyboardButton(f"{self.points_prices['OCP7']} Coins", callback_data="32"), self.OCbutton2)\
-            .add(InlineKeyboardButton("Buy 10", callback_data="0"), InlineKeyboardButton(f"{self.points_prices['OCP10']} Coins", callback_data="34"), self.OCbutton3)\
-            .add(InlineKeyboardButton("Go Back", callback_data="-1"))
+        self.buyPP_markup = InlineKeyboardMarkup().add(InlineKeyboardButton(self.localization["Buy3"], callback_data="0"), InlineKeyboardButton(f"{self.points_prices['OCP3']} Coins", callback_data="30"), self.OCbutton1) \
+            .add(InlineKeyboardButton(self.localization["Buy7"], callback_data="0"), InlineKeyboardButton(f"{self.points_prices['OCP7']} Coins", callback_data="32"), self.OCbutton2)\
+            .add(InlineKeyboardButton(self.localization["Buy10"], callback_data="0"), InlineKeyboardButton(f"{self.points_prices['OCP10']} Coins", callback_data="34"), self.OCbutton3)\
+            .add(InlineKeyboardButton(self.localization["GoBack"], callback_data="-1"))
 
-        self.buy_points_markup = InlineKeyboardMarkup().add(InlineKeyboardButton("Buy 150", callback_data="0"), self.pointsBtn1) \
-            .add(InlineKeyboardButton("Buy 500", callback_data="0"), self.pointsBtn2) \
-            .add(InlineKeyboardButton("Buy 2000", callback_data="0"), self.pointsBtn3) \
-            .add(InlineKeyboardButton("Go Back", callback_data="-1"))
+        self.buy_points_markup = InlineKeyboardMarkup().add(InlineKeyboardButton(self.localization["Buy150"], callback_data="0"), self.pointsBtn1) \
+            .add(InlineKeyboardButton(self.localization["Buy500"], callback_data="0"), self.pointsBtn2) \
+            .add(InlineKeyboardButton(self.localization["Buy2000"], callback_data="0"), self.pointsBtn3) \
+            .add(InlineKeyboardButton(self.localization["GoBack"], callback_data="-1"))
 
-        self.effects_list_markup = InlineKeyboardMarkup().add(InlineKeyboardButton("💥Second Chance💥", callback_data="16"))\
-            .add(InlineKeyboardButton("💥The Valentine💥", callback_data="17"))\
-            .add(InlineKeyboardButton("💥The Detector💥", callback_data="18"))\
-            .add(InlineKeyboardButton("💥The Nullifier💥", callback_data="19"))\
-            .add(InlineKeyboardButton("💥Card Deck Mini💥", callback_data="20"))\
-            .add(InlineKeyboardButton("💥Card Deck Platinum💥", callback_data="21"))\
-            .add(InlineKeyboardButton("Go Back", callback_data="-1"))
+        self.effects_list_markup = InlineKeyboardMarkup().add(InlineKeyboardButton(self.localization["ScecondChance"], callback_data="16"))\
+            .add(InlineKeyboardButton(self.localization["TheValentine"], callback_data="17"))\
+            .add(InlineKeyboardButton(self.localization["TheDetector"], callback_data="18"))\
+            .add(InlineKeyboardButton(self.localization["TheNullifier"], callback_data="19"))\
+            .add(InlineKeyboardButton(self.localization["CardDeckMini"], callback_data="20"))\
+            .add(InlineKeyboardButton(self.localization["CardDeckPlatinum"], callback_data="21"))\
+            .add(InlineKeyboardButton(self.localization["GoBack"], callback_data="-1"))
 
         self.effect_pack_markup = InlineKeyboardMarkup()
 
@@ -159,7 +160,7 @@ class Shop:
                 return
 
         if self.shouldGreet:
-            self.send_active_message(f"Welcome to the shop!\n{self.get_balance_message()}", markup=self.start_markup)
+            self.send_active_message(self.localization["Welcome"].format(self.get_balance_message()), markup=self.start_markup)
             self.shouldGreet = False
         else:
             self.send_active_message(self.get_balance_message(), self.start_markup)
@@ -176,7 +177,7 @@ class Shop:
         else:
             self.previous_section = self.destruct
 
-        self.send_active_message(f"<i><b>Please, select a pack and currency by clicking on a corresponding button</b></i>\n{self.get_balance_message()}", markup=self.buy_premium_markup)
+        self.send_active_message(self.localization["SelectPackAndCurrency"].format(self.get_balance_message()), markup=self.buy_premium_markup)
 
     def choose_effect_to_buy(self, message=None):
         self.current_section = self.choose_effect_to_buy
@@ -188,7 +189,7 @@ class Shop:
 
         self.clear_screen(True)
 
-        self.send_active_message(f"<i><b>Please, select an effect</b></i>\n{self.get_balance_message()}", markup=self.effects_list_markup)
+        self.send_active_message(self.localization["SelectEffect"].format(self.get_balance_message()), markup=self.effects_list_markup)
 
     def choose_effect_pack(self, message=None):
         self.current_section = self.choose_effect_pack
@@ -264,7 +265,7 @@ class Shop:
 
         self.construct_active_pack_markup()
 
-        self.send_active_message(f"<i><b>Please, select pack of effects. Click on the according price to choose currency</b></i>\n{self.get_balance_message()}", markup=self.effect_pack_markup)
+        self.send_active_message(self.localization["SelectEffectPack"].format(self.get_balance_message()), markup=self.effect_pack_markup)
 
     def choose_pack_PP(self, message=None):
 
@@ -276,7 +277,7 @@ class Shop:
         self.OCbutton2.text = f"{self.currency_prices['OCP7']} {self.user_currency}"
         self.OCbutton3.text = f"{self.currency_prices['OCP10']} {self.user_currency}"
 
-        self.send_active_message(f"<i><b>Please, select Points pack. Click on the according price to choose currency</b></i>\n{self.get_balance_message()}", markup=self.buyPP_markup)
+        self.send_active_message(self.localization["SelectPointPack"].format(self.get_balance_message()), markup=self.buyPP_markup)
 
         self.current_section = self.choose_pack_PP
 
@@ -294,7 +295,7 @@ class Shop:
         self.pointsBtn2.text = f"{self.currency_prices['Points500']} {self.user_currency}"
         self.pointsBtn3.text = f"{self.currency_prices['Points2000']} {self.user_currency}"
 
-        self.send_active_message(f"<i><b>Please, select Points pack. Click on the according price to choose currency</b></i>\n{self.get_balance_message()}", markup=self.buy_points_markup)
+        self.send_active_message(self.localization["SelectPointPack"].format(self.get_balance_message()), markup=self.buy_points_markup)
 
         self.current_section = self.choose_pack_points
 
@@ -336,75 +337,75 @@ class Shop:
                 if currency == "1":
                     result = Helpers.grant_premium_for_points(self.current_user, self.chosen_pack_price, 3)
                 elif currency == "2":
-                    self.send_price_invoice("Premium", "3 days of Premium class benefits", self.chosen_pack_price, "Premium")
+                    self.send_price_invoice(self.localization["Premium"], self.localization["3Premium"], self.chosen_pack_price, self.localization["Premium"])
                 elif is_final:
                     result = Helpers.grant_premium_for_real_money(self.current_user, self.chosen_pack_price, 3, self.user_currency)
             elif transaction_type == "2":
                 if currency == "1":
                     result = Helpers.grant_premium_for_points(self.current_user, self.chosen_pack_price, 21)
                 elif currency == "2":
-                    self.send_price_invoice("Premium", "21 days of Premium class benefits", self.chosen_pack_price, "Premium")
+                    self.send_price_invoice(self.localization["Premium"], self.localization["21Premium"], self.chosen_pack_price, self.localization["Premium"])
                 elif is_final:
                     result = Helpers.grant_premium_for_real_money(self.current_user, self.chosen_pack_price, 21, self.user_currency)
             elif transaction_type == "3":
                 if currency == "1":
                     result = Helpers.grant_premium_for_points(self.current_user, self.chosen_pack_price, 30)
                 elif currency == "2":
-                    self.send_price_invoice("Premium", "30 days of Premium class benefits", self.chosen_pack_price, "Premium")
+                    self.send_price_invoice(self.localization["Premium"], self.localization["30Premium"], self.chosen_pack_price, self.localization["Premium"])
                 elif is_final:
                     result = Helpers.grant_premium_for_real_money(self.current_user, self.chosen_pack_price, 30, self.user_currency)
             elif transaction_type == "5":
                 if currency == "1":
                     result = Helpers.purchase_effect_for_points(self.current_user, "5", self.chosen_pack_price, self.active_pack)
                 elif currency == "2":
-                    self.send_price_invoice("Second Chance", f"{self.active_pack} Second Chance\n\n{self.secondChanceDescription}", self.chosen_pack_price, "Effect")
+                    self.send_price_invoice(self.localization['ScecondChance'], f"{self.active_pack} {self.localization['ScecondChance']}\n\n{self.secondChanceDescription}", self.chosen_pack_price, "Effect")
                 elif is_final:
                     result = Helpers.purchase_effect_for_real_money(self.current_user, "5", self.chosen_pack_price, self.user_currency, self.active_pack)
             elif transaction_type == "6":
                 if currency == "1":
                     result = Helpers.purchase_effect_for_points(self.current_user, "6", self.chosen_pack_price, self.active_pack)
                 elif currency == "2":
-                    self.send_price_invoice("The Valentine", f"{self.active_pack} The Valentine\n\n{self.valentineDescription}", self.chosen_pack_price, "Effect")
+                    self.send_price_invoice(self.localization['TheValentine'], f"{self.active_pack} {self.localization['TheValentine']}\n\n{self.valentineDescription}", self.chosen_pack_price, "Effect")
                 elif is_final:
                     result = Helpers.purchase_effect_for_real_money(self.current_user, "6", self.chosen_pack_price, self.user_currency, self.active_pack)
             elif transaction_type == "7":
                 if currency == "1":
                     result = Helpers.purchase_effect_for_points(self.current_user, "7", self.chosen_pack_price, self.active_pack)
                 elif currency == "2":
-                    self.send_price_invoice("The Detector", f"{self.active_pack} The Detector\n\n{self.detectorDescription}", self.chosen_pack_price, "Effect")
+                    self.send_price_invoice(self.localization['TheDetector'], f"{self.active_pack} {self.localization['TheDetector']}\n\n{self.detectorDescription}", self.chosen_pack_price, "Effect")
                 elif is_final:
                     result = Helpers.purchase_effect_for_real_money(self.current_user, "7", self.chosen_pack_price, self.user_currency, self.active_pack)
             elif transaction_type == "8":
                 if currency == "1":
                     result = Helpers.purchase_effect_for_points(self.current_user, "8", self.chosen_pack_price, self.active_pack)
                 elif currency == "2":
-                    self.send_price_invoice("Nullifier", f"{self.active_pack} Nullifier\n\n{self.nullifierDescription}", self.chosen_pack_price, "Effect")
+                    self.send_price_invoice(self.localization['TheNullifier'], f"{self.active_pack} {self.localization['TheNullifier']}\n\n{self.nullifierDescription}", self.chosen_pack_price, "Effect")
                 elif is_final:
                     result = Helpers.purchase_effect_for_real_money(self.current_user, "8", self.chosen_pack_price, self.user_currency, self.active_pack)
             elif transaction_type == "9":
                 if currency == "1":
                     result = Helpers.purchase_effect_for_points(self.current_user, "9", self.chosen_pack_price, self.active_pack)
                 elif currency == "2":
-                    self.send_price_invoice("Card Dec Mini", f"{self.active_pack} Card Dec Mini\n\n{self.cardDeckMiniDescription}", self.chosen_pack_price, "Effect")
+                    self.send_price_invoice(self.localization['CardDeckMini'], f"{self.active_pack} {self.localization['CardDeckMini']}\n\n{self.cardDeckMiniDescription}", self.chosen_pack_price, "Effect")
                 elif is_final:
                     result = Helpers.purchase_effect_for_real_money(self.current_user, "9", self.chosen_pack_price, self.user_currency, self.active_pack)
             elif transaction_type == "10":
                 if currency == "1":
                     result = Helpers.purchase_effect_for_points(self.current_user, "10", self.chosen_pack_price, self.active_pack)
                 elif currency == "2":
-                    self.send_price_invoice("Card Dec Premium", f"{self.active_pack} Card Dec Platinum\n\n{self.cardDeckPlatinumDescription}", self.chosen_pack_price, "Effect")
+                    self.send_price_invoice(self.localization['CardDeckPlatinum'], f"{self.active_pack} {self.localization['CardDeckPlatinum']}\n\n{self.cardDeckPlatinumDescription}", self.chosen_pack_price, "Effect")
                 elif is_final:
                     result = Helpers.purchase_effect_for_real_money(self.current_user, "10", self.chosen_pack_price, self.user_currency, self.active_pack)
             elif transaction_type == "100":
                 if currency == "1":
                     result = Helpers.purchase_PP_for_points(self.current_user, self.chosen_pack_price, self.active_pack)
                 elif currency == "2":
-                    self.send_price_invoice("OCEAN+ points", f"{self.active_pack} OCEAN+ points", self.chosen_pack_price, "OceanPoints")
+                    self.send_price_invoice(self.localization['OP_Points'], f"{self.active_pack} {self.localization['OP_Points']}", self.chosen_pack_price, "OceanPoints")
                 elif is_final:
                     result = Helpers.purchase_PP_for_real_money(self.current_user, self.chosen_pack_price, self.user_currency, self.active_pack)
             elif transaction_type == "101":
                 if currency == "2":
-                    self.send_price_invoice("Points", f"{self.active_pack} Points", self.chosen_pack_price, "Points")
+                    self.send_price_invoice(self.localization["Points"], f"{self.active_pack} {self.localization['Points']}", self.chosen_pack_price, "Points")
                 elif is_final:
                     result = Helpers.purchase_points_for_real_money(self.current_user, self.chosen_pack_price, self.user_currency, self.active_pack)
 
@@ -415,7 +416,7 @@ class Shop:
                 self.proceed(self.message)
 
                 if currency != "2":
-                    self.send_active_transaction_message("Successful!")
+                    self.send_active_transaction_message(self.localization["Successfull"])
 
                 # self.send_active_transaction_message("Transaction was successful")
 
@@ -425,9 +426,9 @@ class Shop:
 
             else:
                 if currency != "2":
-                    self.send_active_transaction_message("Something went wrong")
+                    self.send_active_transaction_message(self.localization["SomethingWrong"])
         else:
-            self.send_active_transaction_message("You dont have enough Coins to buy this item")
+            self.send_active_transaction_message(self.localization["NotEnoughCoins"])
 
     def send_active_transaction_message(self, text):
         if self.active_transaction_status_message is not None:
@@ -591,21 +592,21 @@ class Shop:
         if charge_info.status == "succeeded":
             self.delete_price_invoice()
             self.process_transaction(self.current_transaction, None, is_final=True)
-            self.send_active_transaction_message("Payment was successful!")
+            self.send_active_transaction_message(self.localization["PaymentSuccessfull"])
         # elif charge_info.status == "processing":
         #     pass
         elif charge_info.status == "payment_failed":
-            self.send_active_transaction_message("Payment failed. Please try again or contact the administration")
+            self.send_active_transaction_message(self.localization["PaymentFail"])
 
     def construct_active_pack_markup(self):
         self.effect_pack_markup.clear()
-        self.effect_pack_markup.add(InlineKeyboardButton(f"Buy 3:", callback_data="0"), InlineKeyboardButton(f"{self.active_first_option_price} Coins", callback_data="23"), InlineKeyboardButton(f"{self.active_currency_first_option_price} {self.user_currency}", callback_data="24"))\
-            .add(InlineKeyboardButton(f"Buy 7:", callback_data="0"), InlineKeyboardButton(f"{self.active_second_option_price} Coins", callback_data="25"), InlineKeyboardButton(f"{self.active_currency_second_option_price} {self.user_currency}", callback_data="26"))\
-            .add(InlineKeyboardButton(f"Buy 10:", callback_data="0"), InlineKeyboardButton(f"{self.active_third_option_price} Coins", callback_data="27"), InlineKeyboardButton(f"{self.active_currency_third_option_price} {self.user_currency}", callback_data="28"))\
-            .add(InlineKeyboardButton("Go Back", callback_data="-1"))
+        self.effect_pack_markup.add(InlineKeyboardButton(self.localization["Buy3"], callback_data="0"), InlineKeyboardButton(f"{self.active_first_option_price} Coins", callback_data="23"), InlineKeyboardButton(f"{self.active_currency_first_option_price} {self.user_currency}", callback_data="24"))\
+            .add(InlineKeyboardButton(self.localization["Buy7"], callback_data="0"), InlineKeyboardButton(f"{self.active_second_option_price} Coins", callback_data="25"), InlineKeyboardButton(f"{self.active_currency_second_option_price} {self.user_currency}", callback_data="26"))\
+            .add(InlineKeyboardButton(self.localization["Buy10"], callback_data="0"), InlineKeyboardButton(f"{self.active_third_option_price} Coins", callback_data="27"), InlineKeyboardButton(f"{self.active_currency_third_option_price} {self.user_currency}", callback_data="28"))\
+            .add(InlineKeyboardButton(self.localization["GoBack"], callback_data="-1"))
 
     def get_balance_message(self):
-        return "<i><b>Your current points balance: {}</b></i>".format(self.userBalance['points'])
+        return self.localization["CurrentBalance"].format(self.userBalance['points'])
 
     def clear_screen(self, skipTransaction=False):
         # Clear screen of previous transaction message
@@ -635,7 +636,7 @@ class Shop:
             self.send_active_message(text, markup)
 
     def send_price_invoice(self, title: str, description: str, price: str, invoice_payload: str):
-        priceTag = LabeledPrice("Price", int(price.replace(",", "")))
+        priceTag = LabeledPrice(self.localization["Price"], int(price.replace(",", "")))
         self.delete_price_invoice()
         self.current_invoice_id = self.bot.send_invoice(chat_id=self.current_user, currency=self.user_currency,
                          title=title,
