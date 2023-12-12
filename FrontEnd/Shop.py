@@ -65,7 +65,7 @@ class Shop:
         self.currency_purchaseMarkup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True).add("1", "2", "3")
 
         self.start_markup = InlineKeyboardMarkup().add(InlineKeyboardButton(self.localization["Premium"], callback_data="1"))\
-            .add(InlineKeyboardButton(self.localization["Coinds"], callback_data="2"), InlineKeyboardButton("Effects", callback_data="3"))\
+            .add(InlineKeyboardButton(self.localization["Coinds"], callback_data="2"), InlineKeyboardButton(self.localization["Effects"], callback_data="3"))\
             .add(InlineKeyboardButton(self.localization["OP_Points"], callback_data="4"))\
             .add(InlineKeyboardButton(self.localization["Tests"], callback_data="5"))\
             .add(InlineKeyboardButton(self.localization["Support_Us"], callback_data="6"))\
