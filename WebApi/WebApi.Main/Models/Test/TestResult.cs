@@ -18,8 +18,8 @@ public class TestResult
     [NotNull]
     public int? Score { get; set; }
     [NotNull]
-    public string Result { get; set; }
-    public List<long> Tags { get; set; }
+    public string? Result { get; set; }
+    public List<long>? Tags { get; set; }
 
     public TestResult()
     {}

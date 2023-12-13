@@ -1,5 +1,6 @@
 ﻿using WebApi.Enums.Enums.General;
 using WebApi.Enums.Enums.Report;
+using WebApi.Enums.Enums.Sponsor;
 using WebApi.Enums.Enums.User;
 using WebApi.Models.App_GlobalResources;
 
@@ -45,6 +46,11 @@ namespace WebApi.Models.Utilities
         public static string GetLocalizedValue(Currency effect)
         {
             return Resources.ResourceManager.GetString("Effect_" + effect.ToString()) ?? effect.ToString();
+        }
+
+        public static string GetLocalizedValue(AdvertisementPriority reason)
+        {
+            return Resources.ResourceManager.GetString("AdvertisementPriority_" + reason.ToString()) ?? reason.ToString();
         }
     }
 }

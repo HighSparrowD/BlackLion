@@ -70,6 +70,51 @@ namespace WebApi.Models.App_GlobalResources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to High.
+        /// </summary>
+        public static string AdvertisementPriority_High {
+            get {
+                return ResourceManager.GetString("AdvertisementPriority_High", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Low.
+        /// </summary>
+        public static string AdvertisementPriority_Low {
+            get {
+                return ResourceManager.GetString("AdvertisementPriority_Low", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Medium.
+        /// </summary>
+        public static string AdvertisementPriority_Medium {
+            get {
+                return ResourceManager.GetString("AdvertisementPriority_Medium", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Very High.
+        /// </summary>
+        public static string AdvertisementPriority_VeryHigh {
+            get {
+                return ResourceManager.GetString("AdvertisementPriority_VeryHigh", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Very Low.
+        /// </summary>
+        public static string AdvertisementPriority_VeryLow {
+            get {
+                return ResourceManager.GetString("AdvertisementPriority_VeryLow", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to English.
         /// </summary>
         public static string AppLanguage_Eng {
