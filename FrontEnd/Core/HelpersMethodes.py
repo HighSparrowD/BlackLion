@@ -1,5 +1,9 @@
 import json
+import pickle
+
 import requests
+
+import Models.Advertisement.Advertisement
 
 # Used to for translating Accept-Language header
 languages = {
@@ -789,4 +793,15 @@ def remove_user_story(userId):
     try:
         return requests.delete(f"{api_address}/user-story", verify=False, params={"userId": userId})
     except Exception as ex:
+        return None
+
+def add_advertisement(payload: Models.Advertisement.Advertisement.AdvertisementNew):
+    try:
+        d = payload.to_json()
+
+        requests.post("https://localhost:44381/advertisement", d, headers={
+            "Content-Type": "application/json"}, verify=False)
+        pass
+
+    except:
         return None

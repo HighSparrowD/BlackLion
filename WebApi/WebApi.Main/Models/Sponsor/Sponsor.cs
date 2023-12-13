@@ -27,5 +27,5 @@ public class Sponsor
     public virtual SponsorContactInfo? SponsorContactInfo { get; set; }
     [ForeignKey("StatsId")]
     public virtual Stats? Stats { get; set; }
-    public virtual List<Ad>? SponsorAds { get; set; }
+    public virtual List<Advertisement>? SponsorAds { get; set; }
 }

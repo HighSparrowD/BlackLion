@@ -120,6 +120,21 @@
   <data name="AchievementGrant_Message" xml:space="preserve">
     <value>✨✨Congrats! You have unlocked a new achievement!✨✨</value>
   </data>
+  <data name="AdvertisementPriority_High" xml:space="preserve">
+    <value>High</value>
+  </data>
+  <data name="AdvertisementPriority_Low" xml:space="preserve">
+    <value>Low</value>
+  </data>
+  <data name="AdvertisementPriority_Medium" xml:space="preserve">
+    <value>Medium</value>
+  </data>
+  <data name="AdvertisementPriority_VeryHigh" xml:space="preserve">
+    <value>Very High</value>
+  </data>
+  <data name="AdvertisementPriority_VeryLow" xml:space="preserve">
+    <value>Very Low</value>
+  </data>
   <data name="AppLanguage_Eng" xml:space="preserve">
     <value>English</value>
   </data>

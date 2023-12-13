@@ -120,6 +120,21 @@
   <data name="AchievementGrant_Message" xml:space="preserve">
     <value>✨✨Поздравляем! Вы разблокировали новое достижение!✨✨</value>
   </data>
+  <data name="AdvertisementPriority_High" xml:space="preserve">
+    <value>Высокий</value>
+  </data>
+  <data name="AdvertisementPriority_Low" xml:space="preserve">
+    <value>Низкий</value>
+  </data>
+  <data name="AdvertisementPriority_Medium" xml:space="preserve">
+    <value>Средний</value>
+  </data>
+  <data name="AdvertisementPriority_VeryHigh" xml:space="preserve">
+    <value>Очень высокий</value>
+  </data>
+  <data name="AdvertisementPriority_VeryLow" xml:space="preserve">
+    <value>Очень низкий</value>
+  </data>
   <data name="AppLanguage_Eng" xml:space="preserve">
     <value>Английский</value>
   </data>

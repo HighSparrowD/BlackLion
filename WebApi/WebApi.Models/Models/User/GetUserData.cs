@@ -21,10 +21,16 @@ public class GetUserData
     [JsonPropertyName("identityType")]
     public IdentityConfirmationType IdentityType { get; set; }
     [JsonPropertyName("userData")]
-    public UserData UserData { get; set; }
+    public UserData? UserData { get; set; }
 
-    public GetUserData(User userModel, string descriptionBonus = "")
+    public GetUserData()
+    {}
+
+    public GetUserData(User? userModel, string descriptionBonus = "")
     {
+        if (userModel == null)
+            return;
+
         UserId = userModel.Id;
         Nickname = userModel.Nickname;
         HasPremium = userModel.HasPremium;

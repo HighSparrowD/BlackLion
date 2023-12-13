@@ -48,4 +48,22 @@ public class Settings
             UsesOcean = settings.UsesOcean
         };
     }
+
+    public static implicit operator models.Settings?(Settings? settings)
+    {
+        if (settings == null)
+            return null;
+
+        return new models.Settings
+        {
+            Id = settings.Id,
+            ShouldComment = settings.ShouldComment,
+            ShouldConsiderLanguages = settings.ShouldConsiderLanguages,
+            ShouldFilterUsersWithoutRealPhoto = settings.ShouldFilterUsersWithoutRealPhoto,
+            ShouldSendHints = settings.ShouldSendHints,
+            IncreasedFamiliarity = settings.IncreasedFamiliarity,
+            IsFree = settings.IsFree,
+            UsesOcean = settings.UsesOcean
+        };
+    }
 }

@@ -50,7 +50,7 @@ namespace WebApi.Data
         public DbSet<UserTest> UserTests => Set<UserTest>();
 
         //Sponsors
-        public DbSet<Ad> Ads => Set<Ad>();
+        public DbSet<Advertisement> Advertisements => Set<Advertisement>();
         public DbSet<Sponsor> Sponsors => Set<Sponsor>();
         public DbSet<SponsorLanguage> SponsorLanguages => Set<SponsorLanguage>();
         public DbSet<SponsorContactInfo> SponsorContactInfo => Set<SponsorContactInfo>();
@@ -197,7 +197,7 @@ namespace WebApi.Data
             builder.Entity<UserTest>().ToTable("user_tests");
             builder.Entity<UserTag>().ToTable("user_tags");
             builder.Entity<Tag>().ToTable("tags");
-            builder.Entity<Ad>().ToTable("ads");
+            builder.Entity<Advertisement>().ToTable("advertisements");
             builder.Entity<Sponsor>().ToTable("sponsors");
             builder.Entity<SponsorLanguage>().ToTable("sponsor_languages");
             builder.Entity<SponsorContactInfo>().ToTable("sponsor_contact_info");
@@ -222,7 +222,6 @@ namespace WebApi.Data
         }
 
         //Hilo configuration
-
         private void ConfigureAchievements(ModelBuilder builder)
         {
             const string sequenceName = "achievements_hilo";
@@ -259,7 +258,7 @@ namespace WebApi.Data
                 .StartsAt(1)
                 .IncrementsBy(1);
 
-            builder.Entity<Ad>(b =>
+            builder.Entity<Advertisement>(b =>
             {
                 b.Property(a => a.Id).UseHiLo(sequenceName);
             });

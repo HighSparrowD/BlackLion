@@ -16,7 +16,7 @@ public class TestAnswer
     public double Value { get; set; }
     [NotNull]
     public long TestQuestionId { get; set; }
-    public List<long> Tags { get; set; } = default!;
+    public List<long>? Tags { get; set; }
 
     public TestAnswer()
     {}
