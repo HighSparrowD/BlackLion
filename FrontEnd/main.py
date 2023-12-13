@@ -8,11 +8,10 @@ from FeedbackModule import FeedbackModule
 from Shop import *
 
 import Core.HelpersMethodes as Helpers
-# from Sponsor_Handler import SponsorHandler
-# from SponsorHandlerAdmin import SponsorHandlerAdmin
 from AdminCabinet import AdminCabinet
 from StartModule import StartModule
 from Common.Keyboards import register_markup
+from Advertisement_Module import AdvertisementModule
 
 import os
 from dotenv import load_dotenv
@@ -35,7 +34,6 @@ for user in users:
     go_back_to_main_menu(bot, user, None, False)
 
 random_talkers = []
-sponsor_handlers = []
 admin_sponsor_handlers = []
 admin_cabinets = []
 
@@ -80,11 +78,6 @@ def Report(message):
 def ShopC(message):
     create_shop(message, message.from_user.id)
 
-
-@bot.message_handler(commands=["sponsoraccount"], func=lambda message: message.chat.type == 'private')
-def Sponsor_Handler(message):
-    create_sponsor_handler(message)
-
 #TODO: Past mistake. Remake
 @bot.message_handler(commands=["switchstatus", "showstatus"], func=lambda message: message.chat.type == 'private', is_multihandler=True)
 def SwitchAdminStatus(message):
@@ -118,6 +111,11 @@ def settings(message):
 @bot.message_handler(commands=["adventure"], func=lambda message: message.chat.type == 'private')
 def adventurer(message):
     create_adventurer(message, message.from_user.id)
+
+
+@bot.message_handler(commands=["advertisements"], func=lambda message: message.chat.type == 'private')
+def advertisements(message):
+    create_advertisement_module(message, message.from_user.id)
 
 
 @bot.message_handler(commands=["help"], func=lambda message: message.chat.type == 'private', is_multihandler=True)
@@ -283,15 +281,18 @@ def create_adventurer(message, userId):
         bot.send_message(userId, "Hey! your account had been deleted recently. Would you like to restore it?\n Then hit /registration !")
 
 
-#TODO: Finish up using new functionality (viz another create methods)
-def create_sponsor_handler(message):
-    if Helpers.check_user_is_admin(message.from_user.id):
-        pass
-        # return SponsorHandlerAdmin(bot, message, admin_sponsor_handlers)
-    elif Helpers.check_user_exists(message.from_user.id):
-        visit = Helpers.check_user_has_visited_section(message.from_user.id, 8)
-        # return SponsorHandler(bot, message, sponsor_handlers, visit)
-    send_registration_warning(message.from_user.id)
+def create_advertisement_module(message, userId):
+    response = Helpers.switch_user_busy_status(userId, 13)
+    status = response["status"]
+
+    if status == "Success":  # Success
+        return AdvertisementModule(bot, message, response["hasVisited"])
+    elif status == "Busy":  # Busy
+        return
+    elif status == "DoesNotExist":  # Does not exist
+        send_registration_warning(userId)
+    elif status == "IsDeleted":  # Is deleted
+        bot.send_message(userId, "Hey! your account had been deleted recently. Would you like to restore it?\n Then hit /registration !")
 
 
 def create_admin_cabinet(message):

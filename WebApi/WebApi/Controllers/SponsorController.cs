@@ -11,7 +11,7 @@ namespace WebApi.Controllers
     [ApiController]
     public class SponsorController : Controller
     {
-        [HttpGet("advertisement-list/{sponsorId}")]
+        [HttpGet("/advertisement-list/{sponsorId}")]
         public async Task<ActionResult<List<AdvertisementItem>>> GetAdvertisementList(
             [FromServices] ISponsorRepository sponsorRepo, 
             [FromRoute] int sponsorId)
@@ -20,7 +20,7 @@ namespace WebApi.Controllers
             return Ok(advertisements);
         }
 
-        [HttpGet("advertisement/{id}")]
+        [HttpGet("/advertisement/{id}")]
         public async Task<ActionResult<Advertisement>> GetAdvertisement(
             [FromServices] ISponsorRepository sponsorRepo, 
             [FromRoute] int id)
@@ -29,7 +29,7 @@ namespace WebApi.Controllers
             return Ok(advertisement); 
         }
 
-        [HttpPost("advertisement")]
+        [HttpPost("/advertisement")]
         public async Task<ActionResult> AddAdvertisement(
             [FromServices] ISponsorRepository sponsorRepo, 
             [FromBody] AdvertisementNew model)
@@ -38,7 +38,7 @@ namespace WebApi.Controllers
             return NoContent();
         }
 
-        [HttpPut("advertisement")]
+        [HttpPut("/advertisement")]
         public async Task<ActionResult> UpdateAdvertisement(
             [FromServices] ISponsorRepository sponsorRepo,
             [FromBody] AdvertisementUpdate model)
@@ -47,7 +47,7 @@ namespace WebApi.Controllers
             return NoContent();
         }
 
-        [HttpDelete("advertisement/{id}")]
+        [HttpDelete("/advertisement/{id}")]
         public async Task<ActionResult> DeleteAdvertisement(
             [FromServices] ISponsorRepository sponsorRepo, 
             [FromRoute] int id)
@@ -56,7 +56,7 @@ namespace WebApi.Controllers
             return NoContent();
         }
 
-        [HttpGet("statistics")]
+        [HttpGet("/statistics")]
         public async Task<ActionResult> GetAdvertisementStatistics([FromServices] ISponsorRepository sponsorRepo)
         {
             return null;
@@ -68,7 +68,7 @@ namespace WebApi.Controllers
             return null;
         }
 
-        [HttpGet("advertisement/switch-status/{id}")]
+        [HttpGet("/advertisement/switch-status/{id}")]
         public async Task<ActionResult<List<Advertisement>>> SwitchShowStatus(
             [FromServices] ISponsorRepository sponsorRepo,
             [FromRoute] int id)
@@ -77,7 +77,7 @@ namespace WebApi.Controllers
             return NoContent();
         }
 
-        [HttpGet("priorities/{id}")]
+        [HttpGet("/priorities/{id}")]
         public async Task<ActionResult> SetPriority(
             [FromServices] ISponsorRepository sponsorRepo,
             [FromRoute] int id,
