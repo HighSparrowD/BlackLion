@@ -153,13 +153,13 @@ public class User
         if (user == null)
             return null;
 
-        return new User
+        return new models.User
         {
             Id = user.Id,
             DataId = user.DataId,
             SettingsId = user.SettingsId,
-            Data = user.Data,
-            Settings = user.Settings,
+            Data = (models.UserData?)user.Data,
+            Settings = (models.Settings?)user.Settings,
             AdventureSearchCount = user.AdventureSearchCount,
             MaxAdventureSearchCount = user.MaxAdventureSearchCount,
             MaxTagSearchCount = user.MaxTagSearchCount,

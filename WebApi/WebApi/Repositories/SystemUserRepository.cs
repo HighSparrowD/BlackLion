@@ -342,6 +342,10 @@ namespace WebApi.Repositories
             //TODO: Check current user's blacklist
             //query = query.Where(u => currentUser.BlackList.All(l => l.BannedUserId != u.Id)); 
 
+            var d = query
+                .Select(u => new GetUserData((models.User.User)u, ""))
+                .ToList();
+
             var data = await query.OrderBy(q => EF.Functions.Random())
                 .Select(u => new GetUserData(u, ""))
                 .Take(profileCount)

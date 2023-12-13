@@ -37,11 +37,39 @@ public class UserData
     public static explicit operator UserData? (models.UserData? data)
     {
         if (data == null)
-        {
             return null;
-        }
 
         return new UserData
+        {
+            Id = data.Id,
+            UserStory = data.UserStory,
+            AgePrefs = data.AgePrefs,
+            AutoReplyText = data.AutoReplyText,
+            AutoReplyVoice = data.AutoReplyVoice,
+            CommunicationPrefs = data.CommunicationPrefs,
+            Language = data.Language,
+            LanguagePreferences = data.LanguagePreferences,
+            LocationPreferences = data.LocationPreferences,
+            MediaType = data.MediaType,
+            Reason = data.Reason,
+            UserAge = data.UserAge,
+            UserDescription = data.UserDescription,
+            UserGender = data.UserGender,
+            UserGenderPrefs = data.UserGenderPrefs,
+            UserLanguages = data.UserLanguages,
+            UserMedia = data.UserMedia,
+            UserName = data.UserName,
+            UserRawDescription = data.UserRawDescription,
+            UserRealName = data.UserRealName
+        };
+    }
+
+    public static implicit operator models.UserData?(UserData? data)
+    {
+        if (data == null)
+            return null;
+
+        return new models.UserData
         {
             Id = data.Id,
             UserStory = data.UserStory,

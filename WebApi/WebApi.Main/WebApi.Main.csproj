@@ -7,7 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\WebApi.Enums\WebApi.Enums.csproj" />
     <ProjectReference Include="..\WebApi.Models\WebApi.Models.csproj" />
   </ItemGroup>
 
