@@ -1,5 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using WebApi.Main.Enums.Adventure;
+using WebApi.Enums.Enums.Adventure;
 
 namespace WebApi.Main.Models.Adventure;
 

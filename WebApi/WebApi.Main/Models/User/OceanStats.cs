@@ -1,5 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using models = WebApi.Models.Models.User;
 
+#nullable enable
 namespace WebApi.Main.Models.User;
 
 public class OceanStats
@@ -25,5 +27,39 @@ public class OceanStats
         Agreeableness = 0;
         Neuroticism = 0;
         Nature = 0;
+    }
+
+    public static explicit operator OceanStats? (models.OceanStats os)
+    {
+        if (os == null)
+            return null;
+
+        return new OceanStats
+        {
+            UserId = os.UserId,
+            Agreeableness = os.Agreeableness,
+            Conscientiousness = os.Conscientiousness,
+            Extroversion = os.Extroversion,
+            Nature = os.Nature,
+            Neuroticism = os.Neuroticism,
+            Openness = os.Openness
+        };
+    }
+
+    public static implicit operator models.OceanStats?(OceanStats os)
+    {
+        if (os == null)
+            return null;
+
+        return new models.OceanStats
+        {
+            UserId = os.UserId,
+            Agreeableness = os.Agreeableness,
+            Conscientiousness = os.Conscientiousness,
+            Extroversion = os.Extroversion,
+            Nature = os.Nature,
+            Neuroticism = os.Neuroticism,
+            Openness = os.Openness
+        };
     }
 }

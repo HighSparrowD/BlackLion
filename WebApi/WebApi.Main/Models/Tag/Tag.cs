@@ -1,8 +1,6 @@
-﻿using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using WebApi.Main.Models.Admin;
-using WebApi.Main.Enums.Tag;
+using WebApi.Enums.Enums.Tag;
 
 namespace WebApi.Main.Models.Tag;
 

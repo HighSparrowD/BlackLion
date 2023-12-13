@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using WebApi.Main.Enums.Media;
-using WebApi.Main.Enums.User;
-using WebApi.Main.Enums.General;
+﻿using System.ComponentModel.DataAnnotations;
+using WebApi.Enums.Enums.General;
+using WebApi.Enums.Enums.Media;
+using WebApi.Enums.Enums.User;
+using models = WebApi.Models.Models.User;
 #nullable enable
 
 namespace WebApi.Main.Models.User;
@@ -30,4 +30,39 @@ public class UserData
     public string? UserMedia { get; set; }
     public MediaType MediaType { get; set; }
     public string? UserStory { get; set; }
+
+    public UserData()
+    {}
+
+    public static explicit operator UserData? (models.UserData? data)
+    {
+        if (data == null)
+        {
+            return null;
+        }
+
+        return new UserData
+        {
+            Id = data.Id,
+            UserStory = data.UserStory,
+            AgePrefs = data.AgePrefs,
+            AutoReplyText = data.AutoReplyText,
+            AutoReplyVoice = data.AutoReplyVoice,
+            CommunicationPrefs = data.CommunicationPrefs,
+            Language = data.Language,
+            LanguagePreferences = data.LanguagePreferences,
+            LocationPreferences = data.LocationPreferences,
+            MediaType = data.MediaType,
+            Reason = data.Reason,
+            UserAge = data.UserAge,
+            UserDescription = data.UserDescription,
+            UserGender = data.UserGender,
+            UserGenderPrefs = data.UserGenderPrefs,
+            UserLanguages = data.UserLanguages,
+            UserMedia = data.UserMedia,
+            UserName = data.UserName,
+            UserRawDescription = data.UserRawDescription,
+            UserRealName = data.UserRealName
+        };
+    }
 }

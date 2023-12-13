@@ -1,14 +1,13 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using WebApi.Entities.UserActionEntities;
 using Microsoft.Extensions.Hosting;
 using WebApi.Interfaces;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using WebApi.App_GlobalResources;
 using WebApi.Main.Models.User;
-using WebApi.Main.Enums.General;
-using WebApi.Main.Enums.Notification;
+using WebApi.Models.App_GlobalResources;
+using WebApi.Enums.Enums.Notification;
+using WebApi.Enums.Enums.General;
 
 namespace WebApi.Services.Background
 {

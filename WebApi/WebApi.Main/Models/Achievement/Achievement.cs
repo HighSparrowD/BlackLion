@@ -1,5 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using WebApi.Main.Enums.General;
+using WebApi.Enums.Enums.General;
 using WebApi.Main.Models.Admin;
 
 namespace WebApi.Main.Models.Achievement;

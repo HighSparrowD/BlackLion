@@ -1,8 +1,7 @@
 ﻿using WebApi.Entities.AdminEntities;
-using System.Collections.Generic;
 using System.Text.Json.Serialization;
-using WebApi.Main.Enums.User;
-using WebApi.Main.Enums.General;
+using WebApi.Enums.Enums.General;
+using WebApi.Enums.Enums.User;
 
 #nullable enable
 namespace WebApi.Entities.TestEntities

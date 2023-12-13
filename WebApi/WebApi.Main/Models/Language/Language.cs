@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
-using WebApi.Main.Enums.General;
+using WebApi.Enums.Enums.General;
 
 namespace WebApi.Main.Models.Language
 {

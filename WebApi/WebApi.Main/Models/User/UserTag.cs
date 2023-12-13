@@ -1,5 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using WebApi.Main.Enums.Tag;
+using WebApi.Enums.Enums.Tag;
 
 namespace WebApi.Main.Models.User;
 
@@ -11,7 +11,7 @@ public class UserTag
     public long UserId { get; set; }
     [Key]
     public TagType TagType { get; set; }
-    public virtual Tag.Tag Tag { get; set; }
+    public virtual  Tag.Tag Tag { get; set; }
 
     public UserTag()
     { }

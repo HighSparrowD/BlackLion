@@ -1,9 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using WebApi.Main.Enums.User;
-#pragma warning disable CS8981 // The type name only contains lower-cased ascii characters. Such names may become reserved for the language.
-using entities = WebApi.Main.Models.Location;
-#pragma warning restore CS8981 // The type name only contains lower-cased ascii characters. Such names may become reserved for the language.
+using WebApi.Enums.Enums.User;
+using models = WebApi.Models.Models.User;
 #nullable enable
 
 namespace WebApi.Main.Models.User;
@@ -50,7 +48,7 @@ public class User
 
     public virtual UserData? Data { get; set; }
     public virtual Settings? Settings { get; set; }
-    public virtual entities.Location? Location { get; set; }
+    public virtual Location.Location? Location { get; set; }
     public virtual Statistics? Statistics { get; set; }
     public virtual List<BlackList>? BlackList { get; set; }
     public virtual List<UserTag>? Tags { get; set; }
@@ -102,5 +100,97 @@ public class User
     public string GenerateUserDescription(string? name, int age, string? country, string? city, string? description)
     {
         return $"{name}, {age},\n({country} - {city})\n\n{description}";
+    }
+
+    public static explicit operator User? (models.User user)
+    {
+        if (user == null)
+            return null;
+
+        return new User
+        {
+            Id = user.Id,
+            DataId = user.DataId,
+            SettingsId = user.SettingsId,
+            Data = (UserData?)user.Data,
+            Settings = (Settings?)user.Settings,
+            AdventureSearchCount= user.AdventureSearchCount,
+            MaxAdventureSearchCount = user.MaxAdventureSearchCount,
+            MaxTagSearchCount = user.MaxTagSearchCount,
+            TagSearchesCount = user.TagSearchesCount,
+            BanDate = user.BanDate,
+            BonusIndex = user.BonusIndex,
+            DailyRewardPoint = user.DailyRewardPoint,
+            DeleteDate = user.DeleteDate,
+            EnteredPromoCodes = user.EnteredPromoCodes,
+            HadReceivedReward = user.HadReceivedReward,
+            HasPremium = user.HasPremium,
+            IdentityType = user.IdentityType,
+            InvitedUsersBonus = user.InvitedUsersBonus,
+            InvitedUsersCount = user.InvitedUsersCount,
+            IsBanned = user.IsBanned,
+            IsBusy = user.IsBusy,
+            IsDecoy = user.IsDecoy,
+            IsDeleted = user.IsDeleted,
+            IsUpdated = user.IsUpdated,
+            Location = (Location.Location?)user.Location,
+            MaxProfileViewsCount = user.MaxProfileViewsCount,
+            MaxRTViewsCount = user.MaxRTViewsCount,
+            Nickname = user.Nickname,
+            RTViewsCount = user.RTViewsCount,
+            LocationId = user.LocationId,
+            ReportCount = user.ReportCount,
+            ParentId = user.ParentId,
+            ProfileViewsCount = user.ProfileViewsCount,
+            PremiumExpirationDate = user.PremiumExpirationDate,
+            PremiumDuration = user.PremiumDuration,
+            ShouldEnhance = user.ShouldEnhance,
+        };
+    }
+
+    public static implicit operator models.User? (User? user)
+    {
+        if (user == null)
+            return null;
+
+        return new User
+        {
+            Id = user.Id,
+            DataId = user.DataId,
+            SettingsId = user.SettingsId,
+            Data = user.Data,
+            Settings = user.Settings,
+            AdventureSearchCount = user.AdventureSearchCount,
+            MaxAdventureSearchCount = user.MaxAdventureSearchCount,
+            MaxTagSearchCount = user.MaxTagSearchCount,
+            TagSearchesCount = user.TagSearchesCount,
+            BanDate = user.BanDate,
+            BonusIndex = user.BonusIndex,
+            DailyRewardPoint = user.DailyRewardPoint,
+            DeleteDate = user.DeleteDate,
+            EnteredPromoCodes = user.EnteredPromoCodes,
+            HadReceivedReward = user.HadReceivedReward,
+            HasPremium = user.HasPremium,
+            IdentityType = user.IdentityType,
+            InvitedUsersBonus = user.InvitedUsersBonus,
+            InvitedUsersCount = user.InvitedUsersCount,
+            IsBanned = user.IsBanned,
+            IsBusy = user.IsBusy,
+            IsDecoy = user.IsDecoy,
+            IsDeleted = user.IsDeleted,
+            IsUpdated = user.IsUpdated,
+            Location = user.Location,
+            MaxProfileViewsCount = user.MaxProfileViewsCount,
+            MaxRTViewsCount = user.MaxRTViewsCount,
+            Nickname = user.Nickname,
+            RTViewsCount = user.RTViewsCount,
+            LocationId = user.LocationId,
+            ReportCount = user.ReportCount,
+            ParentId = user.ParentId,
+            ProfileViewsCount = user.ProfileViewsCount,
+            PremiumExpirationDate = user.PremiumExpirationDate,
+            PremiumDuration = user.PremiumDuration,
+            ShouldEnhance = user.ShouldEnhance,
+        };
     }
 }

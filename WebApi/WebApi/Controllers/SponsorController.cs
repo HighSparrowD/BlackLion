@@ -1,11 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using WebApi.Entities.SponsorEntities;
-using WebApi.Entities.UserInfoEntities;
 using WebApi.Interfaces;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using WebApi.Main.Models.Sponsor;
 
 namespace WebApi.Controllers

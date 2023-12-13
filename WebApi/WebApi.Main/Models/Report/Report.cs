@@ -1,7 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System;
 using System.ComponentModel.DataAnnotations.Schema;
-using WebApi.Main.Enums.Report;
+using WebApi.Enums.Enums.Report;
 
 #nullable enable
 

@@ -1,5 +1,4 @@
-﻿using System;
-using WebApi.Main.Enums.General;
+﻿using WebApi.Enums.Enums.General;
 
 namespace WebApi.Main.Models.Effect;
 

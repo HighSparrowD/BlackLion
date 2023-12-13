@@ -1,26 +1,24 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using WebApi.Data;
-using WebApi.Entities.AchievementEntities;
-using WebApi.Entities.AdminEntities;
 using WebApi.Entities.TestEntities;
 using WebApi.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using WebApi.Entities;
 using Microsoft.OpenApi.Validations;
 using WebApi.Main.Models.Admin;
 using WebApi.Main.Models.Achievement;
 using WebApi.Main.Models.Location;
 using WebApi.Main.Models.Language;
 using WebApi.Main.Models.Report;
-using WebApi.Main.Enums.User;
 using WebApi.Main.Models.User;
-using WebApi.Main.Enums.Notification;
-using WebApi.Main.Enums.General;
 using WebApi.Main.Models.Test;
-using WebApi.Main.Enums.Tag;
+using WebApi.Models.Models.Admin;
+using WebApi.Enums.Enums.User;
+using WebApi.Enums.Enums.Notification;
+using WebApi.Enums.Enums.General;
+using WebApi.Enums.Enums.Tag;
 
 namespace WebApi.Repositories
 {

@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using WebApi.Main.Enums.User;
+using WebApi.Enums.Enums.User;
 
 namespace WebApi.Main.Models.Admin;
 

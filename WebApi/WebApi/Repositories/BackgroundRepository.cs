@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using WebApi.Data;
-using WebApi.Entities.UserInfoEntities;
 using WebApi.Interfaces;
 using System.Collections.Generic;
 using System.Linq;

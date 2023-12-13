@@ -3,17 +3,15 @@ using WebApi.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using WebApi.Entities.TestEntities;
 using System.Linq;
 using System;
-using WebApi.Entities.UserActionEntities;
-using WebApi.Utilities;
-using WebApi.Main.Models.Test;
-using WebApi.Main.Enums.General;
 using WebApi.Main.Models.Language;
-using WebApi.Main.Enums.User;
-using WebApi.Main.Enums.Report;
 using WebApi.Main.Models.Location;
+using WebApi.Models.Models.User;
+using WebApi.Enums.Enums.General;
+using WebApi.Models.Utilities;
+using WebApi.Enums.Enums.Report;
+using WebApi.Enums.Enums.User;
 
 namespace WebApi.Repositories
 {
@@ -116,7 +114,7 @@ namespace WebApi.Repositories
                 .ToListAsync();
         }
 
-        public async Task<Test> GetSingleTestAsync(long testId, AppLanguage localisationId)
+        public async Task<Models.Models.Test.Test> GetSingleTestAsync(long testId, AppLanguage localisationId)
         {
             // TODO: Apply commented code when test are localized
             return await _contx.Tests

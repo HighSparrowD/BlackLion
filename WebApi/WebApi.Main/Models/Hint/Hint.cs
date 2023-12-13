@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using WebApi.Main.Enums.General;
-using WebApi.Main.Enums.Hint;
+using WebApi.Enums.Enums.General;
+using WebApi.Enums.Enums.Hint;
 
 namespace WebApi.Main.Models.Hint;
 

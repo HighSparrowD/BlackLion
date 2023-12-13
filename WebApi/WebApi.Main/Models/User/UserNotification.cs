@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using WebApi.Main.Enums.Notification;
-using WebApi.Main.Enums.General;
+using WebApi.Enums.Enums.General;
+using WebApi.Enums.Enums.Notification;
 
 #nullable enable
 namespace WebApi.Main.Models.User;

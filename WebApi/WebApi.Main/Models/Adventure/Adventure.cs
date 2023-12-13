@@ -1,12 +1,10 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using WebApi.Main.Enums.Adventure;
-using WebApi.Main.Enums.Media;
-using WebApi.Main.Enums.General;
+using WebApi.Enums.Enums.Adventure;
+using WebApi.Enums.Enums.General;
+using WebApi.Enums.Enums.Media;
 using WebApi.Main.Models.Location;
-#pragma warning disable CS8981 // The type name only contains lower-cased ascii characters. Such names may become reserved for the language.
-using entities = WebApi.Main.Models.User;
-#pragma warning restore CS8981 // The type name only contains lower-cased ascii characters. Such names may become reserved for the language.
+using models = WebApi.Models.Models.Adventure;
 
 #nullable enable
 namespace WebApi.Main.Models.Adventure;
@@ -45,8 +43,90 @@ public class Adventure
     public long? GroupId { get; set; }
     public AdventureStatus Status { get; set; }
 
-    public virtual entities.User? Creator { get; set; }
+    public virtual User.User? Creator { get; set; }
     public virtual Country? Country { get; set; }
     public virtual City? City { get; set; }
     public virtual List<AdventureAttendee>? Attendees { get; set; }
+
+    public static explicit operator Adventure?(models.Adventure? adventure)
+    {
+        if (adventure == null)
+            return null;
+
+        return new Adventure
+        {
+            Id = adventure.Id,
+            Status = adventure.Status,
+            Address = adventure.Address,
+            Application = adventure.Application,
+            AttendeesDescription = adventure.AttendeesDescription,
+            AutoReply = adventure.AutoReply,
+            CityId = adventure.CityId,
+            CityCountryLang = adventure.CityCountryLang,
+            CountryId = adventure.CountryId,
+            CountryLang = adventure.CountryLang,
+            Date = adventure.Date,
+            DeleteDate = adventure.DeleteDate,
+            Description = adventure.Description,
+            Duration = adventure.Duration,
+            Experience = adventure.Experience,
+            Gratitude = adventure.Gratitude,
+            GroupId = adventure.GroupId,
+            GroupLink = adventure.GroupLink,
+            IsAutoReplyText = adventure.IsAutoReplyText,
+            IsAwaiting = adventure.IsAwaiting,
+            IsOffline = adventure.IsOffline,
+            Media = adventure.Media,
+            MediaType = adventure.MediaType,
+            Name = adventure.Name,
+            Time = adventure.Time,
+            UniqueLink = adventure.UniqueLink,
+            UnwantedAttendeesDescription = adventure.UnwantedAttendeesDescription,
+            UserId = adventure.UserId,
+            City = (City)adventure.City!,
+            Country = (Country)adventure.Country!,
+            Creator = (User.User)adventure.Creator!
+        };
+    }
+
+    public static implicit operator models.Adventure?(Adventure? adventure)
+    {
+        if (adventure == null)
+            return null;
+
+        return new models.Adventure
+        {
+            Id = adventure.Id,
+            Status = adventure.Status,
+            Address = adventure.Address,
+            Application = adventure.Application,
+            AttendeesDescription = adventure.AttendeesDescription,
+            AutoReply = adventure.AutoReply,
+            CityId = adventure.CityId,
+            CityCountryLang = adventure.CityCountryLang,
+            CountryId = adventure.CountryId,
+            CountryLang = adventure.CountryLang,
+            Date = adventure.Date,
+            DeleteDate = adventure.DeleteDate,
+            Description = adventure.Description,
+            Duration = adventure.Duration,
+            Experience = adventure.Experience,
+            Gratitude = adventure.Gratitude,
+            GroupId = adventure.GroupId,
+            GroupLink = adventure.GroupLink,
+            IsAutoReplyText = adventure.IsAutoReplyText,
+            IsAwaiting = adventure.IsAwaiting,
+            IsOffline = adventure.IsOffline,
+            Media = adventure.Media,
+            MediaType = adventure.MediaType,
+            Name = adventure.Name,
+            Time = adventure.Time,
+            UniqueLink = adventure.UniqueLink,
+            UnwantedAttendeesDescription = adventure.UnwantedAttendeesDescription,
+            UserId = adventure.UserId,
+            City = (City)adventure.City!,
+            Country = (Country)adventure.Country!,
+            Creator = (User.User)adventure.Creator!
+        };
+    }
 }

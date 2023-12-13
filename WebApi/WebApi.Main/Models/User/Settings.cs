@@ -1,5 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using models = WebApi.Models.Models.User;
 
+#nullable enable
 namespace WebApi.Main.Models.User;
 
 public class Settings
@@ -27,5 +29,23 @@ public class Settings
         ShouldSendHints = true;
         IncreasedFamiliarity = true;
         IsFree = false;
+    }
+
+    public static explicit operator Settings? (models.Settings? settings)
+    {
+        if (settings == null)
+            return null;
+
+        return new Settings
+        {
+            Id = settings.Id,
+            ShouldComment = settings.ShouldComment,
+            ShouldConsiderLanguages = settings.ShouldConsiderLanguages,
+            ShouldFilterUsersWithoutRealPhoto = settings.ShouldFilterUsersWithoutRealPhoto,
+            ShouldSendHints = settings.ShouldSendHints,
+            IncreasedFamiliarity = settings.IncreasedFamiliarity,
+            IsFree = settings.IsFree,
+            UsesOcean = settings.UsesOcean
+        };
     }
 }

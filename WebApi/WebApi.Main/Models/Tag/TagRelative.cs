@@ -1,4 +1,4 @@
-﻿using WebApi.Main.Enums.Tag;
+﻿using WebApi.Enums.Enums.Tag;
 
 namespace WebApi.Main.Models.Tag;
 

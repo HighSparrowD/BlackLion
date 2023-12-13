@@ -1,6 +1,4 @@
-﻿using WebApi.Main.Models.Admin;
-using System;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace WebApi.Main.Models.Sponsor;
 

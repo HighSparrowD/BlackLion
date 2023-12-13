@@ -4,21 +4,21 @@ using WebApi.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using WebApi.Entities.UserInfoEntities;
-using WebApi.Entities.AchievementEntities;
-using WebApi.Entities.UserActionEntities;
-using WebApi.Entities.TestEntities;
-using WebApi.Entities.AdventureEntities;
-using WebApi.Entities;
 using WebApi.Main.Models.User;
 using WebApi.Main.Models.Location;
 using WebApi.Main.Models.Report;
 using WebApi.Main.Models.Achievement;
-using WebApi.Main.Models.Adventure;
-using WebApi.Main.Enums.General;
-using WebApi.Main.Enums.User;
 using RegisterEncounter = WebApi.Main.Models.User.RegisterEncounter;
-using WebApi.Main.Enums.Adventure;
+using WebApi.Models.Models.Test;
+using WebApi.Models.Models.User;
+using WebApi.Models.Models.Adventure;
+using WebApi.Models.User;
+using WebApi.Models.Models.Achievement;
+using WebApi.Enums.Enums.Responses;
+using WebApi.Enums.Enums.Adventure;
+using WebApi.Enums.Enums.General;
+using models = WebApi.Models.Models;
+using WebApi.Enums.Enums.User;
 
 namespace WebApi.Controllers
 {
@@ -103,7 +103,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/GetUserByUsername/{username}")]
-        public async Task<ActionResult<User>> GetUserInfo(string username)
+        public async Task<ActionResult<Models.Models.User.User>> GetUserInfo(string username)
         {
             return await _repository.GetUserInfoByUsrnameAsync(username);
         }
@@ -121,7 +121,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/GetBaseUserInfo")]
-        public Task<List<User>> GetBaseUserInfo()
+        public Task<List<Models.Models.User.User>> GetBaseUserInfo()
         {
             throw new NotImplementedException();
         }
@@ -320,7 +320,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/switch-busy-status/{userId}/{section}")]
-        public async Task<SwitchBusyStatusResponse> SwhitchUserBusyStatus([FromRoute] long userId, [FromRoute]Section section)
+        public async Task<SwitchBusyStatusResponse> SwhitchUserBusyStatus([FromRoute] long userId, [FromRoute] Section section)
         {
             return await _repository.SwhitchUserBusyStatus(userId, section);
         }
@@ -527,9 +527,9 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/ocean-points/{userId}")]
-        public async Task<OceanPoints> GetUserPersonalityPoints(long userId)
+        public async Task<models.User.OceanPoints> GetOceanPoints(long userId)
         {
-            return await _repository.GetUserPersonalityPoints(userId);
+            return await _repository.GetOceanPoints(userId);
         }
 
         [HttpGet("/switch-ocean-usage/{userId}")]
@@ -619,13 +619,13 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/non-possest-test")]
-        public async Task<List<GetTestShortData>> GetTestDataByProperty([FromQuery] long userId, [FromQuery] Main.Enums.User.OceanStats param)
+        public async Task<List<GetTestShortData>> GetTestDataByProperty([FromQuery] long userId, [FromQuery] Enums.Enums.User.OceanStats param)
         {
             return await _repository.GetTestDataByPropertyAsync(userId, param);
         }
 
         [HttpGet("/test-data-by-prop")]
-        public async Task<List<GetTestShortData>> GetUserTestDataByProperty([FromQuery] long userId, [FromQuery] Main.Enums.User.OceanStats? param)
+        public async Task<List<GetTestShortData>> GetUserTestDataByProperty([FromQuery] long userId, [FromQuery] Enums.Enums.User.OceanStats? param)
         {
             return await _repository.GetUserTestDataByPropertyAsync(userId, param);
         }
@@ -869,7 +869,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/GetUsersSubscribedAdventures/{userId}")]
-        public async Task<List<Adventure>> GetUsersSubscribedAdventures(long userId)
+        public async Task<List<Models.Models.Adventure.Adventure>> GetUsersSubscribedAdventures(long userId)
         {
             return await _repository.GetUsersSubscribedAdventuresAsync(userId);
         }

@@ -1,13 +1,13 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using WebApi.Entities.AdminEntities;
 using WebApi.Entities.TestEntities;
 using WebApi.Interfaces;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using WebApi.Entities;
 using WebApi.Main.Models.Report;
 using WebApi.Main.Models.Admin;
+using WebApi.Models.Models.Admin;
+using WebApi.Models.Models.User;
 
 namespace WebApi.Controllers
 {
@@ -154,7 +154,7 @@ namespace WebApi.Controllers
                 try
                 {
                     var initialUser = await userRepo.GetUserInfoAsync(userId);
-                    await userRepo.RegisterUserAsync(new Entities.UserActionEntities.UserRegistrationModel
+                    await userRepo.RegisterUserAsync(new UserRegistrationModel
                     {
                         UserName = initialUser.UserName,
                         Age = initialUser.UserAge,

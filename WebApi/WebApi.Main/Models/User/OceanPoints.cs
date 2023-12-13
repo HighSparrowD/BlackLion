@@ -1,7 +1,8 @@
-﻿using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
+using enums = WebApi.Enums.Enums.User;
+using models = WebApi.Models.Models.User;
 
+#nullable enable
 namespace WebApi.Main.Models.User;
 
 public class OceanPoints
@@ -41,43 +42,43 @@ public class OceanPoints
         NaturePercentage = 1;
     }
 
-    public async Task<List<Enums.User.OceanStats>> GetImportantParams()
+    public async Task<List<enums.OceanStats>> GetImportantParams()
     {
-        var importantParams = new List<Enums.User.OceanStats>();
+        var importantParams = new List<enums.OceanStats>();
         var theBiggest = 0;
 
         await Task.Run(() =>
         {
             for (int i = 0; i < 3; i++)
             {
-                if (Openness > theBiggest && !importantParams.Contains(Enums.User.OceanStats.Openness))
+                if (Openness > theBiggest && !importantParams.Contains(enums.OceanStats.Openness))
                 {
-                    importantParams.Add(Enums.User.OceanStats.Openness);
+                    importantParams.Add(enums.OceanStats.Openness);
                     theBiggest = Openness;
                 }
-                else if (Conscientiousness > theBiggest && !importantParams.Contains(Enums.User.OceanStats.Conscientiousness))
+                else if (Conscientiousness > theBiggest && !importantParams.Contains(enums.OceanStats.Conscientiousness))
                 {
-                    importantParams.Add(Enums.User.OceanStats.Conscientiousness);
+                    importantParams.Add(enums.OceanStats.Conscientiousness);
                     theBiggest = Conscientiousness;
                 }
-                else if (Extroversion > theBiggest && !importantParams.Contains(Enums.User.OceanStats.Extroversion))
+                else if (Extroversion > theBiggest && !importantParams.Contains(enums.OceanStats.Extroversion))
                 {
-                    importantParams.Add(Enums.User.OceanStats.Extroversion);
+                    importantParams.Add(enums.OceanStats.Extroversion);
                     theBiggest = Extroversion;
                 }
-                else if (Agreeableness > theBiggest && !importantParams.Contains(Enums.User.OceanStats.Agreeableness))
+                else if (Agreeableness > theBiggest && !importantParams.Contains(enums.OceanStats.Agreeableness))
                 {
-                    importantParams.Add(Enums.User.OceanStats.Agreeableness);
+                    importantParams.Add(enums.OceanStats.Agreeableness);
                     theBiggest = Agreeableness;
                 }
-                else if (Neuroticism > theBiggest && !importantParams.Contains(Enums.User.OceanStats.Neuroticism))
+                else if (Neuroticism > theBiggest && !importantParams.Contains(enums.OceanStats.Neuroticism))
                 {
-                    importantParams.Add(Enums.User.OceanStats.Neuroticism);
+                    importantParams.Add(enums.OceanStats.Neuroticism);
                     theBiggest = Neuroticism;
                 }
-                else if (Nature > theBiggest && !importantParams.Contains(Enums.User.OceanStats.Nature))
+                else if (Nature > theBiggest && !importantParams.Contains(enums.OceanStats.Nature))
                 {
-                    importantParams.Add(Enums.User.OceanStats.Nature);
+                    importantParams.Add(enums.OceanStats.Nature);
                     theBiggest = Nature;
                 }
 
@@ -86,5 +87,51 @@ public class OceanPoints
         });
 
         return importantParams;
+    }
+
+    public static explicit operator OceanPoints? (models.OceanPoints? op)
+    {
+        if (op == null)
+            return null;
+
+        return new OceanPoints
+        {
+            UserId = op.UserId,
+            Agreeableness = op.Agreeableness,
+            AgreeablenessPercentage = op.AgreeablenessPercentage,
+            Conscientiousness = op.Conscientiousness,
+            ConscientiousnessPercentage = op.ConscientiousnessPercentage,
+            Extroversion = op.Extroversion,
+            ExtroversionPercentage = op.ExtroversionPercentage,
+            Nature = op.Nature,
+            NaturePercentage = op.NaturePercentage,
+            Neuroticism = op.Neuroticism,
+            NeuroticismPercentage = op.NeuroticismPercentage,
+            Openness = op.Openness,
+            OpennessPercentage = op.OpennessPercentage
+        };
+    }
+
+    public static implicit operator models.OceanPoints? (OceanPoints? op)
+    {
+        if (op == null)
+            return null;
+
+        return new models.OceanPoints
+        {
+            UserId = op.UserId,
+            Agreeableness = op.Agreeableness,
+            AgreeablenessPercentage = op.AgreeablenessPercentage,
+            Conscientiousness = op.Conscientiousness,
+            ConscientiousnessPercentage = op.ConscientiousnessPercentage,
+            Extroversion = op.Extroversion,
+            ExtroversionPercentage = op.ExtroversionPercentage,
+            Nature = op.Nature,
+            NaturePercentage = op.NaturePercentage,
+            Neuroticism = op.Neuroticism,
+            NeuroticismPercentage = op.NeuroticismPercentage,
+            Openness = op.Openness,
+            OpennessPercentage = op.OpennessPercentage
+        };
     }
 }
