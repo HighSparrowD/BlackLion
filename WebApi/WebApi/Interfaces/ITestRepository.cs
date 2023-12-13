@@ -1,10 +1,9 @@
-﻿using WebApi.Entities.LocationEntities;
-using WebApi.Entities.SecondaryEntities;
-using WebApi.Entities.TestEntities;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using WebApi.Entities.UserActionEntities;
-using WebApi.Enums;
+using WebApi.Main.Models.Location;
+using WebApi.Main.Models.Language;
+using WebApi.Models.Models.User;
+using WebApi.Enums.Enums.General;
 
 namespace WebApi.Interfaces
 {
@@ -17,7 +16,7 @@ namespace WebApi.Interfaces
         Task<List<City>> GetCities(int countryId, AppLanguage localisationId);
         Task<List<Country>> GetCountries(AppLanguage localisationId);
         Task<List<Language>> GetLanguagesAsync(AppLanguage localisationId);
-        Task<Test> GetSingleTestAsync(long testId, AppLanguage localisationId);
+        Task<Models.Models.Test.Test> GetSingleTestAsync(long testId, AppLanguage localisationId);
         //Task<List<IntellectualTest>> GetIntellectualTestsAsync();
         //Task<List<string>> GetSimmilarTagsAsync(string tag);
     }

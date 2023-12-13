@@ -1,11 +1,9 @@
 ﻿using System.Threading.Tasks;
 using System.Collections.Generic;
-using WebApi.Entities.ReportEntities;
-using WebApi.Entities.AchievementEntities;
-using WebApi.Entities.AdminEntities;
 using WebApi.Entities.TestEntities;
-using WebApi.Entities;
-using WebApi.Enums;
+using WebApi.Main.Models.Admin;
+using WebApi.Main.Models.Report;
+using WebApi.Models.Models.Admin;
 
 namespace WebApi.Interfaces
 {

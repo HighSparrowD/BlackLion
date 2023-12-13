@@ -1,16 +1,22 @@
 ﻿using System.Threading.Tasks;
 using System.Collections.Generic;
-using WebApi.Entities.UserInfoEntities;
-using WebApi.Entities.ReportEntities;
-using WebApi.Entities.LocationEntities;
-using WebApi.Entities.AchievementEntities;
 using System;
-using WebApi.Entities.UserActionEntities;
-using WebApi.Enums;
-using WebApi.Entities.TestEntities;
-using WebApi.Entities.AdventureEntities;
-using WebApi.Entities;
-using OceanStats = WebApi.Enums.OceanStats;
+using WebApi.Main.Models.User;
+using WebApi.Main.Models.Achievement;
+using WebApi.Main.Models.Report;
+using WebApi.Main.Models.Location;
+using RegisterEncounter = WebApi.Main.Models.User.RegisterEncounter;
+using WebApi.Models.Models.Test;
+using WebApi.Models.Models.User;
+using WebApi.Enums.Enums.Tag;
+using WebApi.Enums.Enums.General;
+using WebApi.Enums.Enums.User;
+using WebApi.Models.Models.Achievement;
+using WebApi.Enums.Enums.Responses;
+using WebApi.Models.User;
+using WebApi.Models.Models.Adventure;
+using WebApi.Enums.Enums.Adventure;
+using WebApi.Enums.Enums.Notification;
 
 namespace WebApi.Interfaces
 {
@@ -33,7 +39,7 @@ namespace WebApi.Interfaces
         Task<string> AnswerUserRequestAsync(long rquestId, RequestAnswer reaction);
         Task<byte> DeleteUserRequests(long userId);
         Task DeleteUserRequest(long requestId);
-        Task<User> GetUserInfoByUsrnameAsync(string username);
+        Task<Models.Models.User.User> GetUserInfoByUsrnameAsync(string username);
         Task<BasicUserInfo> GetUserBasicInfo(long userId);
         Task<UserPartialData> GetUserPartialData(long userId);
         Task<byte> UpdateUserAppLanguageAsync(long userId, AppLanguage appLanguage);
@@ -110,7 +116,7 @@ namespace WebApi.Interfaces
         Task<int> GetUserPersonalityPointsAmount(long userId);
         Task<bool> UpdateOceanStatsAsync(TestPayload model);
         Task<bool> UpdateUserPersonalityPoints(PointsPayload model);
-        Task<OceanPoints> GetUserPersonalityPoints(long userId);
+        Task<Models.Models.User.OceanPoints> GetOceanPoints(long userId);
         Task<bool?> CheckUserUsesPersonality(long userId);
         Task<bool> RegisterTestPassingAsync(TestPayload model, float testResult);
         Task<bool> UpdateTags(UpdateTags model);
@@ -133,8 +139,8 @@ namespace WebApi.Interfaces
         Task<bool> SendTickRequestAsync(SendTickRequest request);
         Task<bool> SwitchUserFilteringByPhotoAsync(long userId);
         Task<bool> GetUserFilteringByPhotoStatusAsync(long userId);
-        Task<List<GetTestShortData>> GetTestDataByPropertyAsync(long userId, OceanStats param);
-        Task<List<GetTestShortData>> GetUserTestDataByPropertyAsync(long userId, OceanStats? param);
+        Task<List<GetTestShortData>> GetTestDataByPropertyAsync(long userId, Enums.Enums.User.OceanStats param);
+        Task<List<GetTestShortData>> GetUserTestDataByPropertyAsync(long userId, Enums.Enums.User.OceanStats? param);
         Task<GetFullTestData> GetTestFullDataByIdAsync(long testId, AppLanguage localisation);
         Task<GetUserTest> GetUserTestAsync(long userId, long testId);
         Task<int> GetPossibleTestPassRangeAsync(long userId, long testId);
@@ -176,7 +182,7 @@ namespace WebApi.Interfaces
         Task<ManageTemplate> GetAdventureTemplateAsync(long id);
         Task<bool> ProcessSubscriptionRequestAsync(long adventureId, long userId, AdventureAttendeeStatus status);
         Task<List<AttendeeInfo>> GetAdventureAttendeesAsync(long adventureId);
-        Task<List<Adventure>> GetUsersSubscribedAdventuresAsync(long userId);
+        Task<List<Models.Models.Adventure.Adventure>> GetUsersSubscribedAdventuresAsync(long userId);
         Task<List<GetAdventure>> GetUserAdventuresAsync(long userId);
         Task<ManageAdventure> GetAdventureAsync(long id);
         Task<AdventureSearchResponse> GetAdventuresAsync(long userId);

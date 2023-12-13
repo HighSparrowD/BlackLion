@@ -1,6 +1,6 @@
-﻿using WebApi.Entities.UserInfoEntities;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using WebApi.Main.Models.User;
 
 namespace WebApi.Interfaces
 {

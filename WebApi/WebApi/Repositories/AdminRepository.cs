@@ -1,20 +1,24 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using WebApi.Data;
-using WebApi.Entities.AchievementEntities;
-using WebApi.Entities.AdminEntities;
-using WebApi.Entities.LocationEntities;
-using WebApi.Entities.ReportEntities;
-using WebApi.Entities.SecondaryEntities;
 using WebApi.Entities.TestEntities;
-using WebApi.Enums;
 using WebApi.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using WebApi.Entities;
-using WebApi.Entities.SystemEntitires;
 using Microsoft.OpenApi.Validations;
+using WebApi.Main.Models.Admin;
+using WebApi.Main.Models.Achievement;
+using WebApi.Main.Models.Location;
+using WebApi.Main.Models.Language;
+using WebApi.Main.Models.Report;
+using WebApi.Main.Models.User;
+using WebApi.Main.Models.Test;
+using WebApi.Models.Models.Admin;
+using WebApi.Enums.Enums.User;
+using WebApi.Enums.Enums.Notification;
+using WebApi.Enums.Enums.General;
+using WebApi.Enums.Enums.Tag;
 
 namespace WebApi.Repositories
 {
@@ -262,7 +266,7 @@ namespace WebApi.Repositories
             await _contx.SaveChangesAsync();
 
             if (model.IsAccepted)
-                await _userRep.AddUserNotificationAsync(new Entities.UserActionEntities.UserNotification
+                await _userRep.AddUserNotificationAsync(new UserNotification
                 {
                     Description = $"Your identity confirmation had been accepted :)\n{model.Comment}",
                     UserId = request.UserId,
@@ -270,7 +274,7 @@ namespace WebApi.Repositories
                     Section = Section.Neutral,
                 });
             else
-                await _userRep.AddUserNotificationAsync(new Entities.UserActionEntities.UserNotification
+                await _userRep.AddUserNotificationAsync(new UserNotification
                 {
                     Description = $"Sorry, your identity confirmation request had been denied.\n{model.Comment}",
                     UserId = request.UserId,

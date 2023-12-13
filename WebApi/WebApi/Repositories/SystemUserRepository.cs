@@ -1,28 +1,36 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using WebApi.Data;
-using WebApi.Entities.AchievementEntities;
-using WebApi.Entities.AdminEntities;
-using WebApi.Entities.AdventureEntities;
-using WebApi.Entities.EffectEntities;
-using WebApi.Entities.LocationEntities;
-using WebApi.Entities.ReportEntities;
-using WebApi.Entities.SecondaryEntities;
-using WebApi.Entities.TestEntities;
-using WebApi.Entities.UserActionEntities;
-using WebApi.Entities.UserInfoEntities;
-using WebApi.Enums;
-using WebApi.Interfaces;
-using WebApi.Utilities;
 using QRCoder;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using WebApi.Entities;
-using OceanStats = WebApi.Enums.OceanStats;
-using WebApi.Entities.SystemEntitires;
-using WebApi.App_GlobalResources;
-using WebApi.Entities.SponsorEntities;
+using WebApi.Main.Models.User;
+using WebApi.Main.Models.Location;
+using WebApi.Main.Models.Report;
+using WebApi.Main.Models.Achievement;
+using WebApi.Main.Models.Admin;
+using WebApi.Main.Models.PromoCode;
+using WebApi.Main.Models.Adventure;
+using WebApi.Main.Models.Tag;
+using WebApi.Models.User;
+using WebApi.Models.Models.Test;
+using WebApi.Models.Models.User;
+using WebApi.Models.Models.Adventure;
+using WebApi.Enums.Enums.General;
+using WebApi.Enums.Enums.Tag;
+using WebApi.Models.Utilities;
+using WebApi.Enums.Enums.User;
+using WebApi.Enums.Enums.Adventure;
+using WebApi.Enums.Enums.Responses;
+using WebApi.Enums.Enums.Report;
+using WebApi.Enums.Enums.Notification;
+using WebApi.Enums.Enums.Hint;
+using WebApi.Models.Models.Achievement;
+using WebApi.Models.App_GlobalResources;
+using WebApi.Interfaces;
+using entities = WebApi.Main.Models;
+using models = WebApi.Models.Models;
 
 namespace WebApi.Repositories
 {
@@ -41,7 +49,7 @@ namespace WebApi.Repositories
             var city = "---";
 
             Location location = null;
-            var user = new User(model.Id);
+            var user = new Main.Models.User.User(model.Id);
             user.EnteredPromoCodes = model.Promo;
 
             if (model.CityCode != null && model.CountryCode != null)
@@ -63,7 +71,7 @@ namespace WebApi.Repositories
                 location = new Location { Id = model.Id };
             }
 
-            var uData = new UserData
+            var uData = new Main.Models.User.UserData
             {
                 Id = model.Id,
                 UserLanguages = model.Languages,
@@ -84,7 +92,7 @@ namespace WebApi.Repositories
                 UserRealName = model.RealName,
             };
 
-            var uSettings = new Settings(model.Id, model.UsesOcean);
+            var uSettings = new Main.Models.User.Settings(model.Id, model.UsesOcean);
             var uStats = new Statistics(model.Id);
 
             user.LocationId = location.Id;
@@ -113,8 +121,8 @@ namespace WebApi.Repositories
 
             if (model.UsesOcean)
             {
-                var personalityStats = new Entities.UserInfoEntities.OceanStats(model.Id);
-                var personalityPoints = new OceanPoints(model.Id);
+                var personalityStats = new Main.Models.User.OceanStats(model.Id);
+                var personalityPoints = new Main.Models.User.OceanPoints(model.Id);
             }
 
             var invitation = await GetInvitationAsync(model.Id);
@@ -383,7 +391,7 @@ namespace WebApi.Repositories
             return new SearchResponse(returnData);
         }
 
-        private async Task<GetUserData> AssembleProfileAsync(User currentUser, GetUserData outputUser)
+        private async Task<GetUserData> AssembleProfileAsync(entities.User.User currentUser, GetUserData outputUser)
         {
             var bonus = "";
 
@@ -403,7 +411,7 @@ namespace WebApi.Repositories
             return outputUser;
         }
 
-        private async Task<GetUserData> GetOceanMatchResult(User currentUser, GetUserData managedUser, bool isRepeated)
+        private async Task<GetUserData> GetOceanMatchResult(entities.User.User currentUser, GetUserData managedUser, bool isRepeated)
         {
             var returnUser = await AssembleProfileAsync(currentUser, managedUser);
 
@@ -485,7 +493,7 @@ namespace WebApi.Repositories
                     if (personalitySim <= currentValueMax && personalitySim >= currentValueMin)
                     {
                         bonus += "[O] ";
-                        if (important.Contains(Enums.OceanStats.Openness))
+                        if (important.Contains(Enums.Enums.User.OceanStats.Openness))
                         {
                             importantMatches++;
                         }
@@ -510,7 +518,7 @@ namespace WebApi.Repositories
                     if (emIntellectSim <= currentValueMax && emIntellectSim >= currentValueMin)
                     {
                         bonus += "[C] ";
-                        if (important.Contains(Enums.OceanStats.Conscientiousness))
+                        if (important.Contains(Enums.Enums.User.OceanStats.Conscientiousness))
                         {
                             importantMatches++;
                         }
@@ -535,7 +543,7 @@ namespace WebApi.Repositories
                     if (reliabilitySim <= currentValueMax && reliabilitySim >= currentValueMin)
                     {
                         bonus += "[E] ";
-                        if (important.Contains(Enums.OceanStats.Extroversion))
+                        if (important.Contains(Enums.Enums.User.OceanStats.Extroversion))
                         {
                             importantMatches++;
                         }
@@ -560,7 +568,7 @@ namespace WebApi.Repositories
                     if (compassionSim <= currentValueMax && compassionSim >= currentValueMin)
                     {
                         bonus += "[A] ";
-                        if (important.Contains(Enums.OceanStats.Agreeableness))
+                        if (important.Contains(Enums.Enums.User.OceanStats.Agreeableness))
                         {
                             importantMatches++;
                         }
@@ -586,7 +594,7 @@ namespace WebApi.Repositories
                     if (openMindSim <= currentValueMax && openMindSim >= currentValueMin)
                     {
                         bonus += "[N] ";
-                        if (important.Contains(Enums.OceanStats.Neuroticism))
+                        if (important.Contains(Enums.Enums.User.OceanStats.Neuroticism))
                         {
                             importantMatches++;
                         }
@@ -611,7 +619,7 @@ namespace WebApi.Repositories
                     if (natureSim <= currentValueMax && natureSim >= currentValueMin)
                     {
                         bonus += "[+] ";
-                        if (important.Contains(Enums.OceanStats.Nature))
+                        if (important.Contains(Enums.Enums.User.OceanStats.Nature))
                         {
                             importantMatches++;
                         }
@@ -780,7 +788,7 @@ namespace WebApi.Repositories
             return false;
         }
 
-        public async Task<User> GetUserInfoByUsrnameAsync(string username)
+        public async Task<Models.Models.User.User> GetUserInfoByUsrnameAsync(string username)
         {
             return await _contx.Users
                 .Where(u => u.Data.UserName == username)
@@ -1160,8 +1168,8 @@ namespace WebApi.Repositories
 
                         if (result)
                         {
-                            await RegisterUserEncounter(new RegisterEncounter { UserId = user1, EncounteredUserId = user2, Section = Section.RT });
-                            await RegisterUserEncounter(new RegisterEncounter { UserId = user2, EncounteredUserId = user1, Section = Section.RT });
+                            await RegisterUserEncounter(new Main.Models.User.RegisterEncounter { UserId = user1, EncounteredUserId = user2, Section = Section.RT });
+                            await RegisterUserEncounter(new Main.Models.User.RegisterEncounter { UserId = user2, EncounteredUserId = user1, Section = Section.RT });
                         }
 
                         return result;
@@ -1176,8 +1184,8 @@ namespace WebApi.Repositories
 
                         if (result)
                         {
-                            await RegisterUserEncounter(new RegisterEncounter { UserId = user1, EncounteredUserId = user2, Section = Section.RT});
-                            await RegisterUserEncounter(new RegisterEncounter { UserId = user2, EncounteredUserId = user1, Section = Section.RT });
+                            await RegisterUserEncounter(new Main.Models.User.RegisterEncounter { UserId = user1, EncounteredUserId = user2, Section = Section.RT});
+                            await RegisterUserEncounter(new Main.Models.User.RegisterEncounter { UserId = user2, EncounteredUserId = user1, Section = Section.RT });
                         }
 
                         return result;
@@ -1192,8 +1200,8 @@ namespace WebApi.Repositories
 
                         if (result)
                         {
-                            await RegisterUserEncounter(new RegisterEncounter { UserId = user1, EncounteredUserId = user2, Section = Section.RT});
-                            await RegisterUserEncounter(new RegisterEncounter { UserId = user2, EncounteredUserId = user1, Section = Section.RT });
+                            await RegisterUserEncounter(new Main.Models.User.RegisterEncounter { UserId = user1, EncounteredUserId = user2, Section = Section.RT});
+                            await RegisterUserEncounter(new Main.Models.User.RegisterEncounter { UserId = user2, EncounteredUserId = user1, Section = Section.RT });
                         }
 
                         return result;
@@ -1202,8 +1210,8 @@ namespace WebApi.Repositories
                     await AddUserTrustProgressAsync(user1, 0.000005 * (double)userInfo1.BonusIndex);
                     await AddUserTrustProgressAsync(user2, 0.000005 * (double)userInfo2.BonusIndex);
 
-                    await RegisterUserEncounter(new RegisterEncounter { UserId = user1, EncounteredUserId = user2, Section = Section.RT });
-                    await RegisterUserEncounter(new RegisterEncounter { UserId = user2, EncounteredUserId = user1, Section = Section.RT });
+                    await RegisterUserEncounter(new Main.Models.User.RegisterEncounter { UserId = user1, EncounteredUserId = user2, Section = Section.RT });
+                    await RegisterUserEncounter(new Main.Models.User.RegisterEncounter { UserId = user2, EncounteredUserId = user1, Section = Section.RT });
 
                     //If neither considers having the same languages
                     return true;
@@ -1439,10 +1447,11 @@ namespace WebApi.Repositories
             return user.PremiumExpirationDate.Value;
         }
 
-        private async Task<User> GetUserWithPremium(long userId, DateTime timeNow)
+        private async Task<Main.Models.User.User> GetUserWithPremium(long userId, DateTime timeNow)
         {
             return await _contx.Users
                 .Where(u => u.Id == userId && (bool)u.HasPremium && u.PremiumExpirationDate > timeNow)
+                .AsNoTracking()
                 .FirstOrDefaultAsync();
         }
 
@@ -1698,7 +1707,7 @@ namespace WebApi.Repositories
             notification.Section = Section.Familiator;
 
 
-            await RegisterUserEncounter(new RegisterEncounter { UserId = (long)model.SenderId, EncounteredUserId = model.UserId, Section = Section.Familiator});
+            await RegisterUserEncounter(new Main.Models.User.RegisterEncounter { UserId = (long)model.SenderId, EncounteredUserId = model.UserId, Section = Section.Familiator});
 
 
             //Register request
@@ -1818,8 +1827,8 @@ namespace WebApi.Repositories
             var doesExist = await _contx.Requests.AnyAsync(r => r.UserId == user && r.SenderId == encounteredUser);
 
             //Encounter is not registered anywhere but here in that case
-            await RegisterUserEncounter(new RegisterEncounter
-            {
+            await RegisterUserEncounter(new Main.Models.User.RegisterEncounter
+			{
                 UserId = user,
                 EncounteredUserId = encounteredUser,
                 Section = Section.Familiator
@@ -2052,7 +2061,7 @@ namespace WebApi.Repositories
             return true;
         }
 
-        public async Task RegisterUserEncounter(RegisterEncounter model)
+        public async Task RegisterUserEncounter(Main.Models.User.RegisterEncounter model)
         {
             var user = await _contx.Users.FindAsync(model.UserId);
 
@@ -2698,7 +2707,7 @@ namespace WebApi.Repositories
             return true;
         }
 
-        public async Task<OceanPoints> GetUserPersonalityPoints(long userId)
+        public async Task<models.User.OceanPoints> GetOceanPoints(long userId)
         {
             var points = await _contx.OceanPoints
                     .Where(s => s.UserId == userId)
@@ -2706,18 +2715,18 @@ namespace WebApi.Repositories
 
             if (points == null)
             {
-                points = new OceanPoints(userId);
+                points = new entities.User.OceanPoints(userId);
                 await _contx.OceanPoints.AddAsync(points);
             }
 
-            return points;
+            return (models.User.OceanPoints) points;
         }
 
-        private async Task<OceanPoints> RecalculateSimilarityPercentage(PointsPayload model)
+        private async Task<models.User.OceanPoints> RecalculateSimilarityPercentage(PointsPayload model)
         {
             try
             {
-                var points = await GetUserPersonalityPoints(model.UserId);
+                var points = await GetOceanPoints(model.UserId);
 
                 if (model.Openness != null)
                 {
@@ -2771,7 +2780,7 @@ namespace WebApi.Repositories
             //Create user stats if they werent created before
             if (userStats == null)
             {
-                userStats = new Entities.UserInfoEntities.OceanStats(model.UserId);
+                userStats = new Main.Models.User.OceanStats(model.UserId);
                 await _contx.OceanStats.AddAsync(userStats);
                 await _contx.SaveChangesAsync();
             }
@@ -2834,7 +2843,7 @@ namespace WebApi.Repositories
             }
 
             await _contx.SaveChangesAsync();
-            return new RecalculationResult { Stats = userStats, TestResult = result};
+            return new RecalculationResult { Stats = (models.User.OceanStats)userStats, TestResult = result};
         }
 
         private async Task<float> CalculateSimilarityPreferences(int points, float similarityCoefficient)
@@ -2881,7 +2890,7 @@ namespace WebApi.Repositories
                     //Add ocean stats, if they were not created when user was registered
                     if (oceanStats == null)
                     {
-                        oceanStats = new Entities.UserInfoEntities.OceanStats(userId);
+                        oceanStats = new Main.Models.User.OceanStats(userId);
                         await _contx.OceanStats.AddAsync(oceanStats);
                         await _contx.SaveChangesAsync();
                     }
@@ -2889,7 +2898,7 @@ namespace WebApi.Repositories
                     //Add ocean points, if they were not created when user was registered
                     if (oceanPoints == null)
                     {
-                        oceanPoints = new OceanPoints(userId);
+                        oceanPoints = new entities.User.OceanPoints(userId);
                         await _contx.OceanPoints.AddAsync(oceanPoints);
                         await _contx.SaveChangesAsync();
                     }
@@ -3223,7 +3232,7 @@ namespace WebApi.Repositories
         {
             try
             {
-                ActiveEffect effect;
+                entities.Effect.ActiveEffect effect;
                 var userBalance = await GetUserWalletBalance(userId);
 
                 switch (effectId)
@@ -3239,7 +3248,7 @@ namespace WebApi.Repositories
                                 if (userBalance.Valentines > 0)
                                 {
                                     userBalance.Valentines--;
-                                    effect = new TheValentine(userId);
+                                    effect = new Main.Models.Effect.TheValentine(userId);
                                     break;
                                 }
                                 return null;
@@ -3256,7 +3265,7 @@ namespace WebApi.Repositories
                         if (userBalance.Detectors > 0)
                         {
                             userBalance.Detectors--;
-                            effect = new TheDetector(userId);
+                            effect = new Main.Models.Effect.TheDetector(userId);
                             break;
                         }
                         return null;
@@ -3337,7 +3346,7 @@ namespace WebApi.Repositories
             catch { return false; }
         }
 
-        private bool AtLeastOneIsNotZero(OceanPoints points)
+        private bool AtLeastOneIsNotZero(Main.Models.User.OceanPoints points)
         {
             return points.Agreeableness > 0 ||
                 points.Conscientiousness > 0 ||
@@ -3349,15 +3358,18 @@ namespace WebApi.Repositories
         {
             try
             {
-                var effectsToRemove = new List<ActiveEffect>();
+                var effectsToRemove = new List<Main.Models.Effect.ActiveEffect>();
                 var effectsToReturn = new List<GetActiveEffect>();
+                var activeEffects = await _contx.ActiveEffects
+                    .Where(e => e.UserId == userId)
+                    .ToListAsync();
 
-                foreach (var effect in await _contx.ActiveEffects.Where(e => e.UserId == userId).ToListAsync())
+                foreach (var effect in activeEffects)
                 {
                     if (effect.ExpirationTime.Value <= DateTime.UtcNow)
                         effectsToRemove.Add(effect);
                     else
-                        effectsToReturn.Add(new GetActiveEffect(effect));
+                        effectsToReturn.Add(new GetActiveEffect((models.Effect.ActiveEffect)effect));
                 }
 
                 if (effectsToRemove.Count > 0)
@@ -3490,7 +3502,7 @@ namespace WebApi.Repositories
             return userPrefs.ShouldFilterUsersWithoutRealPhoto;
         }
 
-        public async Task<List<GetTestShortData>> GetTestDataByPropertyAsync(long userId, OceanStats param)
+        public async Task<List<GetTestShortData>> GetTestDataByPropertyAsync(long userId, Enums.Enums.User.OceanStats param)
         {
             var localisation = await _contx.UserData.Where(u => u.Id == userId).Select(u => u.Language)
                 .FirstOrDefaultAsync();
@@ -3524,7 +3536,7 @@ namespace WebApi.Repositories
             if (test == null)
                 throw new NullReferenceException($"User {userId} does not have Test {testId}");
 
-            return new GetUserTest(test);
+            return new GetUserTest((models.User.UserTest)test);
         }
 
         public async Task<int> GetPossibleTestPassRangeAsync(long userId, long testId)
@@ -3563,7 +3575,7 @@ namespace WebApi.Repositories
             if (currency == Currency.Points)
                 balance.Points -= cost;
 
-            await _contx.UserTests.AddAsync(new UserTest
+            await _contx.UserTests.AddAsync(new Main.Models.User.UserTest
             {
                 UserId = userId,
                 TestId = testId,
@@ -3575,7 +3587,7 @@ namespace WebApi.Repositories
             await _contx.SaveChangesAsync();
         }
 
-        public async Task<List<GetTestShortData>> GetUserTestDataByPropertyAsync(long userId, OceanStats? param)
+        public async Task<List<GetTestShortData>> GetUserTestDataByPropertyAsync(long userId, Enums.Enums.User.OceanStats? param)
         {
             //Get users tests
             return await _contx.UserTests.Where(t => t.UserId == userId && t.TestType == param)
@@ -3660,7 +3672,7 @@ namespace WebApi.Repositories
 
             if (stats == null)
             {
-                stats = new Entities.UserInfoEntities.OceanStats(userId);
+                stats = new Main.Models.User.OceanStats(userId);
                 await _contx.AddAsync(stats);
             }
 
@@ -3966,7 +3978,7 @@ namespace WebApi.Repositories
                 .Select(u => u.Language)
                 .FirstOrDefaultAsync();
 
-            var adventure = new Adventure
+            var adventure = new entities.Adventure.Adventure
             {
                 UserId = model.UserId,
                 Name = model.Name,
@@ -4166,13 +4178,14 @@ namespace WebApi.Repositories
             }).ToListAsync();
         }
 
-        public async Task<List<Adventure>> GetUsersSubscribedAdventuresAsync(long userId)
+        public async Task<List<Models.Models.Adventure.Adventure>> GetUsersSubscribedAdventuresAsync(long userId)
         {
             var adventureIds = await _contx.AdventureAttendees.Where(a => a.UserId == userId)
                 .Select(a => a.AdventureId)
                 .ToListAsync();
 
             return await _contx.Adventures.Where(a => adventureIds.Contains(a.Id))
+                .Select(a => (models.Adventure.Adventure)a)
                 .ToListAsync();
         }
 
@@ -4711,7 +4724,7 @@ namespace WebApi.Repositories
                         .Where(t => t.MatchDifference)
                         .OrderByDescending(t => t.MatchDifference)
                         .Take(2)
-                        .Select(t => new TagRelative(t.TagId, t.TagType))
+                        .Select(t => new Main.Models.Tag.TagRelative(t.TagId, t.TagType))
                         .ToListAsync();
 
                     var newTag = new Tag(tag, type);
@@ -4776,5 +4789,5 @@ namespace WebApi.Repositories
 
             await _contx.SaveChangesAsync();
         }
-    }
+	}
 }

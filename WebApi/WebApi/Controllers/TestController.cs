@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using WebApi.Interfaces;
 using Microsoft.Extensions.Logging;
-using WebApi.Entities.TestEntities;
-using WebApi.Entities.SecondaryEntities;
-using WebApi.Entities.LocationEntities;
-using WebApi.Entities.UserActionEntities;
-using WebApi.Enums;
+using WebApi.Main.Models.Location;
+using WebApi.Main.Models.Language;
+using WebApi.Main.Models.Test;
+using WebApi.Models.Models.User;
+using WebApi.Enums.Enums.General;
+using models = WebApi.Models.Models.Test;
 
 namespace WebApi.Controllers
 {
@@ -67,18 +68,11 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/single-test/{id}/{language}")]
-        public async Task<Test> GetSingleTest(long id, AppLanguage language)
+        public async Task<models.Test> GetSingleTest(long id, AppLanguage language)
         {
              var tests = await _repository.GetSingleTestAsync(id, language);
             return tests;
         }
-
-        //[HttpGet("/GetIntellectualTests")]
-        //public async Task<List<IntellectualTest>> GetIntellectualTests()
-        //{
-        //    var tests = await _repository.GetIntellectualTestsAsync();
-        //    return tests;
-        //}
 
         [HttpGet("/similar-tags")]
         public IActionResult GetSimmilarTagsAsync()
