@@ -48,6 +48,16 @@ class AdvertisementModule:
             self.delete_active_message()
             self.send_active_message(text, markup)
 
+    def send_error_message(self, text, markup=None):
+        try:
+            if self.error_message:
+                self.bot.edit_message_text(text, self.current_user, self.secondary_message, reply_markup=markup)
+                return
+            self.error_message = self.bot.send_message(self.current_user, text, reply_markup=markup).id
+        except:
+            self.delete_error_message()
+            self.send_error_message(text, markup)
+
     def delete_active_message(self):
         if self.active_message:
             self.bot.delete_message(self.current_user, self.active_message)
@@ -86,3 +96,7 @@ class AdvertisementModule:
         if call.data == 'exit':
             self.destruct()
             self.bot.callback_query_handlers.remove(self.current_callback_handler)
+        elif call.data == 'all_stat':
+            self.send_error_message('This feature isn`t ready')
+        elif call.data == 'my_ads':
+            self.send_error_message('This feature isn`t ready')
