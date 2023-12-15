@@ -20,4 +20,69 @@ class AdvertisementModule:
         self.hasVisited = hasVisited
         self.user_language = self.user_info["language"]
 
+        self.return_method = None
 
+        self.active_message = None
+        self.secondary_message = None
+        self.additional_message = None
+        self.error_message = None
+
+        self.current_callback_handler = self.bot.register_callback_query_handler(message, self.callback_handler, user_id=self.current_user)
+
+        self.main_menu_markup = InlineKeyboardMarkup().add(InlineKeyboardButton('My ads', callback_data='my_ads'))\
+            .add(InlineKeyboardButton('Overall statistics', callback_data='all_stat'))\
+            .add(InlineKeyboardButton('Exit', callback_data='exit'))
+
+        self.start()
+
+    def start(self):
+        self.send_active_message('What you want to see?', markup=self.main_menu_markup)
+
+    def send_active_message(self, text, markup):
+        try:
+            if self.active_message:
+                self.bot.edit_message_text(text, self.current_user, self.active_message, reply_markup=markup)
+                return
+            self.active_message = self.bot.send_message(self.current_user, text, reply_markup=markup).id
+        except:
+            self.delete_active_message()
+            self.send_active_message(text, markup)
+
+    def delete_active_message(self):
+        if self.active_message:
+            self.bot.delete_message(self.current_user, self.active_message)
+            self.active_message = None
+
+    def delete_secondary_message(self):
+        if self.secondary_message:
+            self.bot.delete_message(self.current_user, self.secondary_message)
+            self.secondary_message = None
+
+    def delete_error_message(self):
+        if self.error_message:
+            self.bot.delete_message(self.current_user, self.error_message)
+            self.error_message = None
+
+    def delete_additional_message(self):
+        if self.additional_message:
+            self.bot.delete_message(self.current_user, self.additional_message)
+            self.additional_message = None
+
+    def cleanup(self):
+        self.delete_active_message()
+        self.delete_secondary_message()
+        self.delete_error_message()
+        self.delete_additional_message()
+
+    def destruct(self):
+        self.cleanup()
+        if self.return_method:
+            self.return_method()
+        else:
+            go_back_to_main_menu(self.bot, self.current_user, self.message)
+        del self
+
+    def callback_handler(self, call):
+        if call.data == 'exit':
+            self.destruct()
+            self.bot.callback_query_handlers.remove(self.current_callback_handler)
