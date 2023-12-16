@@ -5,6 +5,7 @@ menu_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True) 
          KeyboardButton("/random"),
          KeyboardButton("/feedback"),
          KeyboardButton("/settings"),
+         KeyboardButton("/advertisements"),
          KeyboardButton("/adventure"),
          KeyboardButton("/shop"))
 
