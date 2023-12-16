@@ -149,7 +149,6 @@ namespace WebApi.Repositories
                 var userBalances = await _contx.Balances.ToListAsync();
                 var userNotifications = await _contx.Notifications.ToListAsync();
                 var userNotifications1 = await _contx.Notifications.ToListAsync();
-                var sponsorRatings = await _contx.SponsorRatings.ToListAsync();
 
                 _contx.UserLocations.RemoveRange(userLocation);
                 _contx.UserAchievements.RemoveRange(userAchievements);
@@ -157,7 +156,6 @@ namespace WebApi.Repositories
                 _contx.Transaction.RemoveRange(userPurchases);
                 _contx.Notifications.RemoveRange(userNotifications);
                 _contx.Notifications.RemoveRange(userNotifications1);
-                _contx.SponsorRatings.RemoveRange(sponsorRatings);
                 _contx.UsersSettings.RemoveRange(userData);
                 _contx.Users.RemoveRange(user);
 

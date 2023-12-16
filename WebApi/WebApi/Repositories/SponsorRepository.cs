@@ -24,7 +24,7 @@ namespace WebApi.Repositories
 
         public async Task<List<AdvertisementItem>> GetAdvertisementListAsync(int sponsorId)
         {
-            var advertisements = await _contx.Advertisements.Where(a => a.SponsorId == sponsorId)
+            var advertisements = await _contx.Advertisements.Where(a => a.UserId == sponsorId)
                 .AsNoTracking()
                 .Select(a => (AdvertisementItem)a)
                 .ToListAsync();
@@ -34,7 +34,7 @@ namespace WebApi.Repositories
 
         public async Task<Models.Models.Sponsor.Advertisement> GetAdvertisementAsync(int advertisementId)
         {
-            var advertisement = await _contx.Advertisements.Where(a => a.SponsorId == advertisementId && a.Deleted == null)
+            var advertisement = await _contx.Advertisements.Where(a => a.UserId == advertisementId && a.Deleted == null)
                 .AsNoTracking()
                 .Select(a => (Models.Models.Sponsor.Advertisement)a)
                 .FirstOrDefaultAsync();
@@ -52,7 +52,7 @@ namespace WebApi.Repositories
 
         public async Task UpdateAdvertisementAsync(AdvertisementUpdate model)
         {
-            var advertisement = await _contx.Advertisements.Where(a => a.SponsorId == model.Id && a.Deleted == null)
+            var advertisement = await _contx.Advertisements.Where(a => a.UserId == model.Id && a.Deleted == null)
                 .FirstOrDefaultAsync();
 
             advertisement.Update(model);
@@ -61,7 +61,7 @@ namespace WebApi.Repositories
 
         public async Task DeleteAdvertisementAsync(int advertisementId)
         {
-            var advertisement = await _contx.Advertisements.Where(a => a.SponsorId == advertisementId && a.Deleted == null)
+            var advertisement = await _contx.Advertisements.Where(a => a.UserId == advertisementId && a.Deleted == null)
                 .FirstOrDefaultAsync();
 
             advertisement.Deleted = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
@@ -86,7 +86,7 @@ namespace WebApi.Repositories
 
         public async Task SetAdvertisementPriorityAsync(int advertisementId, AdvertisementPriority priority)
         {
-            var advertisement = await _contx.Advertisements.Where(a => a.SponsorId == advertisementId && a.Deleted == null)
+            var advertisement = await _contx.Advertisements.Where(a => a.UserId == advertisementId && a.Deleted == null)
                 .FirstOrDefaultAsync();
 
             advertisement.Priority = priority;
@@ -95,7 +95,7 @@ namespace WebApi.Repositories
 
         public async Task SwitchShowStatusAsync(int advertisementId)
         {
-            var advertisement = await _contx.Advertisements.Where(a => a.SponsorId == advertisementId && a.Deleted == null)
+            var advertisement = await _contx.Advertisements.Where(a => a.UserId == advertisementId && a.Deleted == null)
                 .FirstOrDefaultAsync();
 
             advertisement.Show = !advertisement.Show;

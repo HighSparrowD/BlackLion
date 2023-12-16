@@ -11,7 +11,7 @@ public class Advertisement
     public long Id { get; set; }
 
     [JsonPropertyName("sponsorId")]
-    public long SponsorId { get; set; }
+    public long UserId { get; set; }
 
     [JsonPropertyName("text")]
     public string? Text { get; set; }

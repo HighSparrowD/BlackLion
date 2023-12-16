@@ -51,12 +51,12 @@ namespace WebApi.Data
 
         //Sponsors
         public DbSet<Advertisement> Advertisements => Set<Advertisement>();
-        public DbSet<Sponsor> Sponsors => Set<Sponsor>();
-        public DbSet<SponsorLanguage> SponsorLanguages => Set<SponsorLanguage>();
-        public DbSet<SponsorContactInfo> SponsorContactInfo => Set<SponsorContactInfo>();
-        public DbSet<SponsorNotification> SponsorNotifications => Set<SponsorNotification>();
-        public DbSet<SponsorRating> SponsorRatings => Set<SponsorRating>();
-        public DbSet<Stats> SponsorStats => Set<Stats>();
+        //public DbSet<Sponsor> Sponsors => Set<Sponsor>();
+        //public DbSet<SponsorLanguage> SponsorLanguages => Set<SponsorLanguage>();
+        //public DbSet<SponsorContactInfo> SponsorContactInfo => Set<SponsorContactInfo>();
+        //public DbSet<SponsorNotification> SponsorNotifications => Set<SponsorNotification>();
+        //public DbSet<SponsorRating> SponsorRatings => Set<SponsorRating>();
+        //public DbSet<Stats> SponsorStats => Set<Stats>();
         public DbSet<TrustLevel> TrustLevels => Set<TrustLevel>();
         public DbSet<DailyReward> DailyRewards => Set<DailyReward>();
         public DbSet<InvitationCredentials> InvitationCredentials => Set<InvitationCredentials>();
@@ -124,7 +124,7 @@ namespace WebApi.Data
             builder.Entity<Location>().HasOne(u => u.City);
 
             builder.Entity<Country>().HasMany(c => c.Cities);
-            builder.Entity<Sponsor>().HasMany(s => s.SponsorAds);
+            //builder.Entity<Sponsor>().HasMany(s => s.SponsorAds);
             builder.Entity<Test>().HasMany(t => t.Questions);
             builder.Entity<Test>().HasMany(t => t.Results);
             builder.Entity<Test>().HasMany(t => t.Scales);
@@ -151,8 +151,8 @@ namespace WebApi.Data
             builder.Entity<Adventure>().HasMany(a => a.Attendees);
             builder.Entity<AdventureAttendee>().HasKey(t => new { t.UserId, t.AdventureId });
 
-            builder.Entity<Sponsor>().HasMany(s => s.SponsorLanguages);
-            builder.Entity<SponsorLanguage>().HasOne(s => s.Language);
+            //builder.Entity<Sponsor>().HasMany(s => s.SponsorLanguages);
+            //builder.Entity<SponsorLanguage>().HasOne(s => s.Language);
 
             builder.Entity<UserNotification>().HasOne(un => un.Receiver);
             
@@ -198,12 +198,12 @@ namespace WebApi.Data
             builder.Entity<UserTag>().ToTable("user_tags");
             builder.Entity<Tag>().ToTable("tags");
             builder.Entity<Advertisement>().ToTable("advertisements");
-            builder.Entity<Sponsor>().ToTable("sponsors");
-            builder.Entity<SponsorLanguage>().ToTable("sponsor_languages");
-            builder.Entity<SponsorContactInfo>().ToTable("sponsor_contact_info");
-            builder.Entity<SponsorNotification>().ToTable("sponsor_notifications");
-            builder.Entity<SponsorRating>().ToTable("sponsor_ratings");
-            builder.Entity<Stats>().ToTable("sponsor_stats");
+            //builder.Entity<Sponsor>().ToTable("sponsors");
+            //builder.Entity<SponsorLanguage>().ToTable("sponsor_languages");
+            //builder.Entity<SponsorContactInfo>().ToTable("sponsor_contact_info");
+            //builder.Entity<SponsorNotification>().ToTable("sponsor_notifications");
+            //builder.Entity<SponsorRating>().ToTable("sponsor_ratings");
+            //builder.Entity<Stats>().ToTable("sponsor_stats");
             builder.Entity<TrustLevel>().ToTable("trust_levels");
             builder.Entity<DailyReward>().ToTable("daily_rewards");
             builder.Entity<InvitationCredentials>().ToTable("invitation_credentials");
