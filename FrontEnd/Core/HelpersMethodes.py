@@ -1,5 +1,6 @@
 import json
 import pickle
+from typing import Union
 
 import requests
 
@@ -807,7 +808,7 @@ def add_advertisement(payload: advertisement_models.AdvertisementNew):
         return None
 
 
-def get_advertisement_list(userId) -> list[advertisement_models.AdvertisementItem]:
+def get_advertisement_list(userId) -> Union[list[advertisement_models.AdvertisementItem], None]:
     try:
         response = requests.get(f"{api_address}/advertisement-list/{userId}", verify=False)
         advertisements = response.json()
