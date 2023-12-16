@@ -29,9 +29,9 @@ class AdvertisementModule:
 
         self.current_callback_handler = self.bot.register_callback_query_handler(message, self.callback_handler, user_id=self.current_user)
 
-        self.main_menu_markup = InlineKeyboardMarkup().add(InlineKeyboardButton('My ads', callback_data='my_ads'))\
-            .add(InlineKeyboardButton('Overall statistics', callback_data='all_stat'))\
-            .add(InlineKeyboardButton('Exit', callback_data='exit'))
+        self.main_menu_markup = InlineKeyboardMarkup().add(InlineKeyboardButton('My ads', callback_data='1'))\
+            .add(InlineKeyboardButton('Overall statistics', callback_data='2'))\
+            .add(InlineKeyboardButton('Exit', callback_data='0'))
 
         self.start()
 
@@ -93,10 +93,13 @@ class AdvertisementModule:
         del self
 
     def callback_handler(self, call):
-        if call.data == 'exit':
+        # Exit
+        if call.data == '0':
             self.destruct()
             self.bot.callback_query_handlers.remove(self.current_callback_handler)
-        elif call.data == 'all_stat':
+        # My ads
+        elif call.data == '1':
             self.send_error_message('This feature isn`t ready')
-        elif call.data == 'my_ads':
+        # Overall statistics
+        elif call.data == '2':
             self.send_error_message('This feature isn`t ready')
