@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WebApi.Data;
@@ -12,9 +13,11 @@ using WebApi.Data;
 namespace WebApi.Migrations
 {
     [DbContext(typeof(UserContext))]
-    partial class UserContextModelSnapshot : ModelSnapshot
+    [Migration("20231216192815_advertisemtn-user-id")]
+    partial class advertisemtnuserid
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -660,6 +663,9 @@ namespace WebApi.Migrations
                     b.Property<bool>("Show")
                         .HasColumnType("boolean");
 
+                    b.Property<long?>("SponsorId")
+                        .HasColumnType("bigint");
+
                     b.Property<string>("TargetAudience")
                         .HasColumnType("text");
 
@@ -674,9 +680,216 @@ namespace WebApi.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("SponsorId");
 
                     b.ToTable("advertisements", (string)null);
+                });
+
+            modelBuilder.Entity("WebApi.Main.Models.Sponsor.Sponsor", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<int?>("Age")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("CodeWord")
+                        .HasColumnType("text");
+
+                    b.Property<long?>("ContactInfoId")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("HasBaseAccount")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsAwaiting")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsPostponed")
+                        .HasColumnType("boolean");
+
+                    b.Property<long?>("StatsId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("UserAppLanguage")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UserCityId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UserCountryId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UserMaxAdCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UserMaxAdViewCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Username")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContactInfoId");
+
+                    b.HasIndex("StatsId");
+
+                    b.ToTable("sponsors", (string)null);
+                });
+
+            modelBuilder.Entity("WebApi.Main.Models.Sponsor.SponsorContactInfo", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<string>("Facebook")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<string>("Instagram")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<long>("SponsorId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Tel")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("sponsor_contact_info", (string)null);
+                });
+
+            modelBuilder.Entity("WebApi.Main.Models.Sponsor.SponsorLanguage", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<byte>("Lang")
+                        .HasColumnType("smallint");
+
+                    b.Property<int?>("LanguageId")
+                        .HasColumnType("integer");
+
+                    b.Property<byte?>("LanguageLang")
+                        .HasColumnType("smallint");
+
+                    b.Property<short>("Level")
+                        .HasColumnType("smallint");
+
+                    b.Property<long>("SponsorId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SponsorId");
+
+                    b.HasIndex("LanguageId", "LanguageLang");
+
+                    b.ToTable("sponsor_languages", (string)null);
+                });
+
+            modelBuilder.Entity("WebApi.Main.Models.Sponsor.SponsorNotification", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<short>("NotificationReason")
+                        .HasColumnType("smallint");
+
+                    b.Property<long>("SponsorId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SponsorId");
+
+                    b.ToTable("sponsor_notifications", (string)null);
+                });
+
+            modelBuilder.Entity("WebApi.Main.Models.Sponsor.SponsorRating", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Comment")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CommentTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<short>("Rating")
+                        .HasColumnType("smallint");
+
+                    b.Property<long>("SponsorId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SponsorId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("sponsor_ratings", (string)null);
+                });
+
+            modelBuilder.Entity("WebApi.Main.Models.Sponsor.Stats", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<double?>("AverageRating")
+                        .HasColumnType("double precision");
+
+                    b.Property<int>("ConductedEventsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("integer");
+
+                    b.Property<double>("LevelGoal")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("LevelProgress")
+                        .HasColumnType("double precision");
+
+                    b.Property<long>("SponsorId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("sponsor_stats", (string)null);
                 });
 
             modelBuilder.Entity("WebApi.Main.Models.Tag.Tag", b =>
@@ -1653,13 +1866,69 @@ namespace WebApi.Migrations
 
             modelBuilder.Entity("WebApi.Main.Models.Sponsor.Advertisement", b =>
                 {
-                    b.HasOne("WebApi.Main.Models.User.User", "User")
+                    b.HasOne("WebApi.Main.Models.Sponsor.Sponsor", null)
+                        .WithMany("SponsorAds")
+                        .HasForeignKey("SponsorId");
+                });
+
+            modelBuilder.Entity("WebApi.Main.Models.Sponsor.Sponsor", b =>
+                {
+                    b.HasOne("WebApi.Main.Models.Sponsor.SponsorContactInfo", "SponsorContactInfo")
+                        .WithMany()
+                        .HasForeignKey("ContactInfoId");
+
+                    b.HasOne("WebApi.Main.Models.Sponsor.Stats", "Stats")
+                        .WithMany()
+                        .HasForeignKey("StatsId");
+
+                    b.Navigation("SponsorContactInfo");
+
+                    b.Navigation("Stats");
+                });
+
+            modelBuilder.Entity("WebApi.Main.Models.Sponsor.SponsorLanguage", b =>
+                {
+                    b.HasOne("WebApi.Main.Models.Sponsor.Sponsor", null)
+                        .WithMany("SponsorLanguages")
+                        .HasForeignKey("SponsorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("WebApi.Main.Models.Language.Language", "Language")
+                        .WithMany()
+                        .HasForeignKey("LanguageId", "LanguageLang");
+
+                    b.Navigation("Language");
+                });
+
+            modelBuilder.Entity("WebApi.Main.Models.Sponsor.SponsorNotification", b =>
+                {
+                    b.HasOne("WebApi.Main.Models.Sponsor.Sponsor", "Reciever")
+                        .WithMany()
+                        .HasForeignKey("SponsorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Reciever");
+                });
+
+            modelBuilder.Entity("WebApi.Main.Models.Sponsor.SponsorRating", b =>
+                {
+                    b.HasOne("WebApi.Main.Models.Sponsor.Sponsor", "Sponsor")
+                        .WithMany()
+                        .HasForeignKey("SponsorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("WebApi.Main.Models.User.User", "Commentator")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("User");
+                    b.Navigation("Commentator");
+
+                    b.Navigation("Sponsor");
                 });
 
             modelBuilder.Entity("WebApi.Main.Models.Tag.Tag", b =>
@@ -1867,6 +2136,13 @@ namespace WebApi.Migrations
             modelBuilder.Entity("WebApi.Main.Models.Location.Country", b =>
                 {
                     b.Navigation("Cities");
+                });
+
+            modelBuilder.Entity("WebApi.Main.Models.Sponsor.Sponsor", b =>
+                {
+                    b.Navigation("SponsorAds");
+
+                    b.Navigation("SponsorLanguages");
                 });
 
             modelBuilder.Entity("WebApi.Main.Models.Test.Test", b =>

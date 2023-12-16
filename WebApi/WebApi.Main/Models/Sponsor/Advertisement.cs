@@ -1,4 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Diagnostics.CodeAnalysis;
 using WebApi.Enums.Enums.Media;
 using WebApi.Enums.Enums.Sponsor;
 using WebApi.Models.Models.Sponsor;
@@ -11,22 +13,26 @@ public class Advertisement
 {
     [Key]
     public long Id { get; set; }
-    public long SponsorId { get; set; }
+    [ForeignKey("User")]
+    public long UserId { get; set; }
     public string? Text { get; set; }
     public string? TargetAudience { get; set; }
     public string? Media { get; set; }
     public bool Show { get; set; }
     public bool Updated { get; set; }
+    [MaybeNull]
     public DateTime? Deleted { get; set; }
     public AdvertisementPriority Priority { get; set; }
     public MediaType MediaType { get; set; }
+
+    public User.User? User { get; set; }
 
     public Advertisement()
     {}
 
     public Advertisement(models.AdvertisementNew model)
     {
-        SponsorId = model.SponsorId;
+        UserId = model.SponsorId;
         Text = model.Text;
         TargetAudience = model.TargetAudience;
         Media = model.Media;
@@ -71,7 +77,7 @@ public class Advertisement
         return new Advertisement
         {
             Id = advertisement.Id,
-            SponsorId = advertisement.SponsorId,
+            UserId = advertisement.UserId,
             Text = advertisement.Text,
             Media = advertisement.Media,
             MediaType = advertisement.MediaType,
@@ -89,7 +95,7 @@ public class Advertisement
         return new models.Advertisement
         {
             Id = advertisement.Id,
-            SponsorId = advertisement.SponsorId,
+            UserId = advertisement.UserId,
             Text = advertisement.Text,
             Media = advertisement.Media,
             MediaType = advertisement.MediaType,

@@ -9,3 +9,11 @@ class AdvertisementNew(ApiModel):
         self.media: str = media
         self.priority: str = priority
         self.mediaType: str = media_type
+
+class AdvertisementItem:
+    id: int
+    text: str
+
+    def __init__(self, advertisement_dict):
+        self.id = advertisement_dict["id"]
+        self.text = advertisement_dict["text"]

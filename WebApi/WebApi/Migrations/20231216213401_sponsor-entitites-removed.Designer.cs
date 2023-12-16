@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WebApi.Data;
@@ -12,9 +13,11 @@ using WebApi.Data;
 namespace WebApi.Migrations
 {
     [DbContext(typeof(UserContext))]
-    partial class UserContextModelSnapshot : ModelSnapshot
+    [Migration("20231216213401_sponsor-entitites-removed")]
+    partial class sponsorentititesremoved
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -27,8 +30,6 @@ namespace WebApi.Migrations
             modelBuilder.HasSequence<int>("achievements_hilo");
 
             modelBuilder.HasSequence<int>("active_effects_hilo");
-
-            modelBuilder.HasSequence<int>("ads_hilo");
 
             modelBuilder.HasSequence<int>("adventure_templates_hilo");
 
@@ -635,48 +636,6 @@ namespace WebApi.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("user_reports", (string)null);
-                });
-
-            modelBuilder.Entity("WebApi.Main.Models.Sponsor.Advertisement", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<long>("Id"), "ads_hilo");
-
-                    b.Property<DateTime?>("Deleted")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Media")
-                        .HasColumnType("text");
-
-                    b.Property<short>("MediaType")
-                        .HasColumnType("smallint");
-
-                    b.Property<int>("Priority")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("Show")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("TargetAudience")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Text")
-                        .HasColumnType("text");
-
-                    b.Property<bool>("Updated")
-                        .HasColumnType("boolean");
-
-                    b.Property<long>("UserId")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("advertisements", (string)null);
                 });
 
             modelBuilder.Entity("WebApi.Main.Models.Tag.Tag", b =>
@@ -1647,17 +1606,6 @@ namespace WebApi.Migrations
                     b.Navigation("Adventure");
 
                     b.Navigation("Sender");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("WebApi.Main.Models.Sponsor.Advertisement", b =>
-                {
-                    b.HasOne("WebApi.Main.Models.User.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
 
                     b.Navigation("User");
                 });

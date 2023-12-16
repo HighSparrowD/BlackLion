@@ -3,7 +3,7 @@ import pickle
 
 import requests
 
-import Models.Advertisement.Advertisement
+import Models.Advertisement.Advertisement as advertisement_models
 
 # Used to for translating Accept-Language header
 languages = {
@@ -795,7 +795,7 @@ def remove_user_story(userId):
     except Exception as ex:
         return None
 
-def add_advertisement(payload: Models.Advertisement.Advertisement.AdvertisementNew):
+def add_advertisement(payload: advertisement_models.AdvertisementNew):
     try:
         d = payload.to_json()
 
@@ -805,3 +805,13 @@ def add_advertisement(payload: Models.Advertisement.Advertisement.AdvertisementN
 
     except:
         return None
+
+
+def get_advertisement_list(userId) -> list[advertisement_models.AdvertisementItem]:
+    try:
+        response = requests.get(f"{api_address}/advertisement-list/{userId}", verify=False)
+        advertisements = response.json()
+
+        return [advertisement_models.AdvertisementItem(advertisement) for advertisement in advertisements]
+    except:
+        return

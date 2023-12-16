@@ -125,24 +125,7 @@ def help(message):
 
 @bot.message_handler(commands=["test"], func=lambda message: message.chat.type == 'private', is_multihandler=True)
 def test(message):
-    # price = LabeledPrice("Premium", 300_00)
-    # tax = LabeledPrice("Tax", 5)
-    # prices = [price, tax]
-    # suggested_tips = [5_00, 10_00, 20_00]
-    #
-    # bot.send_invoice(chat_id=message.from_user.id, currency="USD",
-    #                  title="Premium!",
-    #                  description="30 day premium",
-    #                  need_name=True,
-    #                  invoice_payload="Premium",
-    #                  prices=prices,
-    #                  provider_token=payment_token,
-    #                  need_email=True,
-    #                  suggested_tip_amounts=suggested_tips,
-    #                  max_tip_amount=100_000_000,
-    #                  protect_content=True)
-    stripe.api_key = Helpers.stripe_key
-    info = stripe.PaymentIntent.retrieve("pi_3NhcUnAxvQS89BmZ3gtpGTtY")
+    ads = Helpers.get_advertisement_list(message.from_user.id)
     pass
 
 
