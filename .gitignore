@@ -12,6 +12,7 @@ MyWebApi/MyWebApi/obj
 *.user
 *.userosscache
 *.sln.docstates
+*.ps1
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs

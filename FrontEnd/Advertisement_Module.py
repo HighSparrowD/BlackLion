@@ -30,6 +30,10 @@ class AdvertisementModule:
 
         self.current_callback_handler = self.bot.register_callback_query_handler(message, self.callback_handler, user_id=self.current_user)
 
+        self.del_funcs = {"s": self.delete_secondary_message,
+                          "e": self.delete_error_message,
+                          "a": self.delete_additional_message}
+
         self.main_menu_markup = InlineKeyboardMarkup().add(InlineKeyboardButton('My ads', callback_data='1'))\
             .add(InlineKeyboardButton('Overall statistics', callback_data='2'))\
             .add(InlineKeyboardButton('Exit', callback_data='0'))
@@ -43,18 +47,13 @@ class AdvertisementModule:
 
     def send_active_message(self, text, markup, delete_msg: list[str] = None):
         """
-        :param delete_msg: can be a list with "secondary", "error" or "additional".
-        By default, equals to ["secondary", "error", "additional"]
+        :param delete_msg: can be a list with "s", "e" or "a" for secondary, error or additional message correspondingly
         :return: sends active message and deletes messages which types are in the delete_msg param
         """
         try:
-            if delete_msg is None:
-                delete_msg = ["secondary", "error", "additional"]
-            del_funcs = {"secondary": self.delete_secondary_message,
-                         "error": self.delete_error_message,
-                         "additional": self.delete_additional_message}
-            for msg in delete_msg:
-                del_funcs[msg]()
+            if delete_msg is not None:
+                for msg in delete_msg:
+                    self.del_funcs[msg]()
             if self.active_message:
                 self.bot.edit_message_text(text, self.current_user, self.active_message, reply_markup=markup)
                 return
@@ -99,7 +98,7 @@ class AdvertisementModule:
         self.delete_error_message()
         self.delete_additional_message()
 
-    def destruct(self):
+    def prev_menu(self):  # returns you to previous menu (no matter is the menu in ad_module or in main)
         self.cleanup()
         if self.return_method:
             self.return_method()
@@ -115,10 +114,10 @@ class AdvertisementModule:
         # there is a hierarchy: call.data from previous btn is 1 so hear all call.data will start with 1
         self.my_ads_markup.add(InlineKeyboardButton("Add advertisement", callback_data="10"))
         for ad in existing_ads:
-            self.my_ads_markup.add(InlineKeyboardButton(f"{ad.text}", callback_data="1"+str(ad.id)))
+            self.my_ads_markup.add(InlineKeyboardButton(f"{ad.text}", callback_data=str(ad.id)))
         self.my_ads_markup.add(InlineKeyboardButton("Go back", callback_data="0"))
 
-        self.send_active_message("Your advertisements:", self.my_ads_markup)
+        self.send_active_message("Your advertisements:", self.my_ads_markup, ['e'])
 
         self.return_method = self.start
 
@@ -126,7 +125,7 @@ class AdvertisementModule:
     def callback_handler(self, call):
         # Exit
         if call.data == '0':
-            self.destruct()
+            self.prev_menu()
         # My ads
         elif call.data == '1':
             self.show_my_ads()
