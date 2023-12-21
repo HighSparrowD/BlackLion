@@ -979,7 +979,7 @@ class Adventurer:
             elif message.text == "16":
                 self.register_group_step(message)
             elif message.text == "17":
-                if self.doesExist:
+                if self.doesExist and not self.isCreatedFromTemplate:
                     Helpers.change_adventure(self.data)
                     self.send_secondary_message("Changes were saved successfully.\nThey will come into force after approval by the administration")
                     self.subscribe_callback_handler(self.start_callback_handler)
@@ -1703,11 +1703,16 @@ class Adventurer:
     def assemble_adventure_checkout_message(self):
         #Load dependencies if weren't loaded before
         self.load_countries()
-        self.load_cities(self.data["countryId"])
 
-        message = f"{self.data['name']}\n*{self.countries[self.data['countryId']]}, {self.cities[self.data['cityId']]}*\n{self.data['description']}\n{self.data['experience']}\n\n{self.data['attendeesDescription']}\n{self.data['unwantedAttendeesDescription']}\n{self.data['gratitude']}\n\n{self.data['date']}\n{self.data['time']}\n{self.data['duration']}\n{self.data['application']}{self.data['address']}"
-        message = message.replace("\n\n\n", "\n")
-        # message.replace("\n\n", "\n")
+        if "countryId" in self.data.keys() and self.data["countryId"] is not None:
+            self.load_cities(self.data["countryId"])
+
+            message = f"{self.data['name']}\n*{self.countries[self.data['countryId']]}, {self.cities[self.data['cityId']]}*\n{self.data['description']}\n{self.data['experience']}\n\n{self.data['attendeesDescription']}\n{self.data['unwantedAttendeesDescription']}\n{self.data['gratitude']}\n\n{self.data['date']}\n{self.data['time']}\n{self.data['duration']}\n{self.data['application']}{self.data['address']}"
+            message = message.replace("\n\n\n", "\n")
+            # message.replace("\n\n", "\n")
+        else:
+            message = f"{self.data['name']}\n,{self.data['description']}\n{self.data['experience']}\n\n{self.data['attendeesDescription']}\n{self.data['unwantedAttendeesDescription']}\n{self.data['gratitude']}\n\n{self.data['date']}\n{self.data['time']}\n{self.data['duration']}\n{self.data['application']}{self.data['address']}"
+            message = message.replace("\n\n\n", "\n")
 
         return message
 
