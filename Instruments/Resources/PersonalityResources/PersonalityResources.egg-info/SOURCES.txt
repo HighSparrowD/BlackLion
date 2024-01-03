@@ -1,0 +1,5 @@
+setup.py
+PersonalityResources.egg-info/PKG-INFO
+PersonalityResources.egg-info/SOURCES.txt
+PersonalityResources.egg-info/dependency_links.txt
+PersonalityResources.egg-info/top_level.txt

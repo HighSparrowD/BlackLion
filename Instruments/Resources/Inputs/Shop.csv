@@ -1,0 +1,47 @@
+Name,ENG,RUS,UKR
+SC_Description,<i><b>Second chance allows you to 'like' another user once again. It can be used in the 'encounters' section</b></i>,<i><b>Второй шанс позволяет вам еще раз поставить лайк другому пользователю. Его можно использовать в разделе «Встречи».</b></i>,"<i><b>Другий шанс дозволяє ще раз поставити ""подобається"" іншому користувачеві. Його можна використати в розділі ""зустрічі""</b></i>"
+V_Description,<i><b>Doubles your OCEAN+ points for an hour</b></i>,<i><b>Удваивает ваши очки OCEAN+ на час</b></i>,<i><b>Подвоює ваші бали OCEAN+ протягом години</b></i>
+D_Description,"<i><b>When matched, shows which OCEAN+ parameters were matched. Works for 1 hour</b></i>","<i><b>При совпадении показывает, по каким параметрам OCEAN+ было соответвее. Работает в течение 1 часа</b></i>","<i><b>При збігу показує, за якими параметрами OCEAN+ була відповідність. Працює протягом 1 години</b></i>"
+N_Description,"<i><b>Allows you to pass any test one more time, without waiting</b></i>","<i><b>Позволяет пройти любой тест еще раз, не дожидаясь</b></i>","<i><b>Дозволяє пройти будь-який тест ще раз, не чекаючи</b></i>"
+CDM_Description,"<i><b>Instantly adds 15 profile searches, 5 tag searches, 10 RT searches and 15 adventure searches</b></i>""","<i><b>Мгновенно добавляет 15 поисковых запросов по профилям, 5 поисковых запросов по тегам, 10 поисковых запросов RT и 15 поисковых запросов в отделе ""Приключения""</b></i>""","<i><b>Миттєво додає 15 пошукових запитів у профілі, 5 пошукових запитів за тегами, 10 пошукових запитів RT і 15 пошукових запитів у відділі ""Пригоди""</b></i>"""
+CdDP+Description,"<i><b>Instantly adds 35 profile searches, 10 tag searches, 15 RT searches and 20 adventure searches</b></i>","<i><b>Мгновенно добавляет 35 поисковых запросов по профилям, 10 поисковых запросов по тегам, 15 поисковых запросов RT и 20 поисковых запросов в отделе ""Приключения""</b></i>","<i><b>Миттєво додає 35 пошукових запитів у профілі, 10 пошукових запитів за тегами, 15 пошукових запитів RT і 20 пошукових запитів у відділі ""Пригоди""</b></i>"
+Premium,Premium 💎,Премиум 💎,Преміум 💎
+Coinds,Coins 💰,Монеты 💰,Монети 💰
+OP_Points,OCEAN+ points 🌟,OCEAN+ очки 🌟,OCEAN+ очки 🌟
+Tests,Tests 📝,Тесты 📝,Тести 📝
+Support_Us,💸Support us :),💸Поддержите нас :),💸Підтримайте нас :)
+Exit,🔙Exit,🔙Выход,🔙Вихід
+3Days,3 days,3 дня,3 дні
+21Days,21 days,21 день,21 день
+30Days,30 days,30 дней,30 днів
+GoBack,🔙Go Back,🔙 Вернуться,🔙Повернутись
+Buy3,Buy 3,Купить 3,Купити 3
+Buy7,Buy 7,Купить 7,Купити 7
+Buy10,Buy 10,Купить 10,Купити 10
+Buy150,Buy 150,Купить 150,Купити 150
+Buy500,Buy 500,Купить 500,Купити 500
+Buy2000,Buy 2000,Купить 2000,Купити 2000
+ScecondChance,Second Chance 🔄,Второй шанс 🔄,Другий Шанс 🔄
+TheValentine,The Valentine 💖,Валентин 💖,Валентин 💖
+TheDetector,The Detector 🔍,Детектор 🔍,Детектор 🔍
+TheNullifier,The Nullifier 🚫,Нуллификатор 🚫,Нуліфікатор  🚫
+CardDeckMini,Card Deck Mini 👨‍💻🦹‍♀️👩‍🚀,"Колода карт ""Маленькая""👨‍💻🦹‍♀️👩‍🚀","Колода карт ""Мала"" 👨‍💻🦹‍♀️👩‍🚀"
+CardDeckPlatinum,Card Deck Platinum 👨‍💻🦹‍♀️👩‍🚀🧝🧙‍♂️🧛‍♂️🤴,"Колода карт ""Платиновая"" 👨‍💻🦹‍♀️👩‍🚀🧝🧙‍♂️🧛‍♂️🤴","Колода карт ""Платинова""👨‍💻🦹‍♀️👩‍🚀🧝🧙‍♂️🧛‍♂️🤴"
+Welcome,Welcome to the shop!\n{},Добро пожаловать в магазин!\n{},Ласкаво просимо до магазину!\n{}
+SelectPackAndCurrency,"<i><b>Please, select a pack and currency by clicking on a corresponding button</b></i>\n{}","<i><b>Пожалуйста, выберите пакет и валюту, нажав соответствующую кнопку</b></i>\n{}","<i><b>Будь ласка, виберіть пакет і валюту, натиснувши на відповідну кнопку</b></i>\n{}"
+SelectEffect,"<i><b>Please, select an effect</b></i>\n{}","<i><b>Пожалуйста, выберите эффект</b></i>\n{}","<i><b>Будь ласка, виберіть ефект</b></i>\n{}"
+SelectEffectPack,"<i><b>Please, select pack of effects. Click on the according price to choose currency</b></i>\n{}","<i><b>Пожалуйста, выберите пакет эффектов. Нажмите на соответствующую цену, чтобы выбрать валюту</b></i>\n{}","<i><b>Будь ласка, виберіть пакет ефектів. Натисніть відповідну ціну, щоб вибрати валюту</b></i>\n{}"
+SelectPointPack,"<i><b>Please, select Points pack. Click on the according price to choose currency</b></i>\n{}","<i><b>Пожалуйста, выберите Пакет баллов. Нажмите на соответствующую цену, чтобы выбрать валюту</b></i>\n{}","<i><b>Будь ласка, виберіть пакет балів. Натисніть відповідну ціну, щоб вибрати валюту</b></i>\n{}"
+3Premium,3 days of Premium status⏳💎,3 дня Премиум-статуса⏳💎,3 дні Преміум-статусу⏳💎
+21Premium,21 days of premium status⏳💎,21 день премиум-статуса⏳💎,21 день преміум-статусу⏳💎
+30Premium,30 days of premium status⏳💎,30 дней премиум-статуса⏳💎,30 днів преміум-статусу⏳💎
+OPPointsBalance,OCEAN+ points 🌊🌟,OCEAN+ Очки🌊🌟,OCEAN+ Очки🌊🌟
+NotEnoughCoins,You don't have enough coins to buy this item❌💰,У вас недостаточно монет для покупки этого предмета❌💰,У вас недостатньо монет для покупки цього предмета❌💰
+PaymentSuccessfull,Payment was successful! ✅💳,Оплата прошла успешно!✅💳,Оплата пройшла успішно!✅💳
+CurrentBalance,<i><b>Your current points balance is {}</b></i>💰,<i><b>Ваш текущий баланс баллов: {}</b></i>💰,<i><b>Ваш поточний баланс балів: {}</b></i>💰
+Price,Price 💱,Цена💱,Ціна💱
+Points,Points,Очки,Очки
+Successfull,Successful!,Успешно!,Успішно!
+SomethingWrong,Something went wrong,Что-то пошло не так,Щось пішло не так
+PaymentFail,Payment failed. Please try again or contact the administration,"Оплата не прошла. Пожалуйста, попробуйте еще раз или свяжитесь с администрацией","Платіж не пройшов. Будь ласка, спробуйте ще раз або зверніться до адміністрації"
+Effects,Effects✨,Эффекты✨,Ефекти✨
