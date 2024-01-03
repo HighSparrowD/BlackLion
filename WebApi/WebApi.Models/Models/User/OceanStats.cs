@@ -1,7 +1,11 @@
-﻿namespace WebApi.Models.Models.User;
+﻿using System.Collections;
+using System.ComponentModel.DataAnnotations;
 
-public class OceanStats
+namespace WebApi.Models.Models.User;
+
+public class OceanStats : IEnumerable<float>
 {
+    [Key]
     public long UserId { get; set; }
     public float Openness { get; set; }
     public float Conscientiousness { get; set; }
@@ -22,5 +26,20 @@ public class OceanStats
         Agreeableness = 0;
         Neuroticism = 0;
         Nature = 0;
+    }
+
+    public IEnumerator<float> GetEnumerator()
+    {
+        yield return Openness;
+        yield return Conscientiousness;
+        yield return Extroversion;
+        yield return Agreeableness;
+        yield return Neuroticism;
+        yield return Nature;
+    }
+
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
     }
 }

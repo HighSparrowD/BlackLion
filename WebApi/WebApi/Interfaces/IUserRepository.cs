@@ -108,7 +108,6 @@ namespace WebApi.Interfaces
         Task<UserNotification> GetUserNotificationAsync(long notificationId);
         Task<byte> DeleteNotificationAsync(long notidicationId);
         Task<List<string>> GetRandomAchievements(long userId);
-        Task<double> CalculateSimilarityAsync(double param1, double param2);
         Task<DeleteResult> DeleteUserAsync(DeleteUserRequest request);
         Task<RestoreResult> RestoreUserAsync(long userId);
         Task<int> GetUserMaximumLanguageCountAsync(long userId);

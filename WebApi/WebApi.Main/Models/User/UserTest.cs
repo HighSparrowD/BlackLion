@@ -20,7 +20,7 @@ public class UserTest
     public Enums.Enums.User.OceanStats? TestType { get; set; }
     public float Result { get; set; }
     public DateTime? PassedOn { get; set; }
-    public virtual Test.Test Test { get; set; } = new Test.Test();
+    public virtual Test.Test? Test { get; set; }
 
     public UserTest()
     {}

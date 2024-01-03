@@ -186,7 +186,7 @@ class AdminCabinet:
             elif "/getuserbyusername" in command:
                 if len(command) == 2:
                     try:
-                        user = json.loads(requests.get(f"https://localhost:44381/GetUserByUsername/{command[1]}", verify=False).text)
+                        user = json.loads(requests.get(f"https://localhost:44381/user-info-by-username/{command[1]}", verify=False).text)
                         self.manage_user(user)
                     except:
                         self.bot.send_message(self.current_user, "User was not found")

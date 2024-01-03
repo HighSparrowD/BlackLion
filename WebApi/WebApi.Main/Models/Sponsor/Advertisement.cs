@@ -54,7 +54,7 @@ public class Advertisement
         Priority = model.Priority;
     }
 
-    //public static string TrancateDescription(string text, int leng)
+    //public static string TruncateDescription(string text, int leng)
     //{
     //    string description = "";
 

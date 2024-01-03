@@ -53,7 +53,9 @@ namespace WebApi
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "WebApi", Version = "v1" });
+                c.CustomSchemaIds(type => type.ToString());
             });
+
             services.AddDbContext<UserContext>(options => options.UseNpgsql(_config.GetConnectionString("DefaultConnectionString")));
             services.AddScoped<IUserRepository, SystemUserRepository>();
             services.AddScoped<ITestRepository, TestRepository>();
