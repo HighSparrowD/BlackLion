@@ -121,8 +121,11 @@ namespace WebApi.Repositories
 
             if (model.UsesOcean)
             {
-                var personalityStats = new Main.Models.User.OceanStats(model.Id);
-                var personalityPoints = new Main.Models.User.OceanPoints(model.Id);
+                var oceanStats = new Main.Models.User.OceanStats(model.Id);
+                var oceanPoints = new Main.Models.User.OceanPoints(model.Id);
+
+                await _contx.OceanPoints.AddAsync(oceanPoints);
+                await _contx.OceanStats.AddAsync(oceanStats);
             }
 
             var invitation = await GetInvitationAsync(model.Id);
@@ -419,18 +422,15 @@ namespace WebApi.Repositories
         {
             var returnUser = await AssembleProfileAsync(currentUser, managedUser);
 
+            //Pass if user does not use OCEAN+
+            if (!managedUser.UsesOcean)
+                return returnUser;
+
             var userActiveEffects = await GetUserActiveEffects(currentUser.Id);
-            var deviation = 0.15;
-            var minDeviation = 0.05;
+            var deviation = 0.15f;
+            var minDeviation = 0.05f;
 
-            var currentValueMax = 0d;
-            var currentValueMin = 0d;
-
-            var valentineBonus = 1d;
-
-            var importantMatches = 0;
-            var secondaryMatches = 0;
-            var bonus = "";
+            var valentineBonus = 1f;
 
             var hasActiveValentine = userActiveEffects.Any(e => e.Effect == Currency.TheValentine);
 
@@ -441,8 +441,8 @@ namespace WebApi.Repositories
 
             if (isRepeated)
             {
-                deviation *= 1.5;
-                minDeviation *= 3.2;
+                deviation *= 1.5f;
+                minDeviation *= 3.2f;
             }
 
             var userPoints = await _contx.OceanPoints.Where(p => p.UserId == currentUser.Id)
@@ -466,10 +466,6 @@ namespace WebApi.Repositories
 
             var important = await userPoints.GetImportantParams();
 
-            //Pass if user does not use OCEAN+
-            if (!managedUser.UsesOcean)
-                return returnUser;
-
             var user2Points = await _contx.OceanPoints.Where(p => p.UserId == managedUser.UserId)
                 .AsNoTracking()
                 .FirstOrDefaultAsync();
@@ -478,165 +474,13 @@ namespace WebApi.Repositories
                 .AsNoTracking()
                 .FirstOrDefaultAsync();
 
-
-            //Turns off the parameter if 1. User has no relative tests passed; 2. No points where invested in it
-            if (userPoints.Openness > 0 && userStats.Openness > 0 && user2Points.Openness > 0 && user2Stats.Openness > 0)
-            {
-                //TODO: create its own deviation variable depending on the number of personalities (It is likely to be grater than the normal one)
-                var personalitySim = await CalculateSimilarityAsync(userStats.Openness * valentineBonus, user2Stats.Openness);
-
-                currentValueMax = ApplyMaxDeviation(userPoints.OpennessPercentage, deviation);
-                currentValueMin = ApplyMinDeviation(userPoints.OpennessPercentage, minDeviation);
-
-                //Negative conditions are applied, cuz this is an exclussive condition
-                if (personalitySim <= currentValueMax && personalitySim >= currentValueMin)
-                {
-                    currentValueMax = ApplyMaxDeviation(user2Points.OpennessPercentage, deviation);
-                    currentValueMin = ApplyMinDeviation(user2Points.OpennessPercentage, minDeviation);
-
-                    if (personalitySim <= currentValueMax && personalitySim >= currentValueMin)
-                    {
-                        bonus += "[O] ";
-                        if (important.Contains(Enums.Enums.User.OceanStats.Openness))
-                        {
-                            importantMatches++;
-                        }
-                        else
-                            secondaryMatches++;
-                    }
-                }
-            }
-
-            if (userPoints.Conscientiousness > 0 && userStats.Conscientiousness > 0 && user2Points.Conscientiousness > 0 && user2Stats.Conscientiousness > 0)
-            {
-                var emIntellectSim = await CalculateSimilarityAsync(userStats.Conscientiousness * valentineBonus, user2Stats.Conscientiousness);
-
-                currentValueMax = ApplyMaxDeviation(userPoints.ConscientiousnessPercentage, deviation);
-                currentValueMin = ApplyMinDeviation(userPoints.ConscientiousnessPercentage, minDeviation);
-
-                if (emIntellectSim <= currentValueMax && emIntellectSim >= currentValueMin)
-                {
-                    currentValueMax = ApplyMaxDeviation(user2Points.ConscientiousnessPercentage, deviation);
-                    currentValueMin = ApplyMinDeviation(user2Points.ConscientiousnessPercentage, minDeviation);
-
-                    if (emIntellectSim <= currentValueMax && emIntellectSim >= currentValueMin)
-                    {
-                        bonus += "[C] ";
-                        if (important.Contains(Enums.Enums.User.OceanStats.Conscientiousness))
-                        {
-                            importantMatches++;
-                        }
-                        else
-                            secondaryMatches++;
-                    }
-                }
-            }
-
-            if (userPoints.Extroversion > 0 && userStats.Extroversion > 0 && user2Points.Extroversion > 0 && user2Stats.Extroversion > 0)
-            {
-                var reliabilitySim = await CalculateSimilarityAsync(userStats.Extroversion * valentineBonus, user2Stats.Extroversion);
-
-                currentValueMax = ApplyMaxDeviation(userPoints.ExtroversionPercentage, deviation);
-                currentValueMin = ApplyMinDeviation(userPoints.ExtroversionPercentage, minDeviation);
-
-                if (reliabilitySim <= currentValueMax && reliabilitySim >= currentValueMin)
-                {
-                    currentValueMax = ApplyMaxDeviation(user2Points.ExtroversionPercentage, deviation);
-                    currentValueMin = ApplyMinDeviation(user2Points.ExtroversionPercentage, minDeviation);
-
-                    if (reliabilitySim <= currentValueMax && reliabilitySim >= currentValueMin)
-                    {
-                        bonus += "[E] ";
-                        if (important.Contains(Enums.Enums.User.OceanStats.Extroversion))
-                        {
-                            importantMatches++;
-                        }
-                        else
-                            secondaryMatches++;
-                    }
-                }
-            }
-
-            if (userPoints.Agreeableness > 0 && userStats.Agreeableness > 0 && user2Points.Agreeableness > 0 && user2Stats.Agreeableness > 0)
-            {
-                var compassionSim = await CalculateSimilarityAsync(userStats.Agreeableness * valentineBonus, user2Stats.Agreeableness);
-
-                currentValueMax = ApplyMaxDeviation(userPoints.AgreeablenessPercentage, deviation);
-                currentValueMin = ApplyMinDeviation(userPoints.AgreeablenessPercentage, minDeviation);
-
-                if (compassionSim <= currentValueMax && compassionSim >= currentValueMin)
-                {
-                    currentValueMax = ApplyMaxDeviation(user2Points.AgreeablenessPercentage, deviation);
-                    currentValueMin = ApplyMinDeviation(user2Points.AgreeablenessPercentage, minDeviation);
-
-                    if (compassionSim <= currentValueMax && compassionSim >= currentValueMin)
-                    {
-                        bonus += "[A] ";
-                        if (important.Contains(Enums.Enums.User.OceanStats.Agreeableness))
-                        {
-                            importantMatches++;
-                        }
-                        else
-                            secondaryMatches++;
-                    }
-                }
-            }
-
-
-            if (userPoints.Neuroticism > 0 && userStats.Neuroticism > 0 && user2Points.Neuroticism > 0 && user2Stats.Neuroticism > 0)
-            {
-                var openMindSim = await CalculateSimilarityAsync(userStats.Neuroticism * valentineBonus, user2Stats.Neuroticism);
-
-                currentValueMax = ApplyMaxDeviation(userPoints.NeuroticismPercentage, deviation);
-                currentValueMin = ApplyMinDeviation(userPoints.NeuroticismPercentage, minDeviation);
-
-                if (openMindSim <= currentValueMax && openMindSim >= currentValueMin)
-                {
-                    currentValueMax = ApplyMaxDeviation(user2Points.NeuroticismPercentage, deviation);
-                    currentValueMin = ApplyMinDeviation(user2Points.NeuroticismPercentage, minDeviation);
-
-                    if (openMindSim <= currentValueMax && openMindSim >= currentValueMin)
-                    {
-                        bonus += "[N] ";
-                        if (important.Contains(Enums.Enums.User.OceanStats.Neuroticism))
-                        {
-                            importantMatches++;
-                        }
-                        else
-                            secondaryMatches++;
-                    }
-                }
-            }
-
-            if (userPoints.Nature > 0 && userStats.Nature > 0 && user2Points.Nature > 0 && user2Stats.Nature > 0)
-            {
-                var natureSim = await CalculateSimilarityAsync(userStats.Nature * valentineBonus, user2Stats.Nature);
-
-                currentValueMax = ApplyMaxDeviation(userPoints.NaturePercentage, deviation);
-                currentValueMin = ApplyMinDeviation(userPoints.NaturePercentage, minDeviation);
-
-                if (natureSim <= currentValueMax && natureSim >= currentValueMin)
-                {
-                    currentValueMax = ApplyMaxDeviation(user2Points.NaturePercentage, deviation);
-                    currentValueMin = ApplyMinDeviation(user2Points.NaturePercentage, minDeviation);
-
-                    if (natureSim <= currentValueMax && natureSim >= currentValueMin)
-                    {
-                        bonus += "[+] ";
-                        if (important.Contains(Enums.Enums.User.OceanStats.Nature))
-                        {
-                            importantMatches++;
-                        }
-                        else
-                            secondaryMatches++;
-                    }
-                }
-            }
+            var calculationResult = await OceanCalculator.Calculate(userPoints: userPoints, userStats: userStats, user2Points: user2Points, user2Stats: user2Stats, 
+                valentineBonus: valentineBonus, deviation: deviation, minDeviation: minDeviation, important: important);
 
             // Ocean+ match counts only if there are 1 important param match or 3 secondary match
-            if (importantMatches < 1 && secondaryMatches < 3)
+            if (calculationResult.ImportantMatches < 1 && calculationResult.SecondaryMatches < 3)
             {
-                bonus = "";
+                calculationResult.Bonus = "";
             }
             else
             {
@@ -689,19 +533,19 @@ namespace WebApi.Repositories
                 returnUser.Comment = await GetRandomHintAsync(currentUser.Data.Language, HintType.Search);
 
             if (managedUser.HasPremium && managedUser.Nickname != "")
-                bonus += $"<b>{managedUser.Nickname}</b>\n";
+                calculationResult.Bonus += $"<b>{managedUser.Nickname}</b>\n";
 
             if (managedUser.IdentityType == IdentityConfirmationType.Partial)
-                bonus += $"☑️☑️☑️\n\n";
+                calculationResult.Bonus += $"☑️☑️☑️\n\n";
             else if (managedUser.IdentityType == IdentityConfirmationType.Full)
-                bonus += $"✅✅✅\n\n";
+                calculationResult.Bonus += $"✅✅✅\n\n";
 
             if (userHasDetectorOn)
-                bonus += $"<b>OCEAN+ match!</b>\n<b>{bonus}</b>";
+                calculationResult.Bonus += $"<b>OCEAN+ match!</b>\n<b>{calculationResult.Bonus}</b>";
             else
-                bonus += "<b>OCEAN+ match!</b>";
+                calculationResult.Bonus += "<b>OCEAN+ match!</b>";
 
-            returnUser.AddDescriptionUpwards(bonus);
+            returnUser.AddDescriptionUpwards(calculationResult.Bonus);
 
             return returnUser;
         }
@@ -2552,40 +2396,6 @@ namespace WebApi.Repositories
 
             //If there is no achievements left to claim
             return achievents;
-        }
-
-        public async Task<double> CalculateSimilarityAsync(double param1, double param2)
-        {
-            double difference = 0;
-            double x = 0;
-            double c = 0;
-
-            //Remove negative values. We are all possitive here ;)
-            if (param1 < 0)
-                param1 *= -1;
-
-            if (param2 < 0)
-                param2 *= -1;
-
-            await Task.Run(() =>
-            {
-                if (param1 > param2)
-                {
-                    difference = param1 - param2;
-                    x = (difference * 100) / param1;
-                    c = 0 + (x / 100);
-                }
-                else if (param2 > param1)
-                {
-                    difference = param2 - param1;
-                    x = (difference * 100) / param2;
-                    c = 0 + (x / 100);
-                }
-                else if (param1 == param2)
-                    c = 0.00000001; //Similarity percentage will never be equal to 100% !
-            });
-
-            return c;
         }
 
         public async Task<int> GetUserMaximumLanguageCountAsync(long userId)
@@ -4793,5 +4603,5 @@ namespace WebApi.Repositories
 
             await _contx.SaveChangesAsync();
         }
-	}
+    }
 }

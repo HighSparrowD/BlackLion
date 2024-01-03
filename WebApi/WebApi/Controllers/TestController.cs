@@ -14,7 +14,7 @@ namespace WebApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class TestController : ControllerBase
+    public class TestController : Controller
     {
         private ITestRepository _repository;
         private readonly ILogger<TestController> _logger;

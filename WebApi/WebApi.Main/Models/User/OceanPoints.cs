@@ -9,17 +9,17 @@ public class OceanPoints
 {
     [Key]
     public long UserId { get; set; }
-    public int Openness { get; set; }
+    public float Openness { get; set; }
     public float OpennessPercentage { get; set; }
-    public int Conscientiousness { get; set; }
+    public float Conscientiousness { get; set; }
     public float ConscientiousnessPercentage { get; set; }
-    public int Extroversion { get; set; }
+    public float Extroversion { get; set; }
     public float ExtroversionPercentage { get; set; }
-    public int Agreeableness { get; set; }
+    public float Agreeableness { get; set; }
     public float AgreeablenessPercentage { get; set; }
-    public int Neuroticism { get; set; }
+    public float Neuroticism { get; set; }
     public float NeuroticismPercentage { get; set; }
-    public int Nature { get; set; }
+    public float Nature { get; set; }
     public float NaturePercentage { get; set; }
 
     public OceanPoints()
@@ -45,7 +45,7 @@ public class OceanPoints
     public async Task<List<enums.OceanStats>> GetImportantParams()
     {
         var importantParams = new List<enums.OceanStats>();
-        var theBiggest = 0;
+        var theBiggest = 0f;
 
         await Task.Run(() =>
         {

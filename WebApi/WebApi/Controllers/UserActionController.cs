@@ -22,9 +22,9 @@ using WebApi.Enums.Enums.User;
 
 namespace WebApi.Controllers
 {
+    [Route("api/[controller]")]
     [ApiController]
-    [Route("[controller]")]
-    public class UserActionController : ControllerBase
+    public class UserActionController : Controller
     {
         private readonly ILogger<UserActionController> _logger;
         private IUserRepository _repository;
@@ -100,12 +100,6 @@ namespace WebApi.Controllers
         public async Task<ActionResult<byte>> UpdateUserAppLanguage(long userId, AppLanguage appLanguage)
         {
             return await _repository.UpdateUserAppLanguageAsync(userId, appLanguage);
-        }
-
-        [HttpGet("/GetUserByUsername/{username}")]
-        public async Task<ActionResult<Models.Models.User.User>> GetUserInfo(string username)
-        {
-            return await _repository.GetUserInfoByUsrnameAsync(username);
         }
 
         [HttpGet("/user-list")]
@@ -476,12 +470,6 @@ namespace WebApi.Controllers
         public async Task<List<string>> GetRandomAchievements(long userId)
         {
             return await _repository.GetRandomAchievements(userId);
-        }
-
-        [HttpGet("/CalculateSimilarity/{param1}/{param2}")] //Remove in production. This method is internal
-        public async Task<double> CalculateSimilarity(double param1, double param2)
-        {
-            return await _repository.CalculateSimilarityAsync(param1, param2);
         }
 
         [HttpGet("/GetUserMaximumLanguageCount/{userId}")]

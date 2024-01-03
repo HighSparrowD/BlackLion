@@ -8,6 +8,7 @@ using WebApi.Main.Models.Report;
 using WebApi.Main.Models.Admin;
 using WebApi.Models.Models.Admin;
 using WebApi.Models.Models.User;
+using System;
 
 namespace WebApi.Controllers
 {
@@ -92,6 +93,12 @@ namespace WebApi.Controllers
             return await _repository.DeleteAllUsers();
         }
 
+        [HttpGet("/user-info-by-username/{username}")]
+        public async Task<ActionResult<User>> GetUserInfoByUsername([FromServices] IUserRepository userRepo, [FromRoute] string username)
+        {
+            return Ok(await userRepo.GetUserInfoByUsrnameAsync(username));
+        }
+
         [HttpPost("/upload-achievements")]
         public async Task AddNewAchievements([FromBody] List<UploadAchievement> achievements)
         {
@@ -160,7 +167,7 @@ namespace WebApi.Controllers
                         Age = initialUser.UserAge,
                         AgePrefs = initialUser.AgePrefs,
                         AppLanguage = initialUser.Language,
-                        UsesOcean = false,
+                        UsesOcean = true,
                         CityCode = initialUser.CityId,
                         CountryCode = initialUser.CountryId,
                         CommunicationPrefs = initialUser.CommunicationPrefs,
@@ -168,13 +175,13 @@ namespace WebApi.Controllers
                         Gender = initialUser.UserGender,
                         GenderPrefs = initialUser.UserGenderPrefs,
                         MediaType = initialUser.MediaType,
-                        Id = initialUser.Id + i,
+                        Id = initialUser.Id + i + new Random().Next(1000),
                         LanguagePreferences = initialUser.LanguagePreferences,
                         Languages = initialUser.UserLanguages,
                         Media = initialUser.UserMedia,
                         RealName = initialUser.UserRealName,
                         Reason = initialUser.Reason,
-                        UserLocationPreferences = initialUser.LocationPreferences
+                        UserLocationPreferences = initialUser.LocationPreferences,
                     });
                     System.Console.WriteLine($"Registered users count: {i}");
                 }
