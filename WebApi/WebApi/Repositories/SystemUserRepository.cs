@@ -572,26 +572,6 @@ namespace WebApi.Repositories
             return feedback.Id;
         }
 
-        private double ApplyMaxDeviation(double value, double deviation)
-        {
-            var currentValueMax = value + deviation;
-
-            if (currentValueMax > 1)
-                currentValueMax = 1;
-
-            return currentValueMax;
-        }
-
-        private double ApplyMinDeviation(double value, double deviation)
-        {
-            var currentValueMin = value - deviation;
-
-            if (currentValueMin < 0)
-                currentValueMin = 0;
-
-            return currentValueMin;
-        }
-
         public async Task<bool> CheckUserExists(long id)
         {
             if (await _contx.Users.FindAsync(id) == null)
@@ -3017,7 +2997,7 @@ namespace WebApi.Repositories
                             value = balance.Detectors > 0;
                             break;
                         case 8:
-                            await ActivateToggleEffectAsync(userId, effectId);
+                            //await ActivateToggleEffectAsync(userId, effectId);
                             value = balance.Nullifiers > 0;
                             break;
                         case 9:

@@ -15,6 +15,15 @@ from Advertisement_Module import AdvertisementModule
 
 import os
 from dotenv import load_dotenv
+from Functions import *
+
+# Update resources
+set_path_prefixes("../Instruments/Resources/Inputs/", "")
+create_registration_resources()
+create_prices_resource()
+create_settings_resources()
+create_currency_setter_resources()
+create_shop_resources()
 
 load_dotenv()
 key = os.getenv("KEY")
