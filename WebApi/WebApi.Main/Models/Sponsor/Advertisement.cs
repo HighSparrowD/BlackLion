@@ -25,7 +25,9 @@ public class Advertisement
     public AdvertisementPriority Priority { get; set; }
     public MediaType MediaType { get; set; }
 
-    public User.User? User { get; set; }
+    public virtual User.User? User { get; set; }
+    
+    public virtual List<AdvertisementStats>? AdvertisementStats { get; set; }
 
     public Advertisement()
     {}

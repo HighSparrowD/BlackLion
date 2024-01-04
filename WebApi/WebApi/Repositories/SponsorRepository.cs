@@ -45,8 +45,15 @@ namespace WebApi.Repositories
         public async Task AddAdvertisementAsync(AdvertisementNew model)
         {
             var advertisement = new entities.Advertisement(model);
+            await _contx.Advertisements.AddAsync(advertisement);
 
-            await _contx.AddAsync(advertisement);
+            var stats = new entities.AdvertisementStats
+            {
+                SponsorId = model.SponsorId,
+                AdvertisementId = advertisement.Id
+            };
+
+            await _contx.AdvertisementStatistics.AddAsync(stats);
             await _contx.SaveChangesAsync();
         }
 
@@ -100,6 +107,24 @@ namespace WebApi.Repositories
 
             advertisement.Show = !advertisement.Show;
             await _contx.SaveChangesAsync();
+        }
+
+        public async Task<List<AdvertisementStats>> GetAdvertisementStatsAsync(long advertisementId)
+        {
+            var statistics = await _contx.AdvertisementStatistics.Where(a => a.AdvertisementId == advertisementId)
+                .Select(a => (AdvertisementStats)a)
+                .ToListAsync();
+
+            return statistics;
+        }
+
+        public async Task<List<AdvertisementStats>> GetAllAdvertisementsStatsAsync(long userId)
+        {
+            var statistics = await _contx.AdvertisementStatistics.Where(a => a.SponsorId == userId)
+                .Select(a => (AdvertisementStats)a)
+                .ToListAsync();
+
+            return statistics;
         }
     }
 }

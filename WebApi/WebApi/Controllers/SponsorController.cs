@@ -57,15 +57,17 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/statistics")]
-        public async Task<ActionResult> GetAdvertisementStatistics([FromServices] ISponsorRepository sponsorRepo)
+        public async Task<ActionResult> GetAdvertisementsStatistics([FromServices] ISponsorRepository sponsorRepo, 
+            [FromQuery] long userId)
         {
-            return null;
+            return Ok(await sponsorRepo.GetAllAdvertisementsStatsAsync(userId));
         }
 
-        [HttpGet("statistics/{id}")]
-        public async Task<ActionResult> GetAdvertisementStatistics([FromServices] ISponsorRepository sponsorRepo, [FromRoute] int id)
+        [HttpGet("/statistics/{id}")]
+        public async Task<ActionResult> GetAdvertisementStatistics([FromServices] ISponsorRepository sponsorRepo, 
+            [FromRoute] int id)
         {
-            return null;
+            return Ok(await sponsorRepo.GetAdvertisementStatsAsync(id));
         }
 
         [HttpGet("/advertisement/switch-status/{id}")]
