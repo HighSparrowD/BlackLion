@@ -10,6 +10,8 @@ namespace WebApi.Interfaces
     {
         Task<List<AdvertisementItem>> GetAdvertisementListAsync(int sponsorId);
         Task<Advertisement> GetAdvertisementAsync(int advertisementId);
+        Task<List<AdvertisementStats>> GetAdvertisementStatsAsync(long advertisementId);
+        Task<List<AdvertisementStats>> GetAllAdvertisementsStatsAsync(long userId);
         Task AddAdvertisementAsync(AdvertisementNew model);
         Task UpdateAdvertisementAsync(AdvertisementUpdate model);
         Task DeleteAdvertisementAsync(int advertisementId);

@@ -51,6 +51,7 @@ namespace WebApi.Data
 
         //Sponsors
         public DbSet<Advertisement> Advertisements => Set<Advertisement>();
+        public DbSet<AdvertisementStats> AdvertisementStatistics => Set<AdvertisementStats>();
         //public DbSet<Sponsor> Sponsors => Set<Sponsor>();
         //public DbSet<SponsorLanguage> SponsorLanguages => Set<SponsorLanguage>();
         //public DbSet<SponsorContactInfo> SponsorContactInfo => Set<SponsorContactInfo>();
@@ -107,6 +108,7 @@ namespace WebApi.Data
             ConfigureTestResults(builder);
             ConfigureTestScales(builder);
             ConfigureTags(builder);
+            ConfigureAdvertisementStatistics(builder);
         }
 
         private void ConfigureRelations(ModelBuilder builder)
@@ -151,6 +153,8 @@ namespace WebApi.Data
             builder.Entity<Adventure>().HasMany(a => a.Attendees);
             builder.Entity<AdventureAttendee>().HasKey(t => new { t.UserId, t.AdventureId });
 
+            builder.Entity<Advertisement>().HasMany(a => a.AdvertisementStats);
+            builder.Entity<AdvertisementStats>().HasOne(a => a.Advertisement);
             //builder.Entity<Sponsor>().HasMany(s => s.SponsorLanguages);
             //builder.Entity<SponsorLanguage>().HasOne(s => s.Language);
 
@@ -198,6 +202,7 @@ namespace WebApi.Data
             builder.Entity<UserTag>().ToTable("user_tags");
             builder.Entity<Tag>().ToTable("tags");
             builder.Entity<Advertisement>().ToTable("advertisements");
+            builder.Entity<AdvertisementStats>().ToTable("advertisement_statistics");
             //builder.Entity<Sponsor>().ToTable("sponsors");
             //builder.Entity<SponsorLanguage>().ToTable("sponsor_languages");
             //builder.Entity<SponsorContactInfo>().ToTable("sponsor_contact_info");
@@ -525,6 +530,20 @@ namespace WebApi.Data
                 .IncrementsBy(1);
 
             builder.Entity<Tag>(b =>
+            {
+                b.Property(a => a.Id).UseHiLo(sequenceName);
+            });
+        }
+
+        private void ConfigureAdvertisementStatistics(ModelBuilder builder)
+        {
+            const string sequenceName = "advertisement_stats_hilo";
+
+            builder.HasSequence<long>(sequenceName)
+                .StartsAt(1)
+                .IncrementsBy(1);
+
+            builder.Entity<AdvertisementStats>(b =>
             {
                 b.Property(a => a.Id).UseHiLo(sequenceName);
             });
