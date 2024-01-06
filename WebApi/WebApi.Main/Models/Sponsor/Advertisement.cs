@@ -83,6 +83,7 @@ public class Advertisement
             Text = advertisement.Text,
             Media = advertisement.Media,
             MediaType = advertisement.MediaType,
+            Show = advertisement.Show,
             Priority = advertisement.Priority,
             TargetAudience = advertisement.TargetAudience,
             Updated = advertisement.Updated
@@ -101,6 +102,7 @@ public class Advertisement
             Text = advertisement.Text,
             Media = advertisement.Media,
             MediaType = advertisement.MediaType,
+            Show = advertisement.Show,
             Priority = advertisement.Priority,
             TargetAudience = advertisement.TargetAudience,
             Updated = advertisement.Updated

@@ -1,8 +1,8 @@
 import json
-import pickle
 from typing import Union
 
 import requests
+from requests import Response
 
 import Models.Advertisement.Advertisement as advertisement_models
 
@@ -796,13 +796,25 @@ def remove_user_story(userId):
     except Exception as ex:
         return None
 
-def add_advertisement(payload: advertisement_models.AdvertisementNew):
+def add_advertisement(payload: advertisement_models.AdvertisementNew) -> Union[Response, None]:
     try:
-        d = payload.to_json()
+        data = payload.to_json()
 
-        requests.post("https://localhost:44381/advertisement", d, headers={
+        response = requests.post("https://localhost:44381/advertisement", data, headers={
             "Content-Type": "application/json"}, verify=False)
-        pass
+        return response
+
+    except:
+        return None
+
+
+def update_advertisement(payload: advertisement_models.AdvertisementNew) -> Union[Response, None]:
+    try:
+        data = payload.to_json()
+
+        response = requests.put("https://localhost:44381/advertisement", data, headers={
+            "Content-Type": "application/json"}, verify=False)
+        return response
 
     except:
         return None
@@ -814,5 +826,24 @@ def get_advertisement_list(userId) -> Union[list[advertisement_models.Advertisem
         advertisements = response.json()
 
         return [advertisement_models.AdvertisementItem(advertisement) for advertisement in advertisements]
+    except:
+        return
+
+
+def get_advertisement_info(userId) -> Union[advertisement_models.Advertisement, None]:
+    try:
+        response = requests.get(f"{api_address}/advertisement/{userId}", verify=False)
+        advertisement = response.json()
+
+        return advertisement_models.Advertisement(advertisement)
+    except:
+        return
+
+
+def delete_advertisement(advertisementId) -> Union[Response, None]:
+    try:
+        response = requests.delete(f"{api_address}/advertisement/{advertisementId}", verify=False)
+
+        return response
     except:
         return

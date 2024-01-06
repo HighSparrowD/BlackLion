@@ -22,6 +22,9 @@ public class Advertisement
     [JsonPropertyName("media")]
     public string? Media { get; set; }
 
+    [JsonPropertyName("show")]
+    public bool Show { get; set; }
+
     [JsonPropertyName("updated")]
     public bool Updated { get; set; }
 
