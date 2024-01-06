@@ -1,0 +1,2 @@
+Photo = "Photo"
+Video = "Video"
