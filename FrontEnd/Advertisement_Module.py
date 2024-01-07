@@ -5,6 +5,7 @@ from Common.Menues import count_pages, assemble_markup, reset_pages, add_tick_to
 import requests
 import json
 
+from Basement import Personality_Bot
 from Models import Advertisement as models
 from Common.Menues import go_back_to_main_menu
 from Helper import Helper
@@ -12,27 +13,11 @@ from ReportModule import ReportModule
 from Settings import Settings
 from Enums.AttendeeStatus import AttendeeStatus
 
-class AdvertisementModule:
+class AdvertisementModule(Personality_Bot):
     def __init__(self, bot: telebot.TeleBot, message: Message, hasVisited=False):
-        self.bot = bot
-        self.message = message
-        self.current_user = message.from_user.id
-        self.user_info = Helpers.get_user_info(self.current_user)
-        self.hasVisited = hasVisited
-        self.user_language = self.user_info["language"]
-
-        self.return_method = None
-
-        self.active_message = None
-        self.secondary_message = None
-        self.additional_message = None
-        self.error_message = None
+        super().__init__(bot, message, hasVisited)
 
         self.current_callback_handler = self.bot.register_callback_query_handler(message, self.callback_handler, user_id=self.current_user)
-
-        self.del_funcs = {"s": self.delete_secondary_message,
-                          "e": self.delete_error_message,
-                          "a": self.delete_additional_message}
 
         self.main_menu_markup = InlineKeyboardMarkup().add(InlineKeyboardButton('My ads', callback_data='1'))\
             .add(InlineKeyboardButton('Overall statistics', callback_data='2'))\
@@ -45,67 +30,6 @@ class AdvertisementModule:
         self.send_active_message('What you want to see?', markup=self.main_menu_markup)
         self.return_method = None
 
-    def send_active_message(self, text, markup, delete_msg: list[str] = None):
-        """
-        :param delete_msg: can be a list with "s", "e" or "a" for secondary, error or additional message correspondingly
-        :return: sends active message and deletes messages which types are in the delete_msg param
-        """
-        try:
-            if delete_msg is not None:
-                for msg in delete_msg:
-                    self.del_funcs[msg]()
-            if self.active_message:
-                self.bot.edit_message_text(text, self.current_user, self.active_message, reply_markup=markup)
-                return
-            self.active_message = self.bot.send_message(self.current_user, text, reply_markup=markup).id
-        except:
-            self.delete_active_message()
-            self.send_active_message(text, markup)
-
-    def send_error_message(self, text, markup=None):
-        try:
-            if self.error_message:
-                self.bot.edit_message_text(text, self.current_user, self.secondary_message, reply_markup=markup)
-                return
-            self.error_message = self.bot.send_message(self.current_user, text, reply_markup=markup).id
-        except:
-            self.delete_error_message()
-            self.send_error_message(text, markup)
-
-    def delete_active_message(self):
-        if self.active_message:
-            self.bot.delete_message(self.current_user, self.active_message)
-            self.active_message = None
-
-    def delete_secondary_message(self):
-        if self.secondary_message:
-            self.bot.delete_message(self.current_user, self.secondary_message)
-            self.secondary_message = None
-
-    def delete_error_message(self):
-        if self.error_message:
-            self.bot.delete_message(self.current_user, self.error_message)
-            self.error_message = None
-
-    def delete_additional_message(self):
-        if self.additional_message:
-            self.bot.delete_message(self.current_user, self.additional_message)
-            self.additional_message = None
-
-    def cleanup(self):
-        self.delete_active_message()
-        self.delete_secondary_message()
-        self.delete_error_message()
-        self.delete_additional_message()
-
-    def prev_menu(self):  # returns you to previous menu (no matter is the menu in ad_module or in main)
-        self.cleanup()
-        if self.return_method:
-            self.return_method()
-        else:
-            go_back_to_main_menu(self.bot, self.current_user, self.message)
-            self.bot.callback_query_handlers.remove(self.current_callback_handler)
-        del self
 
     def show_my_ads(self):
         self.my_ads_markup.clear()
