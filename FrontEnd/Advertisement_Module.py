@@ -5,7 +5,7 @@ from Common.Menues import count_pages, assemble_markup, reset_pages, add_tick_to
 import requests
 import json
 
-from Basement import Personality_Bot
+from BaseModule import Personality_Bot
 from Models import Advertisement as models
 from Common.Menues import go_back_to_main_menu
 from Helper import Helper
