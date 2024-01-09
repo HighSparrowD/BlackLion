@@ -1,10 +1,15 @@
+from typing import Union
+
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup
+
+import Models.User.User
 from Core import HelpersMethodes as Helpers
 from Common.Menues import paginate, assemble_markup, add_tick_to_element, remove_tick_from_element, index_converter
 import requests
 import json
 
 from Common.Menues import go_back_to_main_menu
+from Enums import MediaType
 from Helper import Helper
 from ReportModule import ReportModule
 from Settings import Settings
@@ -18,9 +23,9 @@ class Adventurer:
         self.current_user = message.from_user.id
         self.user_info = Helpers.get_user_info(self.current_user)
         self.hasVisited = hasVisited
-        self.hasPremium = self.user_info["hasPremium"]
-        self.isIdentityConfirmed = self.user_info["identityType"] != "None"
-        self.user_localization = self.user_info["language"]
+        self.hasPremium = self.user_info.hasPremium
+        self.isIdentityConfirmed = self.user_info.identityType != "None"
+        self.user_localization = self.user_info.language
 
         #Indicates whether if user is managing his own adventures (1), subscribed adventures (2), a template (3), create from template (4)
         self.manageMode = 1
@@ -57,8 +62,8 @@ class Adventurer:
         self.country = None
         self.city = None
 
-        self.country = self.user_info["countryId"]
-        self.city = self.user_info["cityId"]
+        self.country = self.user_info.country
+        self.city = self.user_info.city
 
         #Used for adventure search
         self.adventures = None
@@ -71,7 +76,7 @@ class Adventurer:
         #Used for adventure management
         self.current_adventure = 0
         self.current_attendee = 0
-        self.current_attendee_data = None
+        self.current_attendee_data: Union[Models.User.User.UserInfo, None] = None
         self.isNewAttendee = True
         self.current_attendees_statuses = {}
         self.attendees = {}
@@ -1552,7 +1557,7 @@ class Adventurer:
         self.previous_section()
 
     def get_attendee_contact(self):
-        username = self.current_attendee_data["userName"]
+        username = self.current_attendee_data.username
 
         if username:
             self.send_secondary_message("User does not have a username :(")
@@ -1561,10 +1566,10 @@ class Adventurer:
 
     def display_current_attendee_data(self):
 
-        if self.current_attendee_data["mediaType"] == "Photo":
-            self.send_active_message_with_photo(self.current_attendee_data["userDescription"], self.current_attendee_data["userMedia"])
+        if self.current_attendee_data.mediaType == MediaType.Photo:
+            self.send_active_message_with_photo(self.current_attendee_data.description, self.current_attendee_data.media)
         else:
-            self.send_active_message_with_video(self.current_attendee_data["userDescription"], self.current_attendee_data["userMedia"])
+            self.send_active_message_with_video(self.current_attendee_data.description, self.current_attendee_data.media)
 
     def send_active_message(self, text, markup=None):
         try:

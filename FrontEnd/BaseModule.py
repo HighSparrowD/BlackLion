@@ -19,7 +19,7 @@ class Personality_Bot:
         self.current_user = message.from_user.id
         self.user_info = Helpers.get_user_info(self.current_user)
         self.hasVisited = hasVisited
-        self.user_language = self.user_info["language"]
+        self.user_language = self.user_info.language
 
         self.return_method = None
 

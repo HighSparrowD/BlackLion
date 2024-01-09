@@ -1,5 +1,6 @@
 import copy
 
+from Models.User.User import UserNew
 from telebot import TeleBot
 from telebot.types import KeyboardButton, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
 from Core import HelpersMethodes as Helpers
@@ -76,7 +77,8 @@ class Registrator:
             self.localization["GoBackButton"]: "-10"
         }
 
-        self.data = {}
+        self.model = UserNew()
+
         self.current_user_data = None
         self.country = None
         self.city = None
@@ -124,36 +126,36 @@ class Registrator:
             self.current_user_data = Helpers.get_user_info(self.current_user)
             if self.current_user_data:
 
-                self.pref_countries = self.current_user_data["locationPreferences"]
-                self.pref_langs = self.current_user_data["languagePreferences"]
-                self.chosen_langs = self.current_user_data["userLanguages"]
-                self.app_language = self.current_user_data["language"]
+                self.pref_countries = self.current_user_data.locationPreferences
+                self.pref_langs = self.current_user_data.languagePreferences
+                self.chosen_langs = self.current_user_data.languages
+                self.app_language = self.current_user_data.language
 
-                self.country = self.current_user_data["countryId"]
-                self.city = self.current_user_data["cityId"]
+                self.country = self.current_user_data.country
+                self.city = self.current_user_data.city
 
-                if "tags" in self.current_user_data.keys():
-                    self.tags = ' '.join(self.current_user_data["tags"])
+                if self.current_user_data.tags is not None:
+                    self.tags = ' '.join(self.current_user_data.tags)
 
-                self.data["appLanguage"] = self.app_language
-                self.data["userName"] = self.current_user_data["userName"]
-                self.data["id"] = self.current_user
-                self.data["userRealName"] = self.current_user_data["userRealName"]
-                self.data["userDescription"] = self.current_user_data["userRawDescription"]
-                self.data["userMedia"] = self.current_user_data["userMedia"]
-                self.data["reasonId"] = self.current_user_data["reason"]
-                self.data["userAge"] = self.current_user_data["userAge"]
-                self.data["userLanguages"] = self.chosen_langs
-                self.data["userCountryCode"] = self.country
-                self.data["userCityCode"] = self.city
-                self.data["userGender"] = self.current_user_data["userGender"]
-                self.data["userLanguagePreferences"] = self.pref_langs
-                self.data["userLocationPreferences"] = self.pref_countries
-                self.data["agePrefs"] = self.current_user_data["agePrefs"]
-                self.data["communicationPrefs"] = self.current_user_data["communicationPrefs"]
-                self.data["userGenderPrefs"] = self.current_user_data["userGenderPrefs"]
-                self.data["tags"] = self.tags
-                self.data["mediaType"] = self.current_user_data["mediaType"]
+                self.model.appLanguage = self.app_language
+                self.model.userName = self.current_user_data.username
+                self.model.id = self.current_user
+                self.model.realName = self.current_user_data.realName
+                self.model.description = self.current_user_data.rawDescription
+                self.model.media = self.current_user_data.media
+                self.model.reason = self.current_user_data.reason
+                self.model.age = self.current_user_data.age
+                self.model.languages = self.chosen_langs
+                self.model.country = self.country
+                self.model.city = self.city
+                self.model.gender = self.current_user_data.gender
+                self.model.languagePreferences = self.pref_langs
+                self.model.locationPreferences = self.pref_countries
+                self.model.agePrefs = self.current_user_data.agePrefs
+                self.model.communicationPrefs = self.current_user_data.communicationPrefs
+                self.model.genderPrefs = self.current_user_data.genderPrefs
+                self.model.tags = self.tags
+                self.model.mediaType = self.current_user_data.mediaType
 
                 self.get_localisations()
 
@@ -188,7 +190,7 @@ class Registrator:
             self.delete_secondary_message()
             self.send_active_message(self.localization["LangQ"], markup=self.app_languages_markup)
         else:
-            self.data["userAppLanguage"] = self.app_language
+            self.model.appLanguage = self.app_language
             self.checkout_step(message)
 
     def spoken_language_step(self, message=None, acceptMode=False, shouldInsert=True):
@@ -252,13 +254,13 @@ class Registrator:
                     return
 
             if self.chosen_langs:
-                self.data["userLanguages"] = self.chosen_langs
+                self.model.languages = self.chosen_langs
 
                 if not self.editMode:
-                    self.data["id"] = self.current_user
-                    self.data["userName"] = message.from_user.username
-                    self.data["userAppLanguage"] = self.app_language
-                    self.data["promo"] = self.promo
+                    self.model.id = self.current_user
+                    self.model.username = message.from_user.username
+                    self.model.appLanguage = self.app_language
+                    self.model.promo = self.promo
 
                     self.gender_step()
                 else:
@@ -343,7 +345,7 @@ class Registrator:
                 add_tick_to_element(self.bot, self.current_user, self.active_message, self.current_markup_elements, self.markup_page, str(self.country))
 
             # Allow skipping location part if user prefers to communicate online
-            if self.data["communicationPrefs"] == 1:
+            if self.model.communicationPrefs == 1:
                 m = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(self.localization['NoMatterButton'], row_width=2).add(self.localization['OkButton'], row_width=1)
                 self.send_secondary_message(self.localization['ChooseOrSkipMessage'], markup=m)
             else:
@@ -375,16 +377,16 @@ class Registrator:
                     self.send_error_message(self.localization['GotchaMessage'], markup=self.okMarkup)
                     self.next_handler = self.bot.register_next_step_handler(message, self.location_step, acceptMode=acceptMode, chat_id=self.current_user)
                     return
-                elif message_text == self.localization['NoMatterButton'] and self.data["communicationPrefs"] == 1:
-                    if self.data["communicationPrefs"] == 1:
+                elif message_text == self.localization['NoMatterButton'] and self.model.communicationPrefs == 1:
+                    if self.model.communicationPrefs == 1:
 
                         #In case user had chosen a country before pressing 'Does not matter' button
                         self.country = None
                         self.city = None
                         self.pref_countries.clear()
-                        self.data["userLocationPreferences"] = None
-                        self.data["userCityCode"] = None
-                        self.data["userCountryCode"] = None
+                        self.model.locationPreferences = None
+                        self.model.city = None
+                        self.model.country = None
 
                         self.max_questions_count = 15
 
@@ -403,7 +405,7 @@ class Registrator:
                     return False
 
             if self.country or self.country == 0:
-                self.data["userCountryCode"] = self.country
+                self.model.country = self.country
                 self.previous_item = ''
 
                 if self.editMode:
@@ -482,7 +484,7 @@ class Registrator:
 
             if self.city or self.city == 0:
                 self.previous_item = ''
-                self.data["userCityCode"] = self.city
+                self.model.city = self.city
 
                 if not self.editMode:
                     self.name_step(message)
@@ -509,7 +511,7 @@ class Registrator:
             self.delete_message(message.id)
 
             if message.text:
-                self.data["userRealName"] = message.text
+                self.model.realName = message.text
 
                 if len(message.text) > 50:
                     self.send_error_message(self.localization['LongNameErrorMessage'])
@@ -550,7 +552,7 @@ class Registrator:
                     self.next_handler = self.bot.register_next_step_handler(message, self.age_step, acceptMode=acceptMode, chat_id=self.current_user)
                     return
 
-                self.data["userAge"] = age
+                self.model.age = age
 
                 if not self.editMode:
                     self.description_step(message)
@@ -576,7 +578,7 @@ class Registrator:
             self.delete_message(message.id)
 
             if message.text == self.localization['SkipMessage']:
-                self.data["userDescription"] = ""
+                self.model.description = ""
                 self.send_error_message(self.localization['DescriptionAdviseMessage'])
 
                 if not self.editMode:
@@ -589,7 +591,7 @@ class Registrator:
                     self.send_error_message(self.localization['LargeDescriptionErrorMessage'])
                     self.next_handler = self.bot.register_next_step_handler(message, self.description_step, acceptMode=acceptMode, chat_id=self.current_user)
 
-                self.data["userDescription"] = message.text
+                self.model.description = message.text
 
                 if not self.editMode:
                     self.photo_step(message)
@@ -618,8 +620,8 @@ class Registrator:
             self.delete_message(message.id)
 
             if message.photo:
-                self.data["userMedia"] = message.photo[len(message.photo) - 1].file_id  # TODO: troubleshoot photos
-                self.data["mediaType"] = MediaType.Photo
+                self.model.media = message.photo[len(message.photo) - 1].file_id  # TODO: troubleshoot photos
+                self.model.mediaType = MediaType.Photo
 
                 if self.editMode:
                     self.checkout_step(message)
@@ -632,8 +634,8 @@ class Registrator:
                     self.next_handler = self.bot.register_next_step_handler(message, self.photo_step, acceptMode=acceptMode, chat_id=self.current_user)
                     return
 
-                self.data["userMedia"] = message.video.file_id
-                self.data["mediaType"] = "Video"
+                self.model.media = message.video.file_id
+                self.model.mediaType = MediaType.Video
 
                 if self.editMode:
                     self.checkout_step(message)
@@ -648,8 +650,8 @@ class Registrator:
                     self.next_handler = self.bot.register_next_step_handler(message, self.photo_step, acceptMode=acceptMode, chat_id=self.current_user)
                     return
 
-                self.data["userMedia"] = photos.photos[0][len(photos.photos[0]) -1].file_id
-                self.data["mediaType"] = "Photo"
+                self.model.media = photos.photos[0][len(photos.photos[0]) -1].file_id
+                self.model.mediaType = MediaType.Photo
 
                 if self.editMode:
                     self.checkout_step(message)
@@ -738,7 +740,7 @@ class Registrator:
                     return False
 
             if self.pref_langs:
-                self.data["userLanguagePreferences"] = self.pref_langs
+                self.model.languagePreferences = self.pref_langs
 
                 if not self.editMode:
                     if not self.country:
@@ -815,7 +817,7 @@ class Registrator:
                     return False
 
             if self.pref_countries:
-                self.data["userLocationPreferences"] = self.pref_countries
+                self.model.locationPreferences = self.pref_countries
 
                 if not self.editMode:
                     self.age_pref_step(message)
@@ -844,11 +846,11 @@ class Registrator:
                 if "-" in message.text:
                     nums = message.text.replace(" ", "").split("-")
                     age_pref = list(range(int(nums[0]), int(nums[1])))
-                    self.data["agePrefs"] = age_pref
+                    self.model.agePrefs = age_pref
 
                 else:
                     age_pref = list(range(int(message.text) - 3, int(message.text) + 5))
-                    self.data["agePrefs"] = age_pref
+                    self.model.agePrefs = age_pref
 
                 if not self.editMode:
                     self.tags_step(message)
@@ -888,7 +890,7 @@ class Registrator:
                     try:
                         if len(tags.split()) <= self.maxTagCount:
                             self.tags = Helpers.format_tags(tags)
-                            self.data["tags"] = self.tags
+                            self.model.tags = self.tags
 
                             if not self.editMode:
                                 self.auto_reply_step(message)
@@ -933,7 +935,7 @@ class Registrator:
             elif message.voice:
                 if Helpers.check_user_has_premium(self.current_user):
                     if message.voice.duration <= 15:
-                        self.data["voice"] = message.voice.file_id
+                        self.model.voice = message.voice.file_id
                         if not self.editMode:
                             self.change_something_step(message)
                             return
@@ -947,7 +949,7 @@ class Registrator:
 
             elif message.text:
                 if len(message.text) < 300:
-                    self.data["text"] = message.text
+                    self.model.text = message.text
                     if not self.editMode:
                         self.change_something_step(message)
                         return
@@ -961,10 +963,10 @@ class Registrator:
 
     def change_something_step(self, message=None):
         self.question_index = 13
-        if self.data["mediaType"] == "Photo":
-            self.send_active_message_with_photo(self.localization['CheckoutMessage'].format(self.profile_constructor()), self.data["userMedia"])
+        if self.model.mediaType == MediaType.Photo:
+            self.send_active_message_with_photo(self.localization['CheckoutMessage'].format(self.profile_constructor()), self.model.media)
         else:
-            self.send_active_message_with_video(self.localization['CheckoutMessage'].format(self.profile_constructor()), video=self.data["userMedia"])
+            self.send_active_message_with_video(self.localization['CheckoutMessage'].format(self.profile_constructor()), video=self.model.media)
         self.send_secondary_message(self.localization['CheckoutQuestionMessage'], markup=self.YNmarkup)
 
     def checkout_step(self, input=None, acceptMode=False, shouldInsert=True):
@@ -980,63 +982,63 @@ class Registrator:
 
             self.configure_registration_step(self.checkout_step, shouldInsert)
 
-            if self.data["mediaType"] == "Photo":
-                self.send_active_message_with_photo(self.localization['CheckoutMessage'].format(self.profile_constructor()), self.data["userMedia"])
+            if self.model.mediaType == "Photo":
+                self.send_active_message_with_photo(self.localization['CheckoutMessage'].format(self.profile_constructor()), self.model.media)
             else:
-                self.send_active_message_with_video(self.localization['CheckoutMessage'].format(self.profile_constructor()), self.data["userMedia"])
+                self.send_active_message_with_video(self.localization['CheckoutMessage'].format(self.profile_constructor()), self.model.media)
 
             self.send_secondary_message(self.localization['CheckoutMenuMessage'], markup=active_markup)
         else:
             if input == "1":
-                self.data["wasChanged"] = True
+                self.model.wasChanged = True
                 self.app_language_step(shouldInsert=True)
             elif input == "2":
-                self.data["wasChanged"] = True
+                self.model.wasChanged = True
                 self.name_step(shouldInsert=False)
             elif input == "3":
-                self.data["wasChanged"] = True
+                self.model.wasChanged = True
                 self.description_step(shouldInsert=False)
             elif input == "4":
-                self.data["wasChanged"] = True
+                self.model.wasChanged = True
                 self.spoken_language_step(shouldInsert=False)
             elif input == "5":
-                self.data["wasChanged"] = True
+                self.model.wasChanged = True
                 self.location_step(shouldInsert=False)
             elif input == "6":
-                self.data["wasChanged"] = True
+                self.model.wasChanged = True
                 self.city_step(shouldInsert=False)
             elif input == "7":
-                self.data["wasChanged"] = True
+                self.model.wasChanged = True
                 self.reason_step(shouldInsert=False)
             elif input == "8":
-                self.data["wasChanged"] = True
+                self.model.wasChanged = True
                 self.age_step(shouldInsert=False)
             elif input == "9":
-                self.data["wasChanged"] = True
+                self.model.wasChanged = True
                 self.gender_step(shouldInsert=False)
             elif input == "10":
-                self.data["wasChanged"] = True
+                self.model.wasChanged = True
                 self.photo_step(shouldInsert=False)
             elif input == "11":
-                self.data["wasChanged"] = True
+                self.model.wasChanged = True
                 self.language_preferences_step(shouldInsert=False)
             elif input == "12":
-                self.data["wasChanged"] = True
+                self.model.wasChanged = True
                 self.location_preferences_step(shouldInsert=False)
             elif input == "13":
-                self.data["wasChanged"] = True
+                self.model.wasChanged = True
                 self.age_pref_step(shouldInsert=False)
             elif input == "14":
-                self.data["wasChanged"] = True
+                self.model.wasChanged = True
                 self.gender_preferences_step(shouldInsert=False)
             elif input == "15":
-                self.data["wasChanged"] = True
+                self.model.wasChanged = True
                 self.communication_preferences_step(shouldInsert=False)
             elif input == "16":
-                self.data["wasChanged"] = True
+                self.model.wasChanged = True
                 self.tags_step(shouldInsert=False)
             elif input == "17":
-                self.data["wasChanged"] = True
+                self.model.wasChanged = True
                 self.auto_reply_step(shouldInsert=False)
             elif input == "18":
                 self.finish_step()
@@ -1045,9 +1047,7 @@ class Registrator:
 
     def finish_step(self, message=None):
         if self.hasVisited:
-            d = json.dumps(self.data)
-            response = requests.post("https://localhost:44381/update-user", d, headers={
-                "Content-Type": "application/json"}, verify=False)
+            response = Helpers.update_user(self.model)
 
             if response.text == "1":
                 self.bot.send_message(self.current_user, self.localization['ChangesSavedMessage'])
@@ -1070,10 +1070,10 @@ class Registrator:
         countryName = "---"
 
         if self.country:
-            cityName = self.cities[self.data['userCityCode']]
-            countryName = self.countries[self.data['userCountryCode']]
+            cityName = self.cities[self.model.city]
+            countryName = self.countries[self.model.country]
 
-        result = f"{self.data['userRealName']}, {countryName}, {cityName}\n{self.data['userAge']}\n{self.data['userDescription']}"
+        result = f"{self.model.realName}, {countryName}, {cityName}\n{self.model.age}\n{self.model.description}"
 
         if self.tags:
             result += f"\n\n{self.tags}"
@@ -1239,7 +1239,7 @@ class Registrator:
 
         elif self.question_index == 3:
             gender = call.data
-            self.data["userGender"] = gender
+            self.model.gender = gender
 
             if not self.editMode:
                 self.reason_step()
@@ -1274,12 +1274,12 @@ class Registrator:
                 self.bot.answer_callback_query(call.id, self.localization['CountyNotRecognizedErrorMessage'])
 
         elif self.question_index == 9:
-            self.data["reasonId"] = call.data
+            self.model.reason = call.data
 
             if not self.editMode:
                 if self.isShortReg:
                     # "Does not matter is always the last one"
-                    self.data["communicationPrefs"] = self.communication_pref[len(self.communication_pref.values())].replace(" ", "")
+                    self.model.communicationPrefs = self.communication_pref[len(self.communication_pref.values())].replace(" ", "")
                     self.location_step()
                     return
 
@@ -1288,30 +1288,30 @@ class Registrator:
                 self.checkout_step(call.message)
 
         elif self.question_index == 10:
-            self.data["communicationPrefs"] = call.data
+            self.model.communicationPrefs = call.data
 
             # TODO: Find out what the fuck is that for?
             if not self.editMode:
                 self.location_step(call.message)
             else:
                 #If prefs are not 'Online' and there is no country chosen
-                if call.data != "1" and not self.data["userCountryCode"]:
+                if call.data != "1" and not self.model.country:
                     self.location_step(call.message)
                 else:
                     self.checkout_step(call.message)
 
         elif self.question_index == 11:
             gender = call.data
-            self.data["userGenderPrefs"] = gender
+            self.model.genderPrefs = gender
 
             if not self.editMode:
                 if self.isShortReg:
                     self.pref_langs.extend(self.chosen_langs)
                     self.pref_countries.append(self.country)
 
-                    self.data["userLanguagePreferences"] = self.pref_langs
-                    self.data["userLocationPreferences"] = self.pref_countries
-                    self.data["agePrefs"] = list(range(self.data["userAge"] - 3, self.data["userAge"] + 5))
+                    self.model.languagePreferences = self.pref_langs
+                    self.model.locationPreferences = self.pref_countries
+                    self.model.agePrefs = list(range(self.model.age - 3, self.model.age + 5))
                     self.change_something_step()
                     return
                 self.language_preferences_step(call.message)
@@ -1382,11 +1382,9 @@ class Registrator:
             if call.data == "1":
                 self.bot.answer_callback_query(call.id, "")
 
-                self.data["usesOcean"] = True
+                self.model.usesOcean = True
 
-                d = json.dumps(self.data)
-                requests.post("https://localhost:44381/RegisterUser", d,
-                              headers={"Content-Type": "application/json"}, verify=False)
+                Helpers.register_user(self.model)
 
                 self.bot.send_message(self.current_user, self.localization['HelperDescriptionMessage'])
 
@@ -1395,11 +1393,9 @@ class Registrator:
                 TestModule(self.bot, self.message, isActivatedFromShop=False)
                 return
 
-            self.data["usesOcean"] = False
+            self.model.usesOcean = False
 
-            d = json.dumps(self.data)
-            requests.post("https://localhost:44381/RegisterUser", d,
-                          headers={"Content-Type": "application/json"}, verify=False)
+            response = Helpers.register_user(self.model)
 
             self.destruct()
 
@@ -1420,8 +1416,8 @@ class Registrator:
         self.bot.delete_message(self.current_user, message_id)
 
     def generate_personal_age_range(self):
-        min_value = self.data["userAge"] - 3
-        max_value = self.data["userAge"] + 5
+        min_value = self.model.age - 3
+        max_value = self.model.age + 5
 
         #Age below 12 is forbidden, thus, no need for that :)
         # if min_value:

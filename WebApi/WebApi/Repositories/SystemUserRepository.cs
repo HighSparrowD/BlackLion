@@ -226,35 +226,44 @@ namespace WebApi.Repositories
             return model.Id;
         }
 
-        public async Task<GetUserInfo> GetUserInfoAsync(long id)
+        public async Task<UserInfo> GetUserInfoAsync(long id)
         {
             //Actualize premium information
             await CheckUserHasPremiumAsync(id);
 
-            return await _contx.Users.Where(u => u.Id == id).Select(u => new GetUserInfo
+            var userTags = await _contx.UserTags.Where(t => t.UserId == id)
+                .Join(_contx.Tags,
+                    ut => ut.TagId, t => t.Id,
+                    (ut, t) => new
+                    {
+                        Name = t.Text,
+                    }).ToListAsync();
+
+            return await _contx.Users.Where(u => u.Id == id).Select(u => new UserInfo
             {
                Id = u.Data.Id,
-               UserName = u.Data.UserName,
+               Username = u.Data.UserName,
                AgePrefs = u.Data.AgePrefs,
-               AutoReplyText = u.Data.AutoReplyText,
-               AutoReplyVoice = u.Data.AutoReplyVoice,
-               UserAge = u.Data.UserAge,
-               UserDescription = u.Data.UserDescription,
-               UserRawDescription = u.Data.UserRawDescription,
+               Text = u.Data.AutoReplyText,
+               Voice = u.Data.AutoReplyVoice,
+               Age = u.Data.UserAge,
+               Description = u.Data.UserDescription,
+               RawDescription = u.Data.UserRawDescription,
                CommunicationPrefs = u.Data.CommunicationPrefs,
                Language = u.Data.Language,
                LanguagePreferences = u.Data.LanguagePreferences,
                LocationPreferences = u.Data.LocationPreferences,
                MediaType = u.Data.MediaType,
-               UserMedia = u.Data.UserMedia,
+               Tags = string.Join(", ", userTags),
+               Media = u.Data.UserMedia,
                Reason = u.Data.Reason,
-               UserGender = u.Data.UserGender,
-               UserGenderPrefs = u.Data.UserGenderPrefs,
-               UserLanguages = u.Data.UserLanguages,
-               UserRealName = u.Data.UserRealName,
-               CityId = u.Location.CityId,
-               CountryId = u.Location.CountryId,
-               CityCountryLang = u.Data.Language,
+               Gender = u.Data.UserGender,
+               GenderPrefs = u.Data.UserGenderPrefs,
+               Languages = u.Data.UserLanguages,
+               RealName = u.Data.UserRealName,
+               City = u.Location.CityId,
+               Country = u.Location.CountryId,
+               CityLang = u.Data.Language,
                CountryLang = u.Data.Language,
                IdentityType = u.IdentityType,
                HasPremium = u.HasPremium

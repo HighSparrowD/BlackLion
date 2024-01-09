@@ -78,7 +78,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/user-info/{userId}")]
-        public async Task<ActionResult<GetUserInfo>> GetUserInfo(long userId)
+        public async Task<ActionResult<UserInfo>> GetUserInfo(long userId)
         {
             return Ok(await _repository.GetUserInfoAsync(userId));
         }
@@ -92,8 +92,7 @@ namespace WebApi.Controllers
         [HttpPost("/update-user")]
         public async Task UpdateUserProfile(UpdateUserProfile model)
         {
-            if (model.WasChanged)
-                await _repository.UpdateUserAsync(model);
+            await _repository.UpdateUserAsync(model);
         }
 
         [HttpGet("/UpdateUserAppLanguage/{userId}/{appLanguage}")]
@@ -150,7 +149,7 @@ namespace WebApi.Controllers
             return await _repository.GetUserBasicInfo(userId);
         }
 
-        [HttpPost("/RegisterUser")]
+        [HttpPost("/user-register")]
         public async Task<long> AddUser(UserRegistrationModel model)
         {
 

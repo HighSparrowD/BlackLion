@@ -6,23 +6,23 @@ using WebApi.Enums.Enums.User;
 
 namespace WebApi.Models.Models.User
 {
-    public class GetUserInfo
+    public class UserInfo
     {
         // Data
         [JsonPropertyName("id")]
         public long Id { get; set; }
-        [JsonPropertyName("userLanguages")]
-        public List<int>? UserLanguages { get; set; }
-        [JsonPropertyName("userAge")]
-        public int UserAge { get; set; }
-        [JsonPropertyName("userGender")]
-        public Gender UserGender { get; set; }
+        [JsonPropertyName("languages")]
+        public List<int>? Languages { get; set; }
+        [JsonPropertyName("age")]
+        public int Age { get; set; }
+        [JsonPropertyName("gender")]
+        public Gender Gender { get; set; }
         [JsonPropertyName("language")]
         public AppLanguage Language { get; set; } //AppLanguage
-        [JsonPropertyName("autoReplyText")]
-        public string? AutoReplyText { get; set; }
-        [JsonPropertyName("autoReplyVoice")]
-        public string? AutoReplyVoice { get; set; }
+        [JsonPropertyName("text")]
+        public string? Text { get; set; }
+        [JsonPropertyName("voice")]
+        public string? Voice { get; set; }
         [JsonPropertyName("languagePreferences")]
         public List<int>? LanguagePreferences { get; set; }
         [JsonPropertyName("locationPreferences")]
@@ -31,32 +31,34 @@ namespace WebApi.Models.Models.User
         public List<int>? AgePrefs { get; set; }
         [JsonPropertyName("communicationPrefs")]
         public CommunicationPreference CommunicationPrefs { get; set; }
-        [JsonPropertyName("userGenderPrefs")]
-        public Gender UserGenderPrefs { get; set; }
+        [JsonPropertyName("genderPrefs")]
+        public Gender GenderPrefs { get; set; }
         [JsonPropertyName("reason")]
         public UsageReason Reason { get; set; }
-        [JsonPropertyName("userName")]
-        public string? UserName { get; set; }
-        [JsonPropertyName("userRealName")]
-        public string? UserRealName { get; set; }
-        [JsonPropertyName("userDescription")]
-        public string? UserDescription { get; set; }
-        [JsonPropertyName("userRawDescription")]
-        public string? UserRawDescription { get; set; }
-        [JsonPropertyName("userMedia")]
-        public string? UserMedia { get; set; }
+        [JsonPropertyName("username")]
+        public string? Username { get; set; }
+        [JsonPropertyName("realName")]
+        public string? RealName { get; set; }
+        [JsonPropertyName("description")]
+        public string? Description { get; set; }
+        [JsonPropertyName("rawDescription")]
+        public string? RawDescription { get; set; }
+        [JsonPropertyName("media")]
+        public string? Media { get; set; }
+        [JsonPropertyName("tags")]
+        public string? Tags { get; set; }
         [JsonPropertyName("mediaType")]
         public MediaType MediaType { get; set; }
 
         // Location
-        [JsonPropertyName("cityId")]
-        public int? CityId { get; set; }
-        [JsonPropertyName("countryId")]
-        public int? CountryId { get; set; }
+        [JsonPropertyName("city")]
+        public int? City { get; set; }
+        [JsonPropertyName("country")]
+        public int? Country { get; set; }
         [JsonPropertyName("countryLang")]
         public AppLanguage? CountryLang { get; set; }
-        [JsonPropertyName("cityCountryLang")]
-        public AppLanguage? CityCountryLang { get; set; }
+        [JsonPropertyName("cityLang")]
+        public AppLanguage? CityLang { get; set; }
 
         // Other 
         [JsonPropertyName("identityType")]

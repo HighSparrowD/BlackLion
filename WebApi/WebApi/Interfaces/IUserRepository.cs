@@ -29,7 +29,7 @@ namespace WebApi.Interfaces
         Task<bool> CheckUserIsBanned(long userId);
         Task<bool> CheckUserIsDeleted(long userId);
         Task<bool> SetDebugProperties(); //TODO: remove in production
-        Task<GetUserInfo> GetUserInfoAsync(long id);
+        Task<UserInfo> GetUserInfoAsync(long id);
         Task<GetUserSettings> GetUserSettingsAsync(long id);
         Task<GetRequests> GetUserRequests(long userId);
         Task<UserNotification> GetUserRequest(long requestId);
