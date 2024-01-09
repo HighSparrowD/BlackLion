@@ -7,7 +7,7 @@ from telebot import TeleBot
 import Core.HelpersMethodes as Helpers
 from telebot.types import ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup, LabeledPrice
 from Common.Menues import index_converter
-from Common.Menues import count_pages, assemble_markup, reset_pages
+from Common.Menues import paginate, assemble_markup
 from Common.Menues import go_back_to_main_menu
 from Core.Resources import Resources
 import Settings
@@ -89,6 +89,11 @@ class TestModule:
         self.continueMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Continue")
         self.abortMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("/leave")
 
+        # self.localization["GoBackButton"]: "-10"
+        self.additional_buttons = {
+            "🔙Go Back": "-10"
+        }
+
         self.current_test_short_data = {}
         self.current_test_data = {}
         self.current_question = {}
@@ -155,9 +160,8 @@ class TestModule:
 
         self.isOnStart = False
 
-        reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page, self.markup_pages_count)
-        count_pages(self.tests, self.current_markup_elements, self.markup_pages_count, additionalButton=True, buttonText="🔙Go Back", buttonData=-10)
-        markup = assemble_markup(self.markup_page, self.current_markup_elements, 0)
+        markup = paginate(self.current_markup_elements, self.markup_last_element, self.markup_page,
+                          self.markup_pages_count, self.tests, 0, additional_buttons=self.additional_buttons)
 
         return markup
 

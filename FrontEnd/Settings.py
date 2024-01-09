@@ -3,7 +3,7 @@ import random
 
 from Registration import *
 from ReportModule import *
-from Common.Menues import count_pages, assemble_markup, reset_pages, index_converter
+from Common.Menues import paginate, assemble_markup, index_converter
 from telebot.types import ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
 import Core.HelpersMethodes as Helpers
 
@@ -226,6 +226,10 @@ class Settings:
         self.cardDeckPlatinumDescription = self.localization["CardDecPlatinumD"]
 
         self.ocean_description = self.localization["OceanD"]
+
+        self.additional_buttons = {
+            self.localization["GoBack"]: "-20"
+        }
 
         self.okMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(self.localization["OkB"])
 
@@ -519,9 +523,9 @@ class Settings:
 
             elements[achievement["id"]] = achievement["name"]
 
-        reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page, self.markup_pages_count)
-        count_pages(elements, self.current_markup_elements, self.markup_pages_count, additionalButton=True, buttonText=self.localization["GoBack"], buttonData="-20")
-        markup = assemble_markup(self.markup_page, self.current_markup_elements, 0)
+        markup = paginate(self.current_markup_elements, self.markup_last_element, self.markup_page,
+                          self.markup_pages_count, elements, 0, additional_buttons=self.additional_buttons)
+
         self.markup_page = 1
 
         # self.current_callback_handler = self.bot.register_callback_query_handler("", self.achievement_callback_handler)
@@ -682,10 +686,9 @@ class Settings:
                 # self.current_callback_handler = self.bot.register_callback_query_handler("", self.encounters_callback_handler,user_id=self.current_user)
                 self.subscribe_callback_handler(self.encounters_callback_handler)
 
-                reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page,
-                            self.markup_pages_count)
-                self.markup_pages_count = count_pages(self.encounter_list, self.current_markup_elements, self.markup_pages_count, additionalButton=True, buttonText=self.localization["GoBack"], buttonData=-20)
-                markup = assemble_markup(self.markup_page, self.current_markup_elements, 0)
+                markup = paginate(self.current_markup_elements, self.markup_last_element, self.markup_page,
+                                  self.markup_pages_count, self.encounter_list, 0,
+                                  additional_buttons=self.additional_buttons)
 
                 self.send_active_message(self.localization["AllEncounters"], markup=markup)
             else:
@@ -753,10 +756,9 @@ class Settings:
                 # self.current_callback_handler = self.bot.register_callback_query_handler("", self.black_list_callback_handler, user_id=self.current_user)
                 self.subscribe_callback_handler(self.black_list_callback_handler)
 
-                reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page,
-                            self.markup_pages_count)
-                self.markup_pages_count = count_pages(self.black_list, self.current_markup_elements, self.markup_pages_count, additionalButton=True, buttonText=self.localization["GoBack"], buttonData=-20)
-                markup = assemble_markup(self.markup_page, self.current_markup_elements, 0)
+                markup = paginate(self.current_markup_elements, self.markup_last_element, self.markup_page,
+                                  self.markup_pages_count, self.black_list, 0,
+                                  additional_buttons=self.additional_buttons)
 
                 self.send_active_message(self.localization["BlackListM"], markup=markup)
             else:

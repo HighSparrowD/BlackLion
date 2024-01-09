@@ -3338,7 +3338,7 @@ namespace WebApi.Repositories
             var test = await _contx.UserTests.Where(t => t.UserId == userId && t.TestId == testId)
                 .Include(t => t.Test)
                 .AsNoTracking()
-                .SingleOrDefaultAsync();
+                .FirstOrDefaultAsync();
 
             if (test == null)
                 throw new NullReferenceException($"User #{userId} does not have test #{testId} available");
