@@ -1,6 +1,6 @@
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup
 from Core import HelpersMethodes as Helpers
-from Common.Menues import count_pages, assemble_markup, reset_pages, add_tick_to_element, remove_tick_from_element, index_converter
+from Common.Menues import paginate, assemble_markup, add_tick_to_element, remove_tick_from_element, index_converter
 import requests
 import json
 
@@ -164,6 +164,11 @@ class Adventurer:
         self.attendee_statusDict = {
             "New": "❓", # New
             "Accepted": "✅" # Accepted
+        }
+
+        # self.localization["GoBackButton"]: "-10"
+        self.additional_buttons = {
+            "Go Back": "-20"
         }
 
         self.active_location_markup = None
@@ -358,10 +363,8 @@ class Adventurer:
             self.question_index = 4
             self.load_countries()
 
-            reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page,
-                        self.markup_pages_count)
-            count_pages(self.countries, self.current_markup_elements, self.markup_pages_count)
-            markup = assemble_markup(self.markup_page, self.current_markup_elements, 0)
+            markup = paginate(self.current_markup_elements, self.markup_last_element, self.markup_page,
+                              self.markup_pages_count, self.countries, 0)
 
             self.previous_item = ''
 
@@ -427,9 +430,8 @@ class Adventurer:
 
             self.previous_item = ''
 
-            reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page, self.markup_pages_count)
-            count_pages(self.cities, self.current_markup_elements, self.markup_pages_count)
-            markup = assemble_markup(self.markup_page, self.current_markup_elements, 0)
+            markup = paginate(self.current_markup_elements, self.markup_last_element, self.markup_page,
+                              self.markup_pages_count, self.cities, 0)
 
             self.send_active_message("Please, select city", markup=markup)
 
@@ -1667,9 +1669,9 @@ class Adventurer:
             # self.my_adventures_attendeesMarkup.add(InlineKeyboardButton(f"{status} {attendee['username']} {status}", callback_data=attendee["userId"]))
 
         if self.attendees:
-            reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page, self.markup_pages_count)
-            count_pages(self.attendees, self.current_markup_elements, self.markup_pages_count, additionalButton=True, buttonText="Go Back", buttonData="-20")
-            self.my_adventures_attendeesMarkup = assemble_markup(self.markup_page, self.current_markup_elements, 0)
+            self.my_adventuresMarkup = paginate(self.current_markup_elements, self.markup_last_element, self.markup_page,
+                                                self.markup_pages_count, self.attendees, 0,
+                                                additional_buttons=self.additional_buttons)
 
     def assemble_subscribed_adventures_markup(self):
         adventures = json.loads(requests.get(f"https://localhost:44381/GetUsersSubscribedAdventures/{self.current_user}", verify=False).text)
@@ -1682,9 +1684,10 @@ class Adventurer:
             # self.subscribed_adventuresMarkup.add(InlineKeyboardButton(adventure["name"], callback_data=adventure["id"]))
 
         if self.subscribed_adventures:
-            reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page, self.markup_pages_count)
-            count_pages(self.subscribed_adventures, self.current_markup_elements, self.markup_pages_count, additionalButton=True, buttonText="Go Back", buttonData="-20")
-            self.subscribed_adventuresMarkup = assemble_markup(self.markup_page, self.current_markup_elements, 0)
+            self.subscribed_adventuresMarkup = paginate(self.current_markup_elements, self.markup_last_element,
+                                                        self.markup_page, self.markup_pages_count,
+                                                        self.subscribed_adventures, 0,
+                                                        additional_buttons=self.additional_buttons)
 
     def assemble_my_templates_markup(self, addNewButton=True):
         templates = Helpers.get_templates(self.current_user)

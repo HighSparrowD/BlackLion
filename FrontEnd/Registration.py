@@ -3,11 +3,12 @@ import copy
 from telebot import TeleBot
 from telebot.types import KeyboardButton, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
 from Core import HelpersMethodes as Helpers
-from Common.Menues import count_pages, assemble_markup, reset_pages, add_tick_to_element, add_tick_to_elements, remove_tick_from_element, remove_tick_from_elements, index_converter
+from Common.Menues import paginate, assemble_markup, add_tick_to_element, add_tick_to_elements, remove_tick_from_element, remove_tick_from_elements, index_converter
 import requests
 import json
 from Core.Resources import Resources
 from Common.Menues import go_back_to_main_menu
+from Enums import MediaType
 from TestModule import TestModule
 
 
@@ -70,6 +71,10 @@ class Registrator:
         self.change_markup = copy.copy(self.create_markup)
 
         self.app_language = localizationIndex
+
+        self.additional_buttons = {
+            self.localization["GoBackButton"]: "-10"
+        }
 
         self.data = {}
         self.current_user_data = None
@@ -195,9 +200,9 @@ class Registrator:
 
             self.current_section = self.spoken_language_step
 
-            reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page, self.markup_pages_count)
-            count_pages(self.languages, self.current_markup_elements, self.markup_pages_count)
-            markup = assemble_markup(self.markup_page, self.current_markup_elements, 0)
+            markup = paginate(self.current_markup_elements, self.markup_last_element, self.markup_page, self.markup_pages_count,
+                              self.languages, 0)
+
             self.markup_page = 1
 
             self.send_active_message(question_counter + self.localization['SateLanguagesMessage'], markup=markup)
@@ -326,10 +331,8 @@ class Registrator:
             self.configure_registration_step(self.location_step, shouldInsert)
             # self.send_encourage_message("You have done good job answering our questions. Keep it up!")
 
-            reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page,
-                        self.markup_pages_count)
-            count_pages(self.countries, self.current_markup_elements, self.markup_pages_count, additionalButton=True, buttonText=self.localization["GoBackButton"], buttonData="-10")
-            markup = assemble_markup(self.markup_page, self.current_markup_elements, 0)
+            markup = paginate(self.current_markup_elements, self.markup_last_element, self.markup_page, self.markup_pages_count,
+                              self.countries, 0, additional_buttons=self.additional_buttons)
 
             self.previous_item = ''
 
@@ -434,9 +437,8 @@ class Registrator:
             for city in cities:
                 self.cities[city["id"]] = city["cityName"].lower()
 
-            reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page, self.markup_pages_count)
-            count_pages(self.cities, self.current_markup_elements, self.markup_pages_count, additionalButton=True, buttonText=self.localization["GoBackButton"], buttonData="-10")
-            markup = assemble_markup(self.markup_page, self.current_markup_elements, 0)
+            markup = paginate(self.current_markup_elements, self.markup_last_element, self.markup_page, self.markup_pages_count,
+                              self.cities, 0, additional_buttons=self.additional_buttons)
 
             self.send_active_message(question_counter + self.localization['ChooseCityMessage'], markup=markup)
 
@@ -617,7 +619,7 @@ class Registrator:
 
             if message.photo:
                 self.data["userMedia"] = message.photo[len(message.photo) - 1].file_id  # TODO: troubleshoot photos
-                self.data["mediaType"] = "Photo"
+                self.data["mediaType"] = MediaType.Photo
 
                 if self.editMode:
                     self.checkout_step(message)
@@ -685,10 +687,8 @@ class Registrator:
 
             self.configure_registration_step(self.language_preferences_step, shouldInsert)
 
-            reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page,
-                        self.markup_pages_count)
-            count_pages(self.languages, self.current_markup_elements, self.markup_pages_count, True, additionalButton=True, buttonText=self.localization["GoBackButton"], buttonData="-10")
-            markup = assemble_markup(self.markup_page, self.current_markup_elements, 0)
+            markup = paginate(self.current_markup_elements, self.markup_last_element, self.markup_page, self.markup_pages_count,
+                              self.languages, 0, prefs=True, additional_buttons=self.additional_buttons)
 
             self.send_active_message(question_counter + self.localization['LanguagesQuestionMessage'], markup=markup)
 
@@ -766,10 +766,8 @@ class Registrator:
 
             self.configure_registration_step(self.location_preferences_step, shouldInsert)
 
-            reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page,
-                        self.markup_pages_count)
-            count_pages(self.countries, self.current_markup_elements, self.markup_pages_count, True, additionalButton=True, buttonText=self.localization["GoBackButton"], buttonData="-10")
-            markup = assemble_markup(self.markup_page, self.current_markup_elements, 0)
+            markup = paginate(self.current_markup_elements, self.markup_last_element, self.markup_page, self.markup_pages_count,
+                              self.countries, 0, prefs=True, additional_buttons=self.additional_buttons)
 
             self.send_active_message(question_counter + self.localization['LocationPrefsQuestionMessage'], markup=markup)
 

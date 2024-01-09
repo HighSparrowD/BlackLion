@@ -1,5 +1,6 @@
 import copy
 from math import ceil
+from typing import Union
 
 from Core import HelpersMethodes as Helpers
 from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
@@ -42,7 +43,8 @@ def start_program_in_debug_mode(bot):  # TODO: remove in production
     Helpers.start_program_in_debug_mode(bot)
 
 
-def count_pages(section_elements, current_markup_elements, markup_pages_count, prefs=False, additionalButton=False, buttonText="", buttonData=0):
+def count_pages(section_elements, current_markup_elements, markup_pages_count, prefs: bool = False,
+                additional_buttons: Union[dict[str, str], None] = None):
     current_markup_elements.clear()
     section_elements = copy.copy(section_elements)
     markup = InlineKeyboardMarkup()
@@ -76,8 +78,9 @@ def count_pages(section_elements, current_markup_elements, markup_pages_count, p
                        InlineKeyboardButton(f"{i} / {count}", callback_data=f"-3"),
                        InlineKeyboardButton(">", callback_data="-2"))
 
-            if additionalButton:
-                markup.add(InlineKeyboardButton(buttonText, callback_data=buttonData))
+            if additional_buttons:
+                for button in additional_buttons:
+                    markup.add(InlineKeyboardButton(button, callback_data=additional_buttons[button]))
 
             current_markup_elements.append(copy.deepcopy(markup))
             markup_pages_count += 1
@@ -100,6 +103,18 @@ def reset_pages(current_markup_elements, markup_last_element, markup_page, marku
     markup_last_element = 0
     markup_page = 1
     markup_pages_count = 0
+
+
+def paginate(current_markup_elements: list, markup_last_element: any, markup_page: int, markup_pages_count: int,
+             section_elements: dict[str, str], index: int, prefs: bool = False,
+                additional_buttons: Union[dict[str, str], None] = None):
+
+    reset_pages(current_markup_elements, markup_last_element, markup_page, markup_pages_count)
+
+    count_pages(section_elements, current_markup_elements, markup_pages_count, prefs=prefs,
+                additional_buttons=additional_buttons)
+
+    return assemble_markup(markup_page, current_markup_elements, index)
 
 
 def index_converter(index):
