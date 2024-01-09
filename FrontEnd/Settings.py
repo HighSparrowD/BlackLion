@@ -50,15 +50,15 @@ class Settings:
         self.gestures = ["👍","👎","💪","✊","👊","🖐","✋","👋","👌","✌","🤘","🤟 ","🤙","🤞","🖕","🖖","☝","👆", "👇", "👉","👈"]
         self.gesture = None
 
-        self.uses_ocean = self.current_user_data["usesOcean"]
-        self.has_Premium = self.current_user_data["hasPremium"]
-        self.language_cons_status = self.current_user_data["shouldConsiderLanguages"]
-        self.free_status = self.current_user_data["isFree"]
-        self.comments_status = self.current_user_data["shouldComment"]
-        self.hints_status = self.current_user_data["shouldSendHints"]
-        self.real_photo_filter_status = self.current_user_data["shouldFilterUsersWithoutRealPhoto"]
-        self.increased_familiarity_status = self.current_user_data["increasedFamiliarity"]
-        self.user_language = self.current_user_data["language"]
+        self.uses_ocean = self.current_user_data.usesOcean
+        self.has_Premium = self.current_user_data.hasPremium
+        self.language_cons_status = self.current_user_data.shouldConsiderLanguages
+        self.free_status = self.current_user_data.isFree
+        self.comments_status = self.current_user_data.shouldComment
+        self.hints_status = self.current_user_data.shouldSendHints
+        self.real_photo_filter_status = self.current_user_data.shouldFilterUsersWithoutRealPhoto
+        self.increased_familiarity_status = self.current_user_data.increasedFamiliarity
+        self.user_language = self.current_user_data.language
 
         self.userBalance = Helpers.get_active_user_balance(self.current_user)
         self.requestStatus = requests.get(f"https://localhost:44381/CheckTickRequestStatus/{self.current_user}", verify=False).text
@@ -1483,7 +1483,7 @@ class Settings:
         user = Helpers.get_user_info(self.current_managed_user)
 
         self.delete_active_message()
-        self.send_active_message_with_photo(f"{user['userDescription']}\n\n{self.localization['ChooseOption']}", self.encounterOptionMarkup, user["userMedia"])
+        self.send_active_message_with_photo(f"{user.description}\n\n{self.localization['ChooseOption']}", self.encounterOptionMarkup, user.media)
         # self.bot.send_photo(self.current_user, user["userBaseInfo"]["userMedia"], user["userBaseInfo"]["userDescription"], reply_markup=self.encounterOptionMarkup)
         self.add_next_step_handler_local(self.encounter_list_management, acceptMode=True)
 
