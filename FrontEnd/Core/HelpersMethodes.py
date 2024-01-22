@@ -850,7 +850,7 @@ def delete_advertisement(advertisementId) -> Union[Response, None]:
         return
 
 
-def get_all_priorities() -> Union[list[generic_models.LocalizedEnum], None]:
+def get_all_advertisement_priorities() -> Union[list[generic_models.LocalizedEnum], None]:
     try:
         response = requests.get(f"{api_address}/priorities", verify=False)
         priorities = response.json()
