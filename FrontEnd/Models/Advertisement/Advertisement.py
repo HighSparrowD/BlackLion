@@ -4,18 +4,19 @@ from Models.ApiModel import ApiModel
 
 # create, update
 class AdvertisementNew(ApiModel):
-    def __init__(self, sponsor_id: int, text: str, target_audience: str = None, media: str = None, priority: str = None, media_type: str = None):
-        self.sponsorId: int = sponsor_id
-        self.text: str = text
-        self.targetAudience: str = target_audience
-        self.media: str = media
-        self.priority: str = priority
-        self.mediaType: str = media_type
+    def __init__(self):
+        self.sponsorId: Union[int, None]
+        self.name: Union[str, None]
+        self.text: Union[str, None]
+        self.targetAudience: Union[str, None]
+        self.media: Union[str, None]
+        self.priority: Union[str, None]
+        self.mediaType: Union[str, None]
 
 class AdvertisementItem:
     def __init__(self, advertisement_dict):
         self.id = advertisement_dict["id"]
-        self.text = advertisement_dict["text"]
+        self.name = advertisement_dict["name"]
 
 
 class Advertisement:
@@ -23,6 +24,7 @@ class Advertisement:
         self.id: int = advertisement_dict["id"]
         self.userId: int = advertisement_dict["userId"]
         self.text: str = advertisement_dict["text"]
+        self.name: str = advertisement_dict["name"]
         self.targetAudience: Union[str, None] = advertisement_dict["targetAudience"]
         self.media: Union[str, None] = advertisement_dict["media"]
         self.show: bool = advertisement_dict["show"]

@@ -52,7 +52,6 @@ class AdvertisementModule(Personality_Bot):
         self.send_active_message('What you want to see?', markup=self.main_menu_markup)
         self.return_method = None
 
-
     def show_my_ads(self, shouldInsert=False):
         self.my_ads_markup.clear()
         existing_ads = Helpers.get_advertisement_list(self.current_user)
@@ -60,7 +59,7 @@ class AdvertisementModule(Personality_Bot):
         # there is a hierarchy: call.data from previous btn is 1 so hear all call.data will start with 1
         self.my_ads_markup.add(InlineKeyboardButton("Add advertisement", callback_data="10"))
         for ad in existing_ads:
-            self.my_ads_markup.add(InlineKeyboardButton(f"{ad.text}", callback_data=str(ad.id)))
+            self.my_ads_markup.add(InlineKeyboardButton(f"{ad.name}", callback_data=str(ad.id)))
         self.my_ads_markup.add(InlineKeyboardButton("Go back", callback_data="0"))
 
         self.send_active_message("Your advertisements:", self.my_ads_markup, ['e'])

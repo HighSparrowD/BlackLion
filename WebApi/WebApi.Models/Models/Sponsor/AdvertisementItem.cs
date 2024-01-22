@@ -8,7 +8,7 @@ namespace WebApi.Models.Models.Sponsor
         [JsonPropertyName("id")]
         public long Id { get; set; }
 
-        [JsonPropertyName("text")]
-        public string? Text { get; set; }
+        [JsonPropertyName("name")]
+        public string? Name { get; set; }
     }
 }

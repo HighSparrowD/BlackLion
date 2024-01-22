@@ -10,6 +10,9 @@ public class AdvertisementNew
     [JsonPropertyName("sponsorId")]
     public long SponsorId { get; set; }
 
+    [JsonPropertyName("name")]
+    public string? Name { get; set; }
+
     [JsonPropertyName("text")]
     public string? Text { get; set; }
 
