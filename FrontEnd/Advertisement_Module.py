@@ -20,7 +20,7 @@ class AdvertisementModule(Personality_Bot):
 
         self.current_callback_handler = self.bot.register_callback_query_handler(message, self.callback_handler, user_id=self.current_user)
 
-        self.temp_data = {}  # to prevent saving in global data incomplete adds
+        self.new_ad = None
 
         self.next_handler = None
         self.current_section = None
@@ -80,7 +80,6 @@ class AdvertisementModule(Personality_Bot):
             self.delete_message(message.id)
 
             if message.text:
-                self.temp_data["Name"] = message.text
 
                 if len(message.text) > 20:
                     self.send_error_message("The name is too long")
@@ -88,8 +87,10 @@ class AdvertisementModule(Personality_Bot):
                     return
 
                 if not self.editMode:
+                    self.new_ad = AdvertisementNew(self.current_user, message.text)
                     self.text_step(message)
                 else:
+                    self.new_ad.text = message.text
                     self.checkout_step()
 
             else:
@@ -106,7 +107,7 @@ class AdvertisementModule(Personality_Bot):
             self.delete_message(message.id)
 
             if message.text:
-                self.temp_data["Text"] = message.text
+                # self.temp_data["Text"] = message.text
 
                 if len(message.text) > 1500:
                     self.send_error_message("The text is too long")
@@ -131,8 +132,8 @@ class AdvertisementModule(Personality_Bot):
         else:
             self.delete_message(message.id)
             if message.photo:
-                self.temp_data["Media"] = message.photo[len(message.photo) - 1].file_id  # TODO: troubleshoot photos
-                self.temp_data["MediaType"] = "Photo"
+                self.new_ad.media = message.photo[len(message.photo) - 1].file_id  # TODO: troubleshoot photos
+                self.new_ad.mediaType = "Photo"
 
                 if not self.editMode:
                     self.target_audience_step(message)
@@ -147,8 +148,8 @@ class AdvertisementModule(Personality_Bot):
                                                                             chat_id=self.current_user)
                     return
 
-                self.temp_data["Media"] = message.video.file_id
-                self.temp_data["MediaType"] = "Video"
+                self.new_ad.media = message.video.file_id
+                self.new_ad.mediaType = "Video"
 
                 if not self.editMode:
                     self.target_audience_step(message)
@@ -169,7 +170,7 @@ class AdvertisementModule(Personality_Bot):
             self.delete_message(message.id)
 
             if message.text:
-                self.temp_data["TargetAudience"] = message.text
+                self.new_ad.targetAudience = message.text
 
                 if len(message.text) > 150:
                     self.send_error_message("Your description is too long")
@@ -192,9 +193,9 @@ class AdvertisementModule(Personality_Bot):
             self.send_active_message('Choose a priority of this advertisement', self.priority_markup, ['e'])
         else:
             priority_dict = {'100': "Very low", '101': 'Low', '102': 'Medium', '103': 'High', '104': 'Very high'}
-            for numb, tempdata in priority_dict.items():
+            for numb, data in priority_dict.items():
                 if input == numb:
-                    self.temp_data['Priority'] = tempdata
+                    self.new_ad.priority = data
                     self.checkout_step()
                     return
 
@@ -207,14 +208,14 @@ class AdvertisementModule(Personality_Bot):
 
             self.configure_registration_step(self.checkout_step, shouldInsert)
 
-            if self.temp_data["MediaType"] == "Photo":
-                self.send_active_message_with_photo(f'{self.temp_data["Name"]}\n{self.temp_data["Text"]}\n'
-                                                    f'{self.temp_data["TargetAudience"]}\n'
-                                                    f'Priority rate: {self.temp_data["Priority"]}', self.temp_data["Media"])
-            elif self.temp_data["MediaType"] == "Video":
-                self.send_active_message_with_video(f'{self.temp_data["Name"]}\n{self.temp_data["Text"]}\n'
-                                                    f'{self.temp_data["TargetAudience"]}\n'
-                                                    f'Priority rate: {self.temp_data["Priority"]}', self.temp_data["Media"])
+            if self.new_ad.mediaType == "Photo":
+                self.send_active_message_with_photo(f'{self.new_ad.text}\n{self.new_ad.text}\n'
+                                                    f'{self.new_ad.targetAudience}\n'
+                                                    f'Priority rate: {self.new_ad.priority}', self.new_ad.media)
+            elif self.new_ad.mediaType == "Video":
+                self.send_active_message_with_video(f'{self.new_ad.text}\n{self.new_ad.text}\n'
+                                                    f'{self.new_ad.targetAudience}\n'
+                                                    f'Priority rate: {self.new_ad.priority}', self.new_ad.media)
             else:
                 self.send_active_message('Something went wrong')
 
@@ -232,12 +233,10 @@ class AdvertisementModule(Personality_Bot):
             elif input == '109':
                 self.priority_step(shouldInsert=False)
             elif input == '100a':
-                new_ad = AdvertisementNew(self.current_user, self.temp_data['Text'], self.temp_data['TargetAudience'],
-                                          self.temp_data["Media"], self.temp_data["Priority"], self.temp_data["MediaType"])
-                if Helpers.add_advertisement(new_ad).status_code in range(200, 300):
-                    self.show_my_ads()
+                if Helpers.add_advertisement(self.new_ad).status_code in range(200, 300):
                     self.editMode = False
                     self.ad_reg_steps = []
+                    self.show_my_ads()
                 else:
                     self.send_error_message("Can not save the ad")
 

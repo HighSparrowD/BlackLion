@@ -4,7 +4,7 @@ from Models.ApiModel import ApiModel
 
 # create, update
 class AdvertisementNew(ApiModel):
-    def __init__(self, sponsor_id: int, text: str, target_audience: str, media: str, priority: str, media_type: str):
+    def __init__(self, sponsor_id: int, text: str, target_audience: str = None, media: str = None, priority: str = None, media_type: str = None):
         self.sponsorId: int = sponsor_id
         self.text: str = text
         self.targetAudience: str = target_audience
