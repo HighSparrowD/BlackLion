@@ -75,7 +75,7 @@ namespace WebApi.Repositories
             await _contx.SaveChangesAsync();
         }
 
-        public List<GetLocalizedEnum> GetPrioritiesAsync()
+        public List<GetLocalizedEnum> GetPriorities()
         {
             var reasons = new List<GetLocalizedEnum>();
 

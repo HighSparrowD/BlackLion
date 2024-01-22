@@ -1,6 +1,6 @@
 ﻿namespace WebApi.Enums.Enums.Sponsor;
 
-public enum AdvertisementPriority
+public enum AdvertisementPriority : short
 {
     VeryHigh = 1,
     High = 2,

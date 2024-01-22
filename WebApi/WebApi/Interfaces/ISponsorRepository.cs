@@ -15,7 +15,7 @@ namespace WebApi.Interfaces
         Task AddAdvertisementAsync(AdvertisementNew model);
         Task UpdateAdvertisementAsync(AdvertisementUpdate model);
         Task DeleteAdvertisementAsync(int advertisementId);
-        List<GetLocalizedEnum> GetPrioritiesAsync();
+        List<GetLocalizedEnum> GetPriorities();
         Task SetAdvertisementPriorityAsync(int advertisementId, AdvertisementPriority priority);
         Task SwitchShowStatusAsync(int advertisementId);
     }
