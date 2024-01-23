@@ -20,7 +20,7 @@ class AdvertisementModule(Personality_Bot):
 
         self.current_callback_handler = self.bot.register_callback_query_handler(message, self.callback_handler, user_id=self.current_user)
 
-        self.new_ad = None
+        self.add_model : AdvertisementNew = None
 
         self.next_handler = None
         self.current_section = None
@@ -33,11 +33,12 @@ class AdvertisementModule(Personality_Bot):
         self.my_ads_markup = InlineKeyboardMarkup()
         # Id like to add below markup to BaseModule but call.data varies in different modules
         self.goback_markup = InlineKeyboardMarkup([[InlineKeyboardButton("Go Back", callback_data='0')]])
-        self.priority_markup = InlineKeyboardMarkup([[InlineKeyboardButton("Lowest", callback_data='100')],
-                                                     [InlineKeyboardButton("Low", callback_data='101')],
-                                                     [InlineKeyboardButton("Medium", callback_data='102')],
-                                                     [InlineKeyboardButton("High", callback_data='103')],
-                                                     [InlineKeyboardButton("Highest", callback_data='104')],
+        self.priorities_list = Helpers.get_all_advertisement_priorities()
+        self.priority_markup = InlineKeyboardMarkup([[InlineKeyboardButton(self.priorities_list[0].name, callback_data='100')],
+                                                     [InlineKeyboardButton(self.priorities_list[1].name, callback_data='101')],
+                                                     [InlineKeyboardButton(self.priorities_list[2].name, callback_data='102')],
+                                                     [InlineKeyboardButton(self.priorities_list[3].name, callback_data='103')],
+                                                     [InlineKeyboardButton(self.priorities_list[4].name, callback_data='104')],
                                                      [InlineKeyboardButton("Go Back", callback_data='0')]])
         self.checkout_markup = InlineKeyboardMarkup([[InlineKeyboardButton('Name', callback_data='105')],
                                                      [InlineKeyboardButton('Text', callback_data='106')],
@@ -63,6 +64,7 @@ class AdvertisementModule(Personality_Bot):
         self.my_ads_markup.add(InlineKeyboardButton("Go back", callback_data="0"))
 
         self.send_active_message("Your advertisements:", self.my_ads_markup, ['e'])
+        self.send_secondary_message('ww')
 
         self.return_method = self.start
 
@@ -85,11 +87,11 @@ class AdvertisementModule(Personality_Bot):
                     self.next_handler = self.bot.register_next_step_handler(message, self.name_step, acceptMode=acceptMode, chat_id=self.current_user)
                     return
 
+                self.add_model.name = message.text
+
                 if not self.editMode:
-                    self.new_ad = AdvertisementNew(self.current_user, message.text)
                     self.text_step(message)
                 else:
-                    self.new_ad.text = message.text
                     self.checkout_step()
 
             else:
@@ -106,12 +108,12 @@ class AdvertisementModule(Personality_Bot):
             self.delete_message(message.id)
 
             if message.text:
-                # self.temp_data["Text"] = message.text
-
                 if len(message.text) > 1500:
                     self.send_error_message("The text is too long")
                     self.next_handler = self.bot.register_next_step_handler(message, self.text_step, acceptMode=acceptMode, chat_id=self.current_user)
                     return
+
+                self.add_model.text = message.text
 
                 if not self.editMode:
                     self.media_step(message)
@@ -131,8 +133,8 @@ class AdvertisementModule(Personality_Bot):
         else:
             self.delete_message(message.id)
             if message.photo:
-                self.new_ad.media = message.photo[len(message.photo) - 1].file_id  # TODO: troubleshoot photos
-                self.new_ad.mediaType = "Photo"
+                self.add_model.media = message.photo[len(message.photo) - 1].file_id
+                self.add_model.mediaType = "Photo"
 
                 if not self.editMode:
                     self.target_audience_step(message)
@@ -147,8 +149,8 @@ class AdvertisementModule(Personality_Bot):
                                                                             chat_id=self.current_user)
                     return
 
-                self.new_ad.media = message.video.file_id
-                self.new_ad.mediaType = "Video"
+                self.add_model.media = message.video.file_id
+                self.add_model.mediaType = "Video"
 
                 if not self.editMode:
                     self.target_audience_step(message)
@@ -169,7 +171,7 @@ class AdvertisementModule(Personality_Bot):
             self.delete_message(message.id)
 
             if message.text:
-                self.new_ad.targetAudience = message.text
+                self.add_model.targetAudience = message.text
 
                 if len(message.text) > 150:
                     self.send_error_message("Your description is too long")
@@ -191,10 +193,11 @@ class AdvertisementModule(Personality_Bot):
 
             self.send_active_message('Choose a priority of this advertisement', self.priority_markup, ['e'])
         else:
-            priority_dict = {'100': "Very low", '101': 'Low', '102': 'Medium', '103': 'High', '104': 'Very high'}
+            priority_dict = {'100': self.priorities_list[0].name, '101': self.priorities_list[1].name,
+                             '102': self.priorities_list[2].name, '103': self.priorities_list[3].name, '104': self.priorities_list[4].name}
             for numb, data in priority_dict.items():
                 if input == numb:
-                    self.new_ad.priority = data
+                    self.add_model.priority = data
                     self.checkout_step()
                     return
 
@@ -207,20 +210,19 @@ class AdvertisementModule(Personality_Bot):
 
             self.configure_registration_step(self.checkout_step, shouldInsert)
 
-            if self.new_ad.mediaType == "Photo":
-                self.send_active_message_with_photo(f'{self.new_ad.text}\n{self.new_ad.text}\n'
-                                                    f'{self.new_ad.targetAudience}\n'
-                                                    f'Priority rate: {self.new_ad.priority}', self.new_ad.media)
-            elif self.new_ad.mediaType == "Video":
-                self.send_active_message_with_video(f'{self.new_ad.text}\n{self.new_ad.text}\n'
-                                                    f'{self.new_ad.targetAudience}\n'
-                                                    f'Priority rate: {self.new_ad.priority}', self.new_ad.media)
+            if self.add_model.mediaType == "Photo":
+                self.send_active_message_with_photo(f'{self.add_model.name}\n{self.add_model.text}\n'
+                                                    f'{self.add_model.targetAudience}\n'
+                                                    f'Priority rate: {self.add_model.priority}', self.add_model.media)
+            elif self.add_model.mediaType == "Video":
+                self.send_active_message_with_video(f'{self.add_model.name}\n{self.add_model.text}\n'
+                                                    f'{self.add_model.targetAudience}\n'
+                                                    f'Priority rate: {self.add_model.priority}', self.add_model.media)
             else:
                 self.send_active_message('Something went wrong')
 
             self.send_secondary_message('Want to change something?', self.checkout_markup)
         else:
-            self.delete_secondary_message()
             if input == '105':
                 self.name_step(shouldInsert=False)
             elif input == '106':
@@ -232,9 +234,10 @@ class AdvertisementModule(Personality_Bot):
             elif input == '109':
                 self.priority_step(shouldInsert=False)
             elif input == '100a':
-                if Helpers.add_advertisement(self.new_ad).status_code in range(200, 300):
+                if Helpers.add_advertisement(self.add_model).status_code in range(200, 300):
                     self.editMode = False
                     self.ad_reg_steps = []
+                    self.delete_secondary_message()
                     self.show_my_ads()
                 else:
                     self.send_error_message("Can not save the ad")
@@ -262,6 +265,9 @@ class AdvertisementModule(Personality_Bot):
             self.show_my_ads()
         # Register new ad
         elif call.data == '10':
+            self.add_model = AdvertisementNew()
+            self.add_model.sponsorId = self.current_user
+
             self.name_step()
         elif call.data in [str(data) for data in range(100, 105)]:
             self.priority_step(message=call.message, acceptMode=True, input=call.data)

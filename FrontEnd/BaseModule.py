@@ -77,7 +77,7 @@ class Personality_Bot:
     def send_error_message(self, text, markup=None):
         try:
             if self.error_message:
-                self.bot.edit_message_text(text, self.current_user, self.secondary_message, reply_markup=markup)
+                self.bot.edit_message_text(text, self.current_user, self.error_message, reply_markup=markup)
                 return
             self.error_message = self.bot.send_message(self.current_user, text, reply_markup=markup).id
         except:
