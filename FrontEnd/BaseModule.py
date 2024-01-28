@@ -34,8 +34,10 @@ class Personality_Bot:
                           "e": self.delete_error_message,
                           "a": self.delete_additional_message}
 
-    def send_active_message(self, text, markup, delete_msg: list[str] = None):
+    def send_active_message(self, text, markup=None, delete_msg: list[str] = None):
         """
+        :param text: text of your message
+        :param markup: markup to your message
         :param delete_msg: can be a list with "s", "e" or "a" for secondary, error or additional message correspondingly
         :return: sends active message and deletes messages which types are in the delete_msg param
         """
@@ -44,7 +46,7 @@ class Personality_Bot:
                 for msg in delete_msg:
                     self.del_funcs[msg]()
             if self.active_message:
-                self.bot.edit_message_text(text, self.current_user, self.active_message, reply_markup=markup)
+                self.bot.edit_message_text(text=text, chat_id=self.current_user, message_id=self.active_message, reply_markup=markup)
                 return
             self.active_message = self.bot.send_message(self.current_user, text, reply_markup=markup).id
         except:
@@ -76,7 +78,7 @@ class Personality_Bot:
     def send_error_message(self, text, markup=None):
         try:
             if self.error_message:
-                self.bot.edit_message_text(text, self.current_user, self.secondary_message, reply_markup=markup)
+                self.bot.edit_message_text(text, self.current_user, self.error_message, reply_markup=markup)
                 return
             self.error_message = self.bot.send_message(self.current_user, text, reply_markup=markup).id
         except:
@@ -91,12 +93,18 @@ class Personality_Bot:
         self.bot.send_message(self.current_user, text, reply_markup=markup)
 
     def send_active_message_with_photo(self, text, photo, markup=None):
-        self.delete_active_message()
-        self.active_message = self.bot.send_photo(self.current_user, photo, text, reply_markup=markup).id
+        if self.active_message:
+            self.delete_active_message()
+            self.active_message = self.bot.send_photo(self.current_user, photo, text, reply_markup=markup).id
+        else:
+            self.active_message = self.bot.send_photo(self.current_user, photo, text, reply_markup=markup).id
 
     def send_active_message_with_video(self, text, video, markup=None):
-        self.delete_active_message()
-        self.active_message = self.bot.send_video(self.current_user, video, text, reply_markup=markup).id
+        if self.active_message:
+            self.delete_active_message()
+            self.active_message = self.bot.send_video(self.current_user, video, text, reply_markup=markup).id
+        else:
+            self.active_message = self.bot.send_video(self.current_user, video, text, reply_markup=markup).id
 
     def delete_active_message(self):
         if self.active_message:
@@ -117,6 +125,9 @@ class Personality_Bot:
         if self.error_message:
             self.bot.delete_message(self.current_user, self.error_message)
             self.error_message = None
+
+    def delete_message(self, message_id):
+        self.bot.delete_message(self.current_user, message_id)
 
     def cleanup(self):
         self.delete_active_message()

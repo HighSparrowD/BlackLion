@@ -5,6 +5,7 @@ import requests
 from requests import Response
 
 import Models.Advertisement.Advertisement as advertisement_models
+import Models.Generic.Generic as generic_models
 import Models.User.User as user_models
 
 # Used to for translating Accept-Language header
@@ -870,5 +871,15 @@ def delete_advertisement(advertisementId) -> Union[Response, None]:
         response = requests.delete(f"{api_address}/advertisement/{advertisementId}", verify=False)
 
         return response
+    except:
+        return
+
+
+def get_all_advertisement_priorities() -> Union[list[generic_models.LocalizedEnum], None]:
+    try:
+        response = requests.get(f"{api_address}/priorities", verify=False)
+        priorities = response.json()
+
+        return [generic_models.LocalizedEnum(priority) for priority in priorities]
     except:
         return

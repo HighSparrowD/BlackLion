@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using WebApi.Enums.Enums.Sponsor;
 using WebApi.Models.Models.Sponsor;
+using WebApi.Models.Models.User;
 
 namespace WebApi.Controllers
 {
@@ -88,5 +89,13 @@ namespace WebApi.Controllers
             await sponsorRepo.SetAdvertisementPriorityAsync(id, priority);
             return NoContent();
         }
-    }
+
+		[HttpGet("/priorities")]
+		public ActionResult<List<GetLocalizedEnum>> GetPriorities(
+	        [FromServices] ISponsorRepository sponsorRepo)
+		{
+			var priorities = sponsorRepo.GetPriorities();
+			return Ok(priorities);
+		}
+	}
 }

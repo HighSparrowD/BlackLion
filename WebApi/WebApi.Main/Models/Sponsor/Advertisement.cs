@@ -15,6 +15,7 @@ public class Advertisement
     public long Id { get; set; }
     [ForeignKey("User")]
     public long UserId { get; set; }
+    public string? Name { get; set; }
     public string? Text { get; set; }
     public string? TargetAudience { get; set; }
     public string? Media { get; set; }
@@ -35,6 +36,7 @@ public class Advertisement
     public Advertisement(models.AdvertisementNew model)
     {
         UserId = model.SponsorId;
+        Name = model.Name;
         Text = model.Text;
         TargetAudience = model.TargetAudience;
         Media = model.Media;
@@ -47,6 +49,7 @@ public class Advertisement
 
     public void Update(AdvertisementUpdate model)
     {
+        Name = model.Name;
         Text = model.Text;
         TargetAudience = model.TargetAudience;
         Media = model.Media;
@@ -80,6 +83,7 @@ public class Advertisement
         {
             Id = advertisement.Id,
             UserId = advertisement.UserId,
+            Name = advertisement.Name,
             Text = advertisement.Text,
             Media = advertisement.Media,
             MediaType = advertisement.MediaType,
@@ -99,6 +103,7 @@ public class Advertisement
         {
             Id = advertisement.Id,
             UserId = advertisement.UserId,
+            Name = advertisement.Name,
             Text = advertisement.Text,
             Media = advertisement.Media,
             MediaType = advertisement.MediaType,
@@ -117,7 +122,7 @@ public class Advertisement
         return new models.AdvertisementItem
         {
             Id = advertisement.Id,
-            Text = advertisement.Text
+            Name = advertisement.Name
         };
     }
 }

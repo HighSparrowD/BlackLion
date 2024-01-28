@@ -16,6 +16,9 @@ public class Advertisement
     [JsonPropertyName("text")]
     public string? Text { get; set; }
 
+    [JsonPropertyName("name")]
+    public string? Name { get; set; }
+
     [JsonPropertyName("tagrgetAudience")]
     public string? TargetAudience { get; set; }
 
