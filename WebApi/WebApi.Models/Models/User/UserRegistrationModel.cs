@@ -10,39 +10,39 @@ namespace WebApi.Models.Models.User
     {
         [JsonPropertyName("id")]
         public long Id { get; set; }
-        [JsonPropertyName("userName")]
+        [JsonPropertyName("username")]
         public string? UserName { get; set; }
-        [JsonPropertyName("userRealName")]
+        [JsonPropertyName("realName")]
         public string? RealName { get; set; }
-        [JsonPropertyName("userDescription")]
+        [JsonPropertyName("description")]
         public string? Description { get; set; }
-        [JsonPropertyName("userAppLanguageId")]
+        [JsonPropertyName("appLanguage")]
         public AppLanguage AppLanguage { get; set; }
-        [JsonPropertyName("userMedia")]
+        [JsonPropertyName("media")]
         public string? Media { get; set; }
         [JsonPropertyName("mediaType")]
         public MediaType MediaType { get; set; }
-        [JsonPropertyName("userCountryCode")]
+        [JsonPropertyName("country")]
         public int? CountryCode { get; set; }
-        [JsonPropertyName("userCityCode")]
+        [JsonPropertyName("city")]
         public int? CityCode { get; set; }
-        [JsonPropertyName("userLanguages")]
+        [JsonPropertyName("languages")]
         public List<int>? Languages { get; set; }
-        [JsonPropertyName("reasonId")]
+        [JsonPropertyName("reason")]
         public UsageReason Reason { get; set; }
-        [JsonPropertyName("userAge")]
+        [JsonPropertyName("age")]
         public int Age { get; set; }
-        [JsonPropertyName("userGender")]
+        [JsonPropertyName("gender")]
         public Gender Gender { get; set; }
-        [JsonPropertyName("userLanguagePreferences")]
+        [JsonPropertyName("languagePreferences")]
         public List<int>? LanguagePreferences { get; set; }
-        [JsonPropertyName("userlocationPreferences")]
+        [JsonPropertyName("locationPreferences")]
         public List<int>? UserLocationPreferences { get; set; }
         [JsonPropertyName("agePrefs")]
         public List<int>? AgePrefs { get; set; }
         [JsonPropertyName("communicationPrefs")]
         public CommunicationPreference CommunicationPrefs { get; set; }
-        [JsonPropertyName("userGenderPrefs")]
+        [JsonPropertyName("genderPrefs")]
         public Gender GenderPrefs { get; set; }
         [JsonPropertyName("voice")]
         public string? Voice { get; set; }

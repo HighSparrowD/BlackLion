@@ -6,6 +6,7 @@ from requests import Response
 
 import Models.Advertisement.Advertisement as advertisement_models
 import Models.Generic.Generic as generic_models
+import Models.User.User as user_models
 
 # Used to for translating Accept-Language header
 languages = {
@@ -173,6 +174,24 @@ def check_user_in_a_blacklist(userId, encounteredUser):
         return None
 
 
+def update_user(model: user_models.UserNew) -> Union[Response, None]:
+    try:
+        d = model.to_json()
+        return requests.post(f"{api_address}/update-user", d, headers={
+            "Content-Type": "application/json"}, verify=False)
+    except:
+        return None
+
+
+def register_user(model: user_models.UserNew) -> Union[Response, None]:
+    try:
+        d = model.to_json()
+        return requests.post(f"{api_address}/user-register", d, headers={
+            "Content-Type": "application/json"}, verify=False)
+    except:
+        return None
+
+
 def get_user_language_limit(userId):
     try:
         return int(
@@ -238,16 +257,22 @@ def get_user_request(requestId):
         return None
 
 
-def get_user_info(userId):
+def get_user_info(userId: int) -> Union[user_models.UserInfo, None]:
     try:
-        return json.loads(requests.get(f"{api_address}/user-info/{userId}", verify=False).text)
+        response = requests.get(f"{api_address}/user-info/{userId}", verify=False)
+        data = response.json()
+
+        return user_models.UserInfo(data)
     except:
         return None
 
 
-def get_user_settings(userId):
+def get_user_settings(userId: int) -> Union[user_models.UserSettings, None]:
     try:
-        return json.loads(requests.get(f"{api_address}/user-settings/{userId}", verify=False).text)
+        response = requests.get(f"{api_address}/user-settings/{userId}", verify=False)
+        data = response.json()
+
+        return user_models.UserSettings(data)
     except:
         return None
 

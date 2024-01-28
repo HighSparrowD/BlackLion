@@ -11,6 +11,7 @@ from ReportModule import ReportModule
 from Settings import Settings
 from Enums.AttendeeStatus import AttendeeStatus
 
+
 class Personality_Bot:
     def __init__(self, bot, message, hasVisited=False):
         self.bot = bot
@@ -18,7 +19,7 @@ class Personality_Bot:
         self.current_user = message.from_user.id
         self.user_info = Helpers.get_user_info(self.current_user)
         self.hasVisited = hasVisited
-        self.user_language = self.user_info["language"]
+        self.user_language = self.user_info.language
 
         self.return_method = None
 
