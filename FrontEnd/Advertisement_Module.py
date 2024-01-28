@@ -64,7 +64,6 @@ class AdvertisementModule(Personality_Bot):
         self.my_ads_markup.add(InlineKeyboardButton("Go back", callback_data="0"))
 
         self.send_active_message("Your advertisements:", self.my_ads_markup, ['e'])
-        self.send_secondary_message('ww')
 
         self.return_method = self.start
 
