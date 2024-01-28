@@ -1,10 +1,15 @@
+from typing import Union
+
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup
+
+import Models.User.User
 from Core import HelpersMethodes as Helpers
-from Common.Menues import count_pages, assemble_markup, reset_pages, add_tick_to_element, remove_tick_from_element, index_converter
+from Common.Menues import paginate, assemble_markup, add_tick_to_element, remove_tick_from_element, index_converter
 import requests
 import json
 
 from Common.Menues import go_back_to_main_menu
+from Enums import MediaType
 from Helper import Helper
 from ReportModule import ReportModule
 from Settings import Settings
@@ -18,9 +23,9 @@ class Adventurer:
         self.current_user = message.from_user.id
         self.user_info = Helpers.get_user_info(self.current_user)
         self.hasVisited = hasVisited
-        self.hasPremium = self.user_info["hasPremium"]
-        self.isIdentityConfirmed = self.user_info["identityType"] != "None"
-        self.user_localization = self.user_info["language"]
+        self.hasPremium = self.user_info.hasPremium
+        self.isIdentityConfirmed = self.user_info.identityType != "None"
+        self.user_localization = self.user_info.language
 
         #Indicates whether if user is managing his own adventures (1), subscribed adventures (2), a template (3), create from template (4)
         self.manageMode = 1
@@ -57,8 +62,8 @@ class Adventurer:
         self.country = None
         self.city = None
 
-        self.country = self.user_info["countryId"]
-        self.city = self.user_info["cityId"]
+        self.country = self.user_info.country
+        self.city = self.user_info.city
 
         #Used for adventure search
         self.adventures = None
@@ -71,7 +76,7 @@ class Adventurer:
         #Used for adventure management
         self.current_adventure = 0
         self.current_attendee = 0
-        self.current_attendee_data = None
+        self.current_attendee_data: Union[Models.User.User.UserInfo, None] = None
         self.isNewAttendee = True
         self.current_attendees_statuses = {}
         self.attendees = {}
@@ -164,6 +169,11 @@ class Adventurer:
         self.attendee_statusDict = {
             "New": "❓", # New
             "Accepted": "✅" # Accepted
+        }
+
+        # self.localization["GoBackButton"]: "-10"
+        self.additional_buttons = {
+            "Go Back": "-20"
         }
 
         self.active_location_markup = None
@@ -358,10 +368,8 @@ class Adventurer:
             self.question_index = 4
             self.load_countries()
 
-            reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page,
-                        self.markup_pages_count)
-            count_pages(self.countries, self.current_markup_elements, self.markup_pages_count)
-            markup = assemble_markup(self.markup_page, self.current_markup_elements, 0)
+            markup = paginate(self.current_markup_elements, self.markup_last_element, self.markup_page,
+                              self.markup_pages_count, self.countries, 0)
 
             self.previous_item = ''
 
@@ -427,9 +435,8 @@ class Adventurer:
 
             self.previous_item = ''
 
-            reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page, self.markup_pages_count)
-            count_pages(self.cities, self.current_markup_elements, self.markup_pages_count)
-            markup = assemble_markup(self.markup_page, self.current_markup_elements, 0)
+            markup = paginate(self.current_markup_elements, self.markup_last_element, self.markup_page,
+                              self.markup_pages_count, self.cities, 0)
 
             self.send_active_message("Please, select city", markup=markup)
 
@@ -1550,7 +1557,7 @@ class Adventurer:
         self.previous_section()
 
     def get_attendee_contact(self):
-        username = self.current_attendee_data["userName"]
+        username = self.current_attendee_data.username
 
         if username:
             self.send_secondary_message("User does not have a username :(")
@@ -1559,10 +1566,10 @@ class Adventurer:
 
     def display_current_attendee_data(self):
 
-        if self.current_attendee_data["mediaType"] == "Photo":
-            self.send_active_message_with_photo(self.current_attendee_data["userDescription"], self.current_attendee_data["userMedia"])
+        if self.current_attendee_data.mediaType == MediaType.Photo:
+            self.send_active_message_with_photo(self.current_attendee_data.description, self.current_attendee_data.media)
         else:
-            self.send_active_message_with_video(self.current_attendee_data["userDescription"], self.current_attendee_data["userMedia"])
+            self.send_active_message_with_video(self.current_attendee_data.description, self.current_attendee_data.media)
 
     def send_active_message(self, text, markup=None):
         try:
@@ -1667,9 +1674,9 @@ class Adventurer:
             # self.my_adventures_attendeesMarkup.add(InlineKeyboardButton(f"{status} {attendee['username']} {status}", callback_data=attendee["userId"]))
 
         if self.attendees:
-            reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page, self.markup_pages_count)
-            count_pages(self.attendees, self.current_markup_elements, self.markup_pages_count, additionalButton=True, buttonText="Go Back", buttonData="-20")
-            self.my_adventures_attendeesMarkup = assemble_markup(self.markup_page, self.current_markup_elements, 0)
+            self.my_adventuresMarkup = paginate(self.current_markup_elements, self.markup_last_element, self.markup_page,
+                                                self.markup_pages_count, self.attendees, 0,
+                                                additional_buttons=self.additional_buttons)
 
     def assemble_subscribed_adventures_markup(self):
         adventures = json.loads(requests.get(f"https://localhost:44381/GetUsersSubscribedAdventures/{self.current_user}", verify=False).text)
@@ -1682,9 +1689,10 @@ class Adventurer:
             # self.subscribed_adventuresMarkup.add(InlineKeyboardButton(adventure["name"], callback_data=adventure["id"]))
 
         if self.subscribed_adventures:
-            reset_pages(self.current_markup_elements, self.markup_last_element, self.markup_page, self.markup_pages_count)
-            count_pages(self.subscribed_adventures, self.current_markup_elements, self.markup_pages_count, additionalButton=True, buttonText="Go Back", buttonData="-20")
-            self.subscribed_adventuresMarkup = assemble_markup(self.markup_page, self.current_markup_elements, 0)
+            self.subscribed_adventuresMarkup = paginate(self.current_markup_elements, self.markup_last_element,
+                                                        self.markup_page, self.markup_pages_count,
+                                                        self.subscribed_adventures, 0,
+                                                        additional_buttons=self.additional_buttons)
 
     def assemble_my_templates_markup(self, addNewButton=True):
         templates = Helpers.get_templates(self.current_user)
