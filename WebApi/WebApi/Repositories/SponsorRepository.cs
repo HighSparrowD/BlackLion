@@ -34,7 +34,7 @@ namespace WebApi.Repositories
 
         public async Task<Models.Models.Sponsor.Advertisement> GetAdvertisementAsync(int advertisementId)
         {
-            var advertisement = await _contx.Advertisements.Where(a => a.UserId == advertisementId && a.Deleted == null)
+            var advertisement = await _contx.Advertisements.Where(a => a.Id == advertisementId && a.Deleted == null)
                 .AsNoTracking()
                 .Select(a => (Models.Models.Sponsor.Advertisement)a)
                 .FirstOrDefaultAsync();

@@ -5,6 +5,7 @@ import requests
 from requests import Response
 
 import Models.Advertisement.Advertisement as advertisement_models
+import Models.Generic.Generic as generic_models
 import Models.User.User as user_models
 import Models.Generic.Generic as generic_models
 
