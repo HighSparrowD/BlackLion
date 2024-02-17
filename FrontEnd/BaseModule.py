@@ -34,6 +34,9 @@ class Personality_Bot:
                           "e": self.delete_error_message,
                           "a": self.delete_additional_message}
 
+        self.turnedOnSticker = "✅"
+        self.turnedOffSticker = "❌"
+
     def send_active_message(self, text, markup=None, delete_msg: list[str] = None):
         """
         :param text: text of your message
