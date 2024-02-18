@@ -863,7 +863,7 @@ def get_advertisement_info(userId) -> Union[advertisement_models.Advertisement, 
         advertisement = response.json()
 
         return advertisement_models.Advertisement(advertisement)
-    except:
+    except Exception as ex:
         return
 
 
