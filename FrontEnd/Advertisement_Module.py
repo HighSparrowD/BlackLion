@@ -309,17 +309,6 @@ class AdvertisementModule(Personality_Bot):
             self.checkout_step(input=call.data, acceptMode=True)
         elif call.data == '100a':
             self.checkout_step(input=call.data, acceptMode=True)
-
-        # if self.ads_calldata:
-        #     # Register new ad
-        #     if call.data == 'a':
-        #         self.ad_model = AdvertisementNew()
-        #         self.ad_model.sponsorId = self.current_user
-        #
-        #         self.name_step()
-        #     elif call.data in [str(data) for data in range(100)]:
-        #         self.ad_settings(int(call.id))
-
         # Overall statistics
         # elif call.data == '2':
         #     self.send_error_message('This feature isn`t ready')

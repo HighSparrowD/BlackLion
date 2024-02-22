@@ -857,14 +857,13 @@ def get_advertisement_list(userId) -> Union[list[advertisement_models.Advertisem
         return
 
 
-def get_advertisement_info(userId) -> Union[advertisement_models.Advertisement, None]:
-    try:
-        response = requests.get(f"{api_address}/advertisement/{userId}", verify=False)
-        advertisement = response.json()
+def get_advertisement_info(adId) -> Union[advertisement_models.Advertisement, None]:
 
-        return advertisement_models.Advertisement(advertisement)
-    except Exception as ex:
-        return
+    response = requests.get(f"{api_address}/advertisement/{adId}", verify=False)
+    advertisement = response.json()
+
+    return advertisement_models.Advertisement(advertisement)
+
 
 
 def delete_advertisement(advertisementId) -> Union[Response, None]:
