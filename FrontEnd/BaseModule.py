@@ -132,6 +132,12 @@ class Personality_Bot:
     def edit_active_message_markup(self, markup):
         self.bot.edit_message_reply_markup(self.current_user, self.active_message, reply_markup=markup)
 
+    def edit_secondary_message_markup(self, markup):
+        self.bot.edit_message_reply_markup(self.current_user, self.secondary_message, reply_markup=markup)
+
+    def edit_additional_message_markup(self, markup):
+        self.bot.edit_message_reply_markup(self.current_user, self.additional_message, reply_markup=markup)
+
     def cleanup(self):
         self.delete_active_message()
         self.delete_secondary_message()
