@@ -7,6 +7,7 @@ from requests import Response
 import Models.Advertisement.Advertisement as advertisement_models
 import Models.Generic.Generic as generic_models
 import Models.User.User as user_models
+import Models.Generic.Generic as generic_models
 
 # Used to for translating Accept-Language header
 languages = {
@@ -856,14 +857,13 @@ def get_advertisement_list(userId) -> Union[list[advertisement_models.Advertisem
         return
 
 
-def get_advertisement_info(userId) -> Union[advertisement_models.Advertisement, None]:
-    try:
-        response = requests.get(f"{api_address}/advertisement/{userId}", verify=False)
-        advertisement = response.json()
+def get_advertisement_info(adId) -> Union[advertisement_models.Advertisement, None]:
 
-        return advertisement_models.Advertisement(advertisement)
-    except:
-        return
+    response = requests.get(f"{api_address}/advertisement/{adId}", verify=False)
+    advertisement = response.json()
+
+    return advertisement_models.Advertisement(advertisement)
+
 
 
 def delete_advertisement(advertisementId) -> Union[Response, None]:

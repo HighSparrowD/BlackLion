@@ -1,18 +1,9 @@
 import telebot
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, Message, CallbackQuery
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, Message, CallbackQuery
 from Core import HelpersMethodes as Helpers
-from Common.Menues import count_pages, assemble_markup, reset_pages, add_tick_to_element, remove_tick_from_element, index_converter
-import requests
-import json
 
 from BaseModule import Personality_Bot
 from Models.Advertisement.Advertisement import AdvertisementNew
-from Models import Advertisement as models
-from Common.Menues import go_back_to_main_menu
-from Helper import Helper
-from ReportModule import ReportModule
-from Settings import Settings
-from Enums.AttendeeStatus import AttendeeStatus
 
 class AdvertisementModule(Personality_Bot):
     def __init__(self, bot: telebot.TeleBot, message: Message, hasVisited=False):
@@ -20,26 +11,42 @@ class AdvertisementModule(Personality_Bot):
 
         self.current_callback_handler = self.bot.register_callback_query_handler(message, self.callback_handler, user_id=self.current_user)
 
-        self.add_model : AdvertisementNew = None
+        self.ads_calldata: bool = False
+        self.priority_calldata: bool = False
+
+        self.turnedOnSticker = "✅"
+        self.turnedOffSticker = "❌"
+
+        # storage for ad model used in ad reg and ad settings
+        self.ad_model = None
+        self.existing_ads = None
 
         self.next_handler = None
         self.current_section = None
         self.editMode = False
         self.ad_reg_steps = []
 
+        # advertisement settings buttons
+        self.show_btn_indicator = InlineKeyboardButton(text=self.turnedOffSticker, callback_data='4')
+        self.priority_btn_indicator = InlineKeyboardButton(text='', callback_data='6')
+
         self.main_menu_markup = InlineKeyboardMarkup().add(InlineKeyboardButton('My ads', callback_data='1'))\
             .add(InlineKeyboardButton('Overall statistics', callback_data='2'))\
             .add(InlineKeyboardButton('Exit', callback_data='0'))
+
         self.my_ads_markup = InlineKeyboardMarkup()
-        # Id like to add below markup to BaseModule but call.data varies in different modules
+
         self.goback_markup = InlineKeyboardMarkup([[InlineKeyboardButton("Go Back", callback_data='0')]])
+
         self.priorities_list = Helpers.get_all_advertisement_priorities()
-        self.priority_markup = InlineKeyboardMarkup([[InlineKeyboardButton(self.priorities_list[0].name, callback_data='100')],
-                                                     [InlineKeyboardButton(self.priorities_list[1].name, callback_data='101')],
-                                                     [InlineKeyboardButton(self.priorities_list[2].name, callback_data='102')],
-                                                     [InlineKeyboardButton(self.priorities_list[3].name, callback_data='103')],
-                                                     [InlineKeyboardButton(self.priorities_list[4].name, callback_data='104')],
+
+        self.priority_markup = InlineKeyboardMarkup([[InlineKeyboardButton(self.priorities_list[0].name, callback_data=self.priorities_list[0].id)],
+                                                     [InlineKeyboardButton(self.priorities_list[1].name, callback_data=self.priorities_list[1].id)],
+                                                     [InlineKeyboardButton(self.priorities_list[2].name, callback_data=self.priorities_list[2].id)],
+                                                     [InlineKeyboardButton(self.priorities_list[3].name, callback_data=self.priorities_list[3].id)],
+                                                     [InlineKeyboardButton(self.priorities_list[4].name, callback_data=self.priorities_list[4].id)],
                                                      [InlineKeyboardButton("Go Back", callback_data='0')]])
+
         self.checkout_markup = InlineKeyboardMarkup([[InlineKeyboardButton('Name', callback_data='105')],
                                                      [InlineKeyboardButton('Text', callback_data='106')],
                                                      [InlineKeyboardButton('Media', callback_data='107')],
@@ -47,19 +54,31 @@ class AdvertisementModule(Personality_Bot):
                                                      [InlineKeyboardButton('Priority rate', callback_data='109')],
                                                      [InlineKeyboardButton('Done', callback_data='100a')]])
 
+        self.ad_settings_keyboard = InlineKeyboardMarkup([[InlineKeyboardButton(text='Statistics', callback_data='3')],
+                                                          [InlineKeyboardButton(text='Show', callback_data='4'),
+                                                           self.show_btn_indicator],
+                                                          [InlineKeyboardButton(text='Edit', callback_data='5')],
+                                                          [InlineKeyboardButton(text='Priority', callback_data='6'),
+                                                           self.priority_btn_indicator],
+                                                          [InlineKeyboardButton(text='Delete', callback_data='7')],
+                                                          [InlineKeyboardButton(text='Go back', callback_data='0')]])
+
         self.start()
 
     def start(self):
         self.send_active_message('What you want to see?', markup=self.main_menu_markup)
         self.return_method = None
+        self.ads_calldata = False
 
     def show_my_ads(self, shouldInsert=False):
+        self.ads_calldata = True
+
         self.my_ads_markup.clear()
-        existing_ads = Helpers.get_advertisement_list(self.current_user)
+        self.existing_ads = Helpers.get_advertisement_list(self.current_user)
 
         # there is a hierarchy: call.data from previous btn is 1 so hear all call.data will start with 1
-        self.my_ads_markup.add(InlineKeyboardButton("Add advertisement", callback_data="10"))
-        for ad in existing_ads:
+        self.my_ads_markup.add(InlineKeyboardButton("Add advertisement", callback_data="a"))
+        for ad in self.existing_ads:
             self.my_ads_markup.add(InlineKeyboardButton(f"{ad.name}", callback_data=str(ad.id)))
         self.my_ads_markup.add(InlineKeyboardButton("Go back", callback_data="0"))
 
@@ -67,7 +86,18 @@ class AdvertisementModule(Personality_Bot):
 
         self.return_method = self.start
 
+    def ad_settings(self, ad_id: int):
+        self.ad_model = Helpers.get_advertisement_info(ad_id)
+        self.show_btn_indicator.text = self.turnedOnSticker if self.ad_model.show else self.turnedOffSticker
+        self.priority_btn_indicator.text = self.ad_model.priority
+        self.send_active_message('Advertisement settings', markup=self.ad_settings_keyboard)
+
+        self.ads_calldata = False
+        self.return_method = self.show_my_ads
+
     def name_step(self, message=None, acceptMode=False, shouldInsert=True):
+        self.ads_calldata = False
+
         if not acceptMode:
             self.current_section = self.show_my_ads
             self.return_method = self.prev_reg_step
@@ -86,7 +116,7 @@ class AdvertisementModule(Personality_Bot):
                     self.next_handler = self.bot.register_next_step_handler(message, self.name_step, acceptMode=acceptMode, chat_id=self.current_user)
                     return
 
-                self.add_model.name = message.text
+                self.ad_model.name = message.text
 
                 if not self.editMode:
                     self.text_step(message)
@@ -112,7 +142,7 @@ class AdvertisementModule(Personality_Bot):
                     self.next_handler = self.bot.register_next_step_handler(message, self.text_step, acceptMode=acceptMode, chat_id=self.current_user)
                     return
 
-                self.add_model.text = message.text
+                self.ad_model.text = message.text
 
                 if not self.editMode:
                     self.media_step(message)
@@ -132,8 +162,8 @@ class AdvertisementModule(Personality_Bot):
         else:
             self.delete_message(message.id)
             if message.photo:
-                self.add_model.media = message.photo[len(message.photo) - 1].file_id
-                self.add_model.mediaType = "Photo"
+                self.ad_model.media = message.photo[len(message.photo) - 1].file_id
+                self.ad_model.mediaType = "Photo"
 
                 if not self.editMode:
                     self.target_audience_step(message)
@@ -148,8 +178,8 @@ class AdvertisementModule(Personality_Bot):
                                                                             chat_id=self.current_user)
                     return
 
-                self.add_model.media = message.video.file_id
-                self.add_model.mediaType = "Video"
+                self.ad_model.media = message.video.file_id
+                self.ad_model.mediaType = "Video"
 
                 if not self.editMode:
                     self.target_audience_step(message)
@@ -170,7 +200,7 @@ class AdvertisementModule(Personality_Bot):
             self.delete_message(message.id)
 
             if message.text:
-                self.add_model.targetAudience = message.text
+                self.ad_model.targetAudience = message.text
 
                 if len(message.text) > 150:
                     self.send_error_message("Your description is too long")
@@ -189,14 +219,15 @@ class AdvertisementModule(Personality_Bot):
     def priority_step(self, message=None, acceptMode=False, shouldInsert=True, input=None):
         if not acceptMode:
             # i think we should to add some kind of link in this message so people can understand what priority is
+            self.priority_calldata = True
 
             self.send_active_message('Choose a priority of this advertisement', self.priority_markup, ['e'])
         else:
-            priority_dict = {'100': self.priorities_list[0].name, '101': self.priorities_list[1].name,
-                             '102': self.priorities_list[2].name, '103': self.priorities_list[3].name, '104': self.priorities_list[4].name}
-            for numb, data in priority_dict.items():
-                if input == numb:
-                    self.add_model.priority = data
+            self.priority_calldata = False
+
+            for priority_item in self.priorities_list:
+                if priority_item.id == int(input):
+                    self.ad_model.priority = priority_item.name
                     self.checkout_step()
                     return
 
@@ -209,14 +240,14 @@ class AdvertisementModule(Personality_Bot):
 
             self.configure_registration_step(self.checkout_step, shouldInsert)
 
-            if self.add_model.mediaType == "Photo":
-                self.send_active_message_with_photo(f'{self.add_model.name}\n{self.add_model.text}\n'
-                                                    f'{self.add_model.targetAudience}\n'
-                                                    f'Priority rate: {self.add_model.priority}', self.add_model.media)
-            elif self.add_model.mediaType == "Video":
-                self.send_active_message_with_video(f'{self.add_model.name}\n{self.add_model.text}\n'
-                                                    f'{self.add_model.targetAudience}\n'
-                                                    f'Priority rate: {self.add_model.priority}', self.add_model.media)
+            if self.ad_model.mediaType == "Photo":
+                self.send_active_message_with_photo(f'{self.ad_model.name}\n{self.ad_model.text}\n'
+                                                    f'{self.ad_model.targetAudience}\n'
+                                                    f'Priority rate: {self.ad_model.priority}', self.ad_model.media)
+            elif self.ad_model.mediaType == "Video":
+                self.send_active_message_with_video(f'{self.ad_model.name}\n{self.ad_model.text}\n'
+                                                    f'{self.ad_model.targetAudience}\n'
+                                                    f'Priority rate: {self.ad_model.priority}', self.ad_model.media)
             else:
                 self.send_active_message('Something went wrong')
 
@@ -233,7 +264,7 @@ class AdvertisementModule(Personality_Bot):
             elif input == '109':
                 self.priority_step(shouldInsert=False)
             elif input == '100a':
-                if Helpers.add_advertisement(self.add_model).status_code in range(200, 300):
+                if Helpers.add_advertisement(self.ad_model).status_code == 204:
                     self.editMode = False
                     self.ad_reg_steps = []
                     self.delete_secondary_message()
@@ -247,35 +278,43 @@ class AdvertisementModule(Personality_Bot):
         self.current_section = step
 
     def prev_reg_step(self):
-        if self.editMode == True:
+        if self.editMode:
             self.checkout_step()
         else:
             self.bot.remove_next_step_handler(self.current_user, self.next_handler)
-            self.previous_section = self.ad_reg_steps[0]
+            previous_section = self.ad_reg_steps[0]
             self.ad_reg_steps.pop(0)
-            self.previous_section(shouldInsert=False)
+            previous_section(shouldInsert=False)
 
     def callback_handler(self, call: CallbackQuery):
         # Exit
         if call.data == '0':
             self.prev_menu()
+
+        # Register new ad
+        elif self.ads_calldata and call.data == 'a':
+            self.ad_model = AdvertisementNew()
+            self.ad_model.sponsorId = self.current_user
+
+            self.name_step()
+
+        # Ad settings
+        elif self.ads_calldata and call.data != 'a':
+            self.ad_settings(int(call.data))
+
+        # Ad reg calldata
+        elif self.priority_calldata:
+            self.priority_step(message=call.message, acceptMode=True, input=call.data)
+        elif call.data in ['105', '106', '107', '108', '109', '100a']:
+            self.checkout_step(input=call.data, acceptMode=True)
+
         # My ads
         elif call.data == '1':
             self.show_my_ads()
-        # Register new ad
-        elif call.data == '10':
-            self.add_model = AdvertisementNew()
-            self.add_model.sponsorId = self.current_user
 
-            self.name_step()
-        elif call.data in [str(data) for data in range(100, 105)]:
-            self.priority_step(message=call.message, acceptMode=True, input=call.data)
-        elif call.data in [str(data) for data in range(105, 110)]:
-            self.checkout_step(input=call.data, acceptMode=True)
-        elif call.data == '100a':
-            self.checkout_step(input=call.data, acceptMode=True)
         # Overall statistics
         # elif call.data == '2':
         #     self.send_error_message('This feature isn`t ready')
+
         else:
             self.send_error_message('This feature isn`t ready')

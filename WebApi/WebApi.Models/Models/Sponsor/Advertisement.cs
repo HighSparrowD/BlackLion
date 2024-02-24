@@ -19,7 +19,7 @@ public class Advertisement
     [JsonPropertyName("name")]
     public string? Name { get; set; }
 
-    [JsonPropertyName("tagrgetAudience")]
+    [JsonPropertyName("targetAudience")]
     public string? TargetAudience { get; set; }
 
     [JsonPropertyName("media")]
