@@ -26,6 +26,10 @@ class AdvertisementModule(Personality_Bot):
         self.editMode = False
         self.ad_reg_steps = []
 
+        # advertisement settings buttons
+        self.show_btn_indicator = InlineKeyboardButton(text=self.turnedOffSticker, callback_data='4')
+        self.priority_btn_indicator = InlineKeyboardButton(text='', callback_data='6')
+
         self.main_menu_markup = InlineKeyboardMarkup().add(InlineKeyboardButton('My ads', callback_data='1'))\
             .add(InlineKeyboardButton('Overall statistics', callback_data='2'))\
             .add(InlineKeyboardButton('Exit', callback_data='0'))
@@ -50,19 +54,16 @@ class AdvertisementModule(Personality_Bot):
                                                      [InlineKeyboardButton('Priority rate', callback_data='109')],
                                                      [InlineKeyboardButton('Done', callback_data='100a')]])
 
-        self.start()
+        self.ad_settings_keyboard = InlineKeyboardMarkup([[InlineKeyboardButton(text='Statistics', callback_data='3')],
+                                                          [InlineKeyboardButton(text='Show', callback_data='4'),
+                                                           self.show_btn_indicator],
+                                                          [InlineKeyboardButton(text='Edit', callback_data='5')],
+                                                          [InlineKeyboardButton(text='Priority', callback_data='6'),
+                                                           self.priority_btn_indicator],
+                                                          [InlineKeyboardButton(text='Delete', callback_data='7')],
+                                                          [InlineKeyboardButton(text='Go back', callback_data='0')]])
 
-    def ad_settings_keyboard(self, isShown: bool, priority: str):
-        symb = self.turnedOffSticker
-        if isShown:
-            symb = self.turnedOnSticker
-        keyboard = InlineKeyboardMarkup([[InlineKeyboardButton(text='Statistics', callback_data='01')],
-                                         [InlineKeyboardButton(text='Show', callback_data='02'), InlineKeyboardButton(text=symb, callback_data='02')],
-                                         [InlineKeyboardButton(text='Edit', callback_data='03')],
-                                         [InlineKeyboardButton(text='Priority', callback_data='04'), InlineKeyboardButton(text=priority, callback_data='04')],
-                                         [InlineKeyboardButton(text='Delete', callback_data='05')],
-                                         [InlineKeyboardButton(text='Go back', callback_data='0')]])
-        return keyboard
+        self.start()
 
     def start(self):
         self.send_active_message('What you want to see?', markup=self.main_menu_markup)
@@ -87,7 +88,9 @@ class AdvertisementModule(Personality_Bot):
 
     def ad_settings(self, ad_id: int):
         self.ad_model = Helpers.get_advertisement_info(ad_id)
-        self.send_active_message('Advertisement settings', markup=self.ad_settings_keyboard(self.ad_model.show, self.ad_model.priority))
+        self.show_btn_indicator.text = self.turnedOnSticker if self.ad_model.show else self.turnedOffSticker
+        self.priority_btn_indicator.text = self.ad_model.priority
+        self.send_active_message('Advertisement settings', markup=self.ad_settings_keyboard)
 
         self.ads_calldata = False
         self.return_method = self.show_my_ads
