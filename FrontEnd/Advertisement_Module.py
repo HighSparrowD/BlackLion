@@ -63,6 +63,9 @@ class AdvertisementModule(Personality_Bot):
                                                           [InlineKeyboardButton(text='Delete', callback_data='7')],
                                                           [InlineKeyboardButton(text='Go back', callback_data='0')]])
 
+        self.delete_markup = InlineKeyboardMarkup([[InlineKeyboardButton(text='Yes', callback_data='70')],
+                                                   [InlineKeyboardButton(text='No', callback_data='0')]])
+
         self.start()
 
     def start(self):
@@ -86,14 +89,27 @@ class AdvertisementModule(Personality_Bot):
 
         self.return_method = self.start
 
-    def ad_settings(self, ad_id: int):
-        self.ad_model = Helpers.get_advertisement_info(ad_id)
+    def ad_settings(self, ad_id: int = None):
+        if ad_id:
+            self.ad_model = Helpers.get_advertisement_info(ad_id)
         self.show_btn_indicator.text = self.turnedOnSticker if self.ad_model.show else self.turnedOffSticker
         self.priority_btn_indicator.text = self.ad_model.priority
         self.send_active_message('Advertisement settings', markup=self.ad_settings_keyboard)
 
         self.ads_calldata = False
         self.return_method = self.show_my_ads
+
+    def ad_delete(self, acceptMode=False):
+        self.return_method = self.ad_settings
+        if not acceptMode:
+            self.send_active_message('Are you sure, you want to delete this advertisement?', self.delete_markup, ['e'])
+        else:
+            # Only if user want to delete the ad
+            if Helpers.delete_advertisement(self.ad_model.id).status_code == 204:
+                self.show_my_ads()
+            else:
+                self.prev_menu()
+                self.send_error_message('Something went wrong\n\nCan not delete the ad')
 
     def name_step(self, message=None, acceptMode=False, shouldInsert=True):
         self.ads_calldata = False
@@ -307,6 +323,12 @@ class AdvertisementModule(Personality_Bot):
             self.priority_step(message=call.message, acceptMode=True, input=call.data)
         elif call.data in ['105', '106', '107', '108', '109', '100a']:
             self.checkout_step(input=call.data, acceptMode=True)
+
+        # Ad deleting
+        elif call.data == '7':
+            self.ad_delete()
+        elif call.data == '70':
+            self.ad_delete(True)
 
         # My ads
         elif call.data == '1':
