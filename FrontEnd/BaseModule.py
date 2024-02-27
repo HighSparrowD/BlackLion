@@ -145,9 +145,7 @@ class Personality_Bot:
         self.delete_additional_message()
 
     def prev_menu(self, delete_msg: list[str] = None):  # returns you to previous menu (no matter is the menu in ad_module or in main)
-        if delete_msg is not None:
-            for msg in delete_msg:
-                self.del_funcs[msg]()
+        self.cleanup()
         if self.return_method:
             self.return_method()
         else:
