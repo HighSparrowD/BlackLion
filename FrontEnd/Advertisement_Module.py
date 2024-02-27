@@ -90,7 +90,7 @@ class AdvertisementModule(Personality_Bot):
         self.return_method = self.start
 
     def ad_settings(self, ad_id: int = None):
-        if ad_id:
+        if not self.ad_model or self.ad_model.id != ad_id:
             self.ad_model = Helpers.get_advertisement_info(ad_id)
         self.show_btn_indicator.text = self.turnedOnSticker if self.ad_model.show else self.turnedOffSticker
         self.priority_btn_indicator.text = self.ad_model.priority

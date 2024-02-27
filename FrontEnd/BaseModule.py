@@ -144,11 +144,13 @@ class Personality_Bot:
         self.delete_error_message()
         self.delete_additional_message()
 
-    def prev_menu(self):  # returns you to previous menu (no matter is the menu in ad_module or in main)
-        self.cleanup()
+    def prev_menu(self, delete_msg: list[str] = None):  # returns you to previous menu (no matter is the menu in ad_module or in main)
+        if delete_msg is not None:
+            for msg in delete_msg:
+                self.del_funcs[msg]()
         if self.return_method:
             self.return_method()
         else:
             go_back_to_main_menu(self.bot, self.current_user, self.message)
             self.bot.callback_query_handlers.remove(self.current_callback_handler)
-        del self
+            del self
