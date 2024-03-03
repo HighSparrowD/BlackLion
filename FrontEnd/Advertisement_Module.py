@@ -13,6 +13,7 @@ class AdvertisementModule(Personality_Bot):
 
         self.ads_calldata: bool = False
         self.priority_calldata: bool = False
+        self.shouldUpdate: bool = False
 
         self.turnedOnSticker = "✅"
         self.turnedOffSticker = "❌"
@@ -29,6 +30,7 @@ class AdvertisementModule(Personality_Bot):
         # advertisement settings buttons
         self.show_btn_indicator = InlineKeyboardButton(text=self.turnedOffSticker, callback_data='4')
         self.priority_btn_indicator = InlineKeyboardButton(text='', callback_data='6')
+
 
         self.main_menu_markup = InlineKeyboardMarkup().add(InlineKeyboardButton('My ads', callback_data='1'))\
             .add(InlineKeyboardButton('Overall statistics', callback_data='2'))\
@@ -66,6 +68,8 @@ class AdvertisementModule(Personality_Bot):
         self.delete_markup = InlineKeyboardMarkup([[InlineKeyboardButton(text='Yes', callback_data='70')],
                                                    [InlineKeyboardButton(text='No', callback_data='0')]])
 
+        self.to_show_ads_markup = InlineKeyboardMarkup([[InlineKeyboardButton('Return to my Ads', callback_data='10')]])
+
         self.start()
 
     def start(self):
@@ -90,7 +94,7 @@ class AdvertisementModule(Personality_Bot):
         self.return_method = self.start
 
     def ad_settings(self, ad_id: int = None):
-        if not self.ad_model or self.ad_model.id != ad_id:
+        if not self.ad_model or self.ad_model.__class__ is AdvertisementNew or self.ad_model.id != ad_id:
             self.ad_model = Helpers.get_advertisement_info(ad_id)
         self.show_btn_indicator.text = self.turnedOnSticker if self.ad_model.show else self.turnedOffSticker
         self.priority_btn_indicator.text = self.ad_model.priority
@@ -269,6 +273,7 @@ class AdvertisementModule(Personality_Bot):
 
             self.send_secondary_message('Want to change something?', self.checkout_markup)
         else:
+            self.return_method = self.checkout_step  # TODO: fix "change->go back->change"
             if input == '105':
                 self.name_step(shouldInsert=False)
             elif input == '106':
@@ -280,13 +285,17 @@ class AdvertisementModule(Personality_Bot):
             elif input == '109':
                 self.priority_step(shouldInsert=False)
             elif input == '100a':
-                if Helpers.add_advertisement(self.ad_model).status_code == 204:
+                if self.shouldUpdate:
+                    self.shouldUpdate = False
+                    response = Helpers.update_advertisement(self.ad_model)
+                else:
+                    response = Helpers.add_advertisement(self.ad_model)
+                if response.status_code == 204:
                     self.editMode = False
                     self.ad_reg_steps = []
                     self.delete_secondary_message()
                     self.show_my_ads()
-                else:
-                    self.send_error_message("Can not save the ad")
+                self.send_error_message("Something went wrong :-(", self.to_show_ads_markup)
 
     def configure_registration_step(self, step, shouldInsert):
         if shouldInsert:
@@ -318,21 +327,38 @@ class AdvertisementModule(Personality_Bot):
         elif self.ads_calldata and call.data != 'a':
             self.ad_settings(int(call.data))
 
-        # Ad reg calldata
+        # Ad reg/update
         elif self.priority_calldata:
             self.priority_step(message=call.message, acceptMode=True, input=call.data)
+        elif call.data == '100a' and self.ad_model.__class__ != AdvertisementNew:
+            self.delete_secondary_message()
+            self.ad_settings(self.ad_model.id)
         elif call.data in ['105', '106', '107', '108', '109', '100a']:
+            if self.ad_model.__class__ != AdvertisementNew:
+                self.ad_model = AdvertisementNew(self.ad_model.sponsorId, self.ad_model.name,
+                                                 self.ad_model.text, self.ad_model.targetAudience,
+                                                 self.ad_model.media, self.ad_model.priority, self.ad_model.mediaType)
+                self.shouldUpdate = True
             self.checkout_step(input=call.data, acceptMode=True)
+
+        elif call.data == '10':
+            self.delete_secondary_message()
+            self.editMode = False
+            self.show_my_ads()
+
+        # My ads
+        elif call.data == '1':
+            self.show_my_ads()
+
+        # Edit ad
+        elif call.data == '5':
+            self.checkout_step()  # TODO: add return method
 
         # Ad deleting
         elif call.data == '7':
             self.ad_delete()
         elif call.data == '70':
             self.ad_delete(True)
-
-        # My ads
-        elif call.data == '1':
-            self.show_my_ads()
 
         # Overall statistics
         # elif call.data == '2':
