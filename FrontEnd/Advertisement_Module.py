@@ -42,6 +42,9 @@ class AdvertisementModule(Personality_Bot):
 
         self.priorities_list = Helpers.get_all_advertisement_priorities()
 
+        for priority in self.priorities_list:  # temporary solution
+            priority.name = priority.name.replace(' ', '')
+
         self.priority_markup = InlineKeyboardMarkup([[InlineKeyboardButton(self.priorities_list[0].name, callback_data=self.priorities_list[0].id)],
                                                      [InlineKeyboardButton(self.priorities_list[1].name, callback_data=self.priorities_list[1].id)],
                                                      [InlineKeyboardButton(self.priorities_list[2].name, callback_data=self.priorities_list[2].id)],
