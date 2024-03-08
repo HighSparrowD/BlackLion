@@ -42,19 +42,14 @@ namespace WebApi.Repositories
             return advertisement;
         }
 
-        public async Task AddAdvertisementAsync(AdvertisementNew model)
+        public async Task<Advertisement> AddAdvertisementAsync(AdvertisementNew model)
         {
             var advertisement = new entities.Advertisement(model);
             await _contx.Advertisements.AddAsync(advertisement);
 
-            var stats = new entities.AdvertisementStats
-            {
-                SponsorId = model.SponsorId,
-                AdvertisementId = advertisement.Id
-            };
-
-            await _contx.AdvertisementStatistics.AddAsync(stats);
             await _contx.SaveChangesAsync();
+
+            return (Advertisement)advertisement;
         }
 
         public async Task UpdateAdvertisementAsync(AdvertisementUpdate model)
@@ -109,22 +104,30 @@ namespace WebApi.Repositories
             await _contx.SaveChangesAsync();
         }
 
-        public async Task<List<AdvertisementStats>> GetAdvertisementStatsAsync(long advertisementId)
+        public async Task<List<AdvertisementStats>> GetAdvertisementStatsAsync(long advertisementId, AdvertisementStatsRequest searchModel)
         {
-            var statistics = await _contx.AdvertisementStatistics.Where(a => a.AdvertisementId == advertisementId)
-                .Select(a => (AdvertisementStats)a)
-                .ToListAsync();
+            var query = _contx.AdvertisementStatistics.Where(a => a.AdvertisementId == advertisementId);
 
-            return statistics;
+            query = GetTimedQuery(query, searchModel);
+
+            return await query.Select(a => (AdvertisementStats)a)
+                .ToListAsync();
         }
 
-        public async Task<List<AdvertisementStats>> GetAllAdvertisementsStatsAsync(long userId)
+        public async Task<List<AdvertisementStats>> GetAllAdvertisementsStatsAsync(long userId, AdvertisementStatsRequest searchModel)
         {
-            var statistics = await _contx.AdvertisementStatistics.Where(a => a.SponsorId == userId)
-                .Select(a => (AdvertisementStats)a)
-                .ToListAsync();
+            var query = _contx.AdvertisementStatistics.Where(a => a.SponsorId == userId);
 
-            return statistics;
+            query = GetTimedQuery(query, searchModel);
+
+            return await query.Select(a => (AdvertisementStats)a)
+                .ToListAsync();
+        }
+
+        private IQueryable<entities.AdvertisementStats> GetTimedQuery(IQueryable<entities.AdvertisementStats> query, 
+            AdvertisementStatsRequest searchModel)
+        {
+            return query.Where(a => a.Created >= searchModel.From && a.Created <= searchModel.To);
         }
     }
 }
