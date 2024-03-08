@@ -98,7 +98,7 @@ class AdvertisementModule(Personality_Bot):
         self.return_method = self.start
 
     def ad_settings(self, ad_id: int = None):
-        if not self.ad_model or self.ad_model.__class__ in (AdvertisementNew, AdvertisementUpdate) or self.ad_model.id != ad_id:
+        if ad_id:
             self.ad_model = Helpers.get_advertisement_info(ad_id)
         self.show_btn_indicator.text = self.turnedOnSticker if self.ad_model.show else self.turnedOffSticker
         self.priority_btn_indicator.text = self.ad_model.priority
@@ -258,7 +258,7 @@ class AdvertisementModule(Personality_Bot):
             self.send_active_message('Something went wrong\n\nType anything to try again')
             self.next_handler = self.bot.register_next_step_handler(message, self.priority_step, chat_id=self.current_user)
 
-    def checkout_step(self, input=None, acceptMode=False, shouldInsert=True):
+    def checkout_step(self, acceptMode=False, shouldInsert=True):
         if not acceptMode:
             self.editMode = True
             if self.return_method != self.prev_reg_step:
@@ -279,28 +279,17 @@ class AdvertisementModule(Personality_Bot):
 
             self.send_secondary_message('Want to change something?', self.checkout_markup)
         else:
-            if input == '105':
-                self.name_step(shouldInsert=False)
-            elif input == '106':
-                self.text_step(shouldInsert=False)
-            elif input == '107':
-                self.media_step(shouldInsert=False)
-            elif input == '108':
-                self.target_audience_step(shouldInsert=False)
-            elif input == '109':
-                self.priority_step(shouldInsert=False)
-            elif input == '100a':
-                if self.ad_model.__class__ is AdvertisementUpdate:
-                    response = Helpers.update_advertisement(self.ad_model)
-                else:
-                    response = Helpers.add_advertisement(self.ad_model)
-                if response.status_code == 204:
-                    self.editMode = False
-                    self.ad_reg_steps = []
-                    self.delete_secondary_message()
-                    self.show_my_ads()
-                    return
-                self.send_error_message("Something went wrong :-(", self.to_show_ads_markup)
+            if hasattr(self.ad_model, 'id'):
+                response = Helpers.update_advertisement(self.ad_model)
+            else:
+                response = Helpers.add_advertisement(self.ad_model)
+            if response.status_code == 204:
+                self.editMode = False
+                self.ad_reg_steps = []
+                self.delete_secondary_message()
+                self.show_my_ads()
+                return
+            self.send_error_message("Something went wrong :-(", self.to_show_ads_markup)
 
     def configure_registration_step(self, step, shouldInsert):
         if shouldInsert:
@@ -335,16 +324,29 @@ class AdvertisementModule(Personality_Bot):
         # Ad reg/update
         elif self.priority_calldata:
             self.priority_step(message=call.message, acceptMode=True, input=call.data)
-        elif call.data in ('100a', '10') and self.ad_model.__class__ is Advertisement:
+        # Checkout call.data
+        elif call.data == '105':
+            self.name_step(shouldInsert=False)
+            self.delete_secondary_message()
+        elif call.data == '106':
+            self.text_step(shouldInsert=False)
+            self.delete_secondary_message()
+        elif call.data == '107':
+            self.media_step(shouldInsert=False)
+            self.delete_secondary_message()
+        elif call.data == '108':
+            self.target_audience_step(shouldInsert=False)
+            self.delete_secondary_message()
+        elif call.data == '109':
+            self.priority_step(shouldInsert=False)
+            self.delete_secondary_message()
+        elif call.data == '100a':
+            self.checkout_step(acceptMode=True)
+
+        elif call.data == '10' and self.ad_model.__class__ is AdvertisementUpdate:  # for easy return to settings menu
             self.delete_secondary_message()
             self.editMode = False
             self.ad_settings(self.ad_model.id)
-        elif call.data in ['105', '106', '107', '108', '109', '100a']:
-            if self.ad_model.__class__ is Advertisement:
-                self.ad_model = AdvertisementUpdate(self.ad_model.id, self.ad_model.sponsorId, self.ad_model.name,
-                                                 self.ad_model.text, self.ad_model.targetAudience,
-                                                 self.ad_model.media, self.ad_model.priority, self.ad_model.mediaType)
-            self.checkout_step(input=call.data, acceptMode=True)
 
         elif call.data == '10':
             self.delete_secondary_message()
@@ -358,6 +360,9 @@ class AdvertisementModule(Personality_Bot):
         # Edit ad
         elif call.data == '5':
             self.checkout_step()
+            self.ad_model = AdvertisementUpdate(self.ad_model.id, self.ad_model.sponsorId, self.ad_model.name,
+                                                self.ad_model.text, self.ad_model.targetAudience,
+                                                self.ad_model.media, self.ad_model.priority, self.ad_model.mediaType)
 
         # Ad deleting
         elif call.data == '7':
