@@ -9,14 +9,23 @@ namespace WebApi.Interfaces
     public interface ISponsorRepository
     {
         Task<List<AdvertisementItem>> GetAdvertisementListAsync(int sponsorId);
+
         Task<Advertisement> GetAdvertisementAsync(int advertisementId);
-        Task<List<AdvertisementStats>> GetAdvertisementStatsAsync(long advertisementId);
-        Task<List<AdvertisementStats>> GetAllAdvertisementsStatsAsync(long userId);
-        Task AddAdvertisementAsync(AdvertisementNew model);
+
+        Task<List<AdvertisementStats>> GetAdvertisementStatsAsync(long advertisementId, AdvertisementStatsRequest searchModel);
+
+        Task<List<AdvertisementStats>> GetAllAdvertisementsStatsAsync(long userId, AdvertisementStatsRequest searchModel);
+
+        Task<Advertisement> AddAdvertisementAsync(AdvertisementNew model);
+
         Task UpdateAdvertisementAsync(AdvertisementUpdate model);
+
         Task DeleteAdvertisementAsync(int advertisementId);
+
         List<GetLocalizedEnum> GetPriorities();
+
         Task SetAdvertisementPriorityAsync(int advertisementId, AdvertisementPriority priority);
+
         Task SwitchShowStatusAsync(int advertisementId);
     }
 }

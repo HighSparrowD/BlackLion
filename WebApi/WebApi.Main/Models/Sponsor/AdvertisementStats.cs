@@ -31,6 +31,8 @@ namespace WebApi.Main.Models.Sponsor
 
         public string? TargetAudience { get; set; }
 
+        public DateOnly Created { get; set; }
+
         public virtual Advertisement? Advertisement { get; set; }
 
         public static explicit operator AdvertisementStats?(models.AdvertisementStats? advertisement)
@@ -49,7 +51,8 @@ namespace WebApi.Main.Models.Sponsor
                 PricePerClick = advertisement.PricePerClick,
                 TargetAudience = advertisement.TargetAudience,
                 TotalPrice = advertisement.TotalPrice,
-                ViewCount = advertisement.ViewCount
+                ViewCount = advertisement.ViewCount,
+                Created = advertisement.Created
             };
         }
 
@@ -69,7 +72,8 @@ namespace WebApi.Main.Models.Sponsor
                 PricePerClick = advertisement.PricePerClick,
                 TargetAudience = advertisement.TargetAudience,
                 TotalPrice = advertisement.TotalPrice,
-                ViewCount = advertisement.ViewCount
+                ViewCount = advertisement.ViewCount,
+                Created = advertisement.Created
             };
         }
     }

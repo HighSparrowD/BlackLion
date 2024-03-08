@@ -1,15 +1,10 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-
-#nullable enable
+﻿#nullable enable
 namespace WebApi.Models.Models.Sponsor
 {
     public class AdvertisementStats
     {
-        [Key]
         public int Id { get; set; }
 
-        [ForeignKey("Advertisement")]
         public long AdvertisementId { get; set; }
 
         public int ViewCount { get; set; }
@@ -27,5 +22,7 @@ namespace WebApi.Models.Models.Sponsor
         public float ClickCount { get; set; }
 
         public string? TargetAudience { get; set; }
+
+        public DateOnly Created { get; set; }
     }
 }

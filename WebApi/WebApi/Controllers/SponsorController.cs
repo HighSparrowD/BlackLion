@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using WebApi.Enums.Enums.Sponsor;
 using WebApi.Models.Models.Sponsor;
 using WebApi.Models.Models.User;
+using System;
 
 namespace WebApi.Controllers
 {
@@ -35,8 +36,8 @@ namespace WebApi.Controllers
             [FromServices] ISponsorRepository sponsorRepo, 
             [FromBody] AdvertisementNew model)
         {
-            await sponsorRepo.AddAdvertisementAsync(model);
-            return NoContent();
+            var advertisement = await sponsorRepo.AddAdvertisementAsync(model);
+            return NoContent(); // TODO: Ask how is handled and return OK instead
         }
 
         [HttpPut("/advertisement")]
@@ -57,18 +58,20 @@ namespace WebApi.Controllers
             return NoContent();
         }
 
-        [HttpGet("/statistics")]
-        public async Task<ActionResult> GetAdvertisementsStatistics([FromServices] ISponsorRepository sponsorRepo, 
-            [FromQuery] long userId)
+        [HttpPost("/statistics")]
+        public async Task<ActionResult<List<AdvertisementStats>>> GetAdvertisementsStatistics([FromServices] ISponsorRepository sponsorRepo, 
+            [FromQuery] long userId, [FromBody] AdvertisementStatsRequest request)
         {
-            return Ok(await sponsorRepo.GetAllAdvertisementsStatsAsync(userId));
+            var stats = await sponsorRepo.GetAllAdvertisementsStatsAsync(userId, request);
+            return Ok(stats);
         }
 
-        [HttpGet("/statistics/{id}")]
-        public async Task<ActionResult> GetAdvertisementStatistics([FromServices] ISponsorRepository sponsorRepo, 
-            [FromRoute] int id)
+        [HttpPost("/statistics/{advertisementId}")]
+        public async Task<ActionResult<List<AdvertisementStats>>> GetAdvertisementStatistics([FromServices] ISponsorRepository sponsorRepo, 
+            [FromRoute] int advertisementId, [FromBody] AdvertisementStatsRequest request)
         {
-            return Ok(await sponsorRepo.GetAdvertisementStatsAsync(id));
+            var stats = await sponsorRepo.GetAdvertisementStatsAsync(advertisementId, request);
+            return Ok(stats);
         }
 
         [HttpGet("/advertisement/switch-status/{id}")]
