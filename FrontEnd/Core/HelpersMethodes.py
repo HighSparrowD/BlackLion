@@ -835,7 +835,7 @@ def add_advertisement(payload: advertisement_models.AdvertisementNew) -> Union[R
         return None
 
 
-def update_advertisement(payload: advertisement_models.AdvertisementNew) -> Union[Response, None]:
+def update_advertisement(payload: advertisement_models.AdvertisementUpdate) -> Union[Response, None]:
     try:
         data = payload.to_json()
 

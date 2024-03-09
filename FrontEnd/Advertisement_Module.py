@@ -3,7 +3,7 @@ from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, Message, C
 from Core import HelpersMethodes as Helpers
 
 from BaseModule import Personality_Bot
-from Models.Advertisement.Advertisement import AdvertisementNew
+from Models.Advertisement.Advertisement import AdvertisementNew, AdvertisementUpdate, Advertisement
 
 class AdvertisementModule(Personality_Bot):
     def __init__(self, bot: telebot.TeleBot, message: Message, hasVisited=False):
@@ -13,6 +13,7 @@ class AdvertisementModule(Personality_Bot):
 
         self.ads_calldata: bool = False
         self.priority_calldata: bool = False
+        self.shouldUpdate: bool = False
 
         self.turnedOnSticker = "✅"
         self.turnedOffSticker = "❌"
@@ -30,6 +31,7 @@ class AdvertisementModule(Personality_Bot):
         self.show_btn_indicator = InlineKeyboardButton(text=self.turnedOffSticker, callback_data='4')
         self.priority_btn_indicator = InlineKeyboardButton(text='', callback_data='6')
 
+
         self.main_menu_markup = InlineKeyboardMarkup().add(InlineKeyboardButton('My ads', callback_data='1'))\
             .add(InlineKeyboardButton('Overall statistics', callback_data='2'))\
             .add(InlineKeyboardButton('Exit', callback_data='0'))
@@ -39,6 +41,9 @@ class AdvertisementModule(Personality_Bot):
         self.goback_markup = InlineKeyboardMarkup([[InlineKeyboardButton("Go Back", callback_data='0')]])
 
         self.priorities_list = Helpers.get_all_advertisement_priorities()
+
+        for priority in self.priorities_list:  # temporary solution
+            priority.name = priority.name.replace(' ', '')
 
         self.priority_markup = InlineKeyboardMarkup([[InlineKeyboardButton(self.priorities_list[0].name, callback_data=self.priorities_list[0].id)],
                                                      [InlineKeyboardButton(self.priorities_list[1].name, callback_data=self.priorities_list[1].id)],
@@ -52,7 +57,8 @@ class AdvertisementModule(Personality_Bot):
                                                      [InlineKeyboardButton('Media', callback_data='107')],
                                                      [InlineKeyboardButton('Target Audience', callback_data='108')],
                                                      [InlineKeyboardButton('Priority rate', callback_data='109')],
-                                                     [InlineKeyboardButton('Done', callback_data='100a')]])
+                                                     [InlineKeyboardButton('Cancel', callback_data='10'),
+                                                      InlineKeyboardButton('Done', callback_data='100a')]])
 
         self.ad_settings_keyboard = InlineKeyboardMarkup([[InlineKeyboardButton(text='Statistics', callback_data='3')],
                                                           [InlineKeyboardButton(text='Show', callback_data='4'),
@@ -65,6 +71,8 @@ class AdvertisementModule(Personality_Bot):
 
         self.delete_markup = InlineKeyboardMarkup([[InlineKeyboardButton(text='Yes', callback_data='70')],
                                                    [InlineKeyboardButton(text='No', callback_data='0')]])
+
+        self.to_show_ads_markup = InlineKeyboardMarkup([[InlineKeyboardButton('Return to my Ads', callback_data='10')]])
 
         self.start()
 
@@ -90,7 +98,7 @@ class AdvertisementModule(Personality_Bot):
         self.return_method = self.start
 
     def ad_settings(self, ad_id: int = None):
-        if not self.ad_model or self.ad_model.id != ad_id:
+        if ad_id:
             self.ad_model = Helpers.get_advertisement_info(ad_id)
         self.show_btn_indicator.text = self.turnedOnSticker if self.ad_model.show else self.turnedOffSticker
         self.priority_btn_indicator.text = self.ad_model.priority
@@ -250,9 +258,11 @@ class AdvertisementModule(Personality_Bot):
             self.send_active_message('Something went wrong\n\nType anything to try again')
             self.next_handler = self.bot.register_next_step_handler(message, self.priority_step, chat_id=self.current_user)
 
-    def checkout_step(self, input=None, acceptMode=False, shouldInsert=True):
+    def checkout_step(self, acceptMode=False, shouldInsert=True):
         if not acceptMode:
             self.editMode = True
+            if self.return_method != self.prev_reg_step:
+                self.return_method = self.prev_reg_step
 
             self.configure_registration_step(self.checkout_step, shouldInsert)
 
@@ -269,24 +279,17 @@ class AdvertisementModule(Personality_Bot):
 
             self.send_secondary_message('Want to change something?', self.checkout_markup)
         else:
-            if input == '105':
-                self.name_step(shouldInsert=False)
-            elif input == '106':
-                self.text_step(shouldInsert=False)
-            elif input == '107':
-                self.media_step(shouldInsert=False)
-            elif input == '108':
-                self.target_audience_step(shouldInsert=False)
-            elif input == '109':
-                self.priority_step(shouldInsert=False)
-            elif input == '100a':
-                if Helpers.add_advertisement(self.ad_model).status_code == 204:
-                    self.editMode = False
-                    self.ad_reg_steps = []
-                    self.delete_secondary_message()
-                    self.show_my_ads()
-                else:
-                    self.send_error_message("Can not save the ad")
+            if hasattr(self.ad_model, 'id'):
+                response = Helpers.update_advertisement(self.ad_model)
+            else:
+                response = Helpers.add_advertisement(self.ad_model)
+            if response.status_code == 204:
+                self.editMode = False
+                self.ad_reg_steps = []
+                self.delete_secondary_message()
+                self.show_my_ads()
+                return
+            self.send_error_message("Something went wrong :-(", self.to_show_ads_markup)
 
     def configure_registration_step(self, step, shouldInsert):
         if shouldInsert:
@@ -294,10 +297,10 @@ class AdvertisementModule(Personality_Bot):
         self.current_section = step
 
     def prev_reg_step(self):
+        self.bot.remove_next_step_handler(self.current_user, self.next_handler)
         if self.editMode:
             self.checkout_step()
         else:
-            self.bot.remove_next_step_handler(self.current_user, self.next_handler)
             previous_section = self.ad_reg_steps[0]
             self.ad_reg_steps.pop(0)
             previous_section(shouldInsert=False)
@@ -318,21 +321,54 @@ class AdvertisementModule(Personality_Bot):
         elif self.ads_calldata and call.data != 'a':
             self.ad_settings(int(call.data))
 
-        # Ad reg calldata
+        # Ad reg/update
         elif self.priority_calldata:
             self.priority_step(message=call.message, acceptMode=True, input=call.data)
-        elif call.data in ['105', '106', '107', '108', '109', '100a']:
-            self.checkout_step(input=call.data, acceptMode=True)
+        # Checkout call.data
+        elif call.data == '105':
+            self.name_step(shouldInsert=False)
+            self.delete_secondary_message()
+        elif call.data == '106':
+            self.text_step(shouldInsert=False)
+            self.delete_secondary_message()
+        elif call.data == '107':
+            self.media_step(shouldInsert=False)
+            self.delete_secondary_message()
+        elif call.data == '108':
+            self.target_audience_step(shouldInsert=False)
+            self.delete_secondary_message()
+        elif call.data == '109':
+            self.priority_step(shouldInsert=False)
+            self.delete_secondary_message()
+        elif call.data == '100a':
+            self.checkout_step(acceptMode=True)
+
+        elif call.data == '10' and self.ad_model.__class__ is AdvertisementUpdate:  # for easy return to settings menu
+            self.delete_secondary_message()
+            self.editMode = False
+            self.ad_settings(self.ad_model.id)
+
+        elif call.data == '10':
+            self.delete_secondary_message()
+            self.editMode = False
+            self.show_my_ads()
+
+        # My ads
+        elif call.data == '1':
+            self.show_my_ads()
+
+        # Edit ad
+        elif call.data == '5':
+            self.checkout_step()
+            self.ad_model = AdvertisementUpdate(self.ad_model.id, self.ad_model.sponsorId, self.ad_model.name,
+                                                self.ad_model.text, self.ad_model.targetAudience,
+                                                self.ad_model.media, self.ad_model.priority, self.ad_model.mediaType)
 
         # Ad deleting
         elif call.data == '7':
             self.ad_delete()
         elif call.data == '70':
             self.ad_delete(True)
-
-        # My ads
-        elif call.data == '1':
-            self.show_my_ads()
 
         # Overall statistics
         # elif call.data == '2':

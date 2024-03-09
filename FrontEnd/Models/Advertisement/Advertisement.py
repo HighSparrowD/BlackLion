@@ -13,6 +13,17 @@ class AdvertisementNew(ApiModel):
         self.priority: Union[str, None]
         self.mediaType: Union[str, None]
 
+class AdvertisementUpdate(ApiModel):
+    def __init__(self, id: int, sponsorId: int, name: str, text: str, targetAudience: str, media: str, priority: str, mediaType: str):
+        self.id = id
+        self.sponsorId = sponsorId
+        self.name = name
+        self.text = text
+        self.targetAudience = targetAudience
+        self.media = media
+        self.priority = priority
+        self.mediaType = mediaType
+
 class AdvertisementItem:
     def __init__(self, advertisement_dict):
         self.id = advertisement_dict["id"]
