@@ -27,7 +27,7 @@ namespace WebApi.Main.Models.Sponsor
 
         public float Income { get; set; }
 
-        public float ClickCount { get; set; }
+        public int ClickCount { get; set; }
 
         public string? TargetAudience { get; set; }
 

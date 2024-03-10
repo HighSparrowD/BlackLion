@@ -1,3 +1,5 @@
+import calendar
+import datetime
 import json
 from typing import Union
 
@@ -865,7 +867,6 @@ def get_advertisement_info(adId) -> Union[advertisement_models.Advertisement, No
     return advertisement_models.Advertisement(advertisement)
 
 
-
 def delete_advertisement(advertisementId) -> Union[Response, None]:
     try:
         response = requests.delete(f"{api_address}/advertisement/{advertisementId}", verify=False)
@@ -883,3 +884,26 @@ def get_all_advertisement_priorities() -> Union[list[generic_models.LocalizedEnu
         return [generic_models.LocalizedEnum(priority) for priority in priorities]
     except:
         return
+
+
+def get_advertisement_monthly_statistics(advertisement_id) -> Union[list[advertisement_models.Statistics, None]]:
+    try:
+        model = advertisement_models.StatisticsGet()
+
+        now = datetime.datetime.now()
+        max_days = calendar.monthrange(now.year, now.month)[1]
+
+        model.from_ = datetime.datetime(now.year, now.month, 1)
+        model.to = datetime.datetime(now.year, now.month, max_days)
+
+        data = model.to_json()
+
+        response = requests.post(f"https://localhost:44381/statistics/{advertisement_id}", data, headers={
+            "Content-Type": "application/json"}, verify=False)
+
+        stats = response.json()
+
+        return [advertisement_models.Statistics(stat) for stat in stats]
+
+    except:
+        return None

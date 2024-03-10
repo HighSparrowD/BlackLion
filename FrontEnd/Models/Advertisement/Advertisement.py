@@ -1,3 +1,5 @@
+import json
+from datetime import datetime
 from typing import Union
 
 from Models.ApiModel import ApiModel
@@ -13,6 +15,7 @@ class AdvertisementNew(ApiModel):
         self.priority: Union[str, None]
         self.mediaType: Union[str, None]
 
+
 class AdvertisementUpdate(ApiModel):
     def __init__(self, id: int, sponsorId: int, name: str, text: str, targetAudience: str, media: str, priority: str, mediaType: str):
         self.id = id
@@ -23,6 +26,21 @@ class AdvertisementUpdate(ApiModel):
         self.media = media
         self.priority = priority
         self.mediaType = mediaType
+
+
+class StatisticsGet(ApiModel):
+    def __init__(self):
+        self.from_: datetime = datetime.now()
+        self.to: datetime = datetime.now()
+
+    def to_json(self):
+        dict = {
+            "from": self.from_.strftime("%Y-%m-%d"),
+            "to": self.to.strftime("%Y-%m-%d")
+        }
+
+        return json.dumps(dict)
+
 
 class AdvertisementItem:
     def __init__(self, advertisement_dict):
@@ -42,3 +60,18 @@ class Advertisement:
         self.updated: bool = advertisement_dict["updated"]
         self.priority: str = advertisement_dict["priority"]
         self.mediaType: str = advertisement_dict["mediaType"]
+
+
+class Statistics:
+    def __init__(self, stats_dict):
+        self.id: int = stats_dict["id"]
+        self.advertisementId: int = stats_dict["advertisementId"]
+        self.viewCount: int = stats_dict["viewCount"]
+        self.averageStayInSeconds: int = stats_dict["averageStayInSeconds"]
+        self.payback: float = stats_dict["payback"]
+        self.pricePerClick: float = stats_dict["pricePerClick"]
+        self.totalPrice: float = stats_dict["totalPrice"]
+        self.income: float = stats_dict["income"]
+        self.clickCount: int = stats_dict["clickCount"]
+        self.targetAudience: str = stats_dict["targetAudience"]
+        self.created: datetime = stats_dict["created"]
