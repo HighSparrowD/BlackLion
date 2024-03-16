@@ -1,6 +1,8 @@
 import telebot
-import matplotlib
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, Message, CallbackQuery
+import io
+import base64
+import matplotlib.pyplot as plt
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, Message, CallbackQuery, InputFile
 from Core import HelpersMethodes as Helpers
 
 from BaseModule import Personality_Bot
@@ -18,6 +20,7 @@ class AdvertisementModule(Personality_Bot):
 
         self.turnedOnSticker = "✅"
         self.turnedOffSticker = "❌"
+        plt.style.use('fivethirtyeight')
 
         # storage for ad model used in ad reg and ad settings
         self.ad_model = None
@@ -82,7 +85,7 @@ class AdvertisementModule(Personality_Bot):
         self.return_method = None
         self.ads_calldata = False
 
-    def show_my_ads(self, shouldInsert=False):
+    def show_my_ads(self):
         self.ads_calldata = True
 
         self.my_ads_markup.clear()
@@ -119,6 +122,37 @@ class AdvertisementModule(Personality_Bot):
             else:
                 self.prev_menu()
                 self.send_error_message('Something went wrong\n\nCan not delete the ad')
+
+    def ad_statistics(self):
+        self.return_method = self.show_my_ads
+
+        statistics_list = Helpers.get_advertisement_monthly_statistics(self.ad_model.id)
+
+        params = [[], [], [], [], [], [], [], []]  # each of lists represents one of model params
+        for model in statistics_list:
+            params[0].append(model.viewCount)
+            params[1].append(model.averageStayInSeconds)
+            params[2].append(model.payback)
+            params[3].append(model.pricePerClick)
+            params[4].append(model.totalPrice)
+            params[5].append(model.income)
+            params[6].append(model.clickCount)
+            params[7].append(model.created)
+        plt.plot(params[7], params[0], 'b', label='Views')
+        plt.plot(params[7], params[1], 'r', label='Avg Stay-in')
+        plt.plot(params[7], params[2], 'g', label='Payback')
+        plt.plot(params[7], params[3], 'k', label='Price per click')  # I think there could be better names
+        plt.plot(params[7], params[4], 'c', label='Total price')
+        plt.plot(params[7], params[5], 'y', label='Income')
+        plt.plot(params[7], params[6], label='Click count')
+        plt.legend(loc='upper right')
+        plt.xlabel('Days')
+        ad_stat_name = 'ad-stat-graph.png'
+        my_stringIObytes = io.BytesIO()
+        plt.savefig(my_stringIObytes, format='jpg', bbox_inches='tight')
+        my_stringIObytes.seek(0)
+        my_base64_jpgData = base64.b64encode(my_stringIObytes.read())
+        self.send_active_message_with_photo('Statistics for your ad', base64.b64decode(my_base64_jpgData), markup=self.goback_markup)
 
     def name_step(self, message=None, acceptMode=False, shouldInsert=True):
         self.ads_calldata = False
@@ -364,6 +398,10 @@ class AdvertisementModule(Personality_Bot):
             self.ad_model = AdvertisementUpdate(self.ad_model.id, self.ad_model.sponsorId, self.ad_model.name,
                                                 self.ad_model.text, self.ad_model.targetAudience,
                                                 self.ad_model.media, self.ad_model.priority, self.ad_model.mediaType)
+
+        # Ad statistics
+        elif call.data == '3':
+            self.ad_statistics()
 
         # Ad deleting
         elif call.data == '7':
