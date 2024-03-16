@@ -35,7 +35,6 @@ class AdvertisementModule(Personality_Bot):
         self.show_btn_indicator = InlineKeyboardButton(text=self.turnedOffSticker, callback_data='4')
         self.priority_btn_indicator = InlineKeyboardButton(text='', callback_data='6')
 
-
         self.main_menu_markup = InlineKeyboardMarkup().add(InlineKeyboardButton('My ads', callback_data='1'))\
             .add(InlineKeyboardButton('Overall statistics', callback_data='2'))\
             .add(InlineKeyboardButton('Exit', callback_data='0'))
@@ -138,6 +137,7 @@ class AdvertisementModule(Personality_Bot):
             params[5].append(model.income)
             params[6].append(model.clickCount)
             params[7].append(model.created)
+
         plt.plot(params[7], params[0], 'b', label='Views')
         plt.plot(params[7], params[1], 'r', label='Avg Stay-in')
         plt.plot(params[7], params[2], 'g', label='Payback')
@@ -145,13 +145,17 @@ class AdvertisementModule(Personality_Bot):
         plt.plot(params[7], params[4], 'c', label='Total price')
         plt.plot(params[7], params[5], 'y', label='Income')
         plt.plot(params[7], params[6], label='Click count')
+
         plt.legend(loc='upper right')
+
         plt.xlabel('Days')
+
         ad_stat_name = 'ad-stat-graph.png'
         my_stringIObytes = io.BytesIO()
         plt.savefig(my_stringIObytes, format='jpg', bbox_inches='tight')
         my_stringIObytes.seek(0)
         my_base64_jpgData = base64.b64encode(my_stringIObytes.read())
+
         self.send_active_message_with_photo('Statistics for your ad', base64.b64decode(my_base64_jpgData), markup=self.goback_markup)
 
     def name_step(self, message=None, acceptMode=False, shouldInsert=True):

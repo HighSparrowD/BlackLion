@@ -59,7 +59,7 @@ namespace WebApi.Controllers
         }
 
         [HttpPost("/statistics")]
-        public async Task<ActionResult<List<AdvertisementStats>>> GetAdvertisementsStatistics([FromServices] ISponsorRepository sponsorRepo, 
+        public async Task<ActionResult<List<AdvertisementStatsShort>>> GetAdvertisementsStatistics([FromServices] ISponsorRepository sponsorRepo, 
             [FromQuery] long userId, [FromBody] AdvertisementStatsRequest request)
         {
             var stats = await sponsorRepo.GetAllAdvertisementsStatsAsync(userId, request);
@@ -67,7 +67,7 @@ namespace WebApi.Controllers
         }
 
         [HttpPost("/statistics/{advertisementId}")]
-        public async Task<ActionResult<List<AdvertisementStats>>> GetAdvertisementStatistics([FromServices] ISponsorRepository sponsorRepo, 
+        public async Task<ActionResult<List<AdvertisementStatsShort>>> GetAdvertisementStatistics([FromServices] ISponsorRepository sponsorRepo, 
             [FromRoute] int advertisementId, [FromBody] AdvertisementStatsRequest request)
         {
             var stats = await sponsorRepo.GetAdvertisementStatsAsync(advertisementId, request);

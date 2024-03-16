@@ -104,23 +104,23 @@ namespace WebApi.Repositories
             await _contx.SaveChangesAsync();
         }
 
-        public async Task<List<AdvertisementStats>> GetAdvertisementStatsAsync(long advertisementId, AdvertisementStatsRequest searchModel)
+        public async Task<List<AdvertisementStatsShort>> GetAdvertisementStatsAsync(long advertisementId, AdvertisementStatsRequest searchModel)
         {
             var query = _contx.AdvertisementStatistics.Where(a => a.AdvertisementId == advertisementId);
 
             query = GetTimedQuery(query, searchModel);
 
-            return await query.Select(a => (AdvertisementStats)a)
+            return await query.Select(a => (AdvertisementStatsShort)a)
                 .ToListAsync();
         }
 
-        public async Task<List<AdvertisementStats>> GetAllAdvertisementsStatsAsync(long userId, AdvertisementStatsRequest searchModel)
+        public async Task<List<AdvertisementStatsShort>> GetAllAdvertisementsStatsAsync(long userId, AdvertisementStatsRequest searchModel)
         {
             var query = _contx.AdvertisementStatistics.Where(a => a.SponsorId == userId);
 
             query = GetTimedQuery(query, searchModel);
 
-            return await query.Select(a => (AdvertisementStats)a)
+            return await query.Select(a => (AdvertisementStatsShort)a)
                 .ToListAsync();
         }
 

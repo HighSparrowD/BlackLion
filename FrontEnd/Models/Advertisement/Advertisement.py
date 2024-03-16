@@ -74,4 +74,4 @@ class Statistics:
         self.income: float = stats_dict["income"]
         self.clickCount: int = stats_dict["clickCount"]
         self.targetAudience: str = stats_dict["targetAudience"]
-        self.created: datetime = stats_dict["created"]
+        self.created: str = stats_dict["created"]

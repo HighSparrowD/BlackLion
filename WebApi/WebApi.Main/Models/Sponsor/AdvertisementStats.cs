@@ -76,5 +76,26 @@ namespace WebApi.Main.Models.Sponsor
                 Created = advertisement.Created
             };
         }
+
+        public static implicit operator models.AdvertisementStatsShort?(AdvertisementStats? advertisement)
+        {
+            if (advertisement == null)
+                return null;
+
+            return new models.AdvertisementStatsShort
+            {
+                Id = advertisement.Id,
+                AdvertisementId = advertisement.AdvertisementId,
+                AverageStayInSeconds = advertisement.AverageStayInSeconds,
+                ClickCount = advertisement.ClickCount,
+                Income = advertisement.Income,
+                Payback = advertisement.Payback,
+                PricePerClick = advertisement.PricePerClick,
+                TargetAudience = advertisement.TargetAudience,
+                TotalPrice = advertisement.TotalPrice,
+                ViewCount = advertisement.ViewCount,
+                Created = advertisement.Created.ToString("dd.MM")
+            };
+        }
     }
 }
