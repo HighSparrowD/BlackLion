@@ -20,7 +20,7 @@ class AdvertisementModule(Personality_Bot):
 
         self.turnedOnSticker = "✅"
         self.turnedOffSticker = "❌"
-        plt.style.use('fivethirtyeight')
+        plt.style.use("Common/Styles/graph-dark-style.mplstyle")
 
         # storage for ad model used in ad reg and ad settings
         self.ad_model = None
@@ -150,7 +150,6 @@ class AdvertisementModule(Personality_Bot):
 
         plt.xlabel('Days')
 
-        ad_stat_name = 'ad-stat-graph.png'
         my_stringIObytes = io.BytesIO()
         plt.savefig(my_stringIObytes, format='jpg', bbox_inches='tight')
         my_stringIObytes.seek(0)
