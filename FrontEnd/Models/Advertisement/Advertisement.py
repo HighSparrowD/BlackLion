@@ -62,16 +62,23 @@ class Advertisement:
         self.mediaType: str = advertisement_dict["mediaType"]
 
 
-class Statistics:
+class StatisticsEconomy:
+    def __init__(self, stats_dict):
+        self.id: int = stats_dict["id"]
+        self.advertisementId: int = stats_dict["advertisementId"]
+        self.payback: float = stats_dict["payback"]
+        self.pricePerClick: float = stats_dict["pricePerClick"]
+        self.totalPrice: float = stats_dict["totalPrice"]
+        self.income: float = stats_dict["income"]
+        self.created: str = stats_dict["created"]
+
+
+class StatisticsEngagement:
     def __init__(self, stats_dict):
         self.id: int = stats_dict["id"]
         self.advertisementId: int = stats_dict["advertisementId"]
         self.viewCount: int = stats_dict["viewCount"]
         self.averageStayInSeconds: int = stats_dict["averageStayInSeconds"]
-        self.payback: float = stats_dict["payback"]
-        self.pricePerClick: float = stats_dict["pricePerClick"]
-        self.totalPrice: float = stats_dict["totalPrice"]
-        self.income: float = stats_dict["income"]
         self.clickCount: int = stats_dict["clickCount"]
-        self.targetAudience: str = stats_dict["targetAudience"]
+        self.peoplePercentage: int = stats_dict["peoplePercentage"]
         self.created: str = stats_dict["created"]

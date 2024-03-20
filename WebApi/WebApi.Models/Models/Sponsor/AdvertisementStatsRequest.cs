@@ -4,7 +4,7 @@ namespace WebApi.Models.Models.Sponsor;
 
 public class AdvertisementStatsRequest
 {
-    [JsonPropertyName("from_")]
+    [JsonPropertyName("from")]
     public DateOnly From { get; set; }
 
     [JsonPropertyName("to")]

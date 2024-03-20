@@ -58,19 +58,19 @@ namespace WebApi.Controllers
             return NoContent();
         }
 
-        [HttpPost("/statistics")]
-        public async Task<ActionResult<List<AdvertisementStatsShort>>> GetAdvertisementsStatistics([FromServices] ISponsorRepository sponsorRepo, 
-            [FromQuery] long userId, [FromBody] AdvertisementStatsRequest request)
-        {
-            var stats = await sponsorRepo.GetAllAdvertisementsStatsAsync(userId, request);
-            return Ok(stats);
-        }
+		[HttpPost("/statistics/economy/{userId:long}")]
+		public async Task<ActionResult<List<AdvertisementEconomyStats>>> GetAdvertisementsEngagementStatistics([FromServices] ISponsorRepository sponsorRepo,
+			[FromRoute] long userId, [FromQuery] int? advertisementId, [FromBody] AdvertisementStatsRequest request)
+		{
+			var stats = await sponsorRepo.GetAdvertisementEconomyStatsAsync(userId, request, advertisementId);
+			return Ok(stats);
+		}
 
-        [HttpPost("/statistics/{advertisementId}")]
-        public async Task<ActionResult<List<AdvertisementStatsShort>>> GetAdvertisementStatistics([FromServices] ISponsorRepository sponsorRepo, 
-            [FromRoute] int advertisementId, [FromBody] AdvertisementStatsRequest request)
+		[HttpPost("/statistics/engagement/{userId:long}")]
+        public async Task<ActionResult<List<AdvertisementEngagementStats>>> GetAdvertisementStatistics([FromServices] ISponsorRepository sponsorRepo, 
+            [FromRoute] long userId, [FromQuery] int? advertisementId, [FromBody] AdvertisementStatsRequest request)
         {
-            var stats = await sponsorRepo.GetAdvertisementStatsAsync(advertisementId, request);
+            var stats = await sponsorRepo.GetAdvertisementEngagementStatsAsync(userId, request, advertisementId);
             return Ok(stats);
         }
 

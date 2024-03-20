@@ -15,11 +15,8 @@ namespace WebApi.Main.Models.Sponsor
         [ForeignKey("Advertisement")]
         public long AdvertisementId { get; set; }
 
-        public int ViewCount { get; set; }
-
-        public int AverageStayInSeconds { get; set; }
-
-        public float Payback { get; set; }
+		// Economic metrics
+		public float Payback { get; set; }
 
         public float PricePerClick { get; set; }
 
@@ -27,7 +24,15 @@ namespace WebApi.Main.Models.Sponsor
 
         public float Income { get; set; }
 
-        public int ClickCount { get; set; }
+		// Engagement metrics
+		public int LinkClickCount { get; set; }
+
+        public float PeoplePercentage { get; set; }
+
+        public int ViewCount { get; set; }
+
+        public int AverageStayInSeconds { get; set; }
+
 
         public string? TargetAudience { get; set; }
 
@@ -45,7 +50,7 @@ namespace WebApi.Main.Models.Sponsor
                 Id = advertisement.Id,
                 AdvertisementId = advertisement.AdvertisementId,
                 AverageStayInSeconds = advertisement.AverageStayInSeconds,
-                ClickCount = advertisement.ClickCount,
+                LinkClickCount = advertisement.ClickCount,
                 Income = advertisement.Income,
                 Payback = advertisement.Payback,
                 PricePerClick = advertisement.PricePerClick,
@@ -66,7 +71,7 @@ namespace WebApi.Main.Models.Sponsor
                 Id = advertisement.Id,
                 AdvertisementId = advertisement.AdvertisementId,
                 AverageStayInSeconds = advertisement.AverageStayInSeconds,
-                ClickCount = advertisement.ClickCount,
+                ClickCount = advertisement.LinkClickCount,
                 Income = advertisement.Income,
                 Payback = advertisement.Payback,
                 PricePerClick = advertisement.PricePerClick,
@@ -77,25 +82,38 @@ namespace WebApi.Main.Models.Sponsor
             };
         }
 
-        public static implicit operator models.AdvertisementStatsShort?(AdvertisementStats? advertisement)
+        public static implicit operator models.AdvertisementEconomyStats?(AdvertisementStats? advertisement)
         {
             if (advertisement == null)
                 return null;
 
-            return new models.AdvertisementStatsShort
+            return new models.AdvertisementEconomyStats
             {
                 Id = advertisement.Id,
                 AdvertisementId = advertisement.AdvertisementId,
-                AverageStayInSeconds = advertisement.AverageStayInSeconds,
-                ClickCount = advertisement.ClickCount,
                 Income = advertisement.Income,
                 Payback = advertisement.Payback,
                 PricePerClick = advertisement.PricePerClick,
-                TargetAudience = advertisement.TargetAudience,
                 TotalPrice = advertisement.TotalPrice,
-                ViewCount = advertisement.ViewCount,
                 Created = advertisement.Created.ToString("dd.MM")
             };
         }
-    }
+
+		public static implicit operator models.AdvertisementEngagementStats?(AdvertisementStats? advertisement)
+		{
+			if (advertisement == null)
+				return null;
+
+			return new models.AdvertisementEngagementStats
+			{
+				Id = advertisement.Id,
+				AdvertisementId = advertisement.AdvertisementId,
+				AverageStayInSeconds = advertisement.AverageStayInSeconds,
+                LinkClickCount = advertisement.LinkClickCount,
+                PeoplePercentage = advertisement.PeoplePercentage,
+                ViewCount = advertisement.ViewCount,
+				Created = advertisement.Created.ToString("dd.MM")
+			};
+		}
+	}
 }

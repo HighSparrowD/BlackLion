@@ -886,24 +886,45 @@ def get_all_advertisement_priorities() -> Union[list[generic_models.LocalizedEnu
         return
 
 
-def get_advertisement_monthly_statistics(advertisement_id) -> Union[list[advertisement_models.Statistics, None]]:
+def get_advertisement_economy_monthly_statistics(user_id, advertisement_id) \
+        -> Union[list[advertisement_models.StatisticsEconomy], None]:
     try:
-        model = advertisement_models.StatisticsGet()
+        data = create_statistics_request_model()
 
-        now = datetime.datetime.now()
-        max_days = calendar.monthrange(now.year, now.month)[1]
-
-        model.from_ = datetime.datetime(now.year, now.month, 1)
-        model.to = datetime.datetime(now.year, now.month, max_days)
-
-        data = model.to_json()
-
-        response = requests.post(f"https://localhost:44381/statistics/{advertisement_id}", data, headers={
-            "Content-Type": "application/json"}, verify=False)
+        response = requests.post(f"https://localhost:44381/statistics/economy/{user_id}?advertisementId={advertisement_id}",
+                                 data, headers={"Content-Type": "application/json"}, verify=False)
 
         stats = response.json()
 
-        return [advertisement_models.Statistics(stat) for stat in stats]
+        return [advertisement_models.StatisticsEconomy(stat) for stat in stats]
 
     except:
         return None
+
+
+def get_advertisement_engagement_monthly_statistics(user_id, advertisement_id) \
+        -> Union[list[advertisement_models.StatisticsEngagement], None]:
+    try:
+        data = create_statistics_request_model()
+
+        response = requests.post(f"https://localhost:44381/statistics/engagement/{user_id}?advertisementId={advertisement_id}",
+                                 data, headers={"Content-Type": "application/json"}, verify=False)
+
+        stats = response.json()
+
+        return [advertisement_models.StatisticsEngagement(stat) for stat in stats]
+
+    except:
+        return None
+
+
+def create_statistics_request_model():
+    model = advertisement_models.StatisticsGet()
+
+    now = datetime.datetime.now()
+    max_days = calendar.monthrange(now.year, now.month)[1]
+
+    model.from_ = datetime.datetime(now.year, now.month, 1)
+    model.to = datetime.datetime(now.year, now.month, max_days)
+
+    return model.to_json()
