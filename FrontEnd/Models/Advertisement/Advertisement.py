@@ -79,6 +79,6 @@ class StatisticsEngagement:
         self.advertisementId: int = stats_dict["advertisementId"]
         self.viewCount: int = stats_dict["viewCount"]
         self.averageStayInSeconds: int = stats_dict["averageStayInSeconds"]
-        self.clickCount: int = stats_dict["clickCount"]
+        self.clickCount: int = stats_dict["linkClickCount"]
         self.peoplePercentage: int = stats_dict["peoplePercentage"]
         self.created: str = stats_dict["created"]
