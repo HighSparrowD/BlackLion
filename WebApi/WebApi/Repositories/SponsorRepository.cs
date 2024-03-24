@@ -106,7 +106,7 @@ namespace WebApi.Repositories
 
         public async Task<List<AdvertisementEconomyStats>> GetAdvertisementEconomyStatsAsync(long userId, AdvertisementStatsRequest searchModel, int? addId = null)
         {
-            var query = _contx.AdvertisementStatistics.Where(a => a.SponsorId == userId && (addId == null || a.Id == addId));
+            var query = _contx.AdvertisementStatistics.Where(a => a.SponsorId == userId && (addId == null || a.AdvertisementId == addId));
 
             query = GetTimedQuery(query, searchModel);
 
@@ -116,7 +116,7 @@ namespace WebApi.Repositories
 
 		public async Task<List<AdvertisementEngagementStats>> GetAdvertisementEngagementStatsAsync(long userId, AdvertisementStatsRequest searchModel, int? addId = null)
 		{
-			var query = _contx.AdvertisementStatistics.Where(a => a.SponsorId == userId && (addId == null || a.Id == addId));
+			var query = _contx.AdvertisementStatistics.Where(a => a.SponsorId == userId && (addId == null || a.AdvertisementId == addId));
 
 			query = GetTimedQuery(query, searchModel);
 
