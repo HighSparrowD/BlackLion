@@ -4,6 +4,7 @@ import base64
 import matplotlib.pyplot as plt
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, Message, CallbackQuery, InputFile
 from Core import HelpersMethodes as Helpers
+from Common.GraphMaker import graph_one_x
 
 from BaseModule import Personality_Bot
 from Models.Advertisement.Advertisement import AdvertisementNew, AdvertisementUpdate, Advertisement
@@ -72,6 +73,10 @@ class AdvertisementModule(Personality_Bot):
                                                           [InlineKeyboardButton(text='Delete', callback_data='7')],
                                                           [InlineKeyboardButton(text='Go back', callback_data='0')]])
 
+        self.ad_statistics_markup = InlineKeyboardMarkup([[InlineKeyboardButton(text='Monthly economy statistics', callback_data='30')],
+                                                          [InlineKeyboardButton(text='Monthly engagement statistics', callback_data='31')],
+                                                          [InlineKeyboardButton(text='Go back', callback_data='0')]])
+
         self.delete_markup = InlineKeyboardMarkup([[InlineKeyboardButton(text='Yes', callback_data='70')],
                                                    [InlineKeyboardButton(text='No', callback_data='0')]])
 
@@ -122,40 +127,45 @@ class AdvertisementModule(Personality_Bot):
                 self.prev_menu()
                 self.send_error_message('Something went wrong\n\nCan not delete the ad')
 
-    def ad_statistics(self):
+    def economy_statistics(self):
         self.return_method = self.show_my_ads
 
-        statistics_list = Helpers.get_advertisement_monthly_statistics(self.ad_model.id)
+        statistics_list = Helpers.get_advertisement_economy_monthly_statistics(self.current_user, self.ad_model.id)
 
-        params = [[], [], [], [], [], [], [], []]  # each of lists represents one of model params
+        params = [[], [], [], [], []]  # each of lists represents one of model params
+        for model in statistics_list:
+            params[0].append(model.payback)
+            params[1].append(model.pricePerClick)
+            params[2].append(model.totalPrice)
+            params[3].append(model.income)
+            params[4].append(model.created)
+
+        my_base64_jpgData = graph_one_x((params[0], 'Payback', 'r'),
+                                        (params[1], 'Price per click', 'g'),
+                                        (params[2], 'Total price', 'y'),
+                                        (params[3], 'Income', 'c'), x=params[4], xlabel='Days')
+
+        self.send_active_message_with_photo('Economy statistics for your ad', base64.b64decode(my_base64_jpgData), markup=self.goback_markup)
+
+    def engagement_statistics(self):
+        self.return_method = self.show_my_ads
+
+        statistics_list = Helpers.get_advertisement_engagement_monthly_statistics(self.current_user, self.ad_model.id)
+
+        params = [[], [], [], [], []]  # each of lists represents one of model params
         for model in statistics_list:
             params[0].append(model.viewCount)
             params[1].append(model.averageStayInSeconds)
-            params[2].append(model.payback)
-            params[3].append(model.pricePerClick)
-            params[4].append(model.totalPrice)
-            params[5].append(model.income)
-            params[6].append(model.clickCount)
-            params[7].append(model.created)
+            params[2].append(model.clickCount)
+            params[3].append(model.peoplePercentage)
+            params[4].append(model.created)
 
-        plt.plot(params[7], params[0], 'b', label='Views')
-        plt.plot(params[7], params[1], 'r', label='Avg Stay-in')
-        plt.plot(params[7], params[2], 'g', label='Payback')
-        plt.plot(params[7], params[3], 'k', label='Price per click')  # I think there could be better names
-        plt.plot(params[7], params[4], 'c', label='Total price')
-        plt.plot(params[7], params[5], 'y', label='Income')
-        plt.plot(params[7], params[6], label='Click count')
+        my_base64_jpgData = graph_one_x((params[0], 'Views', 'r'),
+                                        (params[1], 'Average stay in sec', 'g'),
+                                        (params[2], 'Clicks', 'y'),
+                                        (params[3], 'People percentage', 'c'), x=params[4], xlabel='Days')
 
-        plt.legend(loc='upper right')
-
-        plt.xlabel('Days')
-
-        my_stringIObytes = io.BytesIO()
-        plt.savefig(my_stringIObytes, format='jpg', bbox_inches='tight')
-        my_stringIObytes.seek(0)
-        my_base64_jpgData = base64.b64encode(my_stringIObytes.read())
-
-        self.send_active_message_with_photo('Statistics for your ad', base64.b64decode(my_base64_jpgData), markup=self.goback_markup)
+        self.send_active_message_with_photo('Engagement statistics for your ad', base64.b64decode(my_base64_jpgData), markup=self.goback_markup)
 
     def name_step(self, message=None, acceptMode=False, shouldInsert=True):
         self.ads_calldata = False
@@ -402,9 +412,16 @@ class AdvertisementModule(Personality_Bot):
                                                 self.ad_model.text, self.ad_model.targetAudience,
                                                 self.ad_model.media, self.ad_model.priority, self.ad_model.mediaType)
 
-        # Ad statistics
+        # Ad statistics choice
         elif call.data == '3':
-            self.ad_statistics()
+            self.return_method = self.show_my_ads
+
+            self.send_active_message('What statistics of your ad you want to see?', markup=self.ad_statistics_markup)
+
+        elif call.data == '30':
+            self.economy_statistics()
+        elif call.data == '31':
+            self.engagement_statistics()
 
         # Ad deleting
         elif call.data == '7':

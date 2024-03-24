@@ -134,8 +134,8 @@ def help(message):
 
 @bot.message_handler(commands=["test"], func=lambda message: message.chat.type == 'private', is_multihandler=True)
 def test(message):
-    ads = Helpers.get_advertisement_economy_monthly_statistics(1254647653, 6)
-    ads = Helpers.get_advertisement_engagement_monthly_statistics(1254647653, 6)
+    ads = Helpers.get_advertisement_economy_monthly_statistics(915826981, 15)
+    ads = Helpers.get_advertisement_engagement_monthly_statistics(915826981, 15)
     pass
 
 
