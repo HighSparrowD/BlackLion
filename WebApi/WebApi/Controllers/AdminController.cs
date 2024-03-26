@@ -9,6 +9,9 @@ using WebApi.Main.Models.Admin;
 using WebApi.Models.Models.Admin;
 using WebApi.Models.Models.User;
 using System;
+using Microsoft.AspNetCore.Authorization;
+using WebApi.Models.Models.Identity;
+using WebApi.Models.Models.Identity.Attributes;
 
 namespace WebApi.Controllers
 {
@@ -24,26 +27,6 @@ namespace WebApi.Controllers
             _repository = repos;
             _logger = logger;
         }
-
-        //[HttpGet("/get-admin-localisation")]
-        //public async Task<Dictionary<string, string>> GetAdminLocalisation()
-        //{
-        //    var localisationDict = new Dictionary<string, string>();
-
-        //    await Task.Run(() => {
-        //        var rawLocalization = _localizer.GetAllStrings()
-        //            .Select(w => new {w.Name, w.Value})
-        //            .ToList();
-
-
-        //        foreach (var item in rawLocalization)
-        //        {
-        //            localisationDict.Add(item.Name, item.Value);
-        //        }
-        //    });
-
-        //    return localisationDict;
-        //}
 
         [HttpPost("/UpdateCountries")]
         public async Task<long> UpdateCountries(List<UpdateCountry> countries)
@@ -64,27 +47,11 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/GetFeedbacks")]
+        [Authorize()]
+        [RequiresClaim(IdentityData.MachineClaimName)]
         public async Task<List<Feedback>> GetFeedbacks()
         {
             return await _repository.GetFeedbacks();
-        }
-
-        [HttpGet("/CheckUserIsAdmin/{userId}")]
-        public async Task<bool> CheckUserIsAdmin(long userId)
-        {
-            return await _repository.CheckUserIsAdmin(userId);
-        }
-
-        [HttpGet("/SwitchAdminStatus/{userId}")]
-        public async Task<byte> SwitchAdminStatus(long userId)
-        {
-            return await _repository.SwitchAdminStatus(userId);
-        }
-
-        [HttpGet("/GethAdminStatus/{userId}")]
-        public async Task<bool?> GetAdminStatus(long userId)
-        {
-            return await _repository.GetAdminStatus(userId);
         }
 
         [HttpGet("/DeleteAllUsersForever")]

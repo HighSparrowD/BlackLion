@@ -8,6 +8,7 @@ using WebApi.Main.Models.User;
 using WebApi.Models.App_GlobalResources;
 using WebApi.Enums.Enums.Notification;
 using WebApi.Enums.Enums.General;
+using Serilog;
 
 namespace WebApi.Services.Background
 {
@@ -43,8 +44,8 @@ namespace WebApi.Services.Background
 
             var timespan = new TimeSpan(differenceHours, differenceMinutes, differenceSeconds);
 
-            Console.WriteLine($"UTC Time now is {now}");
-            Console.WriteLine($"Correcting by timespan: {timespan}");
+            Log.Information($"UTC Time now is {now}");
+			Log.Information($"Correcting by timespan: {timespan}");
             await Task.Delay(timespan);
         }
 

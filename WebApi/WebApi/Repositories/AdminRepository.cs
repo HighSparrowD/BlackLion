@@ -108,33 +108,6 @@ namespace WebApi.Repositories
             return reports;
         }
 
-        public async Task<bool> CheckUserIsAdmin(long userId)
-        {
-            var admin = await _contx.Admins.FindAsync(userId);
-            if (admin == null) { return false; }
-
-            return admin.IsEnabled;
-        }
-
-        public async Task<byte> SwitchAdminStatus(long userId)
-        {
-            var admin = await _contx.Admins.Where(a => a.Id == userId).SingleOrDefaultAsync();
-            if (admin == null) { return 0; }
-
-            admin.IsEnabled = admin.IsEnabled ? false : true;
-            _contx.Update(admin);
-            await _contx.SaveChangesAsync();
-            return 1;
-        }
-
-        public async Task<bool?> GetAdminStatus(long userId)
-        {
-            var admin = await _contx.Admins.Where(a => a.Id == userId).SingleOrDefaultAsync();
-            if (admin == null){ return null; }
-
-            return admin.IsEnabled;
-        }
-
         public async Task<int> DeleteAllUsers()
         {
             try
@@ -437,14 +410,9 @@ namespace WebApi.Repositories
 
         public async Task<List<long>> GetRecentlyBannedUsersAsync()
         {
-            return await _contx.Users.Where(u => u.IsBanned && u.BanDate != null)
+            return await _contx.Users.Where(u => u.BanDate != null)
                 .Select(u => u.Id)
                 .ToListAsync();
         }
-
-        //public Task<long> UploadInTest(UploadInTest model)
-        //{
-        //    throw new NotImplementedException();
-        //}
     }
 }

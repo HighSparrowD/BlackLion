@@ -12,9 +12,6 @@ public class User
     public long SettingsId { get; set; }
     public long LocationId { get; set; }
     public bool IsBusy { get; set; }
-    public bool IsBanned { get; set; }
-    public bool IsDeleted { get; set; }
-    public bool HasPremium { get; set; }
     public DateTime? BanDate { get; set; }
     public DateTime? DeleteDate { get; set; }
     public DateTime? PremiumExpirationDate { get; set; }
@@ -39,7 +36,12 @@ public class User
     public int TagSearchesCount { get; set; }
     public string? EnteredPromoCodes { get; set; }
     public bool IsUpdated { get; set; }
+    
     public bool IsDecoy { get; set; }
+    
+    public bool IsAdmin { get; set; }
+
+    public bool IsSponsor { get; set; }
 
     public virtual UserData? Data { get; set; }
     public virtual Settings? Settings { get; set; }
@@ -56,9 +58,6 @@ public class User
         LocationId = userId;
 
         IsBusy = true; // At the moment of registration user is still inside Registration module, thus true
-        IsBanned = false;
-        IsDeleted = false;
-        HasPremium = false;
         HadReceivedReward = false;
         IdentityType = IdentityConfirmationType.None;
         ShouldEnhance = false;
