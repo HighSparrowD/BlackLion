@@ -16,6 +16,9 @@ def graph_one_x(*args, x, xlabel=None, ylabel=None, legend_location: str = 'best
     for y, label, color in args:
         plt.plot(x, y, label=label, color=color)
 
+    # Set style of the graph
+    plt.style.use("Common/Styles/graph-dark-style.mplstyle")
+
     # Add legend
     plt.legend(loc=legend_location)
 
@@ -27,7 +30,8 @@ def graph_one_x(*args, x, xlabel=None, ylabel=None, legend_location: str = 'best
     stringIObytes = io.BytesIO()
     plt.savefig(stringIObytes, format='jpg', bbox_inches='tight')
     stringIObytes.seek(0)
-    base64_encoded = base64.b64encode(stringIObytes.read())
-    matplotlib.use('agg')
-    plt.clf()
-    return base64.b64decode(base64_encoded)
+    # base64_encoded = base64.b64encode(stringIObytes.read())
+    # matplotlib.use('agg')
+    # plt.clf()
+    # return base64.b64decode(base64_encoded)
+    return base64.b64encode(stringIObytes.read())

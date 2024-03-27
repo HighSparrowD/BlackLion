@@ -21,7 +21,6 @@ class AdvertisementModule(Personality_Bot):
 
         self.turnedOnSticker = "✅"
         self.turnedOffSticker = "❌"
-        plt.style.use("Common/Styles/graph-dark-style.mplstyle")
 
         # storage for ad model used in ad reg and ad settings
         self.ad_model = None
