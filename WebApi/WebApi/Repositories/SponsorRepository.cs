@@ -104,30 +104,30 @@ namespace WebApi.Repositories
             await _contx.SaveChangesAsync();
         }
 
-        public async Task<List<AdvertisementStats>> GetAdvertisementStatsAsync(long advertisementId, AdvertisementStatsRequest searchModel)
+        public async Task<List<AdvertisementEconomyStats>> GetAdvertisementEconomyStatsAsync(long userId, AdvertisementStatsRequest searchModel, int? addId = null)
         {
-            var query = _contx.AdvertisementStatistics.Where(a => a.AdvertisementId == advertisementId);
+            var query = _contx.AdvertisementStatistics.Where(a => a.SponsorId == userId && (addId == null || a.AdvertisementId == addId));
 
             query = GetTimedQuery(query, searchModel);
 
-            return await query.Select(a => (AdvertisementStats)a)
+            return await query.Select(a => (AdvertisementEconomyStats)a)
                 .ToListAsync();
         }
 
-        public async Task<List<AdvertisementStats>> GetAllAdvertisementsStatsAsync(long userId, AdvertisementStatsRequest searchModel)
-        {
-            var query = _contx.AdvertisementStatistics.Where(a => a.SponsorId == userId);
+		public async Task<List<AdvertisementEngagementStats>> GetAdvertisementEngagementStatsAsync(long userId, AdvertisementStatsRequest searchModel, int? addId = null)
+		{
+			var query = _contx.AdvertisementStatistics.Where(a => a.SponsorId == userId && (addId == null || a.AdvertisementId == addId));
 
-            query = GetTimedQuery(query, searchModel);
+			query = GetTimedQuery(query, searchModel);
 
-            return await query.Select(a => (AdvertisementStats)a)
-                .ToListAsync();
-        }
+			return await query.Select(a => (AdvertisementEngagementStats)a)
+				.ToListAsync();
+		}
 
-        private IQueryable<entities.AdvertisementStats> GetTimedQuery(IQueryable<entities.AdvertisementStats> query, 
+		private IQueryable<entities.AdvertisementStats> GetTimedQuery(IQueryable<entities.AdvertisementStats> query, 
             AdvertisementStatsRequest searchModel)
         {
             return query.Where(a => a.Created >= searchModel.From && a.Created <= searchModel.To);
         }
-    }
+	}
 }
