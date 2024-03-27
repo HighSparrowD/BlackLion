@@ -89,7 +89,7 @@ class AdvertisementModule(Personality_Bot):
         self.return_method = None
         self.ads_calldata = False
 
-    def show_my_ads(self):
+    def show_my_ads(self, shouldInsert=None):
         self.ads_calldata = True
 
         self.my_ads_markup.clear()
@@ -128,7 +128,7 @@ class AdvertisementModule(Personality_Bot):
                 self.send_error_message('Something went wrong\n\nCan not delete the ad')
 
     def economy_statistics(self):
-        self.return_method = self.show_my_ads
+        self.return_method = self.ad_settings
 
         statistics_list = Helpers.get_advertisement_economy_monthly_statistics(self.current_user, self.ad_model.id)
 
@@ -140,15 +140,15 @@ class AdvertisementModule(Personality_Bot):
             params[3].append(model.income)
             params[4].append(model.created)
 
-        my_base64_jpgData = graph_one_x((params[0], 'Payback', 'r'),
+        graph = graph_one_x((params[0], 'Payback', 'r'),
                                         (params[1], 'Price per click', 'g'),
                                         (params[2], 'Total price', 'y'),
                                         (params[3], 'Income', 'c'), x=params[4], xlabel='Days')
 
-        self.send_active_message_with_photo('Economy statistics for your ad', base64.b64decode(my_base64_jpgData), markup=self.goback_markup)
+        self.send_active_message_with_photo('Economy statistics for your ad', graph, markup=self.goback_markup)
 
     def engagement_statistics(self):
-        self.return_method = self.show_my_ads
+        self.return_method = self.ad_settings
 
         statistics_list = Helpers.get_advertisement_engagement_monthly_statistics(self.current_user, self.ad_model.id)
 
@@ -160,12 +160,12 @@ class AdvertisementModule(Personality_Bot):
             params[3].append(model.peoplePercentage)
             params[4].append(model.created)
 
-        my_base64_jpgData = graph_one_x((params[0], 'Views', 'r'),
+        graph = graph_one_x((params[0], 'Views', 'r'),
                                         (params[1], 'Average stay in sec', 'g'),
                                         (params[2], 'Clicks', 'y'),
                                         (params[3], 'People percentage', 'c'), x=params[4], xlabel='Days')
 
-        self.send_active_message_with_photo('Engagement statistics for your ad', base64.b64decode(my_base64_jpgData), markup=self.goback_markup)
+        self.send_active_message_with_photo('Engagement statistics for your ad', graph, markup=self.goback_markup)
 
     def name_step(self, message=None, acceptMode=False, shouldInsert=True):
         self.ads_calldata = False
