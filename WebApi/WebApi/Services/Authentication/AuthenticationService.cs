@@ -35,7 +35,7 @@ namespace WebApi.Services.Authentication
                 {
                     new Claim(ClaimTypes.Role, IdentityData.MachineClaimName) 
                 }),
-                Expires = DateTime.UtcNow.AddMinutes(15)
+                Expires = DateTime.UtcNow.AddDays(7)
             };
 
             var token = tokenHandler.CreateToken(tokeDescriptor);
@@ -66,6 +66,10 @@ namespace WebApi.Services.Authentication
                 tokenRoles.Add(new Claim(ClaimTypes.Role, role.Role.ToLowerString()));
             }
 
+            // Grant Id to a token
+            var id = JwtStorage.GenerateTokenId();
+            tokenRoles.Add(new Claim(IdentityData.JwtIdClaimName, id));
+
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(appSecret);
 
@@ -74,7 +78,7 @@ namespace WebApi.Services.Authentication
             {
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
                 Subject = new ClaimsIdentity(tokenRoles),
-                Expires = DateTime.Now
+                Expires = DateTime.UtcNow.AddDays(1)
             };
 
             var token = tokenHandler.CreateToken(tokeDescriptor);

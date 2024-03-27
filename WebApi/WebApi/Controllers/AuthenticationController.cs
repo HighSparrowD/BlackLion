@@ -63,6 +63,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet]
+        [Authorize]
         [RequiresAdminOrCreator]
         public ActionResult Test()
         {

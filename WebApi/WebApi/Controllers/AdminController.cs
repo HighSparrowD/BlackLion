@@ -48,7 +48,6 @@ namespace WebApi.Controllers
 
         [HttpGet("/GetFeedbacks")]
         [Authorize()]
-        [RequiresClaim(IdentityData.MachineClaimName)]
         public async Task<List<Feedback>> GetFeedbacks()
         {
             return await _repository.GetFeedbacks();

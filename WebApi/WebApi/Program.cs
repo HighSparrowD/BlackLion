@@ -65,7 +65,7 @@ var key = Encoding.ASCII.GetBytes(secret);
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(
 	options => options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters()
 	{
-		ValidateLifetime = false,
+		ValidateLifetime = true,
 		ValidateIssuerSigningKey = true,
 		ValidateIssuer = false,
 		ValidateAudience = false,
