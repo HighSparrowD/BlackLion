@@ -7,6 +7,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using WebApi.Enums.Enums.Authentication;
 using WebApi.Interfaces;
 using WebApi.Models.Models.Identity;
 using WebApi.Models.Utilities;
@@ -26,15 +27,20 @@ namespace WebApi.Services.Authentication
         {
             var tokenHandler = new JwtSecurityTokenHandler();
 
+            // Grant Id to a token
+            var id = JwtStorage.SignToken();
+            var tokenRoles = new List<Claim>
+            {
+                new Claim(ClaimTypes.Role, Role.Machine.ToLowerString()), 
+                new Claim(IdentityData.JwtIdClaimName, id)
+            };
+
             var key = Encoding.ASCII.GetBytes(appSecret);
 
             var tokeDescriptor = new SecurityTokenDescriptor
             {
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
-                Subject = new ClaimsIdentity(new[] 
-                {
-                    new Claim(ClaimTypes.Role, IdentityData.MachineClaimName) 
-                }),
+                Subject = new ClaimsIdentity(tokenRoles),
                 Expires = DateTime.UtcNow.AddDays(7)
             };
 
@@ -67,8 +73,10 @@ namespace WebApi.Services.Authentication
             }
 
             // Grant Id to a token
-            var id = JwtStorage.GenerateTokenId();
+            var userIdStr = userId.ToString();
+            var id = JwtStorage.SignToken(userIdStr);
             tokenRoles.Add(new Claim(IdentityData.JwtIdClaimName, id));
+            tokenRoles.Add(new Claim(IdentityData.UserIdClaimName, userIdStr));
 
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(appSecret);

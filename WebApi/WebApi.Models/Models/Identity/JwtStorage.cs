@@ -1,28 +1,45 @@
-﻿using Microsoft.Extensions.Hosting;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using WebApi.Models.Models.Authentication;
+namespace WebApi.Models.Models.Identity;
 
-namespace WebApi.Models.Models.Identity
+public static class JwtStorage
 {
-    public static class JwtStorage
+    // TODO: Use cache, or something more secure
+    private static readonly List<JwtSigningKey> _validTokenIds = new List<JwtSigningKey>();
+
+    public static string SignToken()
     {
-        // TODO: Use cache, or something more secure
-        private static readonly List<string> _validTokenIds = new List<string>();
+        var newId = Guid.NewGuid().ToString();
 
-        public static string GenerateTokenId()
+        var signKey = new JwtSigningKey
         {
-            var newId = Guid.NewGuid().ToString();
-            _validTokenIds.Add(newId);
+            SignId = newId,
+            UserId = null
+        };
 
-            return newId;
-        }
+        _validTokenIds.RemoveAll(vk => string.IsNullOrEmpty(vk.UserId));
+        _validTokenIds.Add(signKey);
 
-        public static bool IsTokenValid(string tokenId)
+        return newId;
+    }
+
+    public static string SignToken(string userId)
+    {
+        var newId = Guid.NewGuid().ToString();
+
+        var signKey = new JwtSigningKey
         {
-            return _validTokenIds.Contains(tokenId);
-        }
+            SignId = newId,
+            UserId = userId
+        };
+
+        _validTokenIds.RemoveAll(vk => vk.UserId.Equals(userId));
+        _validTokenIds.Add(signKey);
+
+        return newId;
+    }
+
+    public static bool IsTokenValid(string tokenId, string userId)
+    {
+        return _validTokenIds.Any(v => v.SignId == tokenId && v.UserId == userId);
     }
 }

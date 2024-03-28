@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using WebApi.Enums.Enums.User;
+using WebApi.Enums.Enums.Authentication;
 using WebApi.Models.Utilities;
 
 namespace WebApi.Models.Models.Identity.Attributes.Admin
@@ -13,7 +13,7 @@ namespace WebApi.Models.Models.Identity.Attributes.Admin
             base.OnAuthorization(context);
             
             var user = context.HttpContext.User;
-            if (!user.IsInRole(UserRole.Admin.ToLowerString()) && !user.IsInRole(UserRole.Creator.ToLowerString()))
+            if (!user.IsInRole(Role.Admin.ToLowerString()) && !user.IsInRole(Role.Creator.ToLowerString()))
             {
                 Forbid(context);
             }

@@ -9,6 +9,6 @@ namespace WebApi.Main.Models.User
         public long UserId { get; set; }
         
         [Key]
-        public enums.UserRole Role { get; set; }
+        public Enums.Enums.Authentication.Role Role { get; set; }
     }
 }

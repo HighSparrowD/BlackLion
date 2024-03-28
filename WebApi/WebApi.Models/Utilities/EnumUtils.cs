@@ -1,10 +1,10 @@
-﻿using WebApi.Enums.Enums.User;
+﻿using WebApi.Enums.Enums.Authentication;
 
 namespace WebApi.Models.Utilities
 {
     public static class EnumUtils
     {
-        public static string ToLowerString(this UserRole userRole)
+        public static string ToLowerString<T>(this T userRole) where T : Enum
         {
             return userRole.ToString().ToLower();
         }

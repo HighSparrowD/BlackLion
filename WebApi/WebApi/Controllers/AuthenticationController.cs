@@ -6,6 +6,7 @@ using WebApi.Interfaces;
 using WebApi.Models.Models.Authentication;
 using WebApi.Models.Models.Identity;
 using WebApi.Models.Models.Identity.Attributes.Admin;
+using WebApi.Models.Models.Identity.Attributes.Machine;
 
 namespace WebApi.Controllers
 {

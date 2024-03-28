@@ -7,9 +7,8 @@ public abstract class BaseRoleAttribute : Attribute, IAuthorizationFilter
 {
     public virtual void OnAuthorization(AuthorizationFilterContext context)
     {
-        var tokenId = context.HttpContext.User.Claims.Where(c => c.Type == IdentityData.JwtIdClaimName)
-            .Select(c => c.Value)
-            .SingleOrDefault();
+        var tokenId = context.HttpContext.User.Claims.SingleOrDefault(c => c.Type == IdentityData.JwtIdClaimName)?.Value;
+        var userId = context.HttpContext.User.Claims.SingleOrDefault(c => c.Type == IdentityData.UserIdClaimName)?.Value;
 
         if (tokenId == null)
         {
@@ -17,7 +16,7 @@ public abstract class BaseRoleAttribute : Attribute, IAuthorizationFilter
             return;
         }
 
-        if(!JwtStorage.IsTokenValid(tokenId))
+        if(!JwtStorage.IsTokenValid(tokenId, userId))
         {
             Forbid(context);
             return;
