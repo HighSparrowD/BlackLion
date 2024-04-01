@@ -37,7 +37,7 @@ stripe.api_key = Helpers.stripe_key
 
 bot = TeleBot(key)
 bot.parse_mode = telegram.ParseMode.HTML
-Menus.start_program_in_debug_mode(bot)  # TODO: remove in production?
+Menus.start_program_in_debug_mode(users)  # TODO: remove in production?
 
 for user in users:
     go_back_to_main_menu(bot, user, None, False)

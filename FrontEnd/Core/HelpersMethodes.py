@@ -338,8 +338,11 @@ def delete_user_notification(notificationId):
         return None
 
 
-def start_program_in_debug_mode(bot):  # TODO: remove in production
-    requests.get(f"{api_address}/SetDebugProperties", verify=False)
+def start_program_in_debug_mode(userIds: list[str]):  # TODO: remove in production
+    data = json.dumps(userIds)
+    requests.post(f"{api_address}/debug", data,
+                                        headers={"Content-Type": "application/json"},
+                                        verify=False)
 
 
 def get_request_sender(requestId):

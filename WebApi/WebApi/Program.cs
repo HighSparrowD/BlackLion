@@ -16,8 +16,10 @@ using System.Text;
 using System.Text.Json.Serialization;
 using WebApi.Data;
 using WebApi.Interfaces;
+using WebApi.Interfaces.Services;
 using WebApi.Models.Models.Identity;
 using WebApi.Repositories;
+using WebApi.Services.Admin;
 using WebApi.Services.Authentication;
 using WebApi.Services.Background;
 
@@ -84,6 +86,7 @@ builder.Services.AddScoped<ISponsorRepository, SponsorRepository>();
 builder.Services.AddScoped<IBackgroundRepository, BackgroundRepository>();
 builder.Services.AddScoped<IRegistrationRepository, RegistrationRepository>();
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+builder.Services.AddScoped<IAdminService, AdminService>();
 
 // Configuration
 var app = builder.Build();

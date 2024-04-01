@@ -28,7 +28,10 @@ namespace WebApi.Interfaces
         Task<bool> CheckUserHasRequests(long userId);
         Task<bool> CheckUserIsBanned(long userId);
         Task<bool> CheckUserIsDeleted(long userId);
-        Task<bool> SetDebugProperties(); //TODO: remove in production
+        Task SetAllBusyStatusToFalse();
+        Task AssignAdminRightsAsync(List<long> userIds);
+        Task AssignSponsorRightsAsync(List<long> userIds);
+        Task RemoveAllEncountersAsync();
         Task<Models.Models.User.User> GetUserAsync(long id);
         Task<List<Main.Models.User.UserRole>> GetUserRolesAsync(long userId);
         Task<UserInfo> GetUserInfoAsync(long id);

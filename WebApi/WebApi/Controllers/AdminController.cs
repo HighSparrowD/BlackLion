@@ -12,6 +12,7 @@ using System;
 using Microsoft.AspNetCore.Authorization;
 using WebApi.Models.Models.Identity;
 using WebApi.Models.Models.Identity.Attributes;
+using WebApi.Interfaces.Services;
 
 namespace WebApi.Controllers
 {
@@ -20,12 +21,22 @@ namespace WebApi.Controllers
     public class AdminController : Controller
     {
         private IAdminRepository _repository;
+        private IAdminService _adminService;
         private readonly ILogger<UserActionController> _logger;
 
-        public AdminController(ILogger<UserActionController> logger, IAdminRepository repos)
+        public AdminController(ILogger<UserActionController> logger, IAdminRepository repos, 
+            IAdminService adminService)
         {
             _repository = repos;
+            _adminService = adminService;
             _logger = logger;
+        }
+
+        [HttpPost("/debug")]
+        public async Task<ActionResult> SetDebugProperties([FromBody] List<long> userIds) // TODO: remove in production
+        {
+            await _adminService.StartInDebug(userIds);
+            return NoContent();
         }
 
         [HttpPost("/UpdateCountries")]

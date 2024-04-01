@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using WebApi.Enums.Enums.Authentication;
 using WebApi.Interfaces;
+using WebApi.Interfaces.Services;
 using WebApi.Models.Models.Identity;
 using WebApi.Models.Utilities;
 

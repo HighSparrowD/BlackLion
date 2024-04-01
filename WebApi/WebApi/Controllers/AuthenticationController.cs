@@ -2,11 +2,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using System.Threading.Tasks;
-using WebApi.Interfaces;
+using WebApi.Interfaces.Services;
 using WebApi.Models.Models.Authentication;
-using WebApi.Models.Models.Identity;
 using WebApi.Models.Models.Identity.Attributes.Admin;
-using WebApi.Models.Models.Identity.Attributes.Machine;
 
 namespace WebApi.Controllers
 {
@@ -35,8 +33,7 @@ namespace WebApi.Controllers
 
             var jwt = new JwtResponse
             {
-                AccessToken = token,
-                RefreshToken = "", // TODO: implement
+                AccessToken = token
             };
 
             return Ok(jwt);
@@ -56,8 +53,7 @@ namespace WebApi.Controllers
 
             var jwtResponse = new JwtResponse
             {
-                AccessToken = token,
-                RefreshToken = "", // TODO: implement
+                AccessToken = token
             };
 
             return Ok(jwtResponse);

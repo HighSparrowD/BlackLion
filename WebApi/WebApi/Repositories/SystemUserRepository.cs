@@ -31,6 +31,7 @@ using WebApi.Models.App_GlobalResources;
 using WebApi.Interfaces;
 using entities = WebApi.Main.Models;
 using models = WebApi.Models.Models;
+using WebApi.Enums.Enums.Authentication;
 
 namespace WebApi.Repositories
 {
@@ -1878,7 +1879,6 @@ namespace WebApi.Repositories
         public async Task<bool> SetDebugProperties()
         {
             var encounters = await _contx.Encounters.ToListAsync();
-
             _contx.Encounters.RemoveRange(encounters);
 
             var users = await _contx.Users.ToListAsync();
@@ -1888,6 +1888,52 @@ namespace WebApi.Repositories
 
             await _contx.SaveChangesAsync();
             return true;
+        }
+
+        public async Task SetAllBusyStatusToFalse()
+        {
+            var sql = "update users set \"IsBusy\" = False ";
+
+            await _contx.Database.ExecuteSqlRawAsync(sql);
+        }
+
+        public async Task AssignAdminRightsAsync(List<long> userIds)
+        {
+            var role = Role.Admin.ToLowerString();
+            var sql = $"UPDATE users SET \"IsAdmin\" = True WHERE \"Id\" IN ({string.Join(",", userIds)});";
+
+            sql += string.Join(";", userIds.Select(id =>
+                $"INSERT INTO user_roles (\"UserId\", \"Role\")" +
+                $"SELECT {id}, '{role}' " +
+                $"WHERE NOT EXISTS (" +
+                $"SELECT 1 FROM user_roles WHERE \"UserId\" = {id} AND \"Role\" = '{role}'" +
+                $")"
+            ));
+
+            await _contx.Database.ExecuteSqlRawAsync(sql);
+        }
+
+        public async Task AssignSponsorRightsAsync(List<long> userIds)
+        {
+            var role = Role.Sponsor.ToLowerString();
+            var sql = $"UPDATE users SET \"IsSponsor\" = True WHERE \"Id\" IN ({string.Join(",", userIds)});";
+
+            sql += string.Join(";", userIds.Select(id =>
+                $"INSERT INTO user_roles (\"UserId\", \"Role\")" +
+                $"SELECT {id}, '{role}' " +
+                $"WHERE NOT EXISTS (" +
+                $"SELECT 1 FROM user_roles WHERE \"UserId\" = {id} AND \"Role\" = '{role}'" +
+                $")"
+            ));
+
+            await _contx.Database.ExecuteSqlRawAsync(sql);
+        }
+
+        public async Task RemoveAllEncountersAsync() // TODO: Remove in production
+        {
+            var sql = $"delete from encounters";
+
+            await _contx.Database.ExecuteSqlRawAsync(sql);
         }
 
         public async Task RegisterUserEncounter(Main.Models.User.RegisterEncounter model)

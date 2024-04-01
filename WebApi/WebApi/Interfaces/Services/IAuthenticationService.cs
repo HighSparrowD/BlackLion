@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 
-namespace WebApi.Interfaces
+namespace WebApi.Interfaces.Services
 {
     public interface IAuthenticationService
     {
