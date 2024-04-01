@@ -889,33 +889,33 @@ def get_advertisement_economy_monthly_statistics(user_id, advertisement_id) \
         payload = create_statistics_request_model()
         params = {"advertisementId": advertisement_id}
 
-        response = ApiBase.create_post_request_with_api_model(payload, f"statistics/{user_id}",
+        response = ApiBase.create_post_request_with_api_model(payload, f"statistics/economy/{user_id}",
                                                               params)
         stats = response.json()
 
-        return advertisement_models.Statistics.unpack(stats)
+        return advertisement_models.StatisticsEconomy.unpack(stats)
 
     except:
         return None
 
 
 def get_advertisement_engagement_monthly_statistics(user_id, advertisement_id) \
-        -> list[advertisement_models.StatisticsEconomy] | None:
+        -> list[advertisement_models.StatisticsEngagement] | None:
     try:
         payload = create_statistics_request_model()
         params = {"advertisementId": advertisement_id}
 
-        response = ApiBase.create_post_request_with_api_model(payload, f"statistics/{user_id}",
+        response = ApiBase.create_post_request_with_api_model(payload, f"statistics/engagement/{user_id}",
                                                               params)
         stats = response.json()
 
-        return advertisement_models.Statistics.unpack(stats)
+        return advertisement_models.StatisticsEngagement.unpack(stats)
 
     except:
         return None
 
 
-def create_statistics_request_model():
+def create_statistics_request_model() -> advertisement_models.StatisticsGet:
     model = advertisement_models.StatisticsGet()
 
     now = datetime.datetime.now()
@@ -924,4 +924,4 @@ def create_statistics_request_model():
     model.from_ = datetime.datetime(now.year, now.month, 1)
     model.to = datetime.datetime(now.year, now.month, max_days)
 
-    return model.to_json()
+    return model

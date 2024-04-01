@@ -70,8 +70,6 @@ class StatisticsEconomy:
         self.pricePerClick: float = stats_dict["pricePerClick"]
         self.totalPrice: float = stats_dict["totalPrice"]
         self.income: float = stats_dict["income"]
-        self.clickCount: int = stats_dict["clickCount"]
-        self.targetAudience: str = stats_dict["targetAudience"]
         self.created: str = stats_dict["created"]
 
     @staticmethod
