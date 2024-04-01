@@ -883,7 +883,7 @@ def get_all_advertisement_priorities() -> Union[list[generic_models.LocalizedEnu
         return
 
 
-def get_advertisement_economy_monthly_statistics(user_id, advertisement_id) \
+def get_advertisement_economy_monthly_statistics(user_id, advertisement_id=None) \
         -> list[advertisement_models.StatisticsEconomy] | None:
     try:
         payload = create_statistics_request_model()
@@ -899,7 +899,7 @@ def get_advertisement_economy_monthly_statistics(user_id, advertisement_id) \
         return None
 
 
-def get_advertisement_engagement_monthly_statistics(user_id, advertisement_id) \
+def get_advertisement_engagement_monthly_statistics(user_id, advertisement_id=None) \
         -> list[advertisement_models.StatisticsEngagement] | None:
     try:
         payload = create_statistics_request_model()

@@ -106,9 +106,36 @@ namespace WebApi.Repositories
 
         public async Task<List<AdvertisementEconomyStats>> GetAdvertisementEconomyStatsAsync(long userId, AdvertisementStatsRequest searchModel, long? addId = null)
         {
-            var query = _contx.AdvertisementStatistics.Where(a => a.SponsorId == userId && (addId == null || a.AdvertisementId == addId));
-
+            var query = _contx.AdvertisementStatistics.Where(a => a.SponsorId == userId);
             query = GetTimedQuery(query, searchModel);
+
+            if(addId == null)
+            {
+                var result = await query.GroupBy(a => a.Created)
+                    .Select(a => new
+                    {
+                        Created = a.Key.ToString("dd.MM"),
+                        AdvertisementId = a.Select(s => s.AdvertisementId).FirstOrDefault(),
+                        Income = a.Sum(s => s.Income),
+                        Payback = a.Sum(s => s.Payback),
+                        PricePerClick = a.Sum(s => s.PricePerClick),
+                        TotalPrice = a.Sum(s => s.TotalPrice),
+                        EntityCount = a.Count()
+                    })
+                    .Select(a => new AdvertisementEconomyStats
+                    {
+                        Created = a.Created,
+                        AdvertisementId = a.AdvertisementId,
+                        Income = a.Income,
+                        Payback = a.TotalPrice - a.Income,
+                        PricePerClick = a.PricePerClick / a.EntityCount,
+                        TotalPrice = a.TotalPrice
+
+                    }).ToListAsync();
+
+                return result;
+            }
+
 
             return await query.Select(a => (AdvertisementEconomyStats)a)
                 .ToListAsync();
@@ -116,11 +143,37 @@ namespace WebApi.Repositories
 
 		public async Task<List<AdvertisementEngagementStats>> GetAdvertisementEngagementStatsAsync(long userId, AdvertisementStatsRequest searchModel, long? addId = null)
 		{
-			var query = _contx.AdvertisementStatistics.Where(a => a.SponsorId == userId && (addId == null || a.AdvertisementId == addId));
+			var query = _contx.AdvertisementStatistics.Where(a => a.SponsorId == userId);
 
 			query = GetTimedQuery(query, searchModel);
 
-			return await query.Select(a => (AdvertisementEngagementStats)a)
+            if (addId == null)
+            {
+                var result = await query.GroupBy(a => a.Created)
+                    .Select(a => new
+                    {
+                        Created = a.Key.ToString("dd.MM"),
+                        AdvertisementId = a.Select(s => s.AdvertisementId).FirstOrDefault(),
+                        StayInSeconds = a.Sum(s => s.AverageStayInSeconds),
+                        LinkClickCount = a.Sum(s => s.LinkClickCount),
+                        PeoplePercentage = a.Sum(s => s.PeoplePercentage),
+                        ViewCount = a.Sum(s => s.ViewCount),
+                        EntityCount = a.Count()
+                    })
+                    .Select(a => new AdvertisementEngagementStats
+                    {
+                        Created = a.Created,
+                        AdvertisementId = a.AdvertisementId,
+                        AverageStayInSeconds = a.StayInSeconds / a.EntityCount,
+                        PeoplePercentage = a.PeoplePercentage / a.EntityCount,
+                        LinkClickCount = a.LinkClickCount,
+                        ViewCount = a.ViewCount
+                    }).ToListAsync();
+
+                return result;
+            }
+
+            return await query.Select(a => (AdvertisementEngagementStats)a)
 				.ToListAsync();
 		}
 
