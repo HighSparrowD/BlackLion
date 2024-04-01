@@ -104,7 +104,7 @@ namespace WebApi.Repositories
             await _contx.SaveChangesAsync();
         }
 
-        public async Task<List<AdvertisementEconomyStats>> GetAdvertisementEconomyStatsAsync(long userId, AdvertisementStatsRequest searchModel, int? addId = null)
+        public async Task<List<AdvertisementEconomyStats>> GetAdvertisementEconomyStatsAsync(long userId, AdvertisementStatsRequest searchModel, long? addId = null)
         {
             var query = _contx.AdvertisementStatistics.Where(a => a.SponsorId == userId && (addId == null || a.AdvertisementId == addId));
 
@@ -114,7 +114,7 @@ namespace WebApi.Repositories
                 .ToListAsync();
         }
 
-		public async Task<List<AdvertisementEngagementStats>> GetAdvertisementEngagementStatsAsync(long userId, AdvertisementStatsRequest searchModel, int? addId = null)
+		public async Task<List<AdvertisementEngagementStats>> GetAdvertisementEngagementStatsAsync(long userId, AdvertisementStatsRequest searchModel, long? addId = null)
 		{
 			var query = _contx.AdvertisementStatistics.Where(a => a.SponsorId == userId && (addId == null || a.AdvertisementId == addId));
 
