@@ -2,6 +2,7 @@ import json
 from datetime import datetime
 from typing import Union
 
+import Models.Advertisement.Advertisement
 from Models.ApiModel import ApiModel
 
 # create, update
@@ -75,3 +76,7 @@ class Statistics:
         self.clickCount: int = stats_dict["clickCount"]
         self.targetAudience: str = stats_dict["targetAudience"]
         self.created: datetime = stats_dict["created"]
+
+    @staticmethod
+    def unpack(stats) -> list[any] | None:
+        return [Statistics(stat) for stat in stats]

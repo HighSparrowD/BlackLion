@@ -1,5 +1,6 @@
 import Common.Menues as Menus
 from Adventurer import Adventurer
+from Core.Api import ApiBase
 from Familiator import *
 from RandomTalker import *
 from Settings import *
@@ -30,7 +31,7 @@ key = os.getenv("KEY")
 payment_token = os.getenv("STRIPE_TOKEN")
 
 users = os.getenv("DEBUG_USERS").split(",")
-Helpers.set_api_address(os.getenv("API_ADDRESS"))
+ApiBase.set_api_address(os.getenv("API_ADDRESS"))
 Helpers.set_payment_token(os.getenv("STRIPE_TOKEN"))
 Helpers.set_stripe_key(os.getenv("STRIPE_SECRET_KEY"))
 stripe.api_key = Helpers.stripe_key
