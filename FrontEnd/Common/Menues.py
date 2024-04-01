@@ -39,8 +39,8 @@ def show_admin_markup(bot, user):
     bot.send_message(user, "Sending you basic admin command set 😏", reply_markup=admin_menu_markup)
 
 
-def start_program_in_debug_mode(bot):  # TODO: remove in production
-    Helpers.start_program_in_debug_mode(bot)
+def start_program_in_debug_mode(userIds: list[str]):  # TODO: remove in production
+    Helpers.start_program_in_debug_mode(userIds)
 
 
 def count_pages(section_elements, current_markup_elements, markup_pages_count, prefs: bool = False,

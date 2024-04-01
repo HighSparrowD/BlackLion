@@ -39,7 +39,7 @@ namespace WebApi.Data
         public DbSet<UserNotification> Notifications => Set<UserNotification>();
         public DbSet<Encounter> Encounters => Set<Encounter>();
         public DbSet<UserTag> UserTags => Set<UserTag>();
-        public DbSet<Admin> Admins => Set<Admin>();
+        public DbSet<UserRole> UserRoles => Set<UserRole>();
 
         //Tests 
         public DbSet<Test> Tests => Set<Test>();
@@ -73,8 +73,6 @@ namespace WebApi.Data
         public DbSet<AdventureAttendee> AdventureAttendees => Set<AdventureAttendee>();
         public DbSet<PromoCode> PromoCodes => Set<PromoCode>();
         public DbSet<Hint> Hints => Set<Hint>();
-
-
 
         public UserContext(DbContextOptions<UserContext> options) : base(options)
         {}
@@ -122,6 +120,7 @@ namespace WebApi.Data
             builder.Entity<User>().HasMany(u => u.Encounters);
             builder.Entity<User>().HasMany(u => u.Notifications);
             builder.Entity<User>().HasMany(u => u.Requests);
+            builder.Entity<User>().HasMany(u => u.UserRoles);
             builder.Entity<Location>().HasOne(u => u.Country);
             builder.Entity<Location>().HasOne(u => u.City);
 
@@ -135,6 +134,7 @@ namespace WebApi.Data
             builder.Entity<UserTest>().HasKey(t => new { t.TestId, t.UserId });
             builder.Entity<TestQuestion>().HasMany(q => q.Answers);
 
+            builder.Entity<UserRole>().HasKey(c => new { c.UserId, c.Role });
             builder.Entity<Country>().HasKey(c => new { c.Id, c.Lang });
             builder.Entity<Language>().HasKey(l => new { l.Id, l.Lang });
             builder.Entity<City>().HasKey(c => new { c.Id, c.CountryLang });
@@ -170,11 +170,14 @@ namespace WebApi.Data
 
             builder.Entity<Encounter>().HasOne(un => un.User);
             builder.Entity<Encounter>().HasOne(un => un.EncounteredUser);
+
+            builder.Entity<UserRole>().Property(ur => ur.Role).HasColumnType("varchar");
         }
 
         private void ConfigureMapping(ModelBuilder builder)
         {
             builder.Entity<User>().ToTable("users");
+            builder.Entity<UserRole>().ToTable("user_roles");
             builder.Entity<UserData>().ToTable("user_data");
             builder.Entity<Settings>().ToTable("user_settings");
             builder.Entity<Location>().ToTable("user_locations");
@@ -192,7 +195,6 @@ namespace WebApi.Data
             builder.Entity<Transaction>().ToTable("transactions");
             builder.Entity<UserNotification>().ToTable("notifications");
             builder.Entity<Encounter>().ToTable("encounters");
-            builder.Entity<Admin>().ToTable("admins");
             builder.Entity<Test>().ToTable("tests");
             builder.Entity<TestQuestion>().ToTable("tests_questions");
             builder.Entity<TestAnswer>().ToTable("tests_answers");

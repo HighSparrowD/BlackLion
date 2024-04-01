@@ -31,6 +31,7 @@ using WebApi.Models.App_GlobalResources;
 using WebApi.Interfaces;
 using entities = WebApi.Main.Models;
 using models = WebApi.Models.Models;
+using WebApi.Enums.Enums.Authentication;
 
 namespace WebApi.Repositories
 {
@@ -148,7 +149,7 @@ namespace WebApi.Repositories
                 // Registered via referal credentials
                 await GrantAchievementAsync(model.Id, 21);
 
-                var bonus = invitor.HasPremium ? 0.05f : 0f;
+                var bonus = invitor.PremiumExpirationDate != null ? 0.05f : 0f;
                 var multiplier = 1;
 
                 if (invitor.InvitedUsersCount > 10)
@@ -266,7 +267,7 @@ namespace WebApi.Repositories
                CityLang = u.Data.Language,
                CountryLang = u.Data.Language,
                IdentityType = u.IdentityType,
-               HasPremium = u.HasPremium
+               HasPremium = u.PremiumExpirationDate != null
             }).FirstOrDefaultAsync();
         }
 
@@ -285,7 +286,7 @@ namespace WebApi.Repositories
                 IsFree = s.Settings.IsFree,
                 Language = s.Data.Language,
                 UsesOcean = s.Settings.UsesOcean,
-                HasPremium = s.HasPremium,
+                HasPremium = s.PremiumExpirationDate != null,
             }).FirstOrDefaultAsync();
         }
 
@@ -332,7 +333,7 @@ namespace WebApi.Repositories
                 query = query.Where(u => u.Settings.IsFree != null && (bool)u.Settings.IsFree);
 
             //Identity check
-            if (currentUser.Settings.ShouldFilterUsersWithoutRealPhoto && currentUser.HasPremium)
+            if (currentUser.Settings.ShouldFilterUsersWithoutRealPhoto && currentUser.PremiumExpirationDate != null)
                 query = query.Where(u => u.IdentityType != IdentityConfirmationType.None);
 
             //Don't check genders if user does NOT have gender preferences
@@ -676,10 +677,7 @@ namespace WebApi.Repositories
 
                 //Ban user if dailly report count is too high
                 if (reportedUser.ReportCount >= 5)
-                {
-                    reportedUser.IsBanned = true;
                     reportedUser.BanDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
-                }
 
                 var report = new Report
                 {
@@ -711,10 +709,7 @@ namespace WebApi.Repositories
 
                 //Ban user if dailly report count is too high
                 if (reportedUser.ReportCount >= 5)
-                {
-                    reportedUser.IsBanned = true;
                     reportedUser.BanDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
-                }
 
                 var report = new Report
                 {
@@ -805,11 +800,13 @@ namespace WebApi.Repositories
             var user = await _contx.Users.Where(u => u.Id == userId)
                 .FirstOrDefaultAsync();
 
-            if (!user.IsBanned)
+            if (user.BanDate != null)
             {
-                user.IsBanned = true;
+                user.BanDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
+
                 _contx.Users.Update(user);
                 await _contx.SaveChangesAsync();
+                
                 return 1;
             }
 
@@ -821,9 +818,8 @@ namespace WebApi.Repositories
             var user = await _contx.Users.Where(u => u.Id == userId)
                 .FirstOrDefaultAsync();
 
-            if (user.IsBanned)
+            if (user.BanDate != null)
             {
-                user.IsBanned = false;
                 user.BanDate = null;
 
                 _contx.Users.Update(user);
@@ -837,13 +833,14 @@ namespace WebApi.Repositories
         public async Task<bool> CheckUserIsBanned(long userId)
         {
             return (await _contx.Users.Where(u => u.Id == userId)
-                .Select(u => u.IsBanned)
+                .Select(u => u.BanDate != null)
                 .FirstOrDefaultAsync());
         }
 
         public async Task<bool> CheckUserIsDeleted(long userId)
         {
-            return (await _contx.Users.Where(u => u.Id == userId).SingleOrDefaultAsync()).IsDeleted;
+            return await _contx.Users.Where(u => u.Id == userId && u.DeleteDate != null)
+                .AnyAsync();
         }
 
         public async Task<string> AddAchievementProgress(long userId, long achievementId, int progress)
@@ -1198,19 +1195,16 @@ namespace WebApi.Repositories
                 
             if (user != null)
             {
-                if ((user.HasPremium && user.PremiumExpirationDate < timeNow) || (user.HasPremium && user.PremiumExpirationDate == null))
+                if ((user.PremiumExpirationDate < timeNow) || (user.PremiumExpirationDate == null))
                 {
-                    user.HasPremium = false;
                     user.PremiumDuration = null;
                     user.PremiumExpirationDate = null;
                     //TODO: Notify user that his premium access has expired
                 }
-                else if (user.PremiumExpirationDate > timeNow)
-                    user.HasPremium = true;
 
 
-                await _contx.SaveChangesAsync();
-                return user.HasPremium;
+                await _contx.SaveChangesAsync(); 
+                return user.PremiumExpirationDate != null;
             }
             return false;
         }
@@ -1242,7 +1236,6 @@ namespace WebApi.Repositories
 
             var balance = await GetUserWalletBalance(userId);
 
-            user.HasPremium = true;
             user.BonusIndex = 2;
 
             if (user.PremiumDuration != null)
@@ -1287,7 +1280,7 @@ namespace WebApi.Repositories
         private async Task<Main.Models.User.User> GetUserWithPremium(long userId, DateTime timeNow)
         {
             return await _contx.Users
-                .Where(u => u.Id == userId && (bool)u.HasPremium && u.PremiumExpirationDate > timeNow)
+                .Where(u => u.Id == userId && u.PremiumExpirationDate > timeNow)
                 .AsNoTracking()
                 .FirstOrDefaultAsync();
         }
@@ -1446,7 +1439,7 @@ namespace WebApi.Repositories
                     };
                 }
 
-                if (user.IsDeleted)
+                if (user.DeleteDate != null)
                 {
                     return new SwitchBusyStatusResponse
                     {
@@ -1886,7 +1879,6 @@ namespace WebApi.Repositories
         public async Task<bool> SetDebugProperties()
         {
             var encounters = await _contx.Encounters.ToListAsync();
-
             _contx.Encounters.RemoveRange(encounters);
 
             var users = await _contx.Users.ToListAsync();
@@ -1896,6 +1888,52 @@ namespace WebApi.Repositories
 
             await _contx.SaveChangesAsync();
             return true;
+        }
+
+        public async Task SetAllBusyStatusToFalse()
+        {
+            var sql = "update users set \"IsBusy\" = False ";
+
+            await _contx.Database.ExecuteSqlRawAsync(sql);
+        }
+
+        public async Task AssignAdminRightsAsync(List<long> userIds)
+        {
+            var role = Role.Admin.ToLowerString();
+            var sql = $"UPDATE users SET \"IsAdmin\" = True WHERE \"Id\" IN ({string.Join(",", userIds)});";
+
+            sql += string.Join(";", userIds.Select(id =>
+                $"INSERT INTO user_roles (\"UserId\", \"Role\")" +
+                $"SELECT {id}, '{role}' " +
+                $"WHERE NOT EXISTS (" +
+                $"SELECT 1 FROM user_roles WHERE \"UserId\" = {id} AND \"Role\" = '{role}'" +
+                $")"
+            ));
+
+            await _contx.Database.ExecuteSqlRawAsync(sql);
+        }
+
+        public async Task AssignSponsorRightsAsync(List<long> userIds)
+        {
+            var role = Role.Sponsor.ToLowerString();
+            var sql = $"UPDATE users SET \"IsSponsor\" = True WHERE \"Id\" IN ({string.Join(",", userIds)});";
+
+            sql += string.Join(";", userIds.Select(id =>
+                $"INSERT INTO user_roles (\"UserId\", \"Role\")" +
+                $"SELECT {id}, '{role}' " +
+                $"WHERE NOT EXISTS (" +
+                $"SELECT 1 FROM user_roles WHERE \"UserId\" = {id} AND \"Role\" = '{role}'" +
+                $")"
+            ));
+
+            await _contx.Database.ExecuteSqlRawAsync(sql);
+        }
+
+        public async Task RemoveAllEncountersAsync() // TODO: Remove in production
+        {
+            var sql = $"delete from encounters";
+
+            await _contx.Database.ExecuteSqlRawAsync(sql);
         }
 
         public async Task RegisterUserEncounter(Main.Models.User.RegisterEncounter model)
@@ -2003,7 +2041,7 @@ namespace WebApi.Repositories
         {
             var currentUser = await _contx.Users.FindAsync(userId);
 
-            if (currentUser.HasPremium)
+            if (currentUser.PremiumExpirationDate != null)
             {
                 currentUser.Nickname = nickname;
                 _contx.Users.Update(currentUser);
@@ -2394,7 +2432,7 @@ namespace WebApi.Repositories
             if (user == null)
                 return GetMaximumLanguageCount(null);
 
-            return GetMaximumLanguageCount(user.HasPremium);
+            return GetMaximumLanguageCount(user.PremiumExpirationDate != null);
         }
 
         public int GetMaximumLanguageCount(bool? hasPremium)
@@ -2830,7 +2868,7 @@ namespace WebApi.Repositories
                     .AsNoTracking();
 
             //Identity check
-            if (currentUser.Settings.ShouldFilterUsersWithoutRealPhoto && currentUser.HasPremium)
+            if (currentUser.Settings.ShouldFilterUsersWithoutRealPhoto && currentUser.PremiumExpirationDate != null)
                 query = query.Where(u => u.IdentityType != IdentityConfirmationType.None);
 
             //Add user search
@@ -2839,7 +2877,7 @@ namespace WebApi.Repositories
             var extractedTags = await AddTagsAsync(model.Tags, TagType.Tags);
             
             // TODO: Come up with some premium benifits
-            if(currentUser.HasPremium)
+            if(currentUser.PremiumExpirationDate != null)
             {   
                 //TODO: Perpabs order by descending afterwards
                 foreach (var tag in extractedTags)
@@ -3641,7 +3679,7 @@ namespace WebApi.Repositories
             else if (sender.IdentityType == IdentityConfirmationType.Full)
                 bonus += $"✅✅✅\n\n";
 
-            if (sender.HasPremium && sender.Nickname != "")
+            if (sender.PremiumExpirationDate != null && sender.Nickname != "")
                 bonus += $"<b>{sender.Nickname}</b>\n";
 
             return new GetUserData(sender, bonus);
@@ -4159,8 +4197,8 @@ namespace WebApi.Repositories
                     Id = u.Id,
                     Username = u.Data.UserName,
                     UserRealName = u.Data.UserRealName,
-                    HasPremium = u.HasPremium,
-                    IsBanned = u.IsBanned,
+                    HasPremium = u.PremiumExpirationDate != null,
+                    IsBanned = u.BanDate != null,
                     IsBusy = u.IsBusy,
                     IsFree = u.Settings.IsFree,
                     Limitations = limitations
@@ -4393,7 +4431,6 @@ namespace WebApi.Repositories
             if (user == null)
                 return DeleteResult.DoesNotExist;
 
-            user.IsDeleted = true;
             user.DeleteDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
 
             await AddFeedbackAsync(new AddFeedback
@@ -4415,10 +4452,9 @@ namespace WebApi.Repositories
                 return RestoreResult.DoesNotExist;
 
             // No need to restore a user, who is not deleted :)
-            if (!user.IsDeleted)
+            if (user.DeleteDate == null)
                 return RestoreResult.Error;
 
-            user.IsDeleted = false;
             user.DeleteDate = null;
 
             await _contx.SaveChangesAsync();
@@ -4591,6 +4627,21 @@ namespace WebApi.Repositories
             userData.UserStory = null;
 
             await _contx.SaveChangesAsync();
+        }
+
+        public async Task<models.User.User> GetUserAsync(long id)
+        {
+            return await _contx.Users.Where(u => u.Id == id)
+                .AsNoTracking()
+                .Select(u => (models.User.User)u)
+                .FirstOrDefaultAsync();
+        }
+
+        public async Task<List<entities.User.UserRole>> GetUserRolesAsync(long userId)
+        {
+            return await _contx.UserRoles.Where(u => u.UserId == userId)
+                .AsNoTracking()
+                .ToListAsync();
         }
     }
 }

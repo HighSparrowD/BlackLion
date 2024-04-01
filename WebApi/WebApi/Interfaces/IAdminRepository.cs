@@ -9,9 +9,6 @@ namespace WebApi.Interfaces
 {
     public interface IAdminRepository
     {
-        Task<bool> CheckUserIsAdmin(long userId);
-        Task<byte> SwitchAdminStatus(long userId);
-        Task<bool?> GetAdminStatus(long userId);
         Task<long> UploadCountries(List<UpdateCountry> countries);
         Task<long> UploadCities(List<UpdateCity> cities);
         Task<long> UploadLanguages(List<UpdateLanguage> langs);

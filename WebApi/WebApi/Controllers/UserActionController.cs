@@ -306,12 +306,6 @@ namespace WebApi.Controllers
             return await _repository.CheckUserIsBusy(userId);
         }
 
-        [HttpGet("/SetDebugProperties")]
-        public async Task<bool> SetDebugProperties() // TODO: remove in production
-        {
-            return await _repository.SetDebugProperties();
-        }
-
         [HttpGet("/switch-busy-status/{userId}/{section}")]
         public async Task<SwitchBusyStatusResponse> SwhitchUserBusyStatus([FromRoute] long userId, [FromRoute] Section section)
         {

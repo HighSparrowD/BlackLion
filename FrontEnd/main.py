@@ -1,5 +1,6 @@
 import Common.Menues as Menus
 from Adventurer import Adventurer
+from Core.Api import ApiBase
 from Familiator import *
 from RandomTalker import *
 from Settings import *
@@ -30,14 +31,14 @@ key = os.getenv("KEY")
 payment_token = os.getenv("STRIPE_TOKEN")
 
 users = os.getenv("DEBUG_USERS").split(",")
-Helpers.set_api_address(os.getenv("API_ADDRESS"))
+ApiBase.set_api_address(os.getenv("API_ADDRESS"))
 Helpers.set_payment_token(os.getenv("STRIPE_TOKEN"))
 Helpers.set_stripe_key(os.getenv("STRIPE_SECRET_KEY"))
 stripe.api_key = Helpers.stripe_key
 
 bot = TeleBot(key)
 bot.parse_mode = telegram.ParseMode.HTML
-Menus.start_program_in_debug_mode(bot)  # TODO: remove in production?
+Menus.start_program_in_debug_mode(users)  # TODO: remove in production?
 
 for user in users:
     go_back_to_main_menu(bot, user, None, False)
@@ -134,8 +135,8 @@ def help(message):
 
 @bot.message_handler(commands=["test"], func=lambda message: message.chat.type == 'private', is_multihandler=True)
 def test(message):
-    ads = Helpers.get_advertisement_economy_monthly_statistics(915826981, 15)
-    ads = Helpers.get_advertisement_engagement_monthly_statistics(915826981, 15)
+    ads = Helpers.get_advertisement_economy_monthly_statistics(1254647653)
+    adss = Helpers.get_advertisement_engagement_monthly_statistics(1254647653)
     pass
 
 

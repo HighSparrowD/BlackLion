@@ -33,7 +33,7 @@ public class GetUserData
 
         UserId = userModel.Id;
         Nickname = userModel.Nickname;
-        HasPremium = userModel.HasPremium;
+        HasPremium = userModel.PremiumExpirationDate != null;
         UsesOcean = userModel.Settings!.UsesOcean;
         IdentityType = userModel.IdentityType;
         UserData = userModel.Data!;

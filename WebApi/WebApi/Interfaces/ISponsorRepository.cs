@@ -12,9 +12,9 @@ namespace WebApi.Interfaces
 
         Task<Advertisement> GetAdvertisementAsync(int advertisementId);
 
-        Task<List<AdvertisementEconomyStats>> GetAdvertisementEconomyStatsAsync(long userId, AdvertisementStatsRequest searchModel, int? addId = null);
+        Task<List<AdvertisementEconomyStats>> GetAdvertisementEconomyStatsAsync(long userId, AdvertisementStatsRequest searchModel, long? addId = null);
         
-        Task<List<AdvertisementEngagementStats>> GetAdvertisementEngagementStatsAsync(long userId, AdvertisementStatsRequest searchModel, int? addId = null);
+        Task<List<AdvertisementEngagementStats>> GetAdvertisementEngagementStatsAsync(long userId, AdvertisementStatsRequest searchModel, long? addId = null);
 
         Task<Advertisement> AddAdvertisementAsync(AdvertisementNew model);
 

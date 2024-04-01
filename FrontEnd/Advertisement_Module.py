@@ -1,13 +1,10 @@
 import telebot
-import io
-import base64
-import matplotlib.pyplot as plt
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, Message, CallbackQuery, InputFile
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, Message, CallbackQuery
 from Core import HelpersMethodes as Helpers
 from Common.GraphMaker import graph_one_x
 
 from BaseModule import Personality_Bot
-from Models.Advertisement.Advertisement import AdvertisementNew, AdvertisementUpdate, Advertisement
+from Models.Advertisement.Advertisement import AdvertisementNew, AdvertisementUpdate
 
 class AdvertisementModule(Personality_Bot):
     def __init__(self, bot: telebot.TeleBot, message: Message, hasVisited=False):

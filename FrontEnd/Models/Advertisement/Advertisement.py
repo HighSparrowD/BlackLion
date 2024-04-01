@@ -72,6 +72,9 @@ class StatisticsEconomy:
         self.income: float = stats_dict["income"]
         self.created: str = stats_dict["created"]
 
+    @staticmethod
+    def unpack(stats) -> list[any] | None:
+        return [StatisticsEconomy(stat) for stat in stats]
 
 class StatisticsEngagement:
     def __init__(self, stats_dict):
@@ -82,3 +85,7 @@ class StatisticsEngagement:
         self.clickCount: int = stats_dict["linkClickCount"]
         self.peoplePercentage: int = stats_dict["peoplePercentage"]
         self.created: str = stats_dict["created"]
+
+    @staticmethod
+    def unpack(stats) -> list[any] | None:
+        return [StatisticsEngagement(stat) for stat in stats]
