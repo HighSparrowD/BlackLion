@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WebApi.Data;
@@ -12,13 +13,15 @@ using WebApi.Data;
 namespace WebApi.Migrations
 {
     [DbContext(typeof(UserContext))]
-    partial class UserContextModelSnapshot : ModelSnapshot
+    [Migration("20240320230039_AdvertisementStatisticsEngagemenEconomy")]
+    partial class AdvertisementStatisticsEngagemenEconomy
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.3")
+                .HasAnnotation("ProductVersion", "7.0.5")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "fuzzystrmatch");
@@ -118,6 +121,22 @@ namespace WebApi.Migrations
                     b.HasIndex("AchievementId", "AchievementLanguage");
 
                     b.ToTable("user_achievements", (string)null);
+                });
+
+            modelBuilder.Entity("WebApi.Main.Models.Admin.Admin", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("admins", (string)null);
                 });
 
             modelBuilder.Entity("WebApi.Main.Models.Admin.TickRequest", b =>
@@ -1329,6 +1348,9 @@ namespace WebApi.Migrations
                     b.Property<bool>("HadReceivedReward")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("HasPremium")
+                        .HasColumnType("boolean");
+
                     b.Property<int>("IdentityType")
                         .HasColumnType("integer");
 
@@ -1338,7 +1360,7 @@ namespace WebApi.Migrations
                     b.Property<int>("InvitedUsersCount")
                         .HasColumnType("integer");
 
-                    b.Property<bool>("IsAdmin")
+                    b.Property<bool>("IsBanned")
                         .HasColumnType("boolean");
 
                     b.Property<bool>("IsBusy")
@@ -1347,7 +1369,7 @@ namespace WebApi.Migrations
                     b.Property<bool>("IsDecoy")
                         .HasColumnType("boolean");
 
-                    b.Property<bool>("IsSponsor")
+                    b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
                     b.Property<bool>("IsUpdated")
@@ -1504,19 +1526,6 @@ namespace WebApi.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("notifications", (string)null);
-                });
-
-            modelBuilder.Entity("WebApi.Main.Models.User.UserRole", b =>
-                {
-                    b.Property<long>("UserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("Role")
-                        .HasColumnType("varchar");
-
-                    b.HasKey("UserId", "Role");
-
-                    b.ToTable("user_roles", (string)null);
                 });
 
             modelBuilder.Entity("WebApi.Main.Models.User.UserTag", b =>
@@ -1892,15 +1901,6 @@ namespace WebApi.Migrations
                     b.Navigation("Receiver");
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.User.UserRole", b =>
-                {
-                    b.HasOne("WebApi.Main.Models.User.User", null)
-                        .WithMany("UserRoles")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("WebApi.Main.Models.User.UserTag", b =>
                 {
                     b.HasOne("WebApi.Main.Models.User.User", null)
@@ -1971,8 +1971,6 @@ namespace WebApi.Migrations
                     b.Navigation("Statistics");
 
                     b.Navigation("Tags");
-
-                    b.Navigation("UserRoles");
                 });
 #pragma warning restore 612, 618
         }
