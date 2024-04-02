@@ -333,10 +333,8 @@ def delete_user_notification(notificationId):
 
 
 def start_program_in_debug_mode(userIds: list[str]):  # TODO: remove in production
-    data = json.dumps(userIds)
-    requests.post(f"{ApiBase.api_address}/debug", data,
-                                        headers={"Content-Type": "application/json"},
-                                        verify=False)
+    response = ApiBase.create_post_request_with_object(userIds, "debug")
+    pass
 
 
 def get_request_sender(requestId):

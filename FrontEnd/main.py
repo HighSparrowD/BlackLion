@@ -38,6 +38,8 @@ stripe.api_key = Helpers.stripe_key
 
 bot = TeleBot(key)
 bot.parse_mode = telegram.ParseMode.HTML
+
+ApiBase.authenticate_machine(os.getenv("API_KEY"))
 Menus.start_program_in_debug_mode(users)  # TODO: remove in production?
 
 for user in users:

@@ -10,9 +10,8 @@ using WebApi.Models.Models.Admin;
 using WebApi.Models.Models.User;
 using System;
 using Microsoft.AspNetCore.Authorization;
-using WebApi.Models.Models.Identity;
-using WebApi.Models.Models.Identity.Attributes;
 using WebApi.Interfaces.Services;
+using WebApi.Models.Models.Identity.Attributes.Machine;
 
 namespace WebApi.Controllers
 {
@@ -33,6 +32,8 @@ namespace WebApi.Controllers
         }
 
         [HttpPost("/debug")]
+        [Authorize]
+        [RequiresMachine]
         public async Task<ActionResult> SetDebugProperties([FromBody] List<long> userIds) // TODO: remove in production
         {
             await _adminService.StartInDebug(userIds);

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using WebApi.Interfaces.Services;
 using WebApi.Models.Models.Authentication;
 using WebApi.Models.Models.Identity.Attributes.Admin;
+using WebApi.Models.Models.Identity.Attributes.Machine;
 
 namespace WebApi.Controllers
 {
@@ -61,7 +62,7 @@ namespace WebApi.Controllers
 
         [HttpGet]
         [Authorize]
-        [RequiresAdminOrCreator]
+        [RequiresMachine]
         public ActionResult Test()
         {
             return Ok();
