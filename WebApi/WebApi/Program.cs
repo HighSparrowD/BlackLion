@@ -55,12 +55,6 @@ Log.Logger = new LoggerConfiguration().MinimumLevel.Information()
 
 builder.Services.AddHostedService<BackgroundWorker>();
 
-builder.Services.AddSwaggerGen(c =>
-{
-	c.SwaggerDoc("v1", new OpenApiInfo { Title = "Api", Version = "v1" });
-	c.CustomSchemaIds(type => type.ToString());
-});
-
 var secret = configuration["Jwt:Key"];
 var key = Encoding.ASCII.GetBytes(secret);
 
@@ -74,6 +68,35 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
 		IssuerSigningKey = new SymmetricSecurityKey(key)
 	}
 );
+
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Api", Version = "v1" });
+    c.CustomSchemaIds(type => type.ToString());
+	
+	// Authentication
+	c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
+	{
+		Name = "Authorization",
+		Scheme = "Bearer",
+		BearerFormat = "JWT",
+		Type = SecuritySchemeType.ApiKey,
+		In = ParameterLocation.Header
+	});
+	c.AddSecurityRequirement(new OpenApiSecurityRequirement()
+	{
+        {
+            new OpenApiSecurityScheme {
+                Reference = new OpenApiReference {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
+	
+});
 
 // Custom authorization is utilized
 builder.Services.AddAuthorization();
