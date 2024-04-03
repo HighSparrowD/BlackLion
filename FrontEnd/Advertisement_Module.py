@@ -33,7 +33,8 @@ class AdvertisementModule(Personality_Bot):
         self.priority_btn_indicator = InlineKeyboardButton(text='', callback_data='6')
 
         self.main_menu_markup = InlineKeyboardMarkup().add(InlineKeyboardButton('My ads', callback_data='1'))\
-            .add(InlineKeyboardButton('Overall statistics', callback_data='2'))\
+            .add(InlineKeyboardButton('Economy statistics', callback_data='2'))\
+            .add(InlineKeyboardButton('Engagement statistics', callback_data='8'))\
             .add(InlineKeyboardButton('Exit', callback_data='0'))
 
         self.my_ads_markup = InlineKeyboardMarkup()
@@ -137,9 +138,9 @@ class AdvertisementModule(Personality_Bot):
             params[4].append(model.created)
 
         graph = graph_one_x((params[0], 'Payback', 'r'),
-                                        (params[1], 'Price per click', 'g'),
-                                        (params[2], 'Total price', 'y'),
-                                        (params[3], 'Income', 'c'), x=params[4], xlabel='Days')
+                            (params[1], 'Price per click', 'g'),
+                            (params[2], 'Total price', 'y'),
+                            (params[3], 'Income', 'c'), x=params[4], xlabel='Days')
 
         self.send_active_message_with_photo('Economy statistics for your ad', graph, markup=self.goback_markup)
 
@@ -157,11 +158,51 @@ class AdvertisementModule(Personality_Bot):
             params[4].append(model.created)
 
         graph = graph_one_x((params[0], 'Views', 'r'),
-                                        (params[1], 'Average stay in sec', 'g'),
-                                        (params[2], 'Clicks', 'y'),
-                                        (params[3], 'People percentage', 'c'), x=params[4], xlabel='Days')
+                            (params[1], 'Average stay in sec', 'g'),
+                            (params[2], 'Clicks', 'y'),
+                            (params[3], 'People percentage', 'c'), x=params[4], xlabel='Days')
 
         self.send_active_message_with_photo('Engagement statistics for your ad', graph, markup=self.goback_markup)
+
+    def overall_economy_statistics(self):
+        self.return_method = self.start
+
+        statistics_list = Helpers.get_overall_economy_monthly_statistics(self.current_user)
+
+        params = [[], [], [], [], []]  # each of lists represents one of model params
+        for model in statistics_list:
+            params[0].append(model.payback)
+            params[1].append(model.pricePerClick)
+            params[2].append(model.totalPrice)
+            params[3].append(model.income)
+            params[4].append(model.created)
+
+        graph = graph_one_x((params[0], 'Payback', 'r'),
+                            (params[1], 'Price per click', 'g'),
+                            (params[2], 'Total price', 'y'),
+                            (params[3], 'Income', 'c'), x=params[4], xlabel='Days')
+
+        self.send_active_message_with_photo('Your overall economy statistics', graph, markup=self.goback_markup)
+
+    def overall_engagement_statistics(self):
+        self.return_method = self.start
+
+        statistics_list = Helpers.get_overall_engagement_monthly_statistics(self.current_user)
+
+        params = [[], [], [], [], []]  # each of lists represents one of model params
+        for model in statistics_list:
+            params[0].append(model.viewCount)
+            params[1].append(model.averageStayInSeconds)
+            params[2].append(model.clickCount)
+            params[3].append(model.peoplePercentage)
+            params[4].append(model.created)
+
+        graph = graph_one_x((params[0], 'Views', 'r'),
+                            (params[1], 'Average stay in sec', 'g'),
+                            (params[2], 'Clicks', 'y'),
+                            (params[3], 'People percentage', 'c'), x=params[4], xlabel='Days')
+
+        self.send_active_message_with_photo('Your overall engagement statistics', graph, markup=self.goback_markup)
 
     def name_step(self, message=None, acceptMode=False, shouldInsert=True):
         self.ads_calldata = False
@@ -425,9 +466,11 @@ class AdvertisementModule(Personality_Bot):
         elif call.data == '70':
             self.ad_delete(True)
 
-        # Overall statistics
-        # elif call.data == '2':
-        #     self.send_error_message('This feature isn`t ready')
+        # Overall economics statistics
+        elif call.data == '2':
+            self.overall_economy_statistics()
+        elif call.data == '8':
+            self.overall_engagement_statistics()
 
         else:
             self.send_error_message('This feature isn`t ready')
