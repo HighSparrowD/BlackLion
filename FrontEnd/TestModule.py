@@ -9,6 +9,7 @@ from telebot.types import ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeybo
 from Common.Menues import index_converter
 from Common.Menues import paginate, assemble_markup
 from Common.Menues import go_back_to_main_menu
+from Core.Api import ApiBase
 from Core.Resources import Resources
 import Settings
 
@@ -298,7 +299,11 @@ class TestModule:
         if not acceptMode:
 
             # Lie check
-            isLying = self.hasLieScale and sum(self.lie_scale.values()) >= self.current_test_data["scales"][0]["minValue"]
+            min_lie_value = self.current_test_data["scales"][0]["minValue"]
+            if min_lie_value:
+                isLying = self.hasLieScale and sum(self.lie_scale.values()) >= min_lie_value
+            else:
+                isLying = False
 
             # Order results, so that the first one is the smallest (if scores are present at all)
             results = sorted(self.current_test_data["results"], key=lambda x: x['score'] if x["score"] is not None else x["id"])
@@ -314,13 +319,14 @@ class TestModule:
 
             if self.current_test == 49:
                 self.user_total = {}
+
+                #TODO: Generate a 24x24 graphic based on x and y
                 y = sum(self.answer_array['1'].values())
                 x = sum(self.answer_array['2'].values())
 
                 # for scale in self.answer_array.keys():
                 #     self.user_total[scale] = sum(self.answer_array[scale].values())
 
-                # TODO: Provide percentages or a graph
                 if y <= 12 <= x:
                     result = results[2]
                     score = 1
@@ -337,6 +343,8 @@ class TestModule:
                 data = self.create_test_payload(score)
                 tags = result["tags"]
                 active_answer = result["result"]
+
+                #TODO: Create express test
             elif self.current_test == 1:
                 o_result = self.answer_array["O"]
                 c_result = self.answer_array["C"]
@@ -361,7 +369,8 @@ class TestModule:
                     active_answer = previous_result["result"]
                     break
 
-            self.send_active_message(active_answer)
+                self.send_active_message(active_answer)
+
             self.send_secondary_message("✨", markup=self.continueMarkup)
 
             if not isLying:
@@ -653,7 +662,7 @@ class TestModule:
                          need_name=True,
                          invoice_payload=invoice_payload,
                          prices=[priceTag],
-                         provider_token=Helpers.payment_token,
+                         provider_token=ApiBase.payment_token,
                          need_email=True,
                          suggested_tip_amounts=self.suggested_tips,
                          max_tip_amount=100_000_000,

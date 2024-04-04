@@ -48,16 +48,11 @@ namespace WebApi.Controllers
             if (secret != model.AppSecret)
                 return Unauthorized();
 
-            var token = await AuthenticationService.AuthenticateUser(model.UserId, model.AppSecret);
-            if (string.IsNullOrEmpty(token))
+            var response = await AuthenticationService.AuthenticateUser(model.UserId, model.AppSecret);
+            if (string.IsNullOrEmpty(response.AccessToken))
                 return Unauthorized();
 
-            var jwtResponse = new JwtResponse
-            {
-                AccessToken = token
-            };
-
-            return Ok(jwtResponse);
+            return Ok(response);
         }
 
         [HttpGet]

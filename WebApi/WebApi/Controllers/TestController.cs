@@ -70,7 +70,7 @@ namespace WebApi.Controllers
         [HttpGet("/single-test/{id}/{language}")]
         public async Task<models.Test> GetSingleTest(long id, AppLanguage language)
         {
-             var tests = await _repository.GetSingleTestAsync(id, language);
+            var tests = await _repository.GetSingleTestAsync(id, language);
             return tests;
         }
 

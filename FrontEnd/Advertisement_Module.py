@@ -1,14 +1,19 @@
 import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, Message, CallbackQuery
-from Core import HelpersMethodes as Helpers
 from Common.GraphMaker import graph_one_x
 
 from BaseModule import Personality_Bot
+from Core.Api.Advertisement.AdvertisementApi import AdvertisementApi
 from Models.Advertisement.Advertisement import AdvertisementNew, AdvertisementUpdate
 
 class AdvertisementModule(Personality_Bot):
     def __init__(self, bot: telebot.TeleBot, message: Message, hasVisited=False):
         super().__init__(bot, message, hasVisited)
+
+        self.api_service = AdvertisementApi(self.current_user)
+
+        #TODO: Delete module and navigate user to the main menu if False
+        is_authenticated = self.api_service.authenticate_sponsor()
 
         self.current_callback_handler = self.bot.register_callback_query_handler(message, self.callback_handler, user_id=self.current_user)
 
@@ -20,7 +25,7 @@ class AdvertisementModule(Personality_Bot):
         self.turnedOffSticker = "❌"
 
         # storage for ad model used in ad reg and ad settings
-        self.ad_model = None
+        self.ad_model: AdvertisementNew | AdvertisementUpdate | None = None
         self.existing_ads = None
 
         self.next_handler = None
@@ -41,7 +46,7 @@ class AdvertisementModule(Personality_Bot):
 
         self.goback_markup = InlineKeyboardMarkup([[InlineKeyboardButton("Go Back", callback_data='0')]])
 
-        self.priorities_list = Helpers.get_all_advertisement_priorities()
+        self.priorities_list = self.api_service.get_all_advertisement_priorities()
 
         for priority in self.priorities_list:  # temporary solution
             priority.name = priority.name.replace(' ', '')
@@ -90,7 +95,7 @@ class AdvertisementModule(Personality_Bot):
         self.ads_calldata = True
 
         self.my_ads_markup.clear()
-        self.existing_ads = Helpers.get_advertisement_list(self.current_user)
+        self.existing_ads = self.api_service.get_advertisement_list(self.current_user)
 
         # there is a hierarchy: call.data from previous btn is 1 so hear all call.data will start with 1
         self.my_ads_markup.add(InlineKeyboardButton("Add advertisement", callback_data="a"))
@@ -104,7 +109,7 @@ class AdvertisementModule(Personality_Bot):
 
     def ad_settings(self, ad_id: int = None):
         if ad_id:
-            self.ad_model = Helpers.get_advertisement_info(ad_id)
+            self.ad_model = self.api_service.get_advertisement_info(ad_id)
         self.show_btn_indicator.text = self.turnedOnSticker if self.ad_model.show else self.turnedOffSticker
         self.priority_btn_indicator.text = self.ad_model.priority
         self.send_active_message('Advertisement settings', markup=self.ad_settings_keyboard)
@@ -118,7 +123,7 @@ class AdvertisementModule(Personality_Bot):
             self.send_active_message('Are you sure, you want to delete this advertisement?', self.delete_markup, ['e'])
         else:
             # Only if user want to delete the ad
-            if Helpers.delete_advertisement(self.ad_model.id).status_code == 204:
+            if self.api_service.delete_advertisement(self.ad_model.id).status_code == 204:
                 self.show_my_ads()
             else:
                 self.prev_menu()
@@ -127,7 +132,7 @@ class AdvertisementModule(Personality_Bot):
     def economy_statistics(self):
         self.return_method = self.ad_settings
 
-        statistics_list = Helpers.get_advertisement_economy_monthly_statistics(self.current_user, self.ad_model.id)
+        statistics_list = self.api_service.get_advertisement_economy_monthly_statistics(self.current_user, self.ad_model.id)
 
         params = [[], [], [], [], []]  # each of lists represents one of model params
         for model in statistics_list:
@@ -147,7 +152,7 @@ class AdvertisementModule(Personality_Bot):
     def engagement_statistics(self):
         self.return_method = self.ad_settings
 
-        statistics_list = Helpers.get_advertisement_engagement_monthly_statistics(self.current_user, self.ad_model.id)
+        statistics_list = self.api_service.get_advertisement_engagement_monthly_statistics(self.current_user, self.ad_model.id)
 
         params = [[], [], [], [], []]  # each of lists represents one of model params
         for model in statistics_list:
@@ -167,7 +172,7 @@ class AdvertisementModule(Personality_Bot):
     def overall_economy_statistics(self):
         self.return_method = self.start
 
-        statistics_list = Helpers.get_overall_economy_monthly_statistics(self.current_user)
+        statistics_list = self.api_service.get_overall_economy_monthly_statistics(self.current_user)
 
         params = [[], [], [], [], []]  # each of lists represents one of model params
         for model in statistics_list:
@@ -187,7 +192,7 @@ class AdvertisementModule(Personality_Bot):
     def overall_engagement_statistics(self):
         self.return_method = self.start
 
-        statistics_list = Helpers.get_overall_engagement_monthly_statistics(self.current_user)
+        statistics_list = self.api_service.get_overall_engagement_monthly_statistics(self.current_user)
 
         params = [[], [], [], [], []]  # each of lists represents one of model params
         for model in statistics_list:
@@ -365,9 +370,9 @@ class AdvertisementModule(Personality_Bot):
             self.send_secondary_message('Want to change something?', self.checkout_markup)
         else:
             if hasattr(self.ad_model, 'id'):
-                response = Helpers.update_advertisement(self.ad_model)
+                response = self.api_service.update_advertisement(self.ad_model)
             else:
-                response = Helpers.add_advertisement(self.ad_model)
+                response = self.api_service.add_advertisement(self.ad_model)
             if response.status_code == 204:
                 self.editMode = False
                 self.ad_reg_steps = []

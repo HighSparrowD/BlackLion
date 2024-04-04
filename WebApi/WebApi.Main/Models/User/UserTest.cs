@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using WebApi.Enums.Enums.General;
+using WebApi.Models.User;
 using models = WebApi.Models.Models.User;
 
 #nullable enable
@@ -57,5 +58,13 @@ public class UserTest
             TestLanguage = userTest.TestLanguage,
             UserId = userTest.UserId
         };
+    }
+
+    public static implicit operator GetUserTest?(UserTest? test)
+    {
+        if (test == null)
+            return null;
+
+        return new GetUserTest(test.PassedOn, test.Test);
     }
 }

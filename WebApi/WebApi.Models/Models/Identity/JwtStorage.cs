@@ -32,7 +32,7 @@ public static class JwtStorage
             UserId = userId
         };
 
-        _validTokenIds.RemoveAll(vk => vk.UserId.Equals(userId));
+        _validTokenIds.RemoveAll(vk => vk.UserId == userId);
         _validTokenIds.Add(signKey);
 
         return newId;

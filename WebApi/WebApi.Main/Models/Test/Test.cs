@@ -65,9 +65,9 @@ public class Test
             TestType = test.TestType,
             Language = test.Language,
             Name = test.Name,
-            Questions = test.Questions.Select(q => (models.TestQuestion)q!).ToList(),
-            Results = test.Results.Select(r => (models.TestResult)r!).ToList(),
-            Scales = test.Scales.Select(s => (models.TestScale)s!).ToList()
+            Questions = test.Questions?.Select(q => (models.TestQuestion)q!).ToList(),
+            Results = test.Results?.Select(r => (models.TestResult)r!).ToList(),
+            Scales = test.Scales?.Select(s => (models.TestScale)s!).ToList()
         };
     }
 }

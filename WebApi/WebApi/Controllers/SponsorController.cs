@@ -5,10 +5,13 @@ using System.Threading.Tasks;
 using WebApi.Enums.Enums.Sponsor;
 using WebApi.Models.Models.Sponsor;
 using WebApi.Models.Models.User;
-using System;
+using Microsoft.AspNetCore.Authorization;
+using WebApi.Models.Models.Identity.Attributes.Sponsor;
 
 namespace WebApi.Controllers
 {
+    [Authorize]
+    [RequiresSponsor]
     [Route("api/[controller]")]
     [ApiController]
     public class SponsorController : Controller

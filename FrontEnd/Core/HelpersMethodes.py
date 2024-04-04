@@ -1,37 +1,13 @@
-import calendar
-import datetime
 import json
 from typing import Union
 
 import requests
 from requests import Response
 
-import Models.Advertisement.Advertisement as advertisement_models
 import Models.User.User as user_models
-import Models.Generic.Generic as generic_models
 from Core.Api import ApiBase
 
-# Used to for translating Accept-Language header
-languages = {
-    0: "en-US",
-    1: "ru-RU",
-    2: "uk-UA"
-}
-
-payment_token = None
-stripe_key = None
-
 points = "Points"
-
-
-def set_payment_token(token):
-    global payment_token
-    payment_token = token
-
-
-def set_stripe_key(key):
-    global stripe_key
-    stripe_key = key
 
 
 def format_tags(tag_string: str) -> str:
@@ -819,132 +795,3 @@ def remove_user_story(userId):
         return requests.delete(f"{ApiBase.api_address}/user-story", verify=False, params={"userId": userId})
     except Exception as ex:
         return None
-
-def add_advertisement(payload: advertisement_models.AdvertisementNew) -> Union[Response, None]:
-    try:
-        data = payload.to_json()
-
-        response = requests.post("https://localhost:44381/advertisement", data, headers={
-            "Content-Type": "application/json"}, verify=False)
-        return response
-
-    except:
-        return None
-
-
-def update_advertisement(payload: advertisement_models.AdvertisementUpdate) -> Union[Response, None]:
-    try:
-        data = payload.to_json()
-
-        response = requests.put("https://localhost:44381/advertisement", data, headers={
-            "Content-Type": "application/json"}, verify=False)
-        return response
-
-    except:
-        return None
-
-
-def get_advertisement_list(userId) -> Union[list[advertisement_models.AdvertisementItem], None]:
-    try:
-        response = requests.get(f"{ApiBase.api_address}/advertisement-list/{userId}", verify=False)
-        advertisements = response.json()
-
-        return [advertisement_models.AdvertisementItem(advertisement) for advertisement in advertisements]
-    except:
-        return
-
-
-def get_advertisement_info(adId) -> Union[advertisement_models.Advertisement, None]:
-
-    response = requests.get(f"{ApiBase.api_address}/advertisement/{adId}", verify=False)
-    advertisement = response.json()
-
-    return advertisement_models.Advertisement(advertisement)
-
-
-def delete_advertisement(advertisementId) -> Union[Response, None]:
-    try:
-        response = requests.delete(f"{ApiBase.api_address}/advertisement/{advertisementId}", verify=False)
-
-        return response
-    except:
-        return
-
-
-def get_all_advertisement_priorities() -> Union[list[generic_models.LocalizedEnum], None]:
-    try:
-        response = requests.get(f"{ApiBase.api_address}/priorities", verify=False)
-        priorities = response.json()
-
-        return [generic_models.LocalizedEnum(priority) for priority in priorities]
-    except:
-        return
-
-
-def get_advertisement_economy_monthly_statistics(user_id, advertisement_id=None) \
-        -> list[advertisement_models.StatisticsEconomy] | None:
-    try:
-        payload = create_statistics_request_model()
-        params = {"advertisementId": advertisement_id}
-
-        response = ApiBase.create_post_request_with_api_model(payload, f"statistics/economy/{user_id}",
-                                                              params)
-        stats = response.json()
-
-        return advertisement_models.StatisticsEconomy.unpack(stats)
-
-    except:
-        return None
-
-
-def get_advertisement_engagement_monthly_statistics(user_id, advertisement_id=None) \
-        -> list[advertisement_models.StatisticsEngagement] | None:
-    try:
-        payload = create_statistics_request_model()
-        params = {"advertisementId": advertisement_id}
-
-        response = ApiBase.create_post_request_with_api_model(payload, f"statistics/engagement/{user_id}",
-                                                              params)
-        stats = response.json()
-
-        return advertisement_models.StatisticsEngagement.unpack(stats)
-
-    except:
-        return None
-
-def get_overall_economy_monthly_statistics(user_id) -> list[advertisement_models.StatisticsEconomy] | None:
-    try:
-        payload = create_statistics_request_model()
-
-        response = ApiBase.create_post_request_with_api_model(payload, f"statistics/economy/{user_id}")
-        stats = response.json()
-
-        return advertisement_models.StatisticsEconomy.unpack(stats)
-
-    except:
-        return None
-
-
-def get_overall_engagement_monthly_statistics(user_id) -> list[advertisement_models.StatisticsEngagement] | None:
-    try:
-        payload = create_statistics_request_model()
-
-        response = ApiBase.create_post_request_with_api_model(payload, f"statistics/engagement/{user_id}")
-        stats = response.json()
-
-        return advertisement_models.StatisticsEngagement.unpack(stats)
-
-    except:
-        return None
-
-
-def create_statistics_request_model() -> advertisement_models.StatisticsGet:
-    model = advertisement_models.StatisticsGet()
-
-    now = datetime.datetime.now()
-    max_days = calendar.monthrange(now.year, now.month)[1]
-
-    model.from_ = datetime.datetime(now.year, now.month, 1)
-    model.to = datetime.datetime(now.year, now.month, max_days)
-
-    return model

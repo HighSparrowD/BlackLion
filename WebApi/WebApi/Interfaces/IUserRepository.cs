@@ -17,6 +17,7 @@ using WebApi.Models.User;
 using WebApi.Models.Models.Adventure;
 using WebApi.Enums.Enums.Adventure;
 using WebApi.Enums.Enums.Notification;
+using WebApi.Enums.Enums.Authentication;
 
 namespace WebApi.Interfaces
 {
@@ -33,7 +34,7 @@ namespace WebApi.Interfaces
         Task AssignSponsorRightsAsync(List<long> userIds);
         Task RemoveAllEncountersAsync();
         Task<Models.Models.User.User> GetUserAsync(long id);
-        Task<List<Main.Models.User.UserRole>> GetUserRolesAsync(long userId);
+        Task<List<Role>> GetUserRolesAsync(long userId);
         Task<UserInfo> GetUserInfoAsync(long id);
         Task<GetUserSettings> GetUserSettingsAsync(long id);
         Task<GetRequests> GetUserRequests(long userId);

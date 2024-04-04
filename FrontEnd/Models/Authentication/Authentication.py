@@ -1,14 +1,25 @@
 from Models.ApiModel import ApiModel
 
+admin_role = "Admin"
+sponsor_role = "Sponsor"
+creator_role = "Creator"
+machine_role = "Machine"
 
 class MachineAuth(ApiModel):
-    def __init__(self, secret: str):
+    def __init__(self, secret: str | None):
         self.appSecret: str = secret
 
+class UserAuth(ApiModel):
+    def __init__(self, secret: str, userId: int):
+        self.appSecret: str = secret
+        self.userId: int = userId
+
 class JwtResponse:
-    def __init__(self, accessToken: str):
+
+    def __init__(self, accessToken: str, roles: list[str]):
         self.accessToken: str = accessToken
+        self.roles: list[str] = roles
 
     @staticmethod
-    def unpack(data_dict: dict[str, str]):
-        return JwtResponse(data_dict["accessToken"])
+    def unpack(data_dict: dict[str, str | list[str]]):
+        return JwtResponse(data_dict["accessToken"], data_dict["roles"])
