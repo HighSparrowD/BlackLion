@@ -4,6 +4,7 @@ from telebot.types import *
 import Core.HelpersMethodes as Helpers
 import Common.Menues as menues
 import Settings
+from Core.Api import ApiBase
 from Core.Resources import Resources
 from Helper import Helper
 from TestModule import TestModule
@@ -644,7 +645,7 @@ class Shop:
                          need_name=True,
                          invoice_payload=invoice_payload,
                          prices=[priceTag],
-                         provider_token=Helpers.payment_token,
+                         provider_token=ApiBase.payment_token,
                          need_email=True,
                          suggested_tip_amounts=self.suggested_tips,
                          max_tip_amount=100_000_000,

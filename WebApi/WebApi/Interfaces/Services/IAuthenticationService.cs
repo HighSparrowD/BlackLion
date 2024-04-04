@@ -1,5 +1,5 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
+using WebApi.Models.Models.Authentication;
 
 namespace WebApi.Interfaces.Services
 {
@@ -7,6 +7,6 @@ namespace WebApi.Interfaces.Services
     {
         string AuthenticateMachine(string appSecret);
 
-        Task<string> AuthenticateUser(long userId, string appSecret);
+        Task<JwtResponse> AuthenticateUser(long userId, string appSecret);
     }
 }

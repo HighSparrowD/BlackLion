@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using WebApi.Enums.Enums.Authentication;
 using WebApi.Interfaces;
 using WebApi.Interfaces.Services;
+using WebApi.Models.Models.Authentication;
 using WebApi.Models.Models.Identity;
 using WebApi.Models.Utilities;
 
@@ -50,7 +51,7 @@ namespace WebApi.Services.Authentication
             return tokenHandler.WriteToken(token);
         }
 
-        public async Task<string> AuthenticateUser(long userId, string appSecret)
+        public async Task<JwtResponse> AuthenticateUser(long userId, string appSecret)
         { 
             var userRepo = ServiceProvider.GetRequiredService<IUserRepository>();
 
@@ -70,7 +71,7 @@ namespace WebApi.Services.Authentication
             var tokenRoles = new List<Claim>();
             foreach (var role in userRoles)
             {
-                tokenRoles.Add(new Claim(ClaimTypes.Role, role.Role.ToLowerString()));
+                tokenRoles.Add(new Claim(ClaimTypes.Role, role.ToLowerString()));
             }
 
             // Grant Id to a token
@@ -92,7 +93,11 @@ namespace WebApi.Services.Authentication
 
             var token = tokenHandler.CreateToken(tokeDescriptor);
 
-            return tokenHandler.WriteToken(token);
+            return new JwtResponse
+            {
+                AccessToken = tokenHandler.WriteToken(token),
+                Roles = userRoles
+            };
         }
     }
 }

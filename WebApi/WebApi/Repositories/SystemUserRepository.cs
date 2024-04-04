@@ -3377,7 +3377,7 @@ namespace WebApi.Repositories
             if (test == null)
                 throw new NullReferenceException($"User {userId} does not have Test {testId}");
 
-            return new GetUserTest((models.User.UserTest)test);
+            return (GetUserTest)test;
         }
 
         public async Task<int> GetPossibleTestPassRangeAsync(long userId, long testId)
@@ -4637,10 +4637,11 @@ namespace WebApi.Repositories
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<List<entities.User.UserRole>> GetUserRolesAsync(long userId)
+        public async Task<List<Role>> GetUserRolesAsync(long userId)
         {
             return await _contx.UserRoles.Where(u => u.UserId == userId)
                 .AsNoTracking()
+                .Select(ur => ur.Role)
                 .ToListAsync();
         }
     }

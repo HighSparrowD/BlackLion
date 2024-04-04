@@ -1,6 +1,5 @@
 import Common.Menues as Menus
 from Adventurer import Adventurer
-from Core.Api import ApiBase
 from Familiator import *
 from RandomTalker import *
 from Settings import *
@@ -32,14 +31,16 @@ payment_token = os.getenv("STRIPE_TOKEN")
 
 users = os.getenv("DEBUG_USERS").split(",")
 ApiBase.set_api_address(os.getenv("API_ADDRESS"))
-Helpers.set_payment_token(os.getenv("STRIPE_TOKEN"))
-Helpers.set_stripe_key(os.getenv("STRIPE_SECRET_KEY"))
-stripe.api_key = Helpers.stripe_key
+ApiBase.set_payment_token(os.getenv("STRIPE_TOKEN"))
+ApiBase.set_stripe_key(os.getenv("STRIPE_SECRET_KEY"))
+ApiBase.set_secret_key(os.getenv("API_KEY"))
+ApiBase.set_api_verify_flag(False)
+stripe.api_key = ApiBase.stripe_key
 
 bot = TeleBot(key)
 bot.parse_mode = telegram.ParseMode.HTML
 
-ApiBase.authenticate_machine(os.getenv("API_KEY"))
+ApiBase.authenticate_machine()
 Menus.start_program_in_debug_mode(users)  # TODO: remove in production?
 
 for user in users:
@@ -137,9 +138,15 @@ def help(message):
 
 @bot.message_handler(commands=["test"], func=lambda message: message.chat.type == 'private', is_multihandler=True)
 def test(message):
-    ads = Helpers.get_advertisement_economy_monthly_statistics(1254647653)
-    adss = Helpers.get_advertisement_engagement_monthly_statistics(1254647653)
-    pass
+    # Graph scales
+    y_scale = list(range(1, 25))
+    x_scale = list(range(1, 25))
+
+    # Testing data. Change it to test if the graph is generated properly
+    x = 15
+    y = 17
+
+    #TODO: Generate graph here
 
 
 # new_chat_member - present even upon changing permissions / adding new users to group
