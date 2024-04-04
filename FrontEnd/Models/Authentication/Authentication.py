@@ -1,8 +1,12 @@
 from Models.ApiModel import ApiModel
 
+admin_role = "Admin"
+sponsor_role = "Sponsor"
+creator_role = "Creator"
+machine_role = "Machine"
 
 class MachineAuth(ApiModel):
-    def __init__(self, secret: str):
+    def __init__(self, secret: str | None):
         self.appSecret: str = secret
 
 class UserAuth(ApiModel):
@@ -11,11 +15,6 @@ class UserAuth(ApiModel):
         self.userId: int = userId
 
 class JwtResponse:
-
-    admin = "admin"
-    sponsor = "sponsor"
-    creator = "creator"
-    machine = "machine"
 
     def __init__(self, accessToken: str, roles: list[str]):
         self.accessToken: str = accessToken

@@ -1,14 +1,19 @@
 import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, Message, CallbackQuery
-from Core import HelpersMethodes as Helpers
 from Common.GraphMaker import graph_one_x
 
 from BaseModule import Personality_Bot
+from Core.Api.Sponsor.SponsorApi import SponsorApi
 from Models.Advertisement.Advertisement import AdvertisementNew, AdvertisementUpdate
 
 class AdvertisementModule(Personality_Bot):
     def __init__(self, bot: telebot.TeleBot, message: Message, hasVisited=False):
         super().__init__(bot, message, hasVisited)
+
+        self.sponsor_api = SponsorApi(self.current_user)
+
+        #TODO: Delete module and navigate user to the main menu if False
+        is_authenticated = self.sponsor_api.authenticate_sponsor()
 
         self.current_callback_handler = self.bot.register_callback_query_handler(message, self.callback_handler, user_id=self.current_user)
 
@@ -20,7 +25,7 @@ class AdvertisementModule(Personality_Bot):
         self.turnedOffSticker = "❌"
 
         # storage for ad model used in ad reg and ad settings
-        self.ad_model = None
+        self.ad_model: AdvertisementNew | AdvertisementUpdate | None = None
         self.existing_ads = None
 
         self.next_handler = None
@@ -33,14 +38,15 @@ class AdvertisementModule(Personality_Bot):
         self.priority_btn_indicator = InlineKeyboardButton(text='', callback_data='6')
 
         self.main_menu_markup = InlineKeyboardMarkup().add(InlineKeyboardButton('My ads', callback_data='1'))\
-            .add(InlineKeyboardButton('Overall statistics', callback_data='2'))\
+            .add(InlineKeyboardButton('Economy statistics', callback_data='2'))\
+            .add(InlineKeyboardButton('Engagement statistics', callback_data='8'))\
             .add(InlineKeyboardButton('Exit', callback_data='0'))
 
         self.my_ads_markup = InlineKeyboardMarkup()
 
         self.goback_markup = InlineKeyboardMarkup([[InlineKeyboardButton("Go Back", callback_data='0')]])
 
-        self.priorities_list = Helpers.get_all_advertisement_priorities()
+        self.priorities_list = self.sponsor_api.get_all_advertisement_priorities()
 
         for priority in self.priorities_list:  # temporary solution
             priority.name = priority.name.replace(' ', '')
@@ -89,7 +95,7 @@ class AdvertisementModule(Personality_Bot):
         self.ads_calldata = True
 
         self.my_ads_markup.clear()
-        self.existing_ads = Helpers.get_advertisement_list(self.current_user)
+        self.existing_ads = self.sponsor_api.get_advertisement_list(self.current_user)
 
         # there is a hierarchy: call.data from previous btn is 1 so hear all call.data will start with 1
         self.my_ads_markup.add(InlineKeyboardButton("Add advertisement", callback_data="a"))
@@ -103,7 +109,7 @@ class AdvertisementModule(Personality_Bot):
 
     def ad_settings(self, ad_id: int = None):
         if ad_id:
-            self.ad_model = Helpers.get_advertisement_info(ad_id)
+            self.ad_model = self.sponsor_api.get_advertisement_info(ad_id)
         self.show_btn_indicator.text = self.turnedOnSticker if self.ad_model.show else self.turnedOffSticker
         self.priority_btn_indicator.text = self.ad_model.priority
         self.send_active_message('Advertisement settings', markup=self.ad_settings_keyboard)
@@ -117,7 +123,7 @@ class AdvertisementModule(Personality_Bot):
             self.send_active_message('Are you sure, you want to delete this advertisement?', self.delete_markup, ['e'])
         else:
             # Only if user want to delete the ad
-            if Helpers.delete_advertisement(self.ad_model.id).status_code == 204:
+            if self.sponsor_api.delete_advertisement(self.ad_model.id).status_code == 204:
                 self.show_my_ads()
             else:
                 self.prev_menu()
@@ -126,7 +132,7 @@ class AdvertisementModule(Personality_Bot):
     def economy_statistics(self):
         self.return_method = self.ad_settings
 
-        statistics_list = Helpers.get_advertisement_economy_monthly_statistics(self.current_user, self.ad_model.id)
+        statistics_list = self.sponsor_api.get_advertisement_economy_monthly_statistics(self.current_user, self.ad_model.id)
 
         params = [[], [], [], [], []]  # each of lists represents one of model params
         for model in statistics_list:
@@ -137,16 +143,16 @@ class AdvertisementModule(Personality_Bot):
             params[4].append(model.created)
 
         graph = graph_one_x((params[0], 'Payback', 'r'),
-                                        (params[1], 'Price per click', 'g'),
-                                        (params[2], 'Total price', 'y'),
-                                        (params[3], 'Income', 'c'), x=params[4], xlabel='Days')
+                            (params[1], 'Price per click', 'g'),
+                            (params[2], 'Total price', 'y'),
+                            (params[3], 'Income', 'c'), x=params[4], xlabel='Days')
 
         self.send_active_message_with_photo('Economy statistics for your ad', graph, markup=self.goback_markup)
 
     def engagement_statistics(self):
         self.return_method = self.ad_settings
 
-        statistics_list = Helpers.get_advertisement_engagement_monthly_statistics(self.current_user, self.ad_model.id)
+        statistics_list = self.sponsor_api.get_advertisement_engagement_monthly_statistics(self.current_user, self.ad_model.id)
 
         params = [[], [], [], [], []]  # each of lists represents one of model params
         for model in statistics_list:
@@ -157,11 +163,51 @@ class AdvertisementModule(Personality_Bot):
             params[4].append(model.created)
 
         graph = graph_one_x((params[0], 'Views', 'r'),
-                                        (params[1], 'Average stay in sec', 'g'),
-                                        (params[2], 'Clicks', 'y'),
-                                        (params[3], 'People percentage', 'c'), x=params[4], xlabel='Days')
+                            (params[1], 'Average stay in sec', 'g'),
+                            (params[2], 'Clicks', 'y'),
+                            (params[3], 'People percentage', 'c'), x=params[4], xlabel='Days')
 
         self.send_active_message_with_photo('Engagement statistics for your ad', graph, markup=self.goback_markup)
+
+    def overall_economy_statistics(self):
+        self.return_method = self.start
+
+        statistics_list = self.sponsor_api.get_overall_economy_monthly_statistics(self.current_user)
+
+        params = [[], [], [], [], []]  # each of lists represents one of model params
+        for model in statistics_list:
+            params[0].append(model.payback)
+            params[1].append(model.pricePerClick)
+            params[2].append(model.totalPrice)
+            params[3].append(model.income)
+            params[4].append(model.created)
+
+        graph = graph_one_x((params[0], 'Payback', 'r'),
+                            (params[1], 'Price per click', 'g'),
+                            (params[2], 'Total price', 'y'),
+                            (params[3], 'Income', 'c'), x=params[4], xlabel='Days')
+
+        self.send_active_message_with_photo('Your overall economy statistics', graph, markup=self.goback_markup)
+
+    def overall_engagement_statistics(self):
+        self.return_method = self.start
+
+        statistics_list = self.sponsor_api.get_overall_engagement_monthly_statistics(self.current_user)
+
+        params = [[], [], [], [], []]  # each of lists represents one of model params
+        for model in statistics_list:
+            params[0].append(model.viewCount)
+            params[1].append(model.averageStayInSeconds)
+            params[2].append(model.clickCount)
+            params[3].append(model.peoplePercentage)
+            params[4].append(model.created)
+
+        graph = graph_one_x((params[0], 'Views', 'r'),
+                            (params[1], 'Average stay in sec', 'g'),
+                            (params[2], 'Clicks', 'y'),
+                            (params[3], 'People percentage', 'c'), x=params[4], xlabel='Days')
+
+        self.send_active_message_with_photo('Your overall engagement statistics', graph, markup=self.goback_markup)
 
     def name_step(self, message=None, acceptMode=False, shouldInsert=True):
         self.ads_calldata = False
@@ -324,9 +370,9 @@ class AdvertisementModule(Personality_Bot):
             self.send_secondary_message('Want to change something?', self.checkout_markup)
         else:
             if hasattr(self.ad_model, 'id'):
-                response = Helpers.update_advertisement(self.ad_model)
+                response = self.sponsor_api.update_advertisement(self.ad_model)
             else:
-                response = Helpers.add_advertisement(self.ad_model)
+                response = self.sponsor_api.add_advertisement(self.ad_model)
             if response.status_code == 204:
                 self.editMode = False
                 self.ad_reg_steps = []
@@ -425,9 +471,11 @@ class AdvertisementModule(Personality_Bot):
         elif call.data == '70':
             self.ad_delete(True)
 
-        # Overall statistics
-        # elif call.data == '2':
-        #     self.send_error_message('This feature isn`t ready')
+        # Overall economics statistics
+        elif call.data == '2':
+            self.overall_economy_statistics()
+        elif call.data == '8':
+            self.overall_engagement_statistics()
 
         else:
             self.send_error_message('This feature isn`t ready')
