@@ -10,7 +10,7 @@ from Core.Api import ApiBase
 from Models.Authentication.Authentication import sponsor_role
 
 
-class SponsorApi:
+class AdvertisementApi:
 
     def __init__(self, sponsorId: int):
         self.user_id = sponsorId
