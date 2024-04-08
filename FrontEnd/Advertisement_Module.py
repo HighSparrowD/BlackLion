@@ -1,6 +1,7 @@
 import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, Message, CallbackQuery
 from Common.GraphMaker import graph_one_x
+from Common.Menues import go_back_to_main_menu
 
 from BaseModule import Personality_Bot
 from Core.Api.Advertisement.AdvertisementApi import AdvertisementApi
@@ -12,7 +13,11 @@ class AdvertisementModule(Personality_Bot):
 
         self.api_service = AdvertisementApi(self.current_user)
 
-        self.is_authenticated = self.api_service.authenticate_sponsor()
+        if not self.api_service.authenticate_sponsor():
+            go_back_to_main_menu(self.bot, self.current_user, self.message)
+            self.send_error_message('You are not authorized to use advertisement module :(')
+            del self
+            return
 
         self.current_callback_handler = self.bot.register_callback_query_handler(message, self.callback_handler, user_id=self.current_user)
 
@@ -45,18 +50,17 @@ class AdvertisementModule(Personality_Bot):
 
         self.goback_markup = InlineKeyboardMarkup([[InlineKeyboardButton("Go Back", callback_data='0')]])
 
-        if self.is_authenticated:
-            self.priorities_list = self.api_service.get_all_advertisement_priorities()
+        self.priorities_list = self.api_service.get_all_advertisement_priorities()
 
-            for priority in self.priorities_list:  # temporary solution
-                priority.name = priority.name.replace(' ', '')
+        for priority in self.priorities_list:  # temporary solution
+            priority.name = priority.name.replace(' ', '')
 
-            self.priority_markup = InlineKeyboardMarkup([[InlineKeyboardButton(self.priorities_list[0].name, callback_data=self.priorities_list[0].id)],
-                                                         [InlineKeyboardButton(self.priorities_list[1].name, callback_data=self.priorities_list[1].id)],
-                                                         [InlineKeyboardButton(self.priorities_list[2].name, callback_data=self.priorities_list[2].id)],
-                                                         [InlineKeyboardButton(self.priorities_list[3].name, callback_data=self.priorities_list[3].id)],
-                                                         [InlineKeyboardButton(self.priorities_list[4].name, callback_data=self.priorities_list[4].id)],
-                                                         [InlineKeyboardButton("Go Back", callback_data='0')]])
+        self.priority_markup = InlineKeyboardMarkup([[InlineKeyboardButton(self.priorities_list[0].name, callback_data=self.priorities_list[0].id)],
+                                                     [InlineKeyboardButton(self.priorities_list[1].name, callback_data=self.priorities_list[1].id)],
+                                                     [InlineKeyboardButton(self.priorities_list[2].name, callback_data=self.priorities_list[2].id)],
+                                                     [InlineKeyboardButton(self.priorities_list[3].name, callback_data=self.priorities_list[3].id)],
+                                                     [InlineKeyboardButton(self.priorities_list[4].name, callback_data=self.priorities_list[4].id)],
+                                                     [InlineKeyboardButton("Go Back", callback_data='0')]])
 
         self.checkout_markup = InlineKeyboardMarkup([[InlineKeyboardButton('Name', callback_data='105')],
                                                      [InlineKeyboardButton('Text', callback_data='106')],
@@ -87,12 +91,9 @@ class AdvertisementModule(Personality_Bot):
         self.start()
 
     def start(self):
-        if not self.is_authenticated:
-            self.send_active_message('You are not authorized to use this module :(', markup=self.goback_markup)
-        else:
-            self.send_active_message('What you want to see?', markup=self.main_menu_markup)
-            self.return_method = None
-            self.ads_calldata = False
+        self.send_active_message('What you want to see?', markup=self.main_menu_markup)
+        self.return_method = None
+        self.ads_calldata = False
 
     def show_my_ads(self, shouldInsert=None):
         self.ads_calldata = True
