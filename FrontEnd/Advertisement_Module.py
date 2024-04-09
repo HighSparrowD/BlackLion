@@ -398,12 +398,6 @@ class AdvertisementModule(Personality_Bot):
             self.ad_reg_steps.pop(0)
             previous_section(shouldInsert=False)
 
-    def destruct(self):
-        go_back_to_main_menu(self.bot, self.current_user, self.message)
-        if self.current_callback_handler:
-            self.bot.callback_query_handlers.remove(self.current_callback_handler)
-        del self
-
     def callback_handler(self, call: CallbackQuery):
         # Exit
         if call.data == '0':
@@ -488,3 +482,9 @@ class AdvertisementModule(Personality_Bot):
 
         else:
             self.send_error_message('This feature isn`t ready')
+
+    def destruct(self):
+        go_back_to_main_menu(self.bot, self.current_user, self.message)
+        if self.current_callback_handler:
+            self.bot.callback_query_handlers.remove(self.current_callback_handler)
+        del self
