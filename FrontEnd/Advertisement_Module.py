@@ -1,6 +1,7 @@
 import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, Message, CallbackQuery
 from Common.GraphMaker import graph_one_x
+from Common.Menues import go_back_to_main_menu
 
 from BaseModule import Personality_Bot
 from Core.Api.Advertisement.AdvertisementApi import AdvertisementApi
@@ -12,8 +13,10 @@ class AdvertisementModule(Personality_Bot):
 
         self.api_service = AdvertisementApi(self.current_user)
 
-        #TODO: Delete module and navigate user to the main menu if False
-        is_authenticated = self.api_service.authenticate_sponsor()
+        if not self.api_service.authenticate_sponsor():
+            self.send_error_message('You are not authorized to use advertisement module :(')
+            self.destruct()
+            return
 
         self.current_callback_handler = self.bot.register_callback_query_handler(message, self.callback_handler, user_id=self.current_user)
 
@@ -88,7 +91,7 @@ class AdvertisementModule(Personality_Bot):
 
     def start(self):
         self.send_active_message('What you want to see?', markup=self.main_menu_markup)
-        self.return_method = None
+        self.prev_func = None
         self.ads_calldata = False
 
     def show_my_ads(self, shouldInsert=None):
@@ -105,7 +108,7 @@ class AdvertisementModule(Personality_Bot):
 
         self.send_active_message("Your advertisements:", self.my_ads_markup, ['e'])
 
-        self.return_method = self.start
+        self.prev_func = self.start
 
     def ad_settings(self, ad_id: int = None):
         if ad_id:
@@ -115,10 +118,10 @@ class AdvertisementModule(Personality_Bot):
         self.send_active_message('Advertisement settings', markup=self.ad_settings_keyboard)
 
         self.ads_calldata = False
-        self.return_method = self.show_my_ads
+        self.prev_func = self.show_my_ads
 
     def ad_delete(self, acceptMode=False):
-        self.return_method = self.ad_settings
+        self.prev_func = self.ad_settings
         if not acceptMode:
             self.send_active_message('Are you sure, you want to delete this advertisement?', self.delete_markup, ['e'])
         else:
@@ -130,7 +133,7 @@ class AdvertisementModule(Personality_Bot):
                 self.send_error_message('Something went wrong\n\nCan not delete the ad')
 
     def economy_statistics(self):
-        self.return_method = self.ad_settings
+        self.prev_func = self.ad_settings
 
         statistics_list = self.api_service.get_advertisement_economy_monthly_statistics(self.current_user, self.ad_model.id)
 
@@ -150,7 +153,7 @@ class AdvertisementModule(Personality_Bot):
         self.send_active_message_with_photo('Economy statistics for your ad', graph, markup=self.goback_markup)
 
     def engagement_statistics(self):
-        self.return_method = self.ad_settings
+        self.prev_func = self.ad_settings
 
         statistics_list = self.api_service.get_advertisement_engagement_monthly_statistics(self.current_user, self.ad_model.id)
 
@@ -170,7 +173,7 @@ class AdvertisementModule(Personality_Bot):
         self.send_active_message_with_photo('Engagement statistics for your ad', graph, markup=self.goback_markup)
 
     def overall_economy_statistics(self):
-        self.return_method = self.start
+        self.prev_func = self.start
 
         statistics_list = self.api_service.get_overall_economy_monthly_statistics(self.current_user)
 
@@ -190,7 +193,7 @@ class AdvertisementModule(Personality_Bot):
         self.send_active_message_with_photo('Your overall economy statistics', graph, markup=self.goback_markup)
 
     def overall_engagement_statistics(self):
-        self.return_method = self.start
+        self.prev_func = self.start
 
         statistics_list = self.api_service.get_overall_engagement_monthly_statistics(self.current_user)
 
@@ -214,7 +217,7 @@ class AdvertisementModule(Personality_Bot):
 
         if not acceptMode:
             self.current_section = self.show_my_ads
-            self.return_method = self.prev_reg_step
+            self.prev_func = self.prev_reg_step
 
             self.configure_registration_step(self.name_step, shouldInsert)
 
@@ -351,8 +354,8 @@ class AdvertisementModule(Personality_Bot):
     def checkout_step(self, acceptMode=False, shouldInsert=True):
         if not acceptMode:
             self.editMode = True
-            if self.return_method != self.prev_reg_step:
-                self.return_method = self.prev_reg_step
+            if self.prev_func != self.prev_reg_step:
+                self.prev_func = self.prev_reg_step
 
             self.configure_registration_step(self.checkout_step, shouldInsert)
 
@@ -456,7 +459,7 @@ class AdvertisementModule(Personality_Bot):
 
         # Ad statistics choice
         elif call.data == '3':
-            self.return_method = self.show_my_ads
+            self.prev_func = self.show_my_ads
 
             self.send_active_message('What statistics of your ad you want to see?', markup=self.ad_statistics_markup)
 
@@ -479,3 +482,9 @@ class AdvertisementModule(Personality_Bot):
 
         else:
             self.send_error_message('This feature isn`t ready')
+
+    def destruct(self):
+        go_back_to_main_menu(self.bot, self.current_user, self.message)
+        if self.current_callback_handler:
+            self.bot.callback_query_handlers.remove(self.current_callback_handler)
+        del self

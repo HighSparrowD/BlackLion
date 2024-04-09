@@ -11,7 +11,7 @@ class Personality_Bot:
         self.hasVisited = hasVisited
         self.user_language = self.user_info.language
 
-        self.return_method = None
+        self.prev_func = None
 
         self.active_message = None
         self.secondary_message = None
@@ -134,11 +134,15 @@ class Personality_Bot:
         self.delete_error_message()
         self.delete_additional_message()
 
+    def destruct(self):
+        go_back_to_main_menu(self.bot, self.current_user, self.message)
+        if self.current_callback_handler:
+            self.bot.callback_query_handlers.remove(self.current_callback_handler)
+        del self
+
     def prev_menu(self, delete_msg: list[str] = None):  # returns you to previous menu (no matter is the menu in ad_module or in main)
         self.cleanup()
-        if self.return_method:
-            self.return_method()
+        if self.prev_func:
+            self.prev_func()
         else:
-            go_back_to_main_menu(self.bot, self.current_user, self.message)
-            self.bot.callback_query_handlers.remove(self.current_callback_handler)
-            del self
+            self.destruct()
