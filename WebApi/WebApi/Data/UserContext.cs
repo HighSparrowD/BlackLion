@@ -1,18 +1,18 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using WebApi.Main.Models.Achievement;
-using WebApi.Main.Models.Admin;
-using WebApi.Main.Models.Adventure;
-using WebApi.Main.Models.DailyReward;
-using WebApi.Main.Models.Effect;
-using WebApi.Main.Models.Hint;
-using WebApi.Main.Models.Language;
-using WebApi.Main.Models.Location;
-using WebApi.Main.Models.PromoCode;
-using WebApi.Main.Models.Report;
-using WebApi.Main.Models.Sponsor;
-using WebApi.Main.Models.Tag;
-using WebApi.Main.Models.Test;
-using WebApi.Main.Models.User;
+using WebApi.Main.Entities.Achievement;
+using WebApi.Main.Entities.Admin;
+using WebApi.Main.Entities.Adventure;
+using WebApi.Main.Entities.DailyReward;
+using WebApi.Main.Entities.Effect;
+using WebApi.Main.Entities.Hint;
+using WebApi.Main.Entities.Language;
+using WebApi.Main.Entities.Location;
+using WebApi.Main.Entities.PromoCode;
+using WebApi.Main.Entities.Report;
+using WebApi.Main.Entities.Sponsor;
+using WebApi.Main.Entities.Tag;
+using WebApi.Main.Entities.Test;
+using WebApi.Main.Entities.User;
 
 namespace WebApi.Data
 {

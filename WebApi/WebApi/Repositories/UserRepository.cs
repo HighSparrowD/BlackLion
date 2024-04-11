@@ -5,14 +5,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using WebApi.Main.Models.User;
-using WebApi.Main.Models.Location;
-using WebApi.Main.Models.Report;
-using WebApi.Main.Models.Achievement;
-using WebApi.Main.Models.Admin;
-using WebApi.Main.Models.PromoCode;
-using WebApi.Main.Models.Adventure;
-using WebApi.Main.Models.Tag;
+using WebApi.Main.Entities.User;
+using WebApi.Main.Entities.Location;
+using WebApi.Main.Entities.Achievement;
+using WebApi.Main.Entities.Admin;
+using WebApi.Main.Entities.PromoCode;
+using WebApi.Main.Entities.Adventure;
+using WebApi.Main.Entities.Tag;
 using WebApi.Models.User;
 using WebApi.Models.Models.Test;
 using WebApi.Models.Models.User;
@@ -29,17 +28,17 @@ using WebApi.Enums.Enums.Hint;
 using WebApi.Models.Models.Achievement;
 using WebApi.Models.App_GlobalResources;
 using WebApi.Interfaces;
-using entities = WebApi.Main.Models;
+using entities = WebApi.Main.Entities;
 using models = WebApi.Models.Models;
 using WebApi.Enums.Enums.Authentication;
 
 namespace WebApi.Repositories
 {
-    public class SystemUserRepository : IUserRepository
+    public class UserRepository : IUserRepository
     {
         private UserContext _contx { get; set; }
 
-        public SystemUserRepository(UserContext context)
+        public UserRepository(UserContext context)
         {
             _contx = context;
         }
@@ -50,7 +49,7 @@ namespace WebApi.Repositories
             var city = "---";
 
             Location location = null;
-            var user = new Main.Models.User.User(model.Id);
+            var user = new Main.Entities.User.User(model.Id);
             user.EnteredPromoCodes = model.Promo;
 
             if (model.CityCode != null && model.CountryCode != null)
@@ -72,7 +71,7 @@ namespace WebApi.Repositories
                 location = new Location { Id = model.Id };
             }
 
-            var uData = new Main.Models.User.UserData
+            var uData = new Main.Entities.User.UserData
             {
                 Id = model.Id,
                 UserLanguages = model.Languages,
@@ -88,15 +87,15 @@ namespace WebApi.Repositories
                 CommunicationPrefs = model.CommunicationPrefs,
                 LanguagePreferences = model.LanguagePreferences,
                 LocationPreferences = model.UserLocationPreferences,
-                UserName = model.UserName,
                 UserRawDescription = model.Description,
                 UserRealName = model.RealName,
             };
 
-            var uSettings = new Main.Models.User.Settings(model.Id, model.UsesOcean);
+            var uSettings = new Main.Entities.User.Settings(model.Id, model.UsesOcean);
             var uStats = new Statistics(model.Id);
 
             user.LocationId = location.Id;
+            user.UserName = model.UserName;
 
             await _contx.Users.AddAsync(user);
             await _contx.UserData.AddAsync(uData);
@@ -122,8 +121,8 @@ namespace WebApi.Repositories
 
             if (model.UsesOcean)
             {
-                var oceanStats = new Main.Models.User.OceanStats(model.Id);
-                var oceanPoints = new Main.Models.User.OceanPoints(model.Id);
+                var oceanStats = new Main.Entities.User.OceanStats(model.Id);
+                var oceanPoints = new Main.Entities.User.OceanPoints(model.Id);
 
                 await _contx.OceanPoints.AddAsync(oceanPoints);
                 await _contx.OceanStats.AddAsync(oceanStats);
@@ -240,35 +239,12 @@ namespace WebApi.Repositories
                         Name = t.Text,
                     }).ToListAsync();
 
-            return await _contx.Users.Where(u => u.Id == id).Select(u => new UserInfo
-            {
-               Id = u.Data.Id,
-               Username = u.Data.UserName,
-               AgePrefs = u.Data.AgePrefs,
-               Text = u.Data.AutoReplyText,
-               Voice = u.Data.AutoReplyVoice,
-               Age = u.Data.UserAge,
-               Description = u.Data.UserDescription,
-               RawDescription = u.Data.UserRawDescription,
-               CommunicationPrefs = u.Data.CommunicationPrefs,
-               Language = u.Data.Language,
-               LanguagePreferences = u.Data.LanguagePreferences,
-               LocationPreferences = u.Data.LocationPreferences,
-               MediaType = u.Data.MediaType,
-               Tags = string.Join(", ", userTags),
-               Media = u.Data.UserMedia,
-               Reason = u.Data.Reason,
-               Gender = u.Data.UserGender,
-               GenderPrefs = u.Data.UserGenderPrefs,
-               Languages = u.Data.UserLanguages,
-               RealName = u.Data.UserRealName,
-               City = u.Location.CityId,
-               Country = u.Location.CountryId,
-               CityLang = u.Data.Language,
-               CountryLang = u.Data.Language,
-               IdentityType = u.IdentityType,
-               HasPremium = u.PremiumExpirationDate != null
-            }).FirstOrDefaultAsync();
+            var userInfo = await _contx.Users.Where(u => u.Id == id).Select(u => (UserInfo)u)
+                .FirstOrDefaultAsync();
+
+            userInfo.Tags = string.Join(", ", userTags);
+
+            return userInfo;
         }
 
         public async Task<GetUserSettings> GetUserSettingsAsync(long id)
@@ -568,7 +544,7 @@ namespace WebApi.Repositories
 
         public async Task<long> AddFeedbackAsync(AddFeedback request)
         {
-            var feedback = new Feedback
+            var feedback = new entities.Report.Feedback
             {
                 UserId = request.UserId,
                 Reason = request.Reason,
@@ -626,124 +602,76 @@ namespace WebApi.Repositories
             return false;
         }
 
-        public async Task<Models.Models.User.User> GetUserInfoByUsrnameAsync(string username)
+        public async Task AddUserReportAsync(SendUserReport request)
         {
-            return await _contx.Users
-                .Where(u => u.Data.UserName == username)
-                .Include(s => s.Data)
-                .Include(s => s.Location)
+            var reportedUser = await _contx.Users.Where(u => u.Id == request.ReportedUser)
                 .FirstOrDefaultAsync();
+
+            reportedUser.ReportCount++;
+
+            if (reportedUser.ReportCount == 1)
+                await GrantAchievementAsync(reportedUser.Id, 22);
+
+            //Ban user if dailly report count is too high
+            if (reportedUser.ReportCount >= 5)
+                reportedUser.BanDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
+
+            var report = new entities.Report.Report
+            {
+                SenderId = request.Sender,
+                UserId = request.ReportedUser,
+                Text = request.Text,
+                Reason = request.Reason,
+                InsertedUtc = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc)
+            };
+
+            await _contx.UserReports.AddAsync(report);
+
+            await _contx.SaveChangesAsync();
         }
 
-        public async Task<List<Feedback>> GetMostRecentFeedbacks()
+        public async Task AddAdventureReportAsync(SendAdventureReport request)
         {
-            var pointInTime = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(-2), DateTimeKind.Utc);
-            return await _contx.Feedbacks
-                .Where(f => f.InsertedUtc >= pointInTime)
-                .Include(f => f.User)
-                .ToListAsync();
-        }
-
-        public async Task<List<Feedback>> GetMostRecentFeedbacksByUserId(long userId)
-        {
-            var pointInTime = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(-2), DateTimeKind.Utc);
-            return await _contx.Feedbacks
-                .Where(f => f.InsertedUtc >= pointInTime && f.UserId == userId)
-                .Include(f => f.User)
-                .Include(f => f.Reason)
-                .ToListAsync();
-        }
-
-        public async Task<Feedback> GetFeedbackById(long id)
-        {
-            return await _contx.Feedbacks
-                .Where(f => f.Id == id)
-                .Include(f => f.User)
-                .Include(f => f.Reason)
+            var reportedUser = await _contx.Adventures.Where(u => u.Id == request.Adventure)
+                .Select(a => a.Creator)
                 .FirstOrDefaultAsync();
-        }
 
-        public async Task<long> AddUserReportAsync(SendUserReport request)
-        {
-            try
+            reportedUser.ReportCount++;
+
+            //Ban user if dailly report count is too high
+            if (reportedUser.ReportCount >= 5)
+                reportedUser.BanDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
+
+            var report = new entities.Report.Report
             {
-                var reportedUser = await _contx.Users.Where(u => u.Id == request.ReportedUser)
-                    .FirstOrDefaultAsync();
+                SenderId = request.Sender,
+                AdventureId = request.Adventure,
+                Text = request.Text,
+                Reason = request.Reason,
+                InsertedUtc = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc)
+            };
 
-                reportedUser.ReportCount++;
+            await _contx.UserReports.AddAsync(report);
 
-                if (reportedUser.ReportCount == 1)
-                    await GrantAchievementAsync(reportedUser.Id, 22);
+            await _contx.SaveChangesAsync();
+    }
 
-                //Ban user if dailly report count is too high
-                if (reportedUser.ReportCount >= 5)
-                    reportedUser.BanDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
-
-                var report = new Report
-                {
-                    SenderId = request.Sender,
-                    UserId = request.ReportedUser,
-                    Text = request.Text,
-                    Reason = request.Reason,
-                    InsertedUtc = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc)
-                };
-
-                await _contx.UserReports.AddAsync(report);
-
-                await _contx.SaveChangesAsync();
-
-                return report.Id;
-            }
-            catch {return 0;}
-        }
-
-        public async Task<long> AddAdventureReportAsync(SendAdventureReport request)
+        public async Task<List<entities.Report.Report>> GetMostRecentReports()
         {
-            try
-            {
-                var reportedUser = await _contx.Adventures.Where(u => u.Id == request.Adventure)
-                    .Select(a => a.Creator)
-                    .FirstOrDefaultAsync();
-
-                reportedUser.ReportCount++;
-
-                //Ban user if dailly report count is too high
-                if (reportedUser.ReportCount >= 5)
-                    reportedUser.BanDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
-
-                var report = new Report
-                {
-                    SenderId = request.Sender,
-                    AdventureId = request.Adventure,
-                    Text = request.Text,
-                    Reason = request.Reason,
-                    InsertedUtc = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc)
-                };
-
-                await _contx.UserReports.AddAsync(report);
-
-                await _contx.SaveChangesAsync();
-
-                return report.Id;
-            }
-            catch { return 0; }
+            var reports = await _contx.UserReports.Where(ur => ur.AdminId == null)
+                .ToListAsync();
+            
+            return reports;
         }
 
-        public async Task<List<Report>> GetMostRecentReports()
+        public async Task<entities.Report.Report> GetUserReportByIdAsync(long id)
         {
-            var pointInTime = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(-1), DateTimeKind.Utc);
-            return await _contx.UserReports.Where(r => r.InsertedUtc > pointInTime).ToListAsync();
+            var reports = await _contx.UserReports.Where(r => r.Id == id)
+                .FirstOrDefaultAsync();
+            return reports;
         }
 
-        public async Task<Report> GetSingleUserReportByIdAsync(long id)
-        {
-            return await _contx.UserReports.Where(r => r.Id == id)
-                .Include(r => r.User)
-                .Include(r => r.Sender)
-                .SingleOrDefaultAsync();
-        }
-
-        public async Task<List<Report>> GetAllReportsOnUserAsync(long userId)
+        public async Task<List<entities.Report.Report>> GetAllReportsOnUserAsync(long userId)
         {
             return await _contx.UserReports.Where(r => r.UserId == userId).ToListAsync();
         }
@@ -788,11 +716,12 @@ namespace WebApi.Repositories
             return false;
         }
 
-        public async Task<List<Report>> GetAllUserReportsAsync(long userId)
+        public async Task<List<entities.Report.Report>> GetAllUserReportsBySenderAsync(long userId)
         {
-            return await _contx.UserReports.Where(u => u.SenderId == userId)
-                .Include(r => r.User)
+            var reports = await _contx.UserReports.Where(u => u.SenderId == userId)
                 .ToListAsync();
+
+            return reports;
         }
 
         public async Task<byte> BanUserAsync(long userId)
@@ -1002,8 +931,8 @@ namespace WebApi.Repositories
 
                         if (result)
                         {
-                            await RegisterUserEncounter(new Main.Models.User.RegisterEncounter { UserId = user1, EncounteredUserId = user2, Section = Section.RT });
-                            await RegisterUserEncounter(new Main.Models.User.RegisterEncounter { UserId = user2, EncounteredUserId = user1, Section = Section.RT });
+                            await RegisterUserEncounter(new Main.Entities.User.RegisterEncounter { UserId = user1, EncounteredUserId = user2, Section = Section.RT });
+                            await RegisterUserEncounter(new Main.Entities.User.RegisterEncounter { UserId = user2, EncounteredUserId = user1, Section = Section.RT });
                         }
 
                         return result;
@@ -1018,8 +947,8 @@ namespace WebApi.Repositories
 
                         if (result)
                         {
-                            await RegisterUserEncounter(new Main.Models.User.RegisterEncounter { UserId = user1, EncounteredUserId = user2, Section = Section.RT});
-                            await RegisterUserEncounter(new Main.Models.User.RegisterEncounter { UserId = user2, EncounteredUserId = user1, Section = Section.RT });
+                            await RegisterUserEncounter(new Main.Entities.User.RegisterEncounter { UserId = user1, EncounteredUserId = user2, Section = Section.RT});
+                            await RegisterUserEncounter(new Main.Entities.User.RegisterEncounter { UserId = user2, EncounteredUserId = user1, Section = Section.RT });
                         }
 
                         return result;
@@ -1034,8 +963,8 @@ namespace WebApi.Repositories
 
                         if (result)
                         {
-                            await RegisterUserEncounter(new Main.Models.User.RegisterEncounter { UserId = user1, EncounteredUserId = user2, Section = Section.RT});
-                            await RegisterUserEncounter(new Main.Models.User.RegisterEncounter { UserId = user2, EncounteredUserId = user1, Section = Section.RT });
+                            await RegisterUserEncounter(new Main.Entities.User.RegisterEncounter { UserId = user1, EncounteredUserId = user2, Section = Section.RT});
+                            await RegisterUserEncounter(new Main.Entities.User.RegisterEncounter { UserId = user2, EncounteredUserId = user1, Section = Section.RT });
                         }
 
                         return result;
@@ -1044,8 +973,8 @@ namespace WebApi.Repositories
                     await AddUserTrustProgressAsync(user1, 0.000005 * (double)userInfo1.BonusIndex);
                     await AddUserTrustProgressAsync(user2, 0.000005 * (double)userInfo2.BonusIndex);
 
-                    await RegisterUserEncounter(new Main.Models.User.RegisterEncounter { UserId = user1, EncounteredUserId = user2, Section = Section.RT });
-                    await RegisterUserEncounter(new Main.Models.User.RegisterEncounter { UserId = user2, EncounteredUserId = user1, Section = Section.RT });
+                    await RegisterUserEncounter(new Main.Entities.User.RegisterEncounter { UserId = user1, EncounteredUserId = user2, Section = Section.RT });
+                    await RegisterUserEncounter(new Main.Entities.User.RegisterEncounter { UserId = user2, EncounteredUserId = user1, Section = Section.RT });
 
                     //If neither considers having the same languages
                     return true;
@@ -1277,7 +1206,7 @@ namespace WebApi.Repositories
             return user.PremiumExpirationDate.Value;
         }
 
-        private async Task<Main.Models.User.User> GetUserWithPremium(long userId, DateTime timeNow)
+        private async Task<Main.Entities.User.User> GetUserWithPremium(long userId, DateTime timeNow)
         {
             return await _contx.Users
                 .Where(u => u.Id == userId && u.PremiumExpirationDate > timeNow)
@@ -1537,7 +1466,7 @@ namespace WebApi.Repositories
             notification.Section = Section.Familiator;
 
 
-            await RegisterUserEncounter(new Main.Models.User.RegisterEncounter { UserId = (long)model.SenderId, EncounteredUserId = model.UserId, Section = Section.Familiator});
+            await RegisterUserEncounter(new Main.Entities.User.RegisterEncounter { UserId = (long)model.SenderId, EncounteredUserId = model.UserId, Section = Section.Familiator});
 
 
             //Register request
@@ -1657,7 +1586,7 @@ namespace WebApi.Repositories
             var doesExist = await _contx.Requests.AnyAsync(r => r.UserId == user && r.SenderId == encounteredUser);
 
             //Encounter is not registered anywhere but here in that case
-            await RegisterUserEncounter(new Main.Models.User.RegisterEncounter
+            await RegisterUserEncounter(new Main.Entities.User.RegisterEncounter
 			{
                 UserId = user,
                 EncounteredUserId = encounteredUser,
@@ -1762,7 +1691,7 @@ namespace WebApi.Repositories
 
             if (new Random().Next(0, 2) == 0)
             {
-                var senderUserName = await _contx.UserData.Where(d => d.Id == userId)
+                var senderUserName = await _contx.Users.Where(d => d.Id == userId)
                     .AsNoTracking()
                     .Select(d => d.UserName)
                     .FirstOrDefaultAsync();
@@ -1781,7 +1710,7 @@ namespace WebApi.Repositories
             }
             else
             {
-                var receiverUserName = await _contx.UserData
+                var receiverUserName = await _contx.Users
                     .Where(d => d.Id == requesSenderId)
                     .AsNoTracking()
                     .Select(d => d.UserName)
@@ -1936,7 +1865,7 @@ namespace WebApi.Repositories
             await _contx.Database.ExecuteSqlRawAsync(sql);
         }
 
-        public async Task RegisterUserEncounter(Main.Models.User.RegisterEncounter model)
+        public async Task RegisterUserEncounter(Main.Entities.User.RegisterEncounter model)
         {
             var user = await _contx.Users.FindAsync(model.UserId);
 
@@ -2621,7 +2550,7 @@ namespace WebApi.Repositories
             //Create user stats if they werent created before
             if (userStats == null)
             {
-                userStats = new Main.Models.User.OceanStats(model.UserId);
+                userStats = new Main.Entities.User.OceanStats(model.UserId);
                 await _contx.OceanStats.AddAsync(userStats);
                 await _contx.SaveChangesAsync();
             }
@@ -2731,7 +2660,7 @@ namespace WebApi.Repositories
                     //Add ocean stats, if they were not created when user was registered
                     if (oceanStats == null)
                     {
-                        oceanStats = new Main.Models.User.OceanStats(userId);
+                        oceanStats = new Main.Entities.User.OceanStats(userId);
                         await _contx.OceanStats.AddAsync(oceanStats);
                         await _contx.SaveChangesAsync();
                     }
@@ -3089,7 +3018,7 @@ namespace WebApi.Repositories
                                 if (userBalance.Valentines > 0)
                                 {
                                     userBalance.Valentines--;
-                                    effect = new Main.Models.Effect.TheValentine(userId);
+                                    effect = new Main.Entities.Effect.TheValentine(userId);
                                     break;
                                 }
                                 return null;
@@ -3106,7 +3035,7 @@ namespace WebApi.Repositories
                         if (userBalance.Detectors > 0)
                         {
                             userBalance.Detectors--;
-                            effect = new Main.Models.Effect.TheDetector(userId);
+                            effect = new Main.Entities.Effect.TheDetector(userId);
                             break;
                         }
                         return null;
@@ -3187,7 +3116,7 @@ namespace WebApi.Repositories
             catch { return false; }
         }
 
-        private bool AtLeastOneIsNotZero(Main.Models.User.OceanPoints points)
+        private bool AtLeastOneIsNotZero(Main.Entities.User.OceanPoints points)
         {
             return points.Agreeableness > 0 ||
                 points.Conscientiousness > 0 ||
@@ -3199,7 +3128,7 @@ namespace WebApi.Repositories
         {
             try
             {
-                var effectsToRemove = new List<Main.Models.Effect.ActiveEffect>();
+                var effectsToRemove = new List<Main.Entities.Effect.ActiveEffect>();
                 var effectsToReturn = new List<GetActiveEffect>();
                 var activeEffects = await _contx.ActiveEffects
                     .Where(e => e.UserId == userId)
@@ -3416,7 +3345,7 @@ namespace WebApi.Repositories
             if (currency == Currency.Points)
                 balance.Points -= cost;
 
-            await _contx.UserTests.AddAsync(new Main.Models.User.UserTest
+            await _contx.UserTests.AddAsync(new Main.Entities.User.UserTest
             {
                 UserId = userId,
                 TestId = testId,
@@ -3513,7 +3442,7 @@ namespace WebApi.Repositories
 
             if (stats == null)
             {
-                stats = new Main.Models.User.OceanStats(userId);
+                stats = new Main.Entities.User.OceanStats(userId);
                 await _contx.AddAsync(stats);
             }
 
@@ -3913,7 +3842,7 @@ namespace WebApi.Repositories
             //if (existingAttendee != null)
             //    return ParticipationRequestStatus.AlreadyParticipating;
 
-            var userName = await _contx.UserData.Where(u => u.Id == userId)
+            var userName = await _contx.Users.Where(u => u.Id == userId)
                 .Select(u => u.UserName)
                 .FirstOrDefaultAsync();
 
@@ -3984,7 +3913,7 @@ namespace WebApi.Repositories
                 throw new NullReferenceException($"No attendee with id #{userId} had been subscribed to adventure {adventureId}");
 
             var adventure = await _contx.Adventures.Where(a => a.Id == adventureId)
-                .Include(a => a.Creator).ThenInclude(u => u.Data)
+                .Include(a => a.Creator)
                 .FirstOrDefaultAsync();
 
             attendee.Status = status;
@@ -3992,7 +3921,7 @@ namespace WebApi.Repositories
             if (status == AdventureAttendeeStatus.Accepted)
             {
                 var contact = string.IsNullOrEmpty(adventure.GroupLink) ? 
-                    $"You may contact its creator @{adventure.Creator.Data.UserName} and discuss details" : 
+                    $"You may contact its creator @{adventure.Creator.UserName} and discuss details" : 
                     $"You may join creator's group via this link\n{adventure.GroupLink}" ;
 
                 await AddUserNotificationAsync(new UserNotification
@@ -4195,7 +4124,7 @@ namespace WebApi.Repositories
                 .Select(u => new BasicUserInfo
                 {
                     Id = u.Id,
-                    Username = u.Data.UserName,
+                    Username = u.UserName,
                     UserRealName = u.Data.UserRealName,
                     HasPremium = u.PremiumExpirationDate != null,
                     IsBanned = u.BanDate != null,
@@ -4563,7 +4492,7 @@ namespace WebApi.Repositories
                         .Where(t => t.MatchDifference)
                         .OrderByDescending(t => t.MatchDifference)
                         .Take(2)
-                        .Select(t => new Main.Models.Tag.TagRelative(t.TagId, t.TagType))
+                        .Select(t => new Main.Entities.Tag.TagRelative(t.TagId, t.TagType))
                         .ToListAsync();
 
                     var newTag = new Tag(tag, type);
@@ -4585,7 +4514,7 @@ namespace WebApi.Repositories
         // TODO: Finish up
         public async Task ProcessInterestsDataAsync(QuestionerPayload model)
         {
-            var userId = await _contx.UserData.Where(u => u.UserName == model.Username)
+            var userId = await _contx.Users.Where(u => u.UserName == model.Username)
                 .Select(u => u.Id)
                 .FirstOrDefaultAsync();
 
@@ -4643,6 +4572,58 @@ namespace WebApi.Repositories
                 .AsNoTracking()
                 .Select(ur => ur.Role)
                 .ToListAsync();
+        }
+
+        public async Task<List<entities.Report.Feedback>> GetAllFeedbackAsync()
+        {
+            var feedbacks = await _contx.Feedbacks
+                .Include(u => u.User)
+                .ToListAsync();
+
+            return feedbacks;
+        }
+
+        public async Task<List<entities.Report.Feedback>> GetRecentFeedbackAsync()
+        {
+            var feedbacks = await _contx.Feedbacks.Where(f => f.AdminId == null)
+                .ToListAsync();
+
+            return feedbacks;
+        }
+
+        public async Task<List<entities.Report.Report>> GetRecentReportsAsync()
+        {
+            var reports = await _contx.UserReports.Where(r => r.AdminId == null)
+                .ToListAsync();
+
+            return reports;
+        }
+
+        public async Task<TickRequest> GetTickRequestAsync()
+        {
+            //if (requestId != null)
+            //{
+            //    //Returns only new, aborted, failed or changed requests
+            //    return await _contx.TickRequests.Where(r => r.Id == requestId && (r.State == TickRequestStatus.Added
+            //    || r.State == TickRequestStatus.Changed
+            //    || r.State == TickRequestStatus.Aborted
+            //    || r.State == TickRequestStatus.Failed))
+            //        .Include(r => r.User)
+            //        .SingleOrDefaultAsync();
+            //}
+
+            //Return any request if id wasnt supplied. (Method is used on the frontend)
+            var request = await _contx.TickRequests.Where(r => r.State == TickRequestStatus.Added || r.State == TickRequestStatus.Changed || r.State == TickRequestStatus.Aborted)
+                .Include(r => r.User)
+                .FirstOrDefaultAsync();
+
+            if (request != null)
+            {
+                request.State = TickRequestStatus.InProcess;
+                await _contx.SaveChangesAsync();
+            }
+
+            return request;
         }
     }
 }

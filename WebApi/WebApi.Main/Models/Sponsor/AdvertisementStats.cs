@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using models = WebApi.Models.Models.Sponsor;
 
 #nullable enable
-namespace WebApi.Main.Models.Sponsor
+namespace WebApi.Main.Entities.Sponsor
 {
     public class AdvertisementStats
     {

@@ -5,42 +5,72 @@ using WebApi.Models.Models.User;
 using models = WebApi.Models.Models.User;
 #nullable enable
 
-namespace WebApi.Main.Models.User;
+namespace WebApi.Main.Entities.User;
 
 public class User
 {
     [Key]
     public long Id { get; set; }
+
+    public string? UserName { get; set; }
+
     [ForeignKey("Data")]
     public long DataId { get; set; }
+
     [ForeignKey("Settings")]
     public long SettingsId { get; set; }
+
     [ForeignKey("Location")]
     public long LocationId { get; set; }
+
     public bool IsBusy { get; set; }
+
     public DateTime? BanDate { get; set; }
+
     public DateTime? DeleteDate { get; set; }
+
     public DateTime? PremiumExpirationDate { get; set; }
+
     public bool HadReceivedReward { get; set; }
+
     public short? PremiumDuration { get; set; }
+
     public IdentityConfirmationType IdentityType { get; set; }
+
     public bool ShouldEnhance { get; set; }
+
     public short ReportCount { get; set; } // How many times this user was reported today
+
     public short DailyRewardPoint { get; set; }
+
     public float BonusIndex { get; set; }
+
     public int InvitedUsersCount { get; set; }
+
     public float InvitedUsersBonus { get; set; }
+
     public string? Nickname { get; set; }
+
     public long? ParentId { get; set; }
+
     public int ProfileViewsCount { get; set; }
+
     public int RTViewsCount { get; set; }
+
     public int AdventureSearchCount { get; set; }
+
     public int MaxProfileViewsCount { get; set; }
+
     public int MaxRTViewsCount { get; set; }
+
     public int MaxTagSearchCount { get; set; }
+
     public int MaxAdventureSearchCount { get; set; }
+
     public int TagSearchesCount { get; set; }
+
     public string? EnteredPromoCodes { get; set; }
+
     public bool IsUpdated { get; set; }
     
     public bool IsDecoy { get; set; }
@@ -114,6 +144,7 @@ public class User
         return new User
         {
             Id = user.Id,
+            UserName = user.UserName,
             DataId = user.DataId,
             SettingsId = user.SettingsId,
             Data = (UserData?)user.Data,
@@ -159,6 +190,7 @@ public class User
         return new models.User
         {
             Id = user.Id,
+            UserName = user.UserName,
             DataId = user.DataId,
             SettingsId = user.SettingsId,
             Data = (models.UserData?)user.Data,
@@ -193,6 +225,41 @@ public class User
             ShouldEnhance = user.ShouldEnhance,
             IsAdmin = user.IsAdmin,
             IsSponsor = user.IsSponsor
+        };
+    }
+
+    public static implicit operator models.UserInfo?(User user)
+    {
+        if (user == null || user.Data == null || user.Location == null)
+            return null;
+
+        return new UserInfo
+        {
+            Id = user.Data.Id,
+            Username = user.UserName,
+            AgePrefs = user.Data.AgePrefs,
+            Text = user.Data.AutoReplyText,
+            Voice = user.Data.AutoReplyVoice,
+            Age = user.Data.UserAge,
+            Description = user.Data.UserDescription,
+            RawDescription = user.Data.UserRawDescription,
+            CommunicationPrefs = user.Data.CommunicationPrefs,
+            Language = user.Data.Language,
+            LanguagePreferences = user.Data.LanguagePreferences,
+            LocationPreferences = user.Data.LocationPreferences,
+            MediaType = user.Data.MediaType,
+            Media = user.Data.UserMedia,
+            Reason = user.Data.Reason,
+            Gender = user.Data.UserGender,
+            GenderPrefs = user.Data.UserGenderPrefs,
+            Languages = user.Data.UserLanguages,
+            RealName = user.Data.UserRealName,
+            City = user.Location.CityId,
+            Country = user.Location.CountryId,
+            CityLang = user.Data.Language,
+            CountryLang = user.Data.Language,
+            IdentityType = user.IdentityType,
+            HasPremium = user.PremiumExpirationDate != null
         };
     }
 }

@@ -1,11 +1,11 @@
 ﻿using System.Threading.Tasks;
 using System.Collections.Generic;
 using System;
-using WebApi.Main.Models.User;
-using WebApi.Main.Models.Achievement;
-using WebApi.Main.Models.Report;
-using WebApi.Main.Models.Location;
-using RegisterEncounter = WebApi.Main.Models.User.RegisterEncounter;
+using WebApi.Main.Entities.User;
+using WebApi.Main.Entities.Achievement;
+using WebApi.Main.Entities.Report;
+using WebApi.Main.Entities.Location;
+using RegisterEncounter = WebApi.Main.Entities.User.RegisterEncounter;
 using WebApi.Models.Models.Test;
 using WebApi.Models.Models.User;
 using WebApi.Enums.Enums.Tag;
@@ -18,6 +18,7 @@ using WebApi.Models.Models.Adventure;
 using WebApi.Enums.Enums.Adventure;
 using WebApi.Enums.Enums.Notification;
 using WebApi.Enums.Enums.Authentication;
+using entities = WebApi.Main.Entities;
 
 namespace WebApi.Interfaces
 {
@@ -45,7 +46,6 @@ namespace WebApi.Interfaces
         Task<string> AnswerUserRequestAsync(long rquestId, RequestAnswer reaction);
         Task<byte> DeleteUserRequests(long userId);
         Task DeleteUserRequest(long requestId);
-        Task<Models.Models.User.User> GetUserInfoByUsrnameAsync(string username);
         Task<BasicUserInfo> GetUserBasicInfo(long userId);
         Task<UserPartialData> GetUserPartialData(long userId);
         Task<byte> UpdateUserAppLanguageAsync(long userId, AppLanguage appLanguage);
@@ -57,16 +57,9 @@ namespace WebApi.Interfaces
         Task<Country> GetCountryAsync(long id);
         //Task<List<ReportReason>> GetReportReasonsAsync(int localisationId);
         Task<long> AddFeedbackAsync(AddFeedback report);
-        Task<long> AddUserReportAsync(SendUserReport report);
-        Task<long> AddAdventureReportAsync(SendAdventureReport report);
-        Task<List<Report>> GetMostRecentReports();
-        Task<Report> GetSingleUserReportByIdAsync(long id);
-        Task<List<Report>> GetAllReportsOnUserAsync(long userId);
-        Task<List<Report>> GetAllUserReportsAsync(long userId);
-        Task<List<Feedback>> GetMostRecentFeedbacks();
-        Task<Feedback> GetFeedbackById(long id);
+        Task AddUserReportAsync(SendUserReport report);
+        Task AddAdventureReportAsync(SendAdventureReport report);
         List<GetLocalizedEnum> GetGenders();
-        Task<List<Feedback>> GetMostRecentFeedbacksByUserId(long userId);
         Task<bool> AddUserToBlackListAsync(long userId, long bannedUserId);
         Task<bool> RemoveUserFromBlackListAsync(long userId, long bannedUserId);
         Task<List<BlackList>> GetBlackList (long userId);
@@ -199,5 +192,13 @@ namespace WebApi.Interfaces
         Task ProcessInterestsDataAsync(QuestionerPayload model);
         Task SetUserStoryAsync(SetStory model);
         Task RemoveUserStoryAsync(long userId);
+
+        Task<List<entities.Report.Feedback>> GetAllFeedbackAsync();
+
+        Task<List<entities.Report.Feedback>> GetRecentFeedbackAsync();
+
+        Task<List<entities.Report.Report>> GetRecentReportsAsync();
+
+        Task<entities.Admin.TickRequest> GetTickRequestAsync();
     }
 }

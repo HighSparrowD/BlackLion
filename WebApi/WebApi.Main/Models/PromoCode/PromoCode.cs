@@ -1,4 +1,4 @@
-﻿namespace WebApi.Main.Models.PromoCode;
+﻿namespace WebApi.Main.Entities.PromoCode;
 
 public class PromoCode
 {

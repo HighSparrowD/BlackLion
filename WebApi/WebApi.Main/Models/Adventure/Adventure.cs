@@ -3,11 +3,11 @@ using System.ComponentModel.DataAnnotations.Schema;
 using WebApi.Enums.Enums.Adventure;
 using WebApi.Enums.Enums.General;
 using WebApi.Enums.Enums.Media;
-using WebApi.Main.Models.Location;
+using WebApi.Main.Entities.Location;
 using models = WebApi.Models.Models.Adventure;
 
 #nullable enable
-namespace WebApi.Main.Models.Adventure;
+namespace WebApi.Main.Entities.Adventure;
 
 public class Adventure
 {

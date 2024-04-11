@@ -1,7 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 using WebApi.Enums.Enums.General;
 
-namespace WebApi.Main.Models.Admin;
+namespace WebApi.Main.Entities.Admin;
 
 public class UploadAchievement
 {

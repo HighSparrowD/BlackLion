@@ -4,14 +4,16 @@ using WebApi.Entities.TestEntities;
 using WebApi.Interfaces;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using WebApi.Main.Models.Report;
-using WebApi.Main.Models.Admin;
+using WebApi.Main.Entities.Admin;
 using WebApi.Models.Models.Admin;
 using WebApi.Models.Models.User;
 using System;
 using Microsoft.AspNetCore.Authorization;
 using WebApi.Interfaces.Services;
 using WebApi.Models.Models.Identity.Attributes.Machine;
+using WebApi.Models.Models.Identity.Attributes.Admin;
+using models = WebApi.Models.Models;
+using WebApi.Models.Models.Report;
 
 namespace WebApi.Controllers
 {
@@ -58,41 +60,16 @@ namespace WebApi.Controllers
             return await _repository.UploadLanguages(langs);
         }
 
-        [HttpGet("/GetFeedbacks")]
-        [Authorize()]
-        public async Task<List<Feedback>> GetFeedbacks()
-        {
-            return await _repository.GetFeedbacks();
-        }
-
         [HttpGet("/DeleteAllUsersForever")]
         public async Task<int> DeleteAllUsers()
         {
             return await _repository.DeleteAllUsers();
         }
 
-        [HttpGet("/user-info-by-username/{username}")]
-        public async Task<ActionResult<User>> GetUserInfoByUsername([FromServices] IUserRepository userRepo, [FromRoute] string username)
-        {
-            return Ok(await userRepo.GetUserInfoByUsrnameAsync(username));
-        }
-
         [HttpPost("/upload-achievements")]
         public async Task AddNewAchievements([FromBody] List<UploadAchievement> achievements)
         {
             await _repository.AddAchievementsAsync(achievements);
-        }
-
-        [HttpGet("/GetTickRequests")]
-        public async Task<List<TickRequest>> GetTickRequests()
-        {
-            return await _repository.GetTickRequestsAsync();
-        }
-
-        [HttpGet("/GetTickRequest/{id?}")]
-        public async Task<TickRequest> GetTickRequest(long? id = null)
-        {
-            return await _repository.GetTickRequestAsync(id);
         }
 
         [HttpPost("/ResolveTickRequest")]
@@ -166,6 +143,42 @@ namespace WebApi.Controllers
                 }
                 catch { }
             }
+        }
+
+        [HttpGet("feedbacks/all")]
+        //[RequiresAdminOrCreator]
+        public async Task<ActionResult<Feedback>> GetGroupedFeedbacks([FromServices] IAdminService adminService)
+        {
+            var feedbacks = await adminService.GetGroupedFeedbackAsync();
+
+            return Ok(feedbacks);
+        }
+
+        [HttpGet("feedbacks/recent")]
+        //[RequiresAdminOrCreator]
+        public async Task<ActionResult<Feedback>> GetRecentFeedbacks([FromServices] IAdminService adminService)
+        {
+            var feedbacks = await adminService.GetRecentFeedbackAsync();
+
+            return Ok(feedbacks);
+        }
+
+        [HttpGet("reports/recent")]
+        //[RequiresAdminOrCreator]
+        public async Task<ActionResult<Report>> GetRecentReports([FromServices] IAdminService adminService)
+        {
+            var reports = await adminService.GetRecentReportsAsync();
+
+            return Ok(reports);
+        }
+
+        [HttpGet("tick-request")]
+        //[RequiresAdminOrCreator]
+        public async Task<ActionResult<models.Admin.TickRequest>> GetTickRequest([FromServices] IAdminService adminService)
+        {
+            var requests = await adminService.GetTickRequestsAsync();
+
+            return Ok(requests);
         }
     }
 }

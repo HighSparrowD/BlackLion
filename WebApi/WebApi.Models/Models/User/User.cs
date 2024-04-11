@@ -8,6 +8,8 @@ public class User
 {
     [Key]
     public long Id { get; set; }
+
+    public string? UserName { get; set; }
     public long DataId { get; set; }
     public long SettingsId { get; set; }
     public long LocationId { get; set; }
@@ -49,42 +51,4 @@ public class User
 
     public User()
     { }
-
-    public User(long userId, bool isDecoy = false)
-    {
-        Id = userId;
-        DataId = userId;
-        SettingsId = userId;
-        LocationId = userId;
-
-        IsBusy = true; // At the moment of registration user is still inside Registration module, thus true
-        HadReceivedReward = false;
-        IdentityType = IdentityConfirmationType.None;
-        ShouldEnhance = false;
-        ReportCount = 0;
-        DailyRewardPoint = 1;
-        BonusIndex = 0;
-
-        InvitedUsersCount = 0;
-        InvitedUsersBonus = 0;
-
-        ProfileViewsCount = 0;
-        RTViewsCount = 0;
-        TagSearchesCount = 0;
-        AdventureSearchCount = 0;
-
-        MaxProfileViewsCount = 50;
-        MaxRTViewsCount = 25;
-        MaxTagSearchCount = 3;
-        MaxAdventureSearchCount = 15;
-
-        IsUpdated = true;
-
-        IsDecoy = isDecoy;
-    }
-
-    public string GenerateUserDescription(string? name, int age, string? country, string? city, string? description)
-    {
-        return $"{name}, {age},\n({country} - {city})\n\n{description}";
-    }
 }

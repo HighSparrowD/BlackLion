@@ -3,7 +3,7 @@ using WebApi.Enums.Enums.General;
 using models = WebApi.Models.Models.Effect;
 
 #nullable enable
-namespace WebApi.Main.Models.Effect;
+namespace WebApi.Main.Entities.Effect;
 
 public class ActiveEffect
 {

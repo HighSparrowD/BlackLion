@@ -4,7 +4,7 @@ using WebApi.Enums.Enums.General;
 using models = WebApi.Models.Models.Location;
 
 #nullable enable
-namespace WebApi.Main.Models.Location;
+namespace WebApi.Main.Entities.Location;
 
 public class Country
 {

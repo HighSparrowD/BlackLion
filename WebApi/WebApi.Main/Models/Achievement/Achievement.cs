@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using WebApi.Enums.Enums.General;
-using WebApi.Main.Models.Admin;
+using WebApi.Main.Entities.Admin;
 
-namespace WebApi.Main.Models.Achievement;
+namespace WebApi.Main.Entities.Achievement;
 
 public class Achievement
 {

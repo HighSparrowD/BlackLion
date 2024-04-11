@@ -3,7 +3,7 @@ using WebApi.Enums.Enums.General;
 using models = WebApi.Models.Models.Test;
 
 #nullable enable
-namespace WebApi.Main.Models.Test;
+namespace WebApi.Main.Entities.Test;
 
 public class TestScale
 {

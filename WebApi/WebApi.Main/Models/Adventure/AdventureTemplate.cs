@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using WebApi.Enums.Enums.Media;
 
-namespace WebApi.Main.Models.Adventure;
+namespace WebApi.Main.Entities.Adventure;
 
 public class AdventureTemplate
 {

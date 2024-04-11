@@ -9,7 +9,7 @@ using WebApi.Interfaces;
 using WebApi.Models.Models.Sponsor;
 using WebApi.Models.Models.User;
 using WebApi.Models.Utilities;
-using entities = WebApi.Main.Models.Sponsor;
+using entities = WebApi.Main.Entities.Sponsor;
 
 namespace WebApi.Repositories
 {

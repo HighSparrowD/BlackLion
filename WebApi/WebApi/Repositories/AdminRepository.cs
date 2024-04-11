@@ -7,18 +7,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.OpenApi.Validations;
-using WebApi.Main.Models.Admin;
-using WebApi.Main.Models.Achievement;
-using WebApi.Main.Models.Location;
-using WebApi.Main.Models.Language;
-using WebApi.Main.Models.Report;
-using WebApi.Main.Models.User;
-using WebApi.Main.Models.Test;
+using WebApi.Main.Entities.Admin;
+using WebApi.Main.Entities.Achievement;
+using WebApi.Main.Entities.Location;
+using WebApi.Main.Entities.Language;
+using WebApi.Main.Entities.Report;
+using WebApi.Main.Entities.User;
+using WebApi.Main.Entities.Test;
 using WebApi.Models.Models.Admin;
 using WebApi.Enums.Enums.User;
 using WebApi.Enums.Enums.Notification;
 using WebApi.Enums.Enums.General;
 using WebApi.Enums.Enums.Tag;
+using entities = WebApi.Main.Entities;
 
 namespace WebApi.Repositories
 {
@@ -184,13 +185,7 @@ namespace WebApi.Repositories
             }
         }
 
-        public async Task<List<TickRequest>> GetTickRequestsAsync()
-        {
-            return await _contx.TickRequests.Take(15)
-                .ToListAsync();
-        }
-
-        public async Task<TickRequest> GetTickRequestAsync(long? requestId = null)
+        public async Task<entities.Admin.TickRequest> GetTickRequestAsync(long? requestId = null)
         {
             if (requestId != null)
             {
@@ -348,25 +343,27 @@ namespace WebApi.Repositories
             catch { return 0; }
         }
 
+        // TODO: Return overall information as a model
         public async Task<string> GetNewNotificationsCountAsync(long adminId)
         {
-            string returnData = "";
+            throw new NotImplementedException();
+            //string returnData = "";
 
-            var recentFeedbacks = await _userRep.GetMostRecentFeedbacks();
-            var tickRequests = await _contx.TickRequests
-                .Where(r => (r.State == TickRequestStatus.Added || 
-                r.State == TickRequestStatus.Changed || 
-                r.State == TickRequestStatus.Aborted || 
-                r.State == TickRequestStatus.Failed) && 
-                r.AdminId == null)
-                .ToListAsync();
+            //var recentFeedbacks = await _userRep ();
+            //var tickRequests = await _contx.TickRequests
+            //    .Where(r => (r.State == TickRequestStatus.Added || 
+            //    r.State == TickRequestStatus.Changed || 
+            //    r.State == TickRequestStatus.Aborted || 
+            //    r.State == TickRequestStatus.Failed) && 
+            //    r.AdminId == null)
+            //    .ToListAsync();
 
 
-            var bannedUsers = await GetRecentlyBannedUsersAsync();
+            //var bannedUsers = await GetRecentlyBannedUsersAsync();
 
-            returnData = $"Recent feedbacks: {recentFeedbacks.Count}\nActive tick requests {tickRequests.Count}\nRecently banned users{bannedUsers.Count}";
+            //returnData = $"Recent feedbacks: {recentFeedbacks.Count}\nActive tick requests {tickRequests.Count}\nRecently banned users{bannedUsers.Count}";
 
-            return returnData;
+            //return returnData;
         }
 
         public async Task<bool> AbortTickRequestAsync(long requestId)

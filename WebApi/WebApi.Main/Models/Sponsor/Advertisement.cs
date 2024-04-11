@@ -7,7 +7,7 @@ using WebApi.Models.Models.Sponsor;
 using models = WebApi.Models.Models.Sponsor;
 
 #nullable enable
-namespace WebApi.Main.Models.Sponsor;
+namespace WebApi.Main.Entities.Sponsor;
 
 public class Advertisement
 {

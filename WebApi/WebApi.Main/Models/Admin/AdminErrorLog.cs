@@ -1,7 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace WebApi.Main.Models.Admin;
+namespace WebApi.Main.Entities.Admin;
 
 public class AdminErrorLog
 {

@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using enums = WebApi.Enums.Enums.User;
 
-namespace WebApi.Main.Models.User
+namespace WebApi.Main.Entities.User
 {
     public class UserRole
     {

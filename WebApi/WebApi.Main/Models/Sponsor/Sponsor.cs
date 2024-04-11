@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 #nullable enable
 
-namespace WebApi.Main.Models.Sponsor;
+namespace WebApi.Main.Entities.Sponsor;
 
 public class Sponsor
 {
