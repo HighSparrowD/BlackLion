@@ -180,5 +180,14 @@ namespace WebApi.Controllers
 
             return Ok(requests);
         }
+
+        [HttpGet("updates")]
+        //[RequiresAdminOrCreator]
+        public async Task<ActionResult<RecentUpdates>> GetUpdates([FromServices] IAdminService adminService)
+        {
+            var updates = await adminService.GetRecentUpdates();
+
+            return Ok(updates);
+        }
     }
 }

@@ -3301,6 +3301,11 @@ namespace WebApi.Repositories
         {
             var test = await _contx.UserTests.Where(t => t.UserId == userId && t.TestId == testId)
                 .Include(t => t.Test)
+                .Include(t => t.Test.Questions)
+                .Include(t => t.Test.Questions)
+                .ThenInclude(t => t.Answers)
+                .Include(t => t.Test.Results)
+                .Include(t => t.Test.Scales)
                 .FirstOrDefaultAsync();
 
             if (test == null)
@@ -4624,6 +4629,49 @@ namespace WebApi.Repositories
             }
 
             return request;
+        }
+
+        public async Task<int> CountRecentFeedbacksAsync()
+        {
+            var count = await _contx.Feedbacks.Where(f => f.AdminId == null)
+                .CountAsync();
+
+            return count;
+        }
+
+        public async Task<int> CountRecentReportsAsync()
+        {
+            var count = await _contx.UserReports.Where(f => f.AdminId == null)
+                .CountAsync();
+
+            return count;
+        }
+
+        public async Task<int> CountPendingVerificationRequestsAsync()
+        {
+            var count = await _contx.TickRequests.
+                Where(r => r.State == TickRequestStatus.Added 
+                || r.State == TickRequestStatus.Changed || 
+                r.State == TickRequestStatus.Aborted)
+                .CountAsync();
+
+            return count;
+        }
+
+        public async Task<int> CountPendingAdvertisementsAsync()
+        {
+            var count = await _contx.Advertisements.Where(a => a.AdminId == null)
+                .CountAsync();
+
+            return count;
+        }
+
+        public async Task<int> CountPendingAdventuresAsync()
+        {
+            var count = await _contx.Adventures.Where(a => a.AdminId == null)
+                .CountAsync();
+
+            return count;
         }
     }
 }

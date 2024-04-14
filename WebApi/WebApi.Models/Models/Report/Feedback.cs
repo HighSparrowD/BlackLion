@@ -18,7 +18,7 @@ public class Feedback
     public string Text { get; set; }
 
     [JsonPropertyName("insertedUtc")]
-    public DateTime InsertedUtc { get; set; }
+    public string InsertedUtc { get; set; }
 
     [JsonPropertyName("reason")]
     public FeedbackReason Reason { get; set; }

@@ -200,5 +200,11 @@ namespace WebApi.Interfaces
         Task<List<entities.Report.Report>> GetRecentReportsAsync();
 
         Task<entities.Admin.TickRequest> GetTickRequestAsync();
+
+        Task<int> CountRecentFeedbacksAsync();
+        Task<int> CountRecentReportsAsync();
+        Task<int> CountPendingVerificationRequestsAsync();
+        Task<int> CountPendingAdvertisementsAsync();
+        Task<int> CountPendingAdventuresAsync();
     }
 }

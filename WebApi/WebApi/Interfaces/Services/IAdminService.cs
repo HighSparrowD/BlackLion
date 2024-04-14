@@ -16,5 +16,7 @@ namespace WebApi.Interfaces.Services
         Task<List<Report>> GetRecentReportsAsync();
 
         Task<models.Admin.TickRequest> GetTickRequestsAsync();
+
+        Task<models.Admin.RecentUpdates> GetRecentUpdates();
     }
 }

@@ -33,7 +33,7 @@ public class Feedback
         {
             Id = feedback.Id,
             AdminId = feedback.AdminId,
-            InsertedUtc = feedback.InsertedUtc,
+            InsertedUtc = DateTime.Parse(feedback.InsertedUtc),
             Reason = feedback.Reason,
             Text = feedback.Text,
             UserId = feedback.UserId
@@ -49,7 +49,7 @@ public class Feedback
         {
             Id = feedback.Id,
             AdminId = feedback.AdminId,
-            InsertedUtc = feedback.InsertedUtc,
+            InsertedUtc = feedback.InsertedUtc.ToString("dd.MM.yyyy"),
             Reason = feedback.Reason,
             Text = feedback.Text,
             UserId = feedback.UserId

@@ -64,5 +64,19 @@ namespace WebApi.Services.Admin
 
             return (TickRequest) request;
         }
+
+        public async Task<RecentUpdates> GetRecentUpdates()
+        {
+            var updates = new RecentUpdates
+            {
+                PendingAdventureCount = await _userRepo.CountPendingAdventuresAsync(),
+                PendingAdvertisementCount = await _userRepo.CountPendingAdvertisementsAsync(),
+                RecentFeedbackCount = await _userRepo.CountRecentFeedbacksAsync(),
+                RecentReportCount = await _userRepo.CountRecentReportsAsync(),
+                VerificationRequestCount = await _userRepo.CountPendingVerificationRequestsAsync()
+            };
+
+            return updates;
+        }
     }
 }

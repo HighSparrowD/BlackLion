@@ -43,6 +43,8 @@ public class Adventure
     public long? GroupId { get; set; }
     public AdventureStatus Status { get; set; }
 
+    public long? AdminId { get; set; }
+
     public virtual User.User? Creator { get; set; }
     public virtual Country? Country { get; set; }
     public virtual City? City { get; set; }
@@ -83,6 +85,7 @@ public class Adventure
             UniqueLink = adventure.UniqueLink,
             UnwantedAttendeesDescription = adventure.UnwantedAttendeesDescription,
             UserId = adventure.UserId,
+            AdminId = adventure.AdminId,
             City = (City)adventure.City!,
             Country = (Country)adventure.Country!,
             Creator = (User.User)adventure.Creator!
@@ -124,6 +127,7 @@ public class Adventure
             UniqueLink = adventure.UniqueLink,
             UnwantedAttendeesDescription = adventure.UnwantedAttendeesDescription,
             UserId = adventure.UserId,
+            AdminId = adventure.AdminId,
             City = (City)adventure.City!,
             Country = (Country)adventure.Country!,
             Creator = (User.User)adventure.Creator!
