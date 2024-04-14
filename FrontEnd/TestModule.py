@@ -326,13 +326,16 @@ class TestModule:
                 y = sum(self.answer_array['1'].values())
                 x = sum(self.answer_array['2'].values())
 
-                self.send_active_message_with_photo("Lorem ipsum dolor met amet",
+                self.send_active_message_with_photo("Оранжевая точка - ваш результат теста",
                                                     nature_test_graph(x, y,
                                                                       'Стабильность',
                                                                       'Нестабильность',
                                                                       'Интроверсия',
                                                                       'Экстроверсия',
-                                                                      'Оранжевое солнце'), self.continue_to_menu_markup)
+                                                                      'Холерик',
+                                                                      'Сангвиник',
+                                                                      'Флегматик',
+                                                                      'Меланхолик'), self.continue_to_menu_markup)
 
                 # for scale in self.answer_array.keys():
                 #     self.user_total[scale] = sum(self.answer_array[scale].values())

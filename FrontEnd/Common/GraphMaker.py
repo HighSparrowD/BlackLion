@@ -43,7 +43,7 @@ def nature_test_graph(x: int, y: int,
                       bottom_text: str,
                       left_text: str,
                       right_text: str,
-                      text_under_dot: str):
+                      sector1: str = None, sector2: str = None, sector3: str = None, sector4: str = None):
     # Setting backend renderer to avoid errors and make a better image
     matplotlib.use('agg')
 
@@ -53,8 +53,8 @@ def nature_test_graph(x: int, y: int,
     ax = plt.subplot()
 
     # Set length of axes
-    ax.set_xlim(0, 24)
-    ax.set_ylim(0, 24)
+    ax.set_xlim(-0.5, 24.5)
+    ax.set_ylim(-0.5, 24.5)
 
     # Draw ticks
     ax.set_xticks(range(0, 25))
@@ -66,14 +66,17 @@ def nature_test_graph(x: int, y: int,
     # Hide the top and right spines.
     ax.spines[["top", "right"]].set_visible(False)
 
-    # Write labels of character
+    # Write labels on the sides
     plt.text(12, 25, top_text, ha='center')
     plt.text(12, -1.3, bottom_text, ha='center')
     plt.text(-1, 12 - len(left_text) / 2, '\n'.join(left_text[i] for i in range(len(left_text))), ha='right')
     plt.text(25, 12 - len(right_text) / 2, '\n'.join(right_text[i] for i in range(len(right_text))))
 
-    # Text under dot
-    plt.text(x, y-2, text_under_dot, fontweight='bold', ha='center')
+    # Sectors names
+    plt.text(20, 20, sector1, ha='center')
+    plt.text(20, 4, sector2, ha='center')
+    plt.text(4, 4, sector3, ha='center')
+    plt.text(4, 20, sector4, ha='center')
 
     # Delete ticks on axes
     ax.tick_params(length=0)
