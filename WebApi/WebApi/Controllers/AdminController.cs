@@ -147,7 +147,7 @@ namespace WebApi.Controllers
 
         [HttpGet("feedbacks/all")]
         //[RequiresAdminOrCreator]
-        public async Task<ActionResult<Feedback>> GetGroupedFeedbacks([FromServices] IAdminService adminService)
+        public async Task<ActionResult<GroupedFeedback>> GetGroupedFeedbacks([FromServices] IAdminService adminService)
         {
             var feedbacks = await adminService.GetGroupedFeedbackAsync();
 
