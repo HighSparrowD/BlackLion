@@ -11,6 +11,7 @@ from Common.Menues import paginate, assemble_markup
 from Common.Menues import go_back_to_main_menu
 from Core.Api import ApiBase
 from Core.Resources import Resources
+from Common.GraphMaker import nature_test_graph
 import Settings
 
 
@@ -85,6 +86,7 @@ class TestModule:
             .add(InlineKeyboardButton("🔙Go Back", callback_data="-5"))
         self.pass_test_again_markup = InlineKeyboardMarkup().add(InlineKeyboardButton("Pass again using 💥Nullifier💥", callback_data="-12"))\
             .add(InlineKeyboardButton("🔙Go Back", callback_data="-5"))
+        self.continue_to_menu_markup = InlineKeyboardMarkup().add(InlineKeyboardButton("Continue", callback_data="-5"))
 
         self.YNmarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Yes", "No")
         self.continueMarkup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add("Continue")
@@ -323,6 +325,17 @@ class TestModule:
                 #TODO: Generate a 24x24 graphic based on x and y
                 y = sum(self.answer_array['1'].values())
                 x = sum(self.answer_array['2'].values())
+
+                self.send_active_message_with_photo("Оранжевая точка - ваш результат теста",
+                                                    nature_test_graph(x, y,
+                                                                      'Стабильность',
+                                                                      'Нестабильность',
+                                                                      'Интроверсия',
+                                                                      'Экстроверсия',
+                                                                      'Холерик',
+                                                                      'Сангвиник',
+                                                                      'Флегматик',
+                                                                      'Меланхолик'), self.continue_to_menu_markup)
 
                 # for scale in self.answer_array.keys():
                 #     self.user_total[scale] = sum(self.answer_array[scale].values())
@@ -640,6 +653,17 @@ class TestModule:
         except Exception as ex:
             self.delete_active_message()
             self.send_active_message(text, markup)
+
+    def send_active_message_with_photo(self, text, photo, markup=None):
+        try:
+            if self.active_message:
+                self.delete_active_message()
+                self.active_message = self.bot.send_photo(self.current_user, photo, text, reply_markup=markup).id
+            else:
+                self.active_message = self.bot.send_photo(self.current_user, photo, text, reply_markup=markup).id
+        except Exception as ex:
+            self.delete_active_message()
+            self.send_active_message_with_photo(text, photo, markup)
 
     def send_secondary_message(self, text, markup=None):
         try:

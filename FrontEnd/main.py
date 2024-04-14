@@ -17,6 +17,8 @@ import os
 from dotenv import load_dotenv
 from Functions import *
 
+from Common.GraphMaker import nature_test_graph
+
 # Update resources
 set_path_prefixes("../Instruments/Resources/Inputs/", "")
 create_registration_resources()
@@ -147,6 +149,10 @@ def test(message):
     y = 17
 
     #TODO: Generate graph here
+    bot.send_photo(message.chat.id,
+                   nature_test_graph(x, y, 'Стабильность', 'Нестабильность', 'Интроверсия', 'Экстроверсия',
+                                     'Сектор I', 'Сектор II', 'Сектор III', 'Сектор IV'),
+                   'The orange sun is your result')
 
 
 # new_chat_member - present even upon changing permissions / adding new users to group
