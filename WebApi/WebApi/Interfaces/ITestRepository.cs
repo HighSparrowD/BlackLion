@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using WebApi.Main.Models.Location;
-using WebApi.Main.Models.Language;
+using WebApi.Main.Entities.Location;
+using WebApi.Main.Entities.Language;
 using WebApi.Models.Models.User;
 using WebApi.Enums.Enums.General;
 

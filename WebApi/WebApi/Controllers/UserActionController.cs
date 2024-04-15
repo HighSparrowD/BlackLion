@@ -4,11 +4,11 @@ using WebApi.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using WebApi.Main.Models.User;
-using WebApi.Main.Models.Location;
-using WebApi.Main.Models.Report;
-using WebApi.Main.Models.Achievement;
-using RegisterEncounter = WebApi.Main.Models.User.RegisterEncounter;
+using WebApi.Main.Entities.User;
+using WebApi.Main.Entities.Location;
+using WebApi.Main.Entities.Report;
+using WebApi.Main.Entities.Achievement;
+using RegisterEncounter = WebApi.Main.Entities.User.RegisterEncounter;
 using WebApi.Models.Models.Test;
 using WebApi.Models.Models.User;
 using WebApi.Models.Models.Adventure;
@@ -132,15 +132,17 @@ namespace WebApi.Controllers
         }
 
         [HttpPost("/report-user")]
-        public async Task<long> AddUserReport([FromBody] SendUserReport report)
+        public async Task<ActionResult> AddUserReport([FromBody] SendUserReport report)
         {
-            return await _repository.AddUserReportAsync(report);
+            await _repository.AddUserReportAsync(report);
+            return NoContent();
         }
 
         [HttpPost("/report-adventure")]
-        public async Task<long> ReportAdventure([FromBody] SendAdventureReport report)
+        public async Task<ActionResult> ReportAdventure([FromBody] SendAdventureReport report)
         {
-            return await _repository.AddAdventureReportAsync(report);
+            await _repository.AddAdventureReportAsync(report);
+            return NoContent();
         }
 
         [HttpGet("/basic-info/{userId}")]
@@ -154,48 +156,6 @@ namespace WebApi.Controllers
         {
 
             return await _repository.RegisterUserAsync(model);
-        }
-
-        [HttpGet("/GetRecentFeedbacks")]
-        public async Task<List<Feedback>> GetRecentFeedbacks()
-        {
-            return await _repository.GetMostRecentFeedbacks();
-        }
-
-        [HttpGet("/GetMostRecentReports")]
-        public async Task<List<Report>> GetMostRecentReports()
-        {
-            return await _repository.GetMostRecentReports();
-        }
-
-        [HttpGet("/GetFeedbackById/{id}")]
-        public async Task<Feedback> GetFeedbackById(long id)
-        {
-            return await _repository.GetFeedbackById(id);
-        }
-
-        [HttpGet("/GetSingleUserReportById/{id}")]
-        public async Task<Report> GetSingleUserReportByIdAsync(long id)
-        {
-            return await _repository.GetSingleUserReportByIdAsync(id);
-        }
-
-        [HttpGet("/GetAllReportsOnUser/{id}")]
-        public async Task<List<Report>> GetAllReportsOnUser(long id)
-        {
-            return await _repository.GetAllReportsOnUserAsync(id);
-        }
-
-        [HttpGet("/GetAllUserReports/{id}")]
-        public async Task<List<Report>> GetAllUserReports(long id)
-        {
-            return await _repository.GetAllUserReportsAsync(id);
-        }
-
-        [HttpGet("/GetUsersRecentFeedbacks/{userId}")]
-        public async Task<List<Feedback>> GetUsersRecentFeedbacks(long userId)
-        {
-            return await _repository.GetMostRecentFeedbacksByUserId(userId);
         }
 
         [HttpGet("/AddUserToBlackList/{userId}/{bannedUserId}")]

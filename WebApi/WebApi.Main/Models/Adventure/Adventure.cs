@@ -3,11 +3,11 @@ using System.ComponentModel.DataAnnotations.Schema;
 using WebApi.Enums.Enums.Adventure;
 using WebApi.Enums.Enums.General;
 using WebApi.Enums.Enums.Media;
-using WebApi.Main.Models.Location;
+using WebApi.Main.Entities.Location;
 using models = WebApi.Models.Models.Adventure;
 
 #nullable enable
-namespace WebApi.Main.Models.Adventure;
+namespace WebApi.Main.Entities.Adventure;
 
 public class Adventure
 {
@@ -42,6 +42,8 @@ public class Adventure
     public string? GroupLink { get; set; }
     public long? GroupId { get; set; }
     public AdventureStatus Status { get; set; }
+
+    public long? AdminId { get; set; }
 
     public virtual User.User? Creator { get; set; }
     public virtual Country? Country { get; set; }
@@ -83,6 +85,7 @@ public class Adventure
             UniqueLink = adventure.UniqueLink,
             UnwantedAttendeesDescription = adventure.UnwantedAttendeesDescription,
             UserId = adventure.UserId,
+            AdminId = adventure.AdminId,
             City = (City)adventure.City!,
             Country = (Country)adventure.Country!,
             Creator = (User.User)adventure.Creator!
@@ -124,6 +127,7 @@ public class Adventure
             UniqueLink = adventure.UniqueLink,
             UnwantedAttendeesDescription = adventure.UnwantedAttendeesDescription,
             UserId = adventure.UserId,
+            AdminId = adventure.AdminId,
             City = (City)adventure.City!,
             Country = (Country)adventure.Country!,
             Creator = (User.User)adventure.Creator!

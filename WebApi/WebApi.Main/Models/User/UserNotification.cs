@@ -4,7 +4,7 @@ using WebApi.Enums.Enums.General;
 using WebApi.Enums.Enums.Notification;
 
 #nullable enable
-namespace WebApi.Main.Models.User;
+namespace WebApi.Main.Entities.User;
 
 public class UserNotification
 {

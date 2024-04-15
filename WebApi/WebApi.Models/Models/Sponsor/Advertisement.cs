@@ -37,18 +37,6 @@ public class Advertisement
     [JsonPropertyName("mediaType")]
     public MediaType MediaType { get; set; }
 
-    public static string TrancateDescription(string text, int leng)
-    {
-        string description = "";
-
-        foreach (char c in text)
-        {
-            if (description.Length + 1 <= leng)
-            {
-                description += c;
-            }
-        }
-
-        return description;
-    }
+    [JsonPropertyName("adminId")]
+    public long? AdminId { get; set; }
 }

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace WebApi.Main.Models.User;
+namespace WebApi.Main.Entities.User;
 
 public class TrustLevel
 {

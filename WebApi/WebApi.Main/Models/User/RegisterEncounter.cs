@@ -1,7 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 using WebApi.Enums.Enums.General;
 
-namespace WebApi.Main.Models.User;
+namespace WebApi.Main.Entities.User;
 
 public class RegisterEncounter
 {

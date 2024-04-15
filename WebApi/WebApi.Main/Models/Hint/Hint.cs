@@ -2,7 +2,7 @@
 using WebApi.Enums.Enums.General;
 using WebApi.Enums.Enums.Hint;
 
-namespace WebApi.Main.Models.Hint;
+namespace WebApi.Main.Entities.Hint;
 
 public class Hint
 {

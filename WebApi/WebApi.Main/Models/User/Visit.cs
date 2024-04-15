@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using WebApi.Enums.Enums.General;
 
-namespace WebApi.Main.Models.User;
+namespace WebApi.Main.Entities.User;
 
 public class Visit
 {

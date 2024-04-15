@@ -1,9 +1,10 @@
 ﻿using System.Threading.Tasks;
 using System.Collections.Generic;
 using WebApi.Entities.TestEntities;
-using WebApi.Main.Models.Admin;
-using WebApi.Main.Models.Report;
+using WebApi.Main.Entities.Admin;
+using WebApi.Main.Entities.Report;
 using WebApi.Models.Models.Admin;
+using entities = WebApi.Main.Entities;
 
 namespace WebApi.Interfaces
 {
@@ -17,8 +18,7 @@ namespace WebApi.Interfaces
         Task<List<Feedback>> GetFeedbacks ();
         Task<int> DeleteAllUsers ();
         Task AddAchievementsAsync(List<UploadAchievement> achievements);
-        Task<List<TickRequest>> GetTickRequestsAsync();
-        Task<TickRequest> GetTickRequestAsync(long? requestId = null);
+        Task<entities.Admin.TickRequest> GetTickRequestAsync(long? requestId = null);
         Task<string> GetNewNotificationsCountAsync(long adminId);
         Task<bool> ResolveTickRequestAsync(ResolveTickRequest request);
         Task<bool> AbortTickRequestAsync(long requestId);

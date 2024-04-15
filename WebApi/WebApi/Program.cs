@@ -102,7 +102,7 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddAuthorization();
 
 builder.Services.AddDbContext<UserContext>(options => options.UseNpgsql(configuration.GetConnectionString("DefaultConnectionString")));
-builder.Services.AddScoped<IUserRepository, SystemUserRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ITestRepository, TestRepository>();
 builder.Services.AddScoped<IAdminRepository, AdminRepository>();
 builder.Services.AddScoped<ISponsorRepository, SponsorRepository>();

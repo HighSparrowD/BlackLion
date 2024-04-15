@@ -68,7 +68,7 @@ namespace WebApi.Migrations
 
             modelBuilder.HasSequence<int>("transactions_hilo");
 
-            modelBuilder.Entity("WebApi.Main.Models.Achievement.Achievement", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.Achievement.Achievement", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -96,7 +96,7 @@ namespace WebApi.Migrations
                     b.ToTable("achievements", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.Achievement.UserAchievement", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.Achievement.UserAchievement", b =>
                 {
                     b.Property<long>("UserId")
                         .HasColumnType("bigint");
@@ -120,7 +120,7 @@ namespace WebApi.Migrations
                     b.ToTable("user_achievements", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.Admin.TickRequest", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.Admin.TickRequest", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -159,7 +159,7 @@ namespace WebApi.Migrations
                     b.ToTable("tick_requests", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.Adventure.Adventure", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.Adventure.Adventure", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -169,6 +169,9 @@ namespace WebApi.Migrations
 
                     b.Property<string>("Address")
                         .HasColumnType("text");
+
+                    b.Property<long?>("AdminId")
+                        .HasColumnType("bigint");
 
                     b.Property<string>("Application")
                         .HasColumnType("text");
@@ -259,7 +262,7 @@ namespace WebApi.Migrations
                     b.ToTable("adventures", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.Adventure.AdventureAttendee", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.Adventure.AdventureAttendee", b =>
                 {
                     b.Property<long>("UserId")
                         .HasColumnType("bigint");
@@ -280,7 +283,7 @@ namespace WebApi.Migrations
                     b.ToTable("adventure_attendees", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.Adventure.AdventureTemplate", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.Adventure.AdventureTemplate", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -350,7 +353,7 @@ namespace WebApi.Migrations
                     b.ToTable("adventure_templates", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.DailyReward.DailyReward", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.DailyReward.DailyReward", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -369,7 +372,7 @@ namespace WebApi.Migrations
                     b.ToTable("daily_rewards", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.Effect.ActiveEffect", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.Effect.ActiveEffect", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -395,7 +398,7 @@ namespace WebApi.Migrations
                     b.ToTable("active_effects", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.Hint.Hint", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.Hint.Hint", b =>
                 {
                     b.Property<int>("Id")
                         .HasColumnType("integer");
@@ -417,7 +420,7 @@ namespace WebApi.Migrations
                     b.ToTable("hints", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.Language.Language", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.Language.Language", b =>
                 {
                     b.Property<int>("Id")
                         .HasColumnType("integer");
@@ -439,7 +442,7 @@ namespace WebApi.Migrations
                     b.ToTable("languages", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.Location.City", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.Location.City", b =>
                 {
                     b.Property<int>("Id")
                         .HasColumnType("integer");
@@ -461,7 +464,7 @@ namespace WebApi.Migrations
                     b.ToTable("cities", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.Location.Country", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.Location.Country", b =>
                 {
                     b.Property<int>("Id")
                         .HasColumnType("integer");
@@ -481,7 +484,7 @@ namespace WebApi.Migrations
                     b.ToTable("countries", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.Location.Location", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.Location.Location", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -510,7 +513,7 @@ namespace WebApi.Migrations
                     b.ToTable("user_locations", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.PromoCode.PromoCode", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.PromoCode.PromoCode", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -553,7 +556,7 @@ namespace WebApi.Migrations
                     b.ToTable("promocodes", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.Report.Feedback", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.Report.Feedback", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -583,7 +586,7 @@ namespace WebApi.Migrations
                     b.ToTable("feedbacks", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.Report.Report", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.Report.Report", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -623,13 +626,16 @@ namespace WebApi.Migrations
                     b.ToTable("user_reports", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.Sponsor.Advertisement", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.Sponsor.Advertisement", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
                     NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<long>("Id"), "ads_hilo");
+
+                    b.Property<long?>("AdminId")
+                        .HasColumnType("bigint");
 
                     b.Property<DateTime?>("Deleted")
                         .HasColumnType("timestamp with time zone");
@@ -668,7 +674,7 @@ namespace WebApi.Migrations
                     b.ToTable("advertisements", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.Sponsor.AdvertisementStats", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.Sponsor.AdvertisementStats", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -719,7 +725,7 @@ namespace WebApi.Migrations
                     b.ToTable("advertisement_statistics", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.Tag.Tag", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.Tag.Tag", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -754,7 +760,7 @@ namespace WebApi.Migrations
                     b.ToTable("tags", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.Test.Test", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.Test.Test", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -784,7 +790,7 @@ namespace WebApi.Migrations
                     b.ToTable("tests", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.Test.TestAnswer", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.Test.TestAnswer", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -812,7 +818,7 @@ namespace WebApi.Migrations
                     b.ToTable("tests_answers", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.Test.TestQuestion", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.Test.TestQuestion", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -845,7 +851,7 @@ namespace WebApi.Migrations
                     b.ToTable("tests_questions", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.Test.TestResult", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.Test.TestResult", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -876,7 +882,7 @@ namespace WebApi.Migrations
                     b.ToTable("tests_results", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.Test.TestScale", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.Test.TestScale", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -904,7 +910,7 @@ namespace WebApi.Migrations
                     b.ToTable("tests_scales", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.User.Balance", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.User.Balance", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -953,7 +959,7 @@ namespace WebApi.Migrations
                     b.ToTable("balances", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.User.BlackList", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.User.BlackList", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -974,7 +980,7 @@ namespace WebApi.Migrations
                     b.ToTable("black_lists", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.User.Encounter", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.User.Encounter", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -1003,7 +1009,7 @@ namespace WebApi.Migrations
                     b.ToTable("encounters", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.User.Invitation", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.User.Invitation", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -1027,7 +1033,7 @@ namespace WebApi.Migrations
                     b.ToTable("invitations", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.User.InvitationCredentials", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.User.InvitationCredentials", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -1049,7 +1055,7 @@ namespace WebApi.Migrations
                     b.ToTable("invitation_credentials", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.User.OceanPoints", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.User.OceanPoints", b =>
                 {
                     b.Property<long>("UserId")
                         .ValueGeneratedOnAdd()
@@ -1098,7 +1104,7 @@ namespace WebApi.Migrations
                     b.ToTable("ocean_points", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.User.OceanStats", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.User.OceanStats", b =>
                 {
                     b.Property<long>("UserId")
                         .ValueGeneratedOnAdd()
@@ -1129,7 +1135,7 @@ namespace WebApi.Migrations
                     b.ToTable("ocean_stats", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.User.Request", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.User.Request", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -1170,7 +1176,7 @@ namespace WebApi.Migrations
                     b.ToTable("requests", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.User.Settings", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.User.Settings", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -1204,7 +1210,7 @@ namespace WebApi.Migrations
                     b.ToTable("user_settings", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.User.Statistics", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.User.Statistics", b =>
                 {
                     b.Property<long>("UserId")
                         .HasColumnType("bigint");
@@ -1247,7 +1253,7 @@ namespace WebApi.Migrations
                     b.ToTable("user_statistics", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.User.Transaction", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.User.Transaction", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -1275,7 +1281,7 @@ namespace WebApi.Migrations
                     b.ToTable("transactions", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.User.TrustLevel", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.User.TrustLevel", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -1297,7 +1303,7 @@ namespace WebApi.Migrations
                     b.ToTable("trust_levels", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.User.User", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.User.User", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -1398,6 +1404,9 @@ namespace WebApi.Migrations
                     b.Property<int>("TagSearchesCount")
                         .HasColumnType("integer");
 
+                    b.Property<string>("UserName")
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
                     b.HasIndex("DataId");
@@ -1409,7 +1418,7 @@ namespace WebApi.Migrations
                     b.ToTable("users", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.User.UserData", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.User.UserData", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -1462,9 +1471,6 @@ namespace WebApi.Migrations
                     b.Property<string>("UserMedia")
                         .HasColumnType("text");
 
-                    b.Property<string>("UserName")
-                        .HasColumnType("text");
-
                     b.Property<string>("UserRawDescription")
                         .HasColumnType("text");
 
@@ -1479,7 +1485,7 @@ namespace WebApi.Migrations
                     b.ToTable("user_data", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.User.UserNotification", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.User.UserNotification", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -1506,7 +1512,7 @@ namespace WebApi.Migrations
                     b.ToTable("notifications", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.User.UserRole", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.User.UserRole", b =>
                 {
                     b.Property<long>("UserId")
                         .HasColumnType("bigint");
@@ -1519,7 +1525,7 @@ namespace WebApi.Migrations
                     b.ToTable("user_roles", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.User.UserTag", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.User.UserTag", b =>
                 {
                     b.Property<long>("TagId")
                         .HasColumnType("bigint");
@@ -1539,7 +1545,7 @@ namespace WebApi.Migrations
                     b.ToTable("user_tags", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.User.UserTest", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.User.UserTest", b =>
                 {
                     b.Property<long>("TestId")
                         .HasColumnType("bigint");
@@ -1566,7 +1572,7 @@ namespace WebApi.Migrations
                     b.ToTable("user_tests", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.User.Visit", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.User.Visit", b =>
                 {
                     b.Property<long>("UserId")
                         .HasColumnType("bigint");
@@ -1579,15 +1585,15 @@ namespace WebApi.Migrations
                     b.ToTable("user_visits", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.Achievement.UserAchievement", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.Achievement.UserAchievement", b =>
                 {
-                    b.HasOne("WebApi.Main.Models.User.User", "User")
+                    b.HasOne("WebApi.Main.Entities.User.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("WebApi.Main.Models.Achievement.Achievement", "Achievement")
+                    b.HasOne("WebApi.Main.Entities.Achievement.Achievement", "Achievement")
                         .WithMany()
                         .HasForeignKey("AchievementId", "AchievementLanguage")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1598,9 +1604,9 @@ namespace WebApi.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.Admin.TickRequest", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.Admin.TickRequest", b =>
                 {
-                    b.HasOne("WebApi.Main.Models.User.User", "User")
+                    b.HasOne("WebApi.Main.Entities.User.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1609,19 +1615,19 @@ namespace WebApi.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.Adventure.Adventure", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.Adventure.Adventure", b =>
                 {
-                    b.HasOne("WebApi.Main.Models.User.User", "Creator")
+                    b.HasOne("WebApi.Main.Entities.User.User", "Creator")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("WebApi.Main.Models.Location.City", "City")
+                    b.HasOne("WebApi.Main.Entities.Location.City", "City")
                         .WithMany()
                         .HasForeignKey("CityId", "CityCountryLang");
 
-                    b.HasOne("WebApi.Main.Models.Location.Country", "Country")
+                    b.HasOne("WebApi.Main.Entities.Location.Country", "Country")
                         .WithMany()
                         .HasForeignKey("CountryId", "CountryLang");
 
@@ -1632,9 +1638,9 @@ namespace WebApi.Migrations
                     b.Navigation("Creator");
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.Adventure.AdventureAttendee", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.Adventure.AdventureAttendee", b =>
                 {
-                    b.HasOne("WebApi.Main.Models.Adventure.Adventure", "Adventure")
+                    b.HasOne("WebApi.Main.Entities.Adventure.Adventure", "Adventure")
                         .WithMany("Attendees")
                         .HasForeignKey("AdventureId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1643,22 +1649,22 @@ namespace WebApi.Migrations
                     b.Navigation("Adventure");
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.Location.City", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.Location.City", b =>
                 {
-                    b.HasOne("WebApi.Main.Models.Location.Country", null)
+                    b.HasOne("WebApi.Main.Entities.Location.Country", null)
                         .WithMany("Cities")
                         .HasForeignKey("CountryId", "CountryLang")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.Location.Location", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.Location.Location", b =>
                 {
-                    b.HasOne("WebApi.Main.Models.Location.City", "City")
+                    b.HasOne("WebApi.Main.Entities.Location.City", "City")
                         .WithMany()
                         .HasForeignKey("CityId", "CityCountryLang");
 
-                    b.HasOne("WebApi.Main.Models.Location.Country", "Country")
+                    b.HasOne("WebApi.Main.Entities.Location.Country", "Country")
                         .WithMany()
                         .HasForeignKey("CountryId", "CountryLang");
 
@@ -1667,9 +1673,9 @@ namespace WebApi.Migrations
                     b.Navigation("Country");
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.Report.Feedback", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.Report.Feedback", b =>
                 {
-                    b.HasOne("WebApi.Main.Models.User.User", "User")
+                    b.HasOne("WebApi.Main.Entities.User.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1678,19 +1684,19 @@ namespace WebApi.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.Report.Report", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.Report.Report", b =>
                 {
-                    b.HasOne("WebApi.Main.Models.Adventure.Adventure", "Adventure")
+                    b.HasOne("WebApi.Main.Entities.Adventure.Adventure", "Adventure")
                         .WithMany()
                         .HasForeignKey("AdventureId");
 
-                    b.HasOne("WebApi.Main.Models.User.User", "Sender")
+                    b.HasOne("WebApi.Main.Entities.User.User", "Sender")
                         .WithMany()
                         .HasForeignKey("SenderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("WebApi.Main.Models.User.User", "User")
+                    b.HasOne("WebApi.Main.Entities.User.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId");
 
@@ -1701,9 +1707,9 @@ namespace WebApi.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.Sponsor.Advertisement", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.Sponsor.Advertisement", b =>
                 {
-                    b.HasOne("WebApi.Main.Models.User.User", "User")
+                    b.HasOne("WebApi.Main.Entities.User.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1712,9 +1718,9 @@ namespace WebApi.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.Sponsor.AdvertisementStats", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.Sponsor.AdvertisementStats", b =>
                 {
-                    b.HasOne("WebApi.Main.Models.Sponsor.Advertisement", "Advertisement")
+                    b.HasOne("WebApi.Main.Entities.Sponsor.Advertisement", "Advertisement")
                         .WithMany("AdvertisementStats")
                         .HasForeignKey("AdvertisementId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1723,13 +1729,13 @@ namespace WebApi.Migrations
                     b.Navigation("Advertisement");
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.Tag.Tag", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.Tag.Tag", b =>
                 {
-                    b.HasOne("WebApi.Main.Models.Tag.Tag", "Father")
+                    b.HasOne("WebApi.Main.Entities.Tag.Tag", "Father")
                         .WithMany()
                         .HasForeignKey("FatherId", "FatherType");
 
-                    b.HasOne("WebApi.Main.Models.Tag.Tag", "Mother")
+                    b.HasOne("WebApi.Main.Entities.Tag.Tag", "Mother")
                         .WithMany()
                         .HasForeignKey("MotherId", "MotherType");
 
@@ -1738,45 +1744,45 @@ namespace WebApi.Migrations
                     b.Navigation("Mother");
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.Test.TestAnswer", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.Test.TestAnswer", b =>
                 {
-                    b.HasOne("WebApi.Main.Models.Test.TestQuestion", null)
+                    b.HasOne("WebApi.Main.Entities.Test.TestQuestion", null)
                         .WithMany("Answers")
                         .HasForeignKey("TestQuestionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.Test.TestQuestion", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.Test.TestQuestion", b =>
                 {
-                    b.HasOne("WebApi.Main.Models.Test.Test", null)
+                    b.HasOne("WebApi.Main.Entities.Test.Test", null)
                         .WithMany("Questions")
                         .HasForeignKey("TestId", "TestLanguage")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.Test.TestResult", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.Test.TestResult", b =>
                 {
-                    b.HasOne("WebApi.Main.Models.Test.Test", null)
+                    b.HasOne("WebApi.Main.Entities.Test.Test", null)
                         .WithMany("Results")
                         .HasForeignKey("TestId", "TestLanguage")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.Test.TestScale", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.Test.TestScale", b =>
                 {
-                    b.HasOne("WebApi.Main.Models.Test.Test", null)
+                    b.HasOne("WebApi.Main.Entities.Test.Test", null)
                         .WithMany("Scales")
                         .HasForeignKey("TestId", "TestLanguage")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.User.BlackList", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.User.BlackList", b =>
                 {
-                    b.HasOne("WebApi.Main.Models.User.User", "BannedUser")
+                    b.HasOne("WebApi.Main.Entities.User.User", "BannedUser")
                         .WithMany("BlackList")
                         .HasForeignKey("BannedUserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1785,15 +1791,15 @@ namespace WebApi.Migrations
                     b.Navigation("BannedUser");
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.User.Encounter", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.User.Encounter", b =>
                 {
-                    b.HasOne("WebApi.Main.Models.User.User", "EncounteredUser")
+                    b.HasOne("WebApi.Main.Entities.User.User", "EncounteredUser")
                         .WithMany()
                         .HasForeignKey("EncounteredUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("WebApi.Main.Models.User.User", "User")
+                    b.HasOne("WebApi.Main.Entities.User.User", "User")
                         .WithMany("Encounters")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1804,9 +1810,9 @@ namespace WebApi.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.User.Invitation", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.User.Invitation", b =>
                 {
-                    b.HasOne("WebApi.Main.Models.User.InvitationCredentials", "InviterCredentials")
+                    b.HasOne("WebApi.Main.Entities.User.InvitationCredentials", "InviterCredentials")
                         .WithMany()
                         .HasForeignKey("InviterCredentialsId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1815,9 +1821,9 @@ namespace WebApi.Migrations
                     b.Navigation("InviterCredentials");
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.User.InvitationCredentials", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.User.InvitationCredentials", b =>
                 {
-                    b.HasOne("WebApi.Main.Models.User.User", "Inviter")
+                    b.HasOne("WebApi.Main.Entities.User.User", "Inviter")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1826,15 +1832,15 @@ namespace WebApi.Migrations
                     b.Navigation("Inviter");
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.User.Request", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.User.Request", b =>
                 {
-                    b.HasOne("WebApi.Main.Models.User.User", "Sender")
+                    b.HasOne("WebApi.Main.Entities.User.User", "Sender")
                         .WithMany()
                         .HasForeignKey("SenderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("WebApi.Main.Models.User.User", "Receiver")
+                    b.HasOne("WebApi.Main.Entities.User.User", "Receiver")
                         .WithMany("Requests")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1845,30 +1851,30 @@ namespace WebApi.Migrations
                     b.Navigation("Sender");
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.User.Statistics", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.User.Statistics", b =>
                 {
-                    b.HasOne("WebApi.Main.Models.User.User", null)
+                    b.HasOne("WebApi.Main.Entities.User.User", null)
                         .WithOne("Statistics")
-                        .HasForeignKey("WebApi.Main.Models.User.Statistics", "UserId")
+                        .HasForeignKey("WebApi.Main.Entities.User.Statistics", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.User.User", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.User.User", b =>
                 {
-                    b.HasOne("WebApi.Main.Models.User.UserData", "Data")
+                    b.HasOne("WebApi.Main.Entities.User.UserData", "Data")
                         .WithMany()
                         .HasForeignKey("DataId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("WebApi.Main.Models.Location.Location", "Location")
+                    b.HasOne("WebApi.Main.Entities.Location.Location", "Location")
                         .WithMany()
                         .HasForeignKey("LocationId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("WebApi.Main.Models.User.Settings", "Settings")
+                    b.HasOne("WebApi.Main.Entities.User.Settings", "Settings")
                         .WithMany()
                         .HasForeignKey("SettingsId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1881,9 +1887,9 @@ namespace WebApi.Migrations
                     b.Navigation("Settings");
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.User.UserNotification", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.User.UserNotification", b =>
                 {
-                    b.HasOne("WebApi.Main.Models.User.User", "Receiver")
+                    b.HasOne("WebApi.Main.Entities.User.User", "Receiver")
                         .WithMany("Notifications")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1892,24 +1898,24 @@ namespace WebApi.Migrations
                     b.Navigation("Receiver");
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.User.UserRole", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.User.UserRole", b =>
                 {
-                    b.HasOne("WebApi.Main.Models.User.User", null)
+                    b.HasOne("WebApi.Main.Entities.User.User", null)
                         .WithMany("UserRoles")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.User.UserTag", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.User.UserTag", b =>
                 {
-                    b.HasOne("WebApi.Main.Models.User.User", null)
+                    b.HasOne("WebApi.Main.Entities.User.User", null)
                         .WithMany("Tags")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("WebApi.Main.Models.Tag.Tag", "Tag")
+                    b.HasOne("WebApi.Main.Entities.Tag.Tag", "Tag")
                         .WithMany()
                         .HasForeignKey("TagId", "TagType")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1918,9 +1924,9 @@ namespace WebApi.Migrations
                     b.Navigation("Tag");
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.User.UserTest", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.User.UserTest", b =>
                 {
-                    b.HasOne("WebApi.Main.Models.Test.Test", "Test")
+                    b.HasOne("WebApi.Main.Entities.Test.Test", "Test")
                         .WithMany()
                         .HasForeignKey("TestId", "TestLanguage")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1929,22 +1935,22 @@ namespace WebApi.Migrations
                     b.Navigation("Test");
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.Adventure.Adventure", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.Adventure.Adventure", b =>
                 {
                     b.Navigation("Attendees");
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.Location.Country", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.Location.Country", b =>
                 {
                     b.Navigation("Cities");
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.Sponsor.Advertisement", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.Sponsor.Advertisement", b =>
                 {
                     b.Navigation("AdvertisementStats");
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.Test.Test", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.Test.Test", b =>
                 {
                     b.Navigation("Questions");
 
@@ -1953,12 +1959,12 @@ namespace WebApi.Migrations
                     b.Navigation("Scales");
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.Test.TestQuestion", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.Test.TestQuestion", b =>
                 {
                     b.Navigation("Answers");
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.User.User", b =>
+            modelBuilder.Entity("WebApi.Main.Entities.User.User", b =>
                 {
                     b.Navigation("BlackList");
 

@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using WebApi.Enums.Enums.General;
 
-namespace WebApi.Main.Models.Achievement;
+namespace WebApi.Main.Entities.Achievement;
 
 public class UserAchievement
 {

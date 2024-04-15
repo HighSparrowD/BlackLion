@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace WebApi.Main.Models.DailyReward;
+namespace WebApi.Main.Entities.DailyReward;
 
 public class DailyReward
 {

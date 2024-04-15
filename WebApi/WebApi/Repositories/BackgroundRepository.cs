@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System;
-using WebApi.Main.Models.User;
+using WebApi.Main.Entities.User;
 
 namespace WebApi.Repositories
 {

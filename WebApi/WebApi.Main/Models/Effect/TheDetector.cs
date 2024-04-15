@@ -1,6 +1,6 @@
 ﻿using WebApi.Enums.Enums.General;
 
-namespace WebApi.Main.Models.Effect;
+namespace WebApi.Main.Entities.Effect;
 
 public class TheDetector : ActiveEffect
 {

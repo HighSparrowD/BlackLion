@@ -2,7 +2,7 @@
 using WebApi.Enums.Enums.General;
 using models = WebApi.Models.Models.Location;
 
-namespace WebApi.Main.Models.Location;
+namespace WebApi.Main.Entities.Location;
 
 #nullable enable
 public class Location

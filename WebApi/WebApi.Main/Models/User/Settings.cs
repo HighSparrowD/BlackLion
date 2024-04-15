@@ -2,7 +2,7 @@
 using models = WebApi.Models.Models.User;
 
 #nullable enable
-namespace WebApi.Main.Models.User;
+namespace WebApi.Main.Entities.User;
 
 public class Settings
 {

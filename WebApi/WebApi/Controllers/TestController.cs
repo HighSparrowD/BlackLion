@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using WebApi.Interfaces;
 using Microsoft.Extensions.Logging;
-using WebApi.Main.Models.Location;
-using WebApi.Main.Models.Language;
-using WebApi.Main.Models.Test;
+using WebApi.Main.Entities.Location;
+using WebApi.Main.Entities.Language;
+using WebApi.Main.Entities.Test;
 using WebApi.Models.Models.User;
 using WebApi.Enums.Enums.General;
 using models = WebApi.Models.Models.Test;
@@ -70,7 +70,7 @@ namespace WebApi.Controllers
         [HttpGet("/single-test/{id}/{language}")]
         public async Task<models.Test> GetSingleTest(long id, AppLanguage language)
         {
-            var tests = await _repository.GetSingleTestAsync(id, language);
+             var tests = await _repository.GetSingleTestAsync(id, language);
             return tests;
         }
 

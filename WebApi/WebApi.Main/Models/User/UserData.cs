@@ -5,7 +5,7 @@ using WebApi.Enums.Enums.User;
 using models = WebApi.Models.Models.User;
 #nullable enable
 
-namespace WebApi.Main.Models.User;
+namespace WebApi.Main.Entities.User;
 
 public class UserData
 {
@@ -23,7 +23,6 @@ public class UserData
     public CommunicationPreference CommunicationPrefs { get; set; }
     public Gender UserGenderPrefs { get; set; }
     public UsageReason Reason { get; set; }
-    public string? UserName { get; set; }
     public string? UserRealName { get; set; }
     public string? UserDescription { get; set; }
     public string? UserRawDescription { get; set; }
@@ -58,7 +57,6 @@ public class UserData
             UserGenderPrefs = data.UserGenderPrefs,
             UserLanguages = data.UserLanguages,
             UserMedia = data.UserMedia,
-            UserName = data.UserName,
             UserRawDescription = data.UserRawDescription,
             UserRealName = data.UserRealName
         };
@@ -88,7 +86,6 @@ public class UserData
             UserGenderPrefs = data.UserGenderPrefs,
             UserLanguages = data.UserLanguages,
             UserMedia = data.UserMedia,
-            UserName = data.UserName,
             UserRawDescription = data.UserRawDescription,
             UserRealName = data.UserRealName
         };

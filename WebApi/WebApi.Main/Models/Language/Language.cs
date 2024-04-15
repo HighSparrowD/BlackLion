@@ -2,7 +2,7 @@
 using System.Diagnostics.CodeAnalysis;
 using WebApi.Enums.Enums.General;
 
-namespace WebApi.Main.Models.Language
+namespace WebApi.Main.Entities.Language
 {
     public class Language
     {

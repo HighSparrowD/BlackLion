@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using WebApi.Main.Models.User;
+using WebApi.Main.Entities.User;
 
 namespace WebApi.Interfaces
 {

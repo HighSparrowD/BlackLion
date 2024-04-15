@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace WebApi.Main.Models.Sponsor;
+namespace WebApi.Main.Entities.Sponsor;
 
 public class SponsorNotification
 {

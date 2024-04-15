@@ -1,6 +1,6 @@
 ﻿using WebApi.Enums.Enums.Tag;
 
-namespace WebApi.Main.Models.Tag;
+namespace WebApi.Main.Entities.Tag;
 
 public class TagRelative
 {

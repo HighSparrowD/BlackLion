@@ -7,7 +7,7 @@ using WebApi.Models.Models.Sponsor;
 using models = WebApi.Models.Models.Sponsor;
 
 #nullable enable
-namespace WebApi.Main.Models.Sponsor;
+namespace WebApi.Main.Entities.Sponsor;
 
 public class Advertisement
 {
@@ -25,6 +25,8 @@ public class Advertisement
     public DateTime? Deleted { get; set; }
     public AdvertisementPriority Priority { get; set; }
     public MediaType MediaType { get; set; }
+
+    public long? AdminId { get; set; }
 
     public virtual User.User? User { get; set; }
     
@@ -44,6 +46,7 @@ public class Advertisement
         Show = true;
         Updated = true;
         Deleted = null;
+        AdminId = null;
         Priority = model.Priority;
     }
 
@@ -56,23 +59,9 @@ public class Advertisement
         MediaType = model.MediaType;
         Show = true;
         Updated = true;
+        AdminId = null;
         Priority = model.Priority;
     }
-
-    //public static string TruncateDescription(string text, int leng)
-    //{
-    //    string description = "";
-
-    //    foreach (char c in text)
-    //    {
-    //        if (description.Length + 1 <= leng)
-    //        {
-    //            description += c;
-    //        }
-    //    }
-
-    //    return description;
-    //}
 
     public static explicit operator Advertisement?(models.Advertisement? advertisement)
     {
@@ -90,7 +79,8 @@ public class Advertisement
             Show = advertisement.Show,
             Priority = advertisement.Priority,
             TargetAudience = advertisement.TargetAudience,
-            Updated = advertisement.Updated
+            Updated = advertisement.Updated,
+            AdminId = advertisement.AdminId
         };
     }
 
@@ -110,7 +100,8 @@ public class Advertisement
             Show = advertisement.Show,
             Priority = advertisement.Priority,
             TargetAudience = advertisement.TargetAudience,
-            Updated = advertisement.Updated
+            Updated = advertisement.Updated,
+            AdminId = advertisement.AdminId
         };
     }
 

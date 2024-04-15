@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using models = WebApi.Models.Models.Test;
 
 #nullable enable
-namespace WebApi.Main.Models.Test;
+namespace WebApi.Main.Entities.Test;
 
 public class TestAnswer
 {

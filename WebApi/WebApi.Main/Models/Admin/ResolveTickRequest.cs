@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace WebApi.Main.Models.Admin;
+namespace WebApi.Main.Entities.Admin;
 
 public class ResolveTickRequest
 {

@@ -5,7 +5,7 @@ using WebApi.Models.User;
 using models = WebApi.Models.Models.User;
 
 #nullable enable
-namespace WebApi.Main.Models.User;
+namespace WebApi.Main.Entities.User;
 
 public class UserTest
 {
@@ -60,11 +60,11 @@ public class UserTest
         };
     }
 
-    public static implicit operator GetUserTest?(UserTest? test)
+    public static implicit operator GetUserTest?(UserTest userTest)
     {
-        if (test == null)
+        if (userTest == null)
             return null;
 
-        return new GetUserTest(test.PassedOn, test.Test);
+        return new GetUserTest(userTest.PassedOn, userTest.Test);
     }
 }

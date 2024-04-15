@@ -4,7 +4,7 @@ using WebApi.Interfaces;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using WebApi.Main.Models.User;
+using WebApi.Main.Entities.User;
 using WebApi.Models.App_GlobalResources;
 using WebApi.Enums.Enums.Notification;
 using WebApi.Enums.Enums.General;

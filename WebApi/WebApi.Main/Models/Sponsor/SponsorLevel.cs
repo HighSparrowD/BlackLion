@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
 #nullable enable
-namespace WebApi.Main.Models.Sponsor;
+namespace WebApi.Main.Entities.Sponsor;
 
 public class SponsorLevel
 {
