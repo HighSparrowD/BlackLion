@@ -1,6 +1,6 @@
 ﻿namespace WebApi.Enums.Enums.Hint;
 
-public enum HintType
+public enum HintType : short
 {
     Encouraging = 1,
     Informative = 2,

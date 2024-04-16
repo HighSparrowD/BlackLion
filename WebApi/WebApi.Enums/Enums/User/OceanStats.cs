@@ -1,6 +1,6 @@
 ﻿namespace WebApi.Enums.Enums.User
 {
-    public enum OceanStats
+    public enum OceanStats : short
     {
         Openness = 1,
         Conscientiousness = 2,

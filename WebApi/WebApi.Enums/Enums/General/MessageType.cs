@@ -2,7 +2,7 @@
 
 public enum MessageType : short
 {
-    Text = 0,
-    Voice = 1,
-    Video = 2
+    Text = 1,
+    Voice = 2,
+    Video = 3
 }

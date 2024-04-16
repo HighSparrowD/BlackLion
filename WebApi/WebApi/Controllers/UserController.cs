@@ -24,12 +24,12 @@ namespace WebApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class UserActionController : Controller
+    public class UserController : Controller
     {
-        private readonly ILogger<UserActionController> _logger;
+        private readonly ILogger<UserController> _logger;
         private IUserRepository _repository;
 
-        public UserActionController(ILogger<UserActionController> logger, IUserRepository rep)
+        public UserController(ILogger<UserController> logger, IUserRepository rep)
         {
             _logger = logger;
             _repository = rep;
@@ -69,12 +69,6 @@ namespace WebApi.Controllers
         public async Task<bool> CheckUsersAreCombinableRT(long user1, long user2)
         {
             return await _repository.CheckUsersAreCombinableRT(user1, user2);
-        }
-
-        [HttpGet("/GetUserAppLanguage/{userId}")]
-        public async Task<string> GetUserLanguagePrefs(long userId)
-        {
-            return await _repository.GetUserAppLanguage(userId);
         }
 
         [HttpGet("/user-info/{userId}")]
@@ -542,7 +536,7 @@ namespace WebApi.Controllers
         }
 
         [HttpPost("/SendTickRequest")]
-        public async Task<bool> SendTickRequest(SendTickRequest request)
+        public async Task<bool> SendTickRequest(SendVerificationRequest request)
         {
             return await _repository.SendTickRequestAsync(request);
         }
@@ -595,12 +589,6 @@ namespace WebApi.Controllers
         {
             await _repository.PurchaseTestAsync(userId, testId, cost, currency, language);
             return Ok();
-        }
-
-        [HttpGet("/CheckTickRequestStatus/{userId}")]
-        public async Task<string> CheckTickRequestStatus(long userId)
-        {
-            return await _repository.CheckTickRequestStatusÀsync(userId);
         }
 
         [HttpGet("/SetUserFreeSearchParam/{userId}/{freeSearch}")]
@@ -839,12 +827,6 @@ namespace WebApi.Controllers
             return await userRepo.DeleteAdventureAttendeeAsync(adventureId, attendeeId);
         }
 
-        [HttpGet("/get-user-media/{userId}")]
-        public async Task<GetUserMedia> UserMedia([FromRoute] long userId, [FromServices] IUserRepository userRepo)
-        {
-            return await userRepo.GetUserMediaAsync(userId);
-        }
-
         [HttpGet("/limitations/{userId}")]
         public async Task<GetLimitations> Limitations(long userId, [FromServices] IUserRepository userRepo)
         {
@@ -925,6 +907,20 @@ namespace WebApi.Controllers
         {
             await _repository.RemoveUserStoryAsync(userId);
             return Ok();
+        }
+
+        [HttpGet("media/{userId}")]
+        public async Task<ActionResult<models.User.UserMedia>> GetUserMedia([FromRoute] long userId)
+        {
+            var media = await _repository.GetUserMediaAsync(userId);
+            return Ok(media);
+        }
+
+        [HttpGet("language/{userId}")]
+        public async Task<ActionResult<AppLanguage>> GetUserLanguage([FromRoute] long userId)
+        {
+            var language = await _repository.GetUserLanguageAsync(userId);
+            return Ok(language);
         }
     }
 }

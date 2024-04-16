@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WebApi.Data;
@@ -12,9 +13,11 @@ using WebApi.Data;
 namespace WebApi.Migrations
 {
     [DbContext(typeof(UserContext))]
-    partial class UserContextModelSnapshot : ModelSnapshot
+    [Migration("20240415215111_VerificationRequest")]
+    partial class VerificationRequest
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -131,8 +134,8 @@ namespace WebApi.Migrations
                     b.Property<long?>("AdminId")
                         .HasColumnType("bigint");
 
-                    b.Property<short>("ConfirmationType")
-                        .HasColumnType("smallint");
+                    b.Property<int>("ConfirmationType")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Gesture")
                         .HasColumnType("text");
@@ -144,8 +147,8 @@ namespace WebApi.Migrations
                     b.Property<short>("MediaType")
                         .HasColumnType("smallint");
 
-                    b.Property<short?>("State")
-                        .HasColumnType("smallint");
+                    b.Property<int?>("State")
+                        .HasColumnType("integer");
 
                     b.Property<long>("UserId")
                         .HasColumnType("bigint");
@@ -234,8 +237,8 @@ namespace WebApi.Migrations
                     b.Property<string>("Name")
                         .HasColumnType("text");
 
-                    b.Property<short>("Status")
-                        .HasColumnType("smallint");
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Time")
                         .HasColumnType("text");
@@ -404,14 +407,14 @@ namespace WebApi.Migrations
                     b.Property<byte>("Localization")
                         .HasColumnType("smallint");
 
-                    b.Property<short?>("Section")
-                        .HasColumnType("smallint");
+                    b.Property<int?>("Section")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Text")
                         .HasColumnType("text");
 
-                    b.Property<short>("Type")
-                        .HasColumnType("smallint");
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id", "Localization");
 
@@ -731,20 +734,20 @@ namespace WebApi.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<long>("Id"), "tags_hilo");
 
-                    b.Property<short>("Type")
-                        .HasColumnType("smallint");
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
 
                     b.Property<long?>("FatherId")
                         .HasColumnType("bigint");
 
-                    b.Property<short?>("FatherType")
-                        .HasColumnType("smallint");
+                    b.Property<int?>("FatherType")
+                        .HasColumnType("integer");
 
                     b.Property<long?>("MotherId")
                         .HasColumnType("bigint");
 
-                    b.Property<short?>("MotherType")
-                        .HasColumnType("smallint");
+                    b.Property<int?>("MotherType")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Text")
                         .HasColumnType("text");
@@ -780,8 +783,8 @@ namespace WebApi.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<short?>("TestType")
-                        .HasColumnType("smallint");
+                    b.Property<int?>("TestType")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id", "Language");
 
@@ -992,8 +995,8 @@ namespace WebApi.Migrations
                     b.Property<long>("EncounteredUserId")
                         .HasColumnType("bigint");
 
-                    b.Property<short>("Section")
-                        .HasColumnType("smallint");
+                    b.Property<int>("Section")
+                        .HasColumnType("integer");
 
                     b.Property<long>("UserId")
                         .HasColumnType("bigint");
@@ -1141,8 +1144,8 @@ namespace WebApi.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<long>("Id"), "requests_hilo");
 
-                    b.Property<short?>("Answer")
-                        .HasColumnType("smallint");
+                    b.Property<int?>("Answer")
+                        .HasColumnType("integer");
 
                     b.Property<DateTime?>("AnsweredTimeStamp")
                         .HasColumnType("timestamp with time zone");
@@ -1333,8 +1336,8 @@ namespace WebApi.Migrations
                     b.Property<bool>("HadReceivedReward")
                         .HasColumnType("boolean");
 
-                    b.Property<short>("IdentityType")
-                        .HasColumnType("smallint");
+                    b.Property<int>("IdentityType")
+                        .HasColumnType("integer");
 
                     b.Property<float>("InvitedUsersBonus")
                         .HasColumnType("real");
@@ -1448,7 +1451,7 @@ namespace WebApi.Migrations
                     b.Property<short>("MediaType")
                         .HasColumnType("smallint");
 
-                    b.Property<short>("Reason")
+                    b.Property<byte>("Reason")
                         .HasColumnType("smallint");
 
                     b.Property<int>("UserAge")
@@ -1494,8 +1497,8 @@ namespace WebApi.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
-                    b.Property<short>("Section")
-                        .HasColumnType("smallint");
+                    b.Property<int>("Section")
+                        .HasColumnType("integer");
 
                     b.Property<short>("Type")
                         .HasColumnType("smallint");
@@ -1531,8 +1534,8 @@ namespace WebApi.Migrations
                     b.Property<long>("UserId")
                         .HasColumnType("bigint");
 
-                    b.Property<short>("TagType")
-                        .HasColumnType("smallint");
+                    b.Property<int>("TagType")
+                        .HasColumnType("integer");
 
                     b.HasKey("TagId", "UserId", "TagType");
 
@@ -1560,8 +1563,8 @@ namespace WebApi.Migrations
                     b.Property<byte>("TestLanguage")
                         .HasColumnType("smallint");
 
-                    b.Property<short?>("TestType")
-                        .HasColumnType("smallint");
+                    b.Property<int?>("TestType")
+                        .HasColumnType("integer");
 
                     b.HasKey("TestId", "UserId");
 
@@ -1575,8 +1578,8 @@ namespace WebApi.Migrations
                     b.Property<long>("UserId")
                         .HasColumnType("bigint");
 
-                    b.Property<short>("Section")
-                        .HasColumnType("smallint");
+                    b.Property<int>("Section")
+                        .HasColumnType("integer");
 
                     b.HasKey("UserId", "Section");
 

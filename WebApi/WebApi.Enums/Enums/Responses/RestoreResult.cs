@@ -1,6 +1,6 @@
 ﻿namespace WebApi.Enums.Enums.Responses;
 
-public enum RestoreResult
+public enum RestoreResult : short
 {
     Success = 1,
     Error = 2,

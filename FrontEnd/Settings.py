@@ -929,27 +929,29 @@ class Settings:
                         self.add_next_step_handler_local(self.send_confirmation_request, acceptMode=acceptMode)
                         return
 
-                    data["video"] = message.video[len(message.video) - 1].file_id
+                    data["mediaType"] = "Video"
+                    data["media"] = message.video[len(message.video) - 1].file_id
                     d = json.dumps(data)
                     if bool(json.loads(requests.post(f"https://localhost:44381/SendTickRequest", d, headers={"Content-Type": "application/json"}, verify=False).text)):
                         self.send_message_with_confirmation(self.localization["RequestAcceptedM"])
                         return
-
                 elif message.video_note:
                     if message.video_note.duration > 15:
                         self.send_error_message(self.current_user, self.localization["ToLongVideoE"])
                         self.add_next_step_handler_local(self.send_confirmation_request, acceptMode=acceptMode)
                         return
 
-                    data["circle"] = message.video_note.file_id
+                    data["mediaType"] = "VideoNote"
+                    data["media"] = message.video_note.file_id
                     d = json.dumps(data)
                     if bool(json.loads(requests.post(f"https://localhost:44381/SendTickRequest", d, headers={"Content-Type": "application/json"}, verify=False).text)):
                         self.send_message_with_confirmation(self.localization["RequestAcceptedM"])
                         return
-
             elif self.requestType == 2:
                 if message.photo:
-                    data["photo"] = message.photo[len(message.photo) - 1].file_id
+
+                    data["mediaType"] = "Photo"
+                    data["media"] = message.photo[len(message.photo) - 1].file_id
                     d = json.dumps(data)
 
                     if bool(json.loads(requests.post(f"https://localhost:44381/SendTickRequest", d, headers={"Content-Type": "application/json"}, verify=False).text)):

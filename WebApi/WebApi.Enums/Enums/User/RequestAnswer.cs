@@ -1,7 +1,7 @@
 ﻿namespace WebApi.Enums.Enums.User;
 
-public enum RequestAnswer
+public enum RequestAnswer : short
 {
-    Accept,
-    Decline
+    Accept = 1,
+    Decline = 2
 }

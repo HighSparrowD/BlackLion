@@ -1,6 +1,6 @@
 ﻿namespace WebApi.Enums.Enums.Adventure;
 
-public enum AdventureStatus
+public enum AdventureStatus : short
 {
     New = 1,
     Changed = 2,
