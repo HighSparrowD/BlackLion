@@ -65,7 +65,7 @@ namespace WebApi.Data
         public DbSet<OceanStats> OceanStats => Set<OceanStats>();
         public DbSet<OceanPoints> OceanPoints => Set<OceanPoints>();
         public DbSet<ActiveEffect> ActiveEffects => Set<ActiveEffect>();
-        public DbSet<TickRequest> TickRequests => Set<TickRequest>();
+        public DbSet<VerificationRequest> TickRequests => Set<VerificationRequest>();
 
         //Adventures
         public DbSet<Adventure> Adventures => Set<Adventure>();
@@ -219,7 +219,7 @@ namespace WebApi.Data
             builder.Entity<OceanStats>().ToTable("ocean_stats");
             builder.Entity<OceanPoints>().ToTable("ocean_points");
             builder.Entity<ActiveEffect>().ToTable("active_effects");
-            builder.Entity<TickRequest>().ToTable("tick_requests");
+            builder.Entity<VerificationRequest>().ToTable("verification_requests");
             builder.Entity<Adventure>().ToTable("adventures");
             builder.Entity<AdventureTemplate>().ToTable("adventure_templates");
             builder.Entity<AdventureAttendee>().ToTable("adventure_attendees");
@@ -405,7 +405,7 @@ namespace WebApi.Data
                 .StartsAt(1)
                 .IncrementsBy(1);
 
-            builder.Entity<TickRequest>(b =>
+            builder.Entity<VerificationRequest>(b =>
             {
                 b.Property(a => a.Id).UseHiLo(sequenceName);
             });

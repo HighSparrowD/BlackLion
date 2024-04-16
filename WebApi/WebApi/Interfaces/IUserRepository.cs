@@ -19,6 +19,7 @@ using WebApi.Enums.Enums.Adventure;
 using WebApi.Enums.Enums.Notification;
 using WebApi.Enums.Enums.Authentication;
 using entities = WebApi.Main.Entities;
+using models = WebApi.Models.Models.User;
 
 namespace WebApi.Interfaces
 {
@@ -134,7 +135,7 @@ namespace WebApi.Interfaces
         Task<bool> PurchaseEffectAsync(long userId, int effectId, float points, Currency currency, short count=1);
         Task<bool> PurchasePersonalityPointsAsync(long userId, float points, Currency currency, short count=1);
         Task PurchasePointsAsync(long userId, float cost, Currency currency, int amount);
-        Task<bool> SendTickRequestAsync(SendTickRequest request);
+        Task<bool> SendTickRequestAsync(SendVerificationRequest request);
         Task<bool> SwitchUserFilteringByPhotoAsync(long userId);
         Task<bool> GetUserFilteringByPhotoStatusAsync(long userId);
         Task<List<GetTestShortData>> GetTestDataByPropertyAsync(long userId, Enums.Enums.User.OceanStats param);
@@ -143,7 +144,6 @@ namespace WebApi.Interfaces
         Task<GetUserTest> GetUserTestAsync(long userId, long testId);
         Task<int> GetPossibleTestPassRangeAsync(long userId, long testId);
         Task PurchaseTestAsync(long userId, long testId, float cost, Currency currency, AppLanguage localisation);
-        Task<string> CheckTickRequestStatusÀsync(long userId);
         Task<bool> CheckUserHaveChosenFreeParamAsync(long userId);
         Task<bool> CheckShouldTurnOffPersonalityAsync(long userId);
         Task<bool> SetUserFreeSearchParamAsync(long userId, bool freeStatus);
@@ -159,7 +159,6 @@ namespace WebApi.Interfaces
         Task<List<long>> AddTagsAsync(string tags, TagType type);
         //Task<bool> AddUserCommercialVector(long userId, string tagString);
         Task<SimilarityBetweenUsers> GetSimilarityBetweenUsersAsync(long user1, long user2);
-        Task<GetUserMedia> GetUserMediaAsync(long userId);
         Task<GetLimitations> GetUserSearchLimitations(long userId);
 
         //Toggle Settings 
@@ -199,7 +198,8 @@ namespace WebApi.Interfaces
 
         Task<List<entities.Report.Report>> GetRecentReportsAsync();
 
-        Task<entities.Admin.TickRequest> GetTickRequestAsync();
+        Task<models.UserMedia> GetUserMediaAsync(long userId);
+        Task<AppLanguage> GetUserLanguageAsync(long userId);
 
         Task<int> CountRecentFeedbacksAsync();
         Task<int> CountRecentReportsAsync();

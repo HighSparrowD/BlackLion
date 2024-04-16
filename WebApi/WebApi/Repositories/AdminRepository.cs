@@ -185,70 +185,67 @@ namespace WebApi.Repositories
             }
         }
 
-        public async Task<entities.Admin.TickRequest> GetTickRequestAsync(long? requestId = null)
+        public async Task<entities.Admin.VerificationRequest> GetVerificationRequestAsync()
         {
-            if (requestId != null)
-            {
-                //Returns only new, aborted, failed or changed requests
-                return await _contx.TickRequests.Where(r => r.Id == requestId && (r.State == TickRequestStatus.Added 
-                || r.State == TickRequestStatus.Changed 
-                || r.State == TickRequestStatus.Aborted 
-                || r.State == TickRequestStatus.Failed))
-                    .Include(r => r.User)
-                    .SingleOrDefaultAsync();
-            }
-
             //Return any request if id wasnt supplied. (Method is used on the frontend)
-            var request = await _contx.TickRequests.Where(r => r.State == TickRequestStatus.Added || r.State == TickRequestStatus.Changed || r.State == TickRequestStatus.Aborted)
-                .Include(r => r.User)
+            var request = await _contx.TickRequests.Where(r => r.State == VerificationRequestStatus.ToView || r.State == VerificationRequestStatus.Aborted)
                 .FirstOrDefaultAsync();
 
             if (request != null)
             {
-                request.State = TickRequestStatus.InProcess;
+                request.State = VerificationRequestStatus.InProcess;
                 await _contx.SaveChangesAsync();
             }
 
             return request;
         }
 
-        public async Task<bool> ResolveTickRequestAsync(ResolveTickRequest model)
+        public async Task<entities.Admin.VerificationRequest> GetVerificationRequestByIdAsync(long requestId)
         {
-            var request = await _contx.TickRequests.Where(r => r.Id == model.Id && (r.State == TickRequestStatus.InProcess))
+            //Returns only new, aborted, failed or changed requests
+            return await _contx.TickRequests.Where(r => r.Id == requestId && (r.State == VerificationRequestStatus.ToView
+            || r.State == VerificationRequestStatus.Aborted
+            || r.State == VerificationRequestStatus.Failed))
                 .Include(r => r.User)
-                .SingleOrDefaultAsync();
+                .FirstOrDefaultAsync();
+        }
+
+        public async Task ResolveVerificationRequestAsync(ResolveVerificationRequest model)
+        {
+            var request = await _contx.TickRequests.Where(r => r.Id == model.Id && (r.State == VerificationRequestStatus.InProcess))
+                .Include(r => r.User)
+                .FirstOrDefaultAsync();
 
             if (request == null)
                 throw new NullReferenceException("Request was not found");
 
-            if (model.IsAccepted)
-                request.State = TickRequestStatus.Accepted;
-            else
-                request.State = TickRequestStatus.Declined;
+            request.State = model.Status;
 
             request.AdminId = model.AdminId;
-            request.User.IdentityType = request.Type;
+            request.User.IdentityType = request.ConfirmationType;
 
-            await _contx.SaveChangesAsync();
-
-            if (model.IsAccepted)
+            if (model.Status == VerificationRequestStatus.Approved)
+            {
                 await _userRep.AddUserNotificationAsync(new UserNotification
                 {
-                    Description = $"Your identity confirmation had been accepted :)\n{model.Comment}",
+                    Description = $"Your identity confirmation had been approved :)\n{model.Comment}",
                     UserId = request.UserId,
-                    Type = NotificationType.TickRequest,
+                    Type = NotificationType.VerificationRequest,
                     Section = Section.Neutral,
                 });
-            else
+            }
+            else if (model.Status == VerificationRequestStatus.Declined)
+            {
                 await _userRep.AddUserNotificationAsync(new UserNotification
                 {
                     Description = $"Sorry, your identity confirmation request had been denied.\n{model.Comment}",
                     UserId = request.UserId,
-                    Type = NotificationType.TickRequest,
+                    Type = NotificationType.VerificationRequest,
                     Section = Section.Neutral,
                 });
+            }
 
-            return model.IsAccepted;
+            await _contx.SaveChangesAsync();
         }
 
         public async Task<byte> UploadTestsAsync(List<UploadTest> tests)
@@ -343,41 +340,18 @@ namespace WebApi.Repositories
             catch { return 0; }
         }
 
-        // TODO: Return overall information as a model
-        public async Task<string> GetNewNotificationsCountAsync(long adminId)
-        {
-            throw new NotImplementedException();
-            //string returnData = "";
-
-            //var recentFeedbacks = await _userRep ();
-            //var tickRequests = await _contx.TickRequests
-            //    .Where(r => (r.State == TickRequestStatus.Added || 
-            //    r.State == TickRequestStatus.Changed || 
-            //    r.State == TickRequestStatus.Aborted || 
-            //    r.State == TickRequestStatus.Failed) && 
-            //    r.AdminId == null)
-            //    .ToListAsync();
-
-
-            //var bannedUsers = await GetRecentlyBannedUsersAsync();
-
-            //returnData = $"Recent feedbacks: {recentFeedbacks.Count}\nActive tick requests {tickRequests.Count}\nRecently banned users{bannedUsers.Count}";
-
-            //return returnData;
-        }
-
         public async Task<bool> AbortTickRequestAsync(long requestId)
         {
             try
             {
                 //Get request if it was marked as processed
-                var request = await _contx.TickRequests.Where(r => r.Id == requestId && (r.State == TickRequestStatus.InProcess))
+                var request = await _contx.TickRequests.Where(r => r.Id == requestId && (r.State == VerificationRequestStatus.InProcess))
                         .SingleOrDefaultAsync(); ;
 
                 if (request == null)
                     throw new NullReferenceException($"Request {requestId} is not in process rigt now");
 
-                request.State = TickRequestStatus.Aborted;
+                request.State = VerificationRequestStatus.Aborted;
                 await _contx.SaveChangesAsync();
 
                 return true;
@@ -395,7 +369,7 @@ namespace WebApi.Repositories
                 if (request == null)
                     throw new NullReferenceException($"Request {requestId} does not exist");
 
-                request.State = TickRequestStatus.Failed;
+                request.State = VerificationRequestStatus.Failed;
                 request.AdminId = adminId;
 
                 await _contx.SaveChangesAsync();

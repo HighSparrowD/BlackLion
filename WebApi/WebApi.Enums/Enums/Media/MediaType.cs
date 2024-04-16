@@ -2,6 +2,7 @@
 
 public enum MediaType : short
 {
-    Photo,
-    Video
+    Photo = 1,
+    Video = 2,
+    VideoNote = 3
 }

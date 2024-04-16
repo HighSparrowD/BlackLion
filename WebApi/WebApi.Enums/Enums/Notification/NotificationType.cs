@@ -5,7 +5,7 @@ public enum NotificationType : short
     Like = 1, // Means request
     LikeNotification = 2, // Means the notification itself
     PremiumAcquire = 3,
-    TickRequest = 4,
+    VerificationRequest = 4,
     PremiumEnd = 5,
     AdventureParticipation = 6,
     AdventureParticipationByCode = 7,

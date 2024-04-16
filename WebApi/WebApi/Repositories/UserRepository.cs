@@ -2223,7 +2223,7 @@ namespace WebApi.Repositories
             try
             {
                 if (model.Type == NotificationType.PremiumAcquire ||
-                    model.Type == NotificationType.TickRequest || 
+                    model.Type == NotificationType.VerificationRequest || 
                     model.Type == NotificationType.PremiumEnd ||
                     model.Type == NotificationType.LikeNotification ||
                     model.Type == NotificationType.ReferentialRegistration)
@@ -3193,7 +3193,7 @@ namespace WebApi.Repositories
             return effects.Any(e => e.Effect == effectId);
         }
 
-        public async Task<bool> SendTickRequestAsync(SendTickRequest request)
+        public async Task<bool> SendTickRequestAsync(SendVerificationRequest request)
         {
             try
             {
@@ -3207,12 +3207,11 @@ namespace WebApi.Repositories
                 //Update existing request if one already exists
                 if (existingRequest != null)
                 {
-                    existingRequest.Photo = request.Photo;
-                    existingRequest.Video = request.Video;
-                    existingRequest.Circle = request.Circle;
+                    existingRequest.Media = request.Media;
+                    existingRequest.MediaType = request.MediaType;
                     existingRequest.Gesture = request.Gesture;
-                    existingRequest.Type = request.Type;
-                    existingRequest.State = TickRequestStatus.Changed;
+                    existingRequest.ConfirmationType = request.ConfirmationType;
+                    existingRequest.State = VerificationRequestStatus.ToView;
                     existingRequest.User.IdentityType = IdentityConfirmationType.Awaiting;
 
                     _contx.TickRequests.Update(existingRequest);
@@ -3226,17 +3225,7 @@ namespace WebApi.Repositories
 
                 user.IdentityType = IdentityConfirmationType.Awaiting;
 
-                var model = new TickRequest
-                {
-                    UserId = request.UserId,
-                    AdminId = null,
-                    State = null,
-                    Photo = request.Photo,
-                    Video = request.Video,
-                    Circle = request.Circle,
-                    Gesture = request.Gesture,
-                    Type = request.Type
-                };
+                var model = (VerificationRequest)request;
 
                 await _contx.TickRequests.AddAsync(model);
                 _contx.Users.Update(user);
@@ -3369,32 +3358,6 @@ namespace WebApi.Repositories
                 .Include(t => t.Test)
                 .Select(t => new GetTestShortData { Id = t.TestId, Name = t.Test.Name })
                 .ToListAsync();
-        }
-
-        public async Task<string> CheckTickRequestStatusÀsync(long userId)
-        {
-            var request = await _contx.TickRequests.Where(r => r.UserId == userId)
-                .SingleOrDefaultAsync();
-
-            if (request == null)
-                return "";
-
-            //TODO: Get status from localizer !
-            switch (request.State)
-            {
-                case TickRequestStatus.Added:
-                    return "Added";
-                case TickRequestStatus.Changed:
-                    return "Changed";
-                case TickRequestStatus.InProcess:
-                    return "In Process";
-                case TickRequestStatus.Declined:
-                    return "Declined";
-                case TickRequestStatus.Accepted:
-                    return "1";
-                default:
-                    return "Added";
-            }
         }
 
         public async Task<bool> SetUserFreeSearchParamAsync(long userId, bool freeStatus)
@@ -4008,7 +3971,7 @@ namespace WebApi.Repositories
             if (user == null)
                 throw new NullReferenceException($"User {userId} does not exist");
 
-            tickRequest.State = TickRequestStatus.Changed;
+            tickRequest.State = VerificationRequestStatus.ToView;
             user.IdentityType = IdentityConfirmationType.None;
 
             await _contx.SaveChangesAsync();
@@ -4163,15 +4126,6 @@ namespace WebApi.Repositories
 
             settings.ShouldComment = !settings.ShouldComment;
             await _contx.SaveChangesAsync();
-        }
-
-        public async Task<GetUserMedia> GetUserMediaAsync(long userId)
-        {
-            return await _contx.UserData.Where(u => u.Id == userId).Select(u => new GetUserMedia
-            {
-                Media = u.UserMedia,
-                MediaType = u.MediaType
-            }).FirstOrDefaultAsync();
         }
 
         public async Task<UserPartialData> GetUserPartialData(long userId)
@@ -4604,33 +4558,6 @@ namespace WebApi.Repositories
             return reports;
         }
 
-        public async Task<TickRequest> GetTickRequestAsync()
-        {
-            //if (requestId != null)
-            //{
-            //    //Returns only new, aborted, failed or changed requests
-            //    return await _contx.TickRequests.Where(r => r.Id == requestId && (r.State == TickRequestStatus.Added
-            //    || r.State == TickRequestStatus.Changed
-            //    || r.State == TickRequestStatus.Aborted
-            //    || r.State == TickRequestStatus.Failed))
-            //        .Include(r => r.User)
-            //        .SingleOrDefaultAsync();
-            //}
-
-            //Return any request if id wasnt supplied. (Method is used on the frontend)
-            var request = await _contx.TickRequests.Where(r => r.State == TickRequestStatus.Added || r.State == TickRequestStatus.Changed || r.State == TickRequestStatus.Aborted)
-                .Include(r => r.User)
-                .FirstOrDefaultAsync();
-
-            if (request != null)
-            {
-                request.State = TickRequestStatus.InProcess;
-                await _contx.SaveChangesAsync();
-            }
-
-            return request;
-        }
-
         public async Task<int> CountRecentFeedbacksAsync()
         {
             var count = await _contx.Feedbacks.Where(f => f.AdminId == null)
@@ -4650,9 +4577,8 @@ namespace WebApi.Repositories
         public async Task<int> CountPendingVerificationRequestsAsync()
         {
             var count = await _contx.TickRequests.
-                Where(r => r.State == TickRequestStatus.Added 
-                || r.State == TickRequestStatus.Changed || 
-                r.State == TickRequestStatus.Aborted)
+                Where(r => r.State == VerificationRequestStatus.ToView || 
+                r.State == VerificationRequestStatus.Aborted)
                 .CountAsync();
 
             return count;
@@ -4672,6 +4598,23 @@ namespace WebApi.Repositories
                 .CountAsync();
 
             return count;
+        }
+
+        public async Task<UserMedia> GetUserMediaAsync(long userId)
+        {
+            return await _contx.UserData.Where(d => d.Id == userId)
+                .Select(d => new UserMedia
+                {
+                    UserId = d.Id,
+                    Media = d.UserMedia,
+                    MediaType = d.MediaType
+                }).FirstOrDefaultAsync();
+        }
+
+        public async Task<AppLanguage> GetUserLanguageAsync(long userId)
+        {
+            return await _contx.UserData.Where(d => d.Id == userId)
+                .Select(d => d.Language).FirstOrDefaultAsync();
         }
     }
 }

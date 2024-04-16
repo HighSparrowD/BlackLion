@@ -1,10 +1,11 @@
 ﻿using System.Text.Json.Serialization;
+using WebApi.Enums.Enums.Media;
 using WebApi.Enums.Enums.User;
 
 namespace WebApi.Models.Models.Admin;
 
 #nullable enable
-public class TickRequest
+public class VerificationRequest
 {
     [JsonPropertyName("id")]
     public long Id { get; set; }
@@ -16,20 +17,17 @@ public class TickRequest
     public long? AdminId { get; set; }
 
     [JsonPropertyName("state")]
-    public TickRequestStatus? State { get; set; }
+    public VerificationRequestStatus? State { get; set; }
 
-    [JsonPropertyName("photo")]
-    public string? Photo { get; set; }
+    [JsonPropertyName("media")]
+    public string Media { get; set; } = default!;
 
-    [JsonPropertyName("video")]
-    public string? Video { get; set; }
-
-    [JsonPropertyName("circle")]
-    public string? Circle { get; set; }
+    [JsonPropertyName("mediaType")]
+    public MediaType MediaType { get; set; }
 
     [JsonPropertyName("gesture")]
     public string? Gesture { get; set; }
 
-    [JsonPropertyName("type")]
-    public IdentityConfirmationType Type { get; set; }
+    [JsonPropertyName("confirmationType")]
+    public IdentityConfirmationType ConfirmationType { get; set; }
 }

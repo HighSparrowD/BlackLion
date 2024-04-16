@@ -188,9 +188,9 @@ def get_user_basic_info(userId):
         return None
 
 
-def get_user_app_language(userId):
+def get_user_app_language(userId) -> str | None:
     try:
-        return requests.get(f"{ApiBase.api_address}/GetUserAppLanguage/{userId}", verify=False).text
+        return requests.get(f"{ApiBase.api_address}/api/User/language/{userId}", verify=False).text
     except:
         return None
 

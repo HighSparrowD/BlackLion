@@ -17,10 +17,13 @@ namespace WebApi.Services.Admin
 
         private IUserRepository _userRepo { get; set; }
 
-        public AdminService(IServiceProvider serviceProvider, IUserRepository userRepo)
+        private IAdminRepository _adminRepo { get; set; }
+
+        public AdminService(IServiceProvider serviceProvider, IUserRepository userRepo, IAdminRepository adminRepo)
         {
             _serviceProvider = serviceProvider;
             _userRepo = userRepo;
+            _adminRepo = adminRepo;
         }
 
         public async Task StartInDebug(List<long> userIds)
@@ -58,11 +61,11 @@ namespace WebApi.Services.Admin
                 .ToList();
         }
 
-        public async Task<TickRequest> GetTickRequestsAsync()
+        public async Task<VerificationRequest> GetVerificationRequestsAsync()
         {
-            var request = await _userRepo.GetTickRequestAsync();
+            var request = await _adminRepo.GetVerificationRequestAsync();
 
-            return (TickRequest) request;
+            return (VerificationRequest)request;
         }
 
         public async Task<RecentUpdates> GetRecentUpdates()

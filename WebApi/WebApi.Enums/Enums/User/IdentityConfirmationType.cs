@@ -2,9 +2,9 @@
 
 public enum IdentityConfirmationType
 {
-    None = 0,
-    Awaiting = 1, //Request awaits confirmation
-    Partial = 2,
-    Full = 3
+    None = 1,
+    Awaiting = 2, //Request awaits confirmation
+    Partial = 3,
+    Full = 4
 }
 

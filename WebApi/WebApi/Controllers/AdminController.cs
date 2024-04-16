@@ -14,6 +14,7 @@ using WebApi.Models.Models.Identity.Attributes.Machine;
 using WebApi.Models.Models.Identity.Attributes.Admin;
 using models = WebApi.Models.Models;
 using WebApi.Models.Models.Report;
+using WebApi.Services.Admin;
 
 namespace WebApi.Controllers
 {
@@ -23,9 +24,9 @@ namespace WebApi.Controllers
     {
         private IAdminRepository _repository;
         private IAdminService _adminService;
-        private readonly ILogger<UserActionController> _logger;
+        private readonly ILogger<UserController> _logger;
 
-        public AdminController(ILogger<UserActionController> logger, IAdminRepository repos, 
+        public AdminController(ILogger<UserController> logger, IAdminRepository repos, 
             IAdminService adminService)
         {
             _repository = repos;
@@ -72,12 +73,6 @@ namespace WebApi.Controllers
             await _repository.AddAchievementsAsync(achievements);
         }
 
-        [HttpPost("/ResolveTickRequest")]
-        public async Task<bool> ResolveTickRequest([FromBody] ResolveTickRequest request)
-        {
-            return await _repository.ResolveTickRequestAsync(request);
-        }
-
         [HttpGet("/AbortTickRequest/{id}")]
         public async Task<bool> AbortTickRequest(long id)
         {
@@ -94,12 +89,6 @@ namespace WebApi.Controllers
         public async Task<byte> UploadPsTests([FromBody] List<UploadTest> model, [FromServices] IAdminRepository adminRepo)
         {
             return await adminRepo.UploadTestsAsync(model);
-        }
-
-        [HttpGet("/GetNewNotificationsCount/{adminId}")]
-        public async Task<string> GetNewNotificationsCount(long adminId)
-        {
-            return await _repository.GetNewNotificationsCountAsync(adminId);
         }
 
         [HttpGet("/banned-users")]
@@ -172,15 +161,6 @@ namespace WebApi.Controllers
             return Ok(reports);
         }
 
-        [HttpGet("tick-request")]
-        //[RequiresAdminOrCreator]
-        public async Task<ActionResult<models.Admin.TickRequest>> GetTickRequest([FromServices] IAdminService adminService)
-        {
-            var requests = await adminService.GetTickRequestsAsync();
-
-            return Ok(requests);
-        }
-
         [HttpGet("updates")]
         //[RequiresAdminOrCreator]
         public async Task<ActionResult<RecentUpdates>> GetUpdates([FromServices] IAdminService adminService)
@@ -188,6 +168,24 @@ namespace WebApi.Controllers
             var updates = await adminService.GetRecentUpdates();
 
             return Ok(updates);
+        }
+
+        [HttpGet("verification-request")]
+        //[RequiresAdminOrCreator]
+        public async Task<ActionResult<models.Admin.VerificationRequest>> GetVerificationRequest(IAdminService adminService)
+        {
+            var requests = await adminService.GetVerificationRequestsAsync();
+
+            return Ok(requests);
+        }
+
+        [HttpPost("verification-request")]
+        //[RequiresAdminOrCreator]
+        public async Task<ActionResult> ResolveVerificationRequest([FromBody] ResolveVerificationRequest request)
+        {
+            await _repository.ResolveVerificationRequestAsync(request);
+
+            return NoContent();
         }
     }
 }
