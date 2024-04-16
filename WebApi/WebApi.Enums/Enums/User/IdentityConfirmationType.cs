@@ -1,6 +1,6 @@
 ﻿namespace WebApi.Enums.Enums.User;
 
-public enum IdentityConfirmationType
+public enum IdentityConfirmationType : short
 {
     None = 1,
     Awaiting = 2, //Request awaits confirmation

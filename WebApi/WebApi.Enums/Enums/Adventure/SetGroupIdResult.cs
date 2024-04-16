@@ -1,6 +1,6 @@
 ﻿namespace WebApi.Enums.Enums.Adventure;
 
-public enum SetGroupIdResult
+public enum SetGroupIdResult : short
 {
     Success = 1,
     AdventureDoesNotExist = 2,

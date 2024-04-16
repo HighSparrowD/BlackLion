@@ -2,7 +2,7 @@
 
 // TODO: Think through roles.
 // Probably add some more valiations. 
-public enum Role
+public enum Role : short
 {
     Admin = 1,
     Creator = 2,

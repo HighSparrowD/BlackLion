@@ -5,9 +5,9 @@ namespace WebApi.Enums.Enums.General;
 public enum AppLanguage : byte
 {
     [Display(Name = "EN")]
-    EN = 0,
+    EN = 1,
     [Display(Name = "RU")]
-    RU = 1,
+    RU = 2,
     [Display(Name = "UK")]
-    UK = 2
+    UK = 3
 }
