@@ -239,7 +239,10 @@ namespace WebApi.Repositories
                         Name = t.Text,
                     }).ToListAsync();
 
-            var userInfo = await _contx.Users.Where(u => u.Id == id).Select(u => (UserInfo)u)
+            var userInfo = await _contx.Users.Where(u => u.Id == id)
+                .Include(u => u.Data)
+                .Include(u => u.Location)
+                .Select(u => (UserInfo)u)
                 .FirstOrDefaultAsync();
 
             userInfo.Tags = string.Join(", ", userTags);
