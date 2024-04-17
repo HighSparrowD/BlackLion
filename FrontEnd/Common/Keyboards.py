@@ -7,7 +7,8 @@ menu_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True) 
          KeyboardButton("/settings"),
          KeyboardButton("/advertisements"),
          KeyboardButton("/adventure"),
-         KeyboardButton("/shop"))
+         KeyboardButton("/shop"),
+         KeyboardButton("/admin"))
 
 admin_menu_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True) \
     .add(KeyboardButton("/switchstatus"),
