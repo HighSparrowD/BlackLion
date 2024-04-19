@@ -28,7 +28,12 @@ class AdminApi:
 
     #TODO: get_all_feedbacks
 
-    #TODO: get_recent_reports
+    def get_recent_reports(self) -> list[admin_models.RecentReports] | None:
+        response = ApiBase.create_get_request("api/Admin/reports/recent", authToken=self.auth_token)
+
+        data = response.json()
+
+        return list(admin_models.RecentReports.unpack(data))
 
     #TODO: get_pending_adventures
 
