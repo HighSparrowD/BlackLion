@@ -1,5 +1,6 @@
 import Common.Menues as Menus
 from Adventurer import Adventurer
+from AdminModule import AdminModule
 from Familiator import *
 from RandomTalker import *
 from Settings import *
@@ -131,6 +132,11 @@ def adventurer(message):
 @bot.message_handler(commands=["advertisements"], func=lambda message: message.chat.type == 'private')
 def advertisements(message):
     create_advertisement_module(message, message.from_user.id)
+
+
+@bot.message_handler(commands=["admin"], func=lambda message: message.chat.type == 'private')
+def admin(message):
+    create_admin_module(message, message.from_user.id)
 
 
 @bot.message_handler(commands=["help"], func=lambda message: message.chat.type == 'private', is_multihandler=True)
@@ -296,6 +302,19 @@ def create_advertisement_module(message, userId):
 
     if status == "Success":  # Success
         return AdvertisementModule(bot, message, response["hasVisited"])
+    elif status == "Busy":  # Busy
+        return
+    elif status == "DoesNotExist":  # Does not exist
+        send_registration_warning(userId)
+    elif status == "IsDeleted":  # Is deleted
+        bot.send_message(userId, "Hey! your account had been deleted recently. Would you like to restore it?\n Then hit /registration !")
+
+def create_admin_module(message, userId):
+    response = Helpers.switch_user_busy_status(userId, 13)
+    status = response["status"]
+
+    if status == "Success":  # Success
+        return AdminModule(bot, message, response["hasVisited"])
     elif status == "Busy":  # Busy
         return
     elif status == "DoesNotExist":  # Does not exist
