@@ -23,7 +23,7 @@ class AdminModule(Personality_Bot):
         self.recent_updates = self.api_service.get_recent_updates()
         self.recent_reports_list = None
 
-        self.reports_calldata: bool = False
+        self.calldata_mode: int = 0
 
         self.start_markup = InlineKeyboardMarkup([[InlineKeyboardButton('Recent feedbacks', callback_data='1'),
                                                    InlineKeyboardButton(f'{self.recent_updates.recentFeedbackCount}', callback_data='1')],
@@ -49,12 +49,12 @@ class AdminModule(Personality_Bot):
 
     def start(self):
         self.send_active_message('Check the recent updates!', self.start_markup)
-        self.reports_calldata = False
+        self.calldata_mode = 0
 
     def recent_reports_menu(self):
         self.prev_func = self.start
 
-        self.reports_calldata = True
+        self.calldata_mode = 2
         self.recent_reports_list = self.api_service.get_recent_reports()
 
         self.send_active_message('Recent reports:', self.recent_reports_markup())
@@ -67,11 +67,12 @@ class AdminModule(Personality_Bot):
                 self.send_active_message(f'Report #{report_item.id}\n\nSender id: <code>{report_item.senderId}</code>\n'
                                          f'Reported id: <code>{report_item.userId}</code>\nReason: {report_item.reason}\n\n'
                                          f'"{report_item.text}"', self.goback_markup)
+                return
 
     def callback_handler(self, call: CallbackQuery):
         if call.data == 'a':
             self.prev_menu()
-        elif self.reports_calldata:
+        elif self.calldata_mode == 2:
             self.show_report(int(call.data))
         elif call.data == '2':
             self.recent_reports_menu()
