@@ -37,11 +37,13 @@ class AdminModule(Personality_Bot):
                                                    InlineKeyboardButton(f'{self.recent_updates.pendingAdventureCount}', callback_data='5')],
                                                   [InlineKeyboardButton('Exit to main menu', callback_data='a')]])
 
+        self.goback_markup = InlineKeyboardMarkup([[InlineKeyboardButton('Go back', callback_data='a')]])
+
         self.start()
 
     def recent_reports_markup(self):
         markup = InlineKeyboardMarkup([[InlineKeyboardButton(f'Report #{button_data.id}', callback_data=f'{button_data.id}')]
-                                       for button_data in self.api_service.get_recent_reports()])
+                                       for button_data in self.recent_reports_list])
         markup.add(InlineKeyboardButton('Go back', callback_data='a'))
         return markup
 
@@ -49,18 +51,29 @@ class AdminModule(Personality_Bot):
         self.send_active_message('Check the recent updates!', self.start_markup)
         self.reports_calldata = False
 
-    def recent_reports(self):
+    def recent_reports_menu(self):
         self.prev_func = self.start
+
         self.reports_calldata = True
+        self.recent_reports_list = self.api_service.get_recent_reports()
 
         self.send_active_message('Recent reports:', self.recent_reports_markup())
+
+    def show_report(self, report_id):
+        self.prev_func = self.recent_reports_menu
+
+        for report_item in self.recent_reports_list:
+            if report_item.id == report_id:
+                self.send_active_message(f'Report #{report_item.id}\n\nSender id: <code>{report_item.senderId}</code>\n'
+                                         f'Reported id: <code>{report_item.userId}</code>\nReason: {report_item.reason}\n\n'
+                                         f'"{report_item.text}"', self.goback_markup)
 
     def callback_handler(self, call: CallbackQuery):
         if call.data == 'a':
             self.prev_menu()
         elif self.reports_calldata:
-            pass
+            self.show_report(int(call.data))
         elif call.data == '2':
-            self.recent_reports()
+            self.recent_reports_menu()
         else:
             self.send_error_message("This feature isn't ready")
