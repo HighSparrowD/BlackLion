@@ -1,3 +1,4 @@
+import abc
 import datetime
 
 
@@ -9,7 +10,14 @@ class RecentUpdates:
         self.pendingAdvertisementCount: int = data_dict["pendingAdvertisementCount"]
         self.pendingAdventureCount: int = data_dict["pendingAdventureCount"]
 
-class RecentReports:
+
+class AdminModuleModel(abc.ABC):
+    @classmethod
+    def unpack(cls, datas) -> list[any] | None:
+        return [cls(data_dict) for data_dict in datas]
+
+
+class RecentReports(AdminModuleModel):
     def __init__(self, data_dict):
         self.id: int = data_dict['id']
         self.senderId: int = data_dict['senderId']
@@ -20,6 +28,18 @@ class RecentReports:
         self.reason: str = data_dict['reason']
         self.insertedUtc: datetime.datetime = data_dict['insertedUtc']
 
-    @staticmethod
-    def unpack(datas) -> list[any] | None:
-        return [RecentReports(data_dict) for data_dict in datas]
+
+class Feedbacks(AdminModuleModel):
+    def __init__(self, data_dict):
+        self.id: int = data_dict['id']
+        self.userId: int = data_dict['userId']
+        self.adminId: int | None = data_dict['adminId']
+        self.text: str = data_dict['text']
+        self.insertedUtc: str = data_dict['insertedUtc']
+        self.reason: str = data_dict['reason']
+
+
+class GroupedFeedback(AdminModuleModel):
+    def __init__(self, data_dict):
+        self.username: str = data_dict['username']
+        self.feedbacks: list = Feedbacks.unpack(data_dict['feedbacks'])
