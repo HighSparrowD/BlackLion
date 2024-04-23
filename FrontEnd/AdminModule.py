@@ -51,7 +51,7 @@ class AdminModule(Personality_Bot):
         markup.add(InlineKeyboardButton('Go back', callback_data='a'))
         return markup
 
-    def recent_feedbacks_markup(self):
+    def feedbacks_markup(self):
         markup = InlineKeyboardMarkup([[InlineKeyboardButton(f'Feedback #{button_data.id}', callback_data=f'{button_data.id}')]
                                        for button_data in self.models_list])
         markup.add(InlineKeyboardButton('Go back', callback_data='a'))
@@ -62,12 +62,6 @@ class AdminModule(Personality_Bot):
                                        for button_data in self.models_list])
         markup.add(InlineKeyboardButton('Go back', callback_data='a'))
         print(self.models_list)
-        return markup
-
-    def users_feedbacks_markup(self, models_list_index):
-        markup = InlineKeyboardMarkup([[InlineKeyboardButton(f'Feedback #{button_data.id}', callback_data=f'{button_data.id}')]
-                                       for button_data in self.models_list[models_list_index].feedbacks])
-        markup.add(InlineKeyboardButton('Go back', callback_data='a'))
         return markup
 
     def start(self):
@@ -85,7 +79,7 @@ class AdminModule(Personality_Bot):
         self.calldata_mode = 1
         self.models_list = self.api_service.get_recent_feedbacks()
 
-        self.send_active_message('Recent feedbacks:', self.recent_feedbacks_markup())
+        self.send_active_message('Recent feedbacks:', self.feedbacks_markup())
 
     def all_feedbacks(self):
         self.prev_func = self.feedbacks_menu
@@ -99,8 +93,9 @@ class AdminModule(Personality_Bot):
         self.prev_func = self.all_feedbacks
 
         self.calldata_mode = 20
+        self.models_list = self.models_list[models_list_index].feedbacks
 
-        self.send_active_message('Which one?', self.users_feedbacks_markup(models_list_index))
+        self.send_active_message('Which one?', self.feedbacks_markup())
 
     def show_feedback(self, feedback_id):
         for feedback_item in self.models_list:
