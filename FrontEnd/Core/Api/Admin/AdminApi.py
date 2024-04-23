@@ -24,9 +24,19 @@ class AdminApi:
 
         return admin_models.RecentUpdates(data)
 
-    #TODO: get_recent_feedbacks
+    def get_recent_feedbacks(self) -> list[admin_models.Feedbacks] | None:
+        response = ApiBase.create_get_request("api/Admin/feedbacks/recent", authToken=self.auth_token)
 
-    #TODO: get_all_feedbacks
+        data = response.json()
+
+        return list(admin_models.Feedbacks.unpack(data))
+
+    def get_all_feedbacks(self) -> list[admin_models.GroupedFeedback] | None:
+        response = ApiBase.create_get_request("api/Admin/feedbacks/all", authToken=self.auth_token)
+
+        data = response.json()
+
+        return list(admin_models.GroupedFeedback.unpack(data))
 
     def get_recent_reports(self) -> list[admin_models.RecentReports] | None:
         response = ApiBase.create_get_request("api/Admin/reports/recent", authToken=self.auth_token)
