@@ -17,18 +17,18 @@ public class Test
     public AppLanguage Language { get; set; }
     [NotNull]
     public string Name { get; set; } = default!;
-    [NotNull]
-    public string Description { get; set; } = default!;
-    [NotNull]
+
+    public string? Description { get; set; } = default!;
+
     public OceanStats? TestType { get; set; }
-    [NotNull]
-    public int CanBePassedInDays { get; set; }
-    [NotNull]
-    public virtual List<TestQuestion> Questions { get; set; } = default!;
-    [NotNull]
-    public virtual List<TestResult> Results { get; set; } = default!;
-    [NotNull]
-    public virtual List<TestScale> Scales { get; set; } = default!;
+
+    public int? CanBePassedInDays { get; set; }
+
+    public virtual List<TestQuestion>? Questions { get; set; } = default!;
+
+    public virtual List<TestResult>? Results { get; set; } = default!;
+
+    public virtual List<TestScale>? Scales { get; set; } = default!;
 
     public Test()
     {}
@@ -45,10 +45,7 @@ public class Test
             Description = test.Description,
             TestType = test.TestType,
             Language = test.Language,
-            Name = test.Name,
-            Questions = test.Questions.Select(q => (TestQuestion)q!).ToList(),
-            Results = test.Results.Select(r => (TestResult)r!).ToList(),
-            Scales = test.Scales.Select(s => (TestScale)s!).ToList()
+            Name = test.Name
         };
     }
 
@@ -65,9 +62,6 @@ public class Test
             TestType = test.TestType,
             Language = test.Language,
             Name = test.Name,
-            Questions = test.Questions.Select(q => (models.TestQuestion)q!).ToList(),
-            Results = test.Results.Select(r => (models.TestResult)r!).ToList(),
-            Scales = test.Scales.Select(s => (models.TestScale)s!).ToList()
         };
     }
 }

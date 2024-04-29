@@ -17,10 +17,10 @@ public class TestQuestion
     public AppLanguage TestLanguage { get; set; }
     [NotNull]
     public string Text { get; set; } = default!;
-    public string Photo { get; set; } = default!;
+    public string? Photo { get; set; } = default!;
     // Each test has different number of scales.
     // This parameter represents a parameter to which the question is related to
-    public string Scale { get; set; } = default!;
+    public string? Scale { get; set; } = default!;
     public virtual List<TestAnswer> Answers { get; set; } = default!;
 
     public TestQuestion()

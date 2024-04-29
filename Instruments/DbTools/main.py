@@ -10,9 +10,9 @@ cities_last_index = 0
 languages_last_index = 0
 
 langs = {
-    0: "EN",
-    1: "RU",
-    2: "UK",
+    1: "EN",
+    2: "RU",
+    3: "UK",
 }
 
 currencies = {
@@ -388,7 +388,7 @@ def add_tests(lang):
 
 
 def generate_test_prices():
-    file = pandas.read_csv(f"Inputs/Tests{langs[1]} - Tests.csv")
+    file = pandas.read_csv(f"Inputs/Tests{langs[2]} - Tests.csv")
     file = get_file_data(file)
 
     data = {}
@@ -559,11 +559,6 @@ def load_uk_localization():
     # add_tests("uk")
 
     print(f"Localization UK is loaded")
-
-
-# create_eng_localization()
-# create_ru_localization()
-# create_uk_localization()
 
 load_eng_localization()
 load_ru_localization()

@@ -11,15 +11,9 @@ public class Test
 
     public string Name { get; set; }
 
-    public string Description { get; set; }
+    public string? Description { get; set; }
 
     public OceanStats? TestType { get; set; }
 
-    public int CanBePassedInDays { get; set; }
-
-    public virtual List<TestQuestion> Questions { get; set; }
-
-    public virtual List<TestResult> Results { get; set; }
-
-    public virtual List<TestScale> Scales { get; set; }
+    public int? CanBePassedInDays { get; set; }
 }
