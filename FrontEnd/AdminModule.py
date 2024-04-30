@@ -1,7 +1,8 @@
 import telebot
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, Message, CallbackQuery
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, Message, CallbackQuery, ReplyKeyboardMarkup, KeyboardButton
 from Common.Menues import go_back_to_main_menu
 from Core.Api.Admin.AdminApi import AdminApi
+from Models.Admin.Admin import ResolveVerificationRequest
 
 from BaseModule import Personality_Bot
 
@@ -20,6 +21,8 @@ class AdminModule(Personality_Bot):
 
         self.current_callback_handler = self.bot.register_callback_query_handler(message, self.callback_handler,
                                                                                  user_id=self.current_user)
+        self.next_handler = None
+
         self.recent_updates = self.api_service.get_recent_updates()
         self.models_list = None
 
@@ -40,6 +43,9 @@ class AdminModule(Personality_Bot):
         self.feedbacks_menu_markup = InlineKeyboardMarkup([[InlineKeyboardButton('Recent', callback_data='10')],
                                                            [InlineKeyboardButton('All', callback_data='11')],
                                                            [InlineKeyboardButton('Go back', callback_data='a')]])
+
+        self.verif_request_approve_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).\
+            add(KeyboardButton("Approve"), KeyboardButton('Decline'), KeyboardButton('Go back'))
 
         self.goback_markup = InlineKeyboardMarkup([[InlineKeyboardButton('Go back', callback_data='a')]])
 
@@ -70,6 +76,7 @@ class AdminModule(Personality_Bot):
         return markup
 
     def start(self):
+        self.prev_func = None
         self.send_active_message('Check the recent updates!', self.start_markup)
         self.calldata_mode = 0
 
@@ -134,6 +141,8 @@ class AdminModule(Personality_Bot):
         self.calldata_mode = 4
         self.models_list = self.api_service.get_verification_requests()
 
+        self.send_active_message('Recent requests:', self.verification_request_markup())
+
     def show_verif_request(self, request_id):
         for request in self.models_list:
             if request.id == request_id:
@@ -148,24 +157,51 @@ class AdminModule(Personality_Bot):
                         else:
                             self.send_secondary_message_with_video(user_media_list[0].media)
 
-                    if request.mediaType == 'Photo':
-                        self.send_active_message_with_photo(f'Request #{request.id}\n\n'
-                                                            f'User id: {request.userId}\n'
-                                                            f'State: {request.state}\n'
-                                                            f'Confirmation type: {request.confirmationType}', request.media)
-                    elif request.mediaType == 'Video':
-                        self.send_active_message_with_video(f'Request #{request.id}\n\n'
-                                                            f'User id: {request.userId}\n'
-                                                            f'State: {request.state}\n'
-                                                            f'Confirmation type: {request.confirmationType}', request.media)
-                    elif request.mediaType == 'VideoNote':
-                        self.send_video_note_as_additional_msg(request.media)
-                        self.send_active_message(f'Request #{request.id}\n\n'
-                                                            f'User id: {request.userId}\n'
-                                                            f'State: {request.state}\n'
-                                                            f'Confirmation type: {request.confirmationType}')
                 elif request.confirmationType == 'Partial':
-                    pass
+                    self.send_secondary_message(f'{request.gesture}')
+
+                if request.mediaType == 'Photo':
+                    self.send_active_message_with_photo(f'Request #{request.id}\n\n'
+                                                        f'User id: {request.userId}\n'
+                                                        f'State: {request.state}\n', request.media,
+                                                        markup=self.verif_request_approve_markup)
+                elif request.mediaType == 'Video':
+                    self.send_active_message_with_video(f'Request #{request.id}\n\n'
+                                                        f'User id: {request.userId}\n'
+                                                        f'State: {request.state}\n', request.media,
+                                                        markup=self.verif_request_approve_markup)
+                elif request.mediaType == 'VideoNote':
+                    self.send_video_note_as_additional_msg(request.media)
+                    self.send_active_message(f'Request #{request.id}\n\n'
+                                             f'User id: {request.userId}\n'
+                                             f'State: {request.state}\n',
+                                             markup=self.verif_request_approve_markup)
+                self.next_handler = self.bot.register_next_step_handler(None, self.resolve_request,
+                                                                        chat_id=self.current_user, request=request)
+                return
+
+    def resolve_request(self, message: Message = None, request=None, isDeclined=False):
+        self.delete_message(message.id)
+
+        if not isDeclined:
+            if message.text == 'Approve':
+                self.api_service.post_verification_request(ResolveVerificationRequest(request.id, request.adminId, 'Approved'))
+                self.verification_requests_menu()
+            elif message.text == 'Decline':
+                self.active_message(f'Tell the user why their request had been declined\n\n User`s language: '
+                                    f'{self.api_service.get_user_language(request.userId)}')
+                self.next_handler = self.bot.register_next_step_handler(message, self.resolve_request,
+                                                                        chat_id=self.current_user, request=request,
+                                                                        isDeclined=True)
+            elif message.text == 'Go Back':
+                self.api_service.post_verification_request(ResolveVerificationRequest(request.id, request.adminId, 'Aborted'))
+                self.start()
+            else:
+                self.send_error_message('Something went wrong...')
+        elif isDeclined:
+            self.api_service.post_verification_request(
+                ResolveVerificationRequest(request.id, request.adminId, 'Declined', message.text))
+            self.verification_requests_menu()
 
     def callback_handler(self, call: CallbackQuery):
         if call.data == 'a':
