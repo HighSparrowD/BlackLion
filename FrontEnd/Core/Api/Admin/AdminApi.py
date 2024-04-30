@@ -18,32 +18,64 @@ class AdminApi:
         return contains_roles
 
     def get_recent_updates(self) -> admin_models.RecentUpdates | None:
-        response = ApiBase.create_get_request("api/Admin/updates", authToken=self.auth_token)
+        try:
+            response = ApiBase.create_get_request("api/Admin/updates", authToken=self.auth_token)
 
-        data = response.json()
+            data = response.json()
 
-        return admin_models.RecentUpdates(data)
+            return admin_models.RecentUpdates(data)
+        except:
+            return
 
     def get_recent_feedbacks(self) -> list[admin_models.Feedbacks] | None:
-        response = ApiBase.create_get_request("api/Admin/feedbacks/recent", authToken=self.auth_token)
+        try:
+            response = ApiBase.create_get_request("api/Admin/feedbacks/recent", authToken=self.auth_token)
 
-        data = response.json()
+            data = response.json()
 
-        return list(admin_models.Feedbacks.unpack(data))
+            return list(admin_models.Feedbacks.unpack(data))
+        except:
+            return
 
     def get_all_feedbacks(self) -> list[admin_models.GroupedFeedback] | None:
-        response = ApiBase.create_get_request("api/Admin/feedbacks/all", authToken=self.auth_token)
+        try:
+            response = ApiBase.create_get_request("api/Admin/feedbacks/all", authToken=self.auth_token)
 
-        data = response.json()
+            data = response.json()
 
-        return list(admin_models.GroupedFeedback.unpack(data))
+            return list(admin_models.GroupedFeedback.unpack(data))
+        except:
+            return
 
     def get_recent_reports(self) -> list[admin_models.RecentReports] | None:
-        response = ApiBase.create_get_request("api/Admin/reports/recent", authToken=self.auth_token)
+        try:
+            response = ApiBase.create_get_request("api/Admin/reports/recent", authToken=self.auth_token)
 
-        data = response.json()
+            data = response.json()
 
-        return list(admin_models.RecentReports.unpack(data))
+            return list(admin_models.RecentReports.unpack(data))
+        except:
+            return
+
+    def get_verification_requests(self) -> list[admin_models.VerificationRequest] | None:
+        try:
+            response = ApiBase.create_get_request("api/Admin/verification-request", authToken=self.auth_token)
+
+            data = response.json()
+
+            return list(admin_models.VerificationRequest.unpack(data))
+        except:
+            return
+
+    def get_user_media(self, userId) -> list[admin_models.UserMedia] | None:
+        try:
+            response = ApiBase.create_get_request(f'api/User/media/{userId}', authToken=self.auth_token)
+
+            data = response.json()
+
+            return list(admin_models.UserMedia.unpack(data))
+        except:
+            return
 
     def get_verification_requests(self) -> list[admin_models.VerificationRequest] | None:
         try:
