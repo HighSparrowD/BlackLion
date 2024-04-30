@@ -3326,7 +3326,7 @@ namespace WebApi.Repositories
 
             //Get number of days in which this test can be passed again
             var result = (test.Test.CanBePassedInDays - (DateTime.UtcNow - test.PassedOn).Value.Days);
-            return result;
+            return result?? 0;
         }
 
         public async Task PurchaseTestAsync(long userId, long testId, float cost, Currency currency, AppLanguage localisation)

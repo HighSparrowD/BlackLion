@@ -120,7 +120,7 @@ namespace WebApi.Repositories
             //sql += $"DELETE FROM \"sponsor_stats\" WHERE \"SponsorId\" IN ({formattedIds});";
             //sql += $"DELETE FROM \"sponsors\" WHERE \"Id\" IN ({formattedIds});";
 
-            sql += $"DELETE FROM \"tick_requests\" WHERE \"UserId\" IN ({formattedIds});";
+            sql += $"DELETE FROM \"verification_requests\" WHERE \"UserId\" IN ({formattedIds});";
             sql += $"DELETE FROM \"transactions\" WHERE \"UserId\" IN ({formattedIds});";
             sql += $"DELETE FROM \"trust_levels\" WHERE \"Id\" IN ({formattedIds});";
             sql += $"DELETE FROM \"user_achievements\" WHERE \"UserId\" IN ({formattedIds});";
