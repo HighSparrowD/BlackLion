@@ -43,3 +43,21 @@ class GroupedFeedback(AdminModuleModel):
     def __init__(self, data_dict):
         self.username: str = data_dict['username']
         self.feedbacks: list = Feedbacks.unpack(data_dict['feedbacks'])
+
+
+class VerificationRequest(AdminModuleModel):
+    def __init__(self, data_dict):
+        self.id: int = data_dict['id']
+        self.userId: int | None = data_dict['userId']
+        self.adminId: int | None = data_dict['adminId']
+        self.state: str | None = data_dict['state']
+        self.media: str = data_dict['media']
+        self.mediaType: str = data_dict['mediaType']
+        self.gesture: str | None = data_dict['gesture']
+        self.confirmationType: str = data_dict['confirmationType']
+
+class UserMedia(AdminModuleModel):
+    def __init__(self, data_dict):
+        self.userId: int | None = data_dict['userId']
+        self.media: str = data_dict['media']
+        self.mediaType: str = data_dict['mediaType']
