@@ -18,7 +18,7 @@ namespace WebApi.Interfaces
         Task<List<Feedback>> GetFeedbacks ();
         Task<int> DeleteAllUsers ();
         Task AddAchievementsAsync(List<UploadAchievement> achievements);
-        Task<entities.Admin.VerificationRequest> GetVerificationRequestAsync();
+        Task<List<entities.Admin.VerificationRequest>> GetVerificationRequestAsync();
         Task<entities.Admin.VerificationRequest> GetVerificationRequestByIdAsync(long requestId);
         Task ResolveVerificationRequestAsync(ResolveVerificationRequest request);
         Task<bool> AbortTickRequestAsync(long requestId);
