@@ -73,34 +73,6 @@ class AdminApi:
         except:
             return None
 
-    def get_verification_requests(self) -> list[admin_models.VerificationRequest] | None:
-        try:
-            response = ApiBase.create_get_request("api/Admin/verification-request", authToken=self.auth_token)
-
-            data = response.json()
-
-            return list(admin_models.VerificationRequest.unpack(data))
-        except:
-            return []
-
-    def get_user_media(self, userId) -> list[admin_models.UserMedia] | None:
-        response = ApiBase.create_get_request(f'api/User/media/{userId}', authToken=self.auth_token)
-
-        data = response.json()
-
-        return list(admin_models.UserMedia.unpack(data))
-
-    def post_verification_request(self, resolved_verification_request: admin_models.ResolveVerificationRequest):
-        response = ApiBase.create_post_request_with_api_model('api/Admin/verification-request', resolved_verification_request,
-                                                              authToken=self.auth_token)
-        return response
-
-    def get_user_language(self, userId) -> str | None:
-        try:
-            return ApiBase.create_get_request(f'/api/User/language/{userId}', authToken=self.auth_token).text
-        except:
-            return None
-
     #TODO: get_pending_adventures
 
     #TODO: get_pending_advertisements
