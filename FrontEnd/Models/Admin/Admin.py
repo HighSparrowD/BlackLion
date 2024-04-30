@@ -1,5 +1,6 @@
 import abc
 import datetime
+from Models.ApiModel import ApiModel
 
 
 class RecentUpdates:
@@ -56,8 +57,17 @@ class VerificationRequest(AdminModuleModel):
         self.gesture: str | None = data_dict['gesture']
         self.confirmationType: str = data_dict['confirmationType']
 
+
 class UserMedia(AdminModuleModel):
     def __init__(self, data_dict):
         self.userId: int | None = data_dict['userId']
         self.media: str = data_dict['media']
         self.mediaType: str = data_dict['mediaType']
+
+
+class ResolveVerificationRequest(ApiModel):
+    def __init__(self, id: int, adminId: int, status: str, comment: str = None):
+        self.id = id
+        self.adminId = adminId
+        self.status = status
+        self.comment = comment
