@@ -109,7 +109,7 @@ class Personality_Bot:
             self.delete_secondary_message()
             self.secondary_message = self.bot.send_video(self.current_user, video, text, reply_markup=markup).id
         else:
-            self.secondary_message = self.bot.send_photo(self.current_user, video, text, reply_markup=markup).id
+            self.secondary_message = self.bot.send_video(self.current_user, video, text, reply_markup=markup).id
 
     def send_video_note_as_additional_msg(self, videoNote, markup=None):
         if self.additional_message:

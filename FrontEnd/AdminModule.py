@@ -146,7 +146,8 @@ class AdminModule(Personality_Bot):
     def show_verif_request(self, request_id):
         for request in self.models_list:
             if request.id == request_id:
-                if request.confirmationType == 'Full':
+                if True:
+                # if request.confirmationType == 'Full':
 
                     user_media_list = self.api_service.get_user_media(request.userId)
                     if len(user_media_list) > 1:
@@ -188,12 +189,12 @@ class AdminModule(Personality_Bot):
                 self.api_service.post_verification_request(ResolveVerificationRequest(request.id, request.adminId, 'Approved'))
                 self.verification_requests_menu()
             elif message.text == 'Decline':
-                self.active_message(f'Tell the user why their request had been declined\n\n User`s language: '
-                                    f'{self.api_service.get_user_language(request.userId)}')
+                self.send_active_message(f'Tell the user why their request had been declined\n\n User`s language: '
+                                         f'{self.api_service.get_user_language(request.userId)}')
                 self.next_handler = self.bot.register_next_step_handler(message, self.resolve_request,
                                                                         chat_id=self.current_user, request=request,
                                                                         isDeclined=True)
-            elif message.text == 'Go Back':
+            elif message.text == 'Go back':
                 self.api_service.post_verification_request(ResolveVerificationRequest(request.id, request.adminId, 'Aborted'))
                 self.start()
             else:
@@ -206,12 +207,6 @@ class AdminModule(Personality_Bot):
     def callback_handler(self, call: CallbackQuery):
         if call.data == 'a':
             self.prev_menu()
-        elif call.data == '1':
-            self.feedbacks_menu()
-        elif call.data == '10':
-            self.recent_feedbacks()
-        elif call.data == '11':
-            self.all_feedbacks()
         elif self.calldata_mode == 1:
             self.show_feedback(int(call.data))
         elif self.calldata_mode == 2:
@@ -221,7 +216,13 @@ class AdminModule(Personality_Bot):
         elif self.calldata_mode == 3:
             self.show_report(int(call.data))
         elif self.calldata_mode == 4:
-            self.show_verif_request(call.data)
+            self.show_verif_request(int(call.data))
+        elif call.data == '1':
+            self.feedbacks_menu()
+        elif call.data == '10':
+            self.recent_feedbacks()
+        elif call.data == '11':
+            self.all_feedbacks()
         elif call.data == '2':
             self.recent_reports_menu()
         elif call.data == '3':
