@@ -61,11 +61,11 @@ namespace WebApi.Services.Admin
                 .ToList();
         }
 
-        public async Task<VerificationRequest> GetVerificationRequestsAsync()
+        public async Task<List<VerificationRequest>> GetVerificationRequestsAsync()
         {
             var request = await _adminRepo.GetVerificationRequestAsync();
 
-            return (VerificationRequest)request;
+            return request.Select(r => (VerificationRequest)r).ToList();
         }
 
         public async Task<RecentUpdates> GetRecentUpdates()

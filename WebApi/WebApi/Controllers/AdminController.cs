@@ -172,7 +172,7 @@ namespace WebApi.Controllers
 
         [HttpGet("verification-request")]
         //[RequiresAdminOrCreator]
-        public async Task<ActionResult<models.Admin.VerificationRequest>> GetVerificationRequest(IAdminService adminService)
+        public async Task<ActionResult<List<models.Admin.VerificationRequest>>> GetVerificationRequest(IAdminService adminService)
         {
             var requests = await adminService.GetVerificationRequestsAsync();
 

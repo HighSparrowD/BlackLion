@@ -185,18 +185,18 @@ namespace WebApi.Repositories
             }
         }
 
-        public async Task<entities.Admin.VerificationRequest> GetVerificationRequestAsync()
+        public async Task<List<entities.Admin.VerificationRequest>> GetVerificationRequestAsync()
         {
             //Return any request if id wasnt supplied. (Method is used on the frontend)
             var request = await _contx.TickRequests.Where(r => r.State == null || r.State == VerificationRequestStatus.ToView 
             || r.State == VerificationRequestStatus.Aborted)
-                .FirstOrDefaultAsync();
+                .Take(3).ToListAsync();
 
-            if (request != null)
-            {
-                request.State = VerificationRequestStatus.InProcess;
-                await _contx.SaveChangesAsync();
-            }
+            //if (request != null)
+            //{
+            //    request.State = VerificationRequestStatus.InProcess;
+            //    await _contx.SaveChangesAsync();
+            //}
 
             return request;
         }
