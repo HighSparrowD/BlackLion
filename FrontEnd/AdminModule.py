@@ -61,7 +61,12 @@ class AdminModule(Personality_Bot):
         markup = InlineKeyboardMarkup([[InlineKeyboardButton(f'{button_data.username}', callback_data=f'{self.models_list.index(button_data)}')]
                                        for button_data in self.models_list])
         markup.add(InlineKeyboardButton('Go back', callback_data='a'))
-        print(self.models_list)
+        return markup
+
+    def verification_request_markup(self):
+        markup = InlineKeyboardMarkup([[InlineKeyboardButton(f'Request #{button_data.id}', callback_data=f'{button_data.id}')]
+                                       for button_data in self.models_list])
+        markup.add(InlineKeyboardButton('Go back', callback_data='a'))
         return markup
 
     def start(self):
@@ -123,6 +128,45 @@ class AdminModule(Personality_Bot):
                                          f'"{report_item.text}"', self.goback_markup)
                 return
 
+    def verification_requests_menu(self):
+        self.prev_func = self.start
+
+        self.calldata_mode = 4
+        self.models_list = self.api_service.get_verification_requests()
+
+    def show_verif_request(self, request_id):
+        for request in self.models_list:
+            if request.id == request_id:
+                if request.confirmationType == 'Full':
+
+                    user_media_list = self.api_service.get_user_media(request.userId)
+                    if len(user_media_list) > 1:
+                        self.send_mediagroup_as_secondary_msg([media.media] for media in user_media_list)
+                    else:
+                        if user_media_list[0].mediaType == 'Photo':
+                            self.send_secondary_message_with_photo(user_media_list[0].media)
+                        else:
+                            self.send_secondary_message_with_video(user_media_list[0].media)
+
+                    if request.mediaType == 'Photo':
+                        self.send_active_message_with_photo(f'Request #{request.id}\n\n'
+                                                            f'User id: {request.userId}\n'
+                                                            f'State: {request.state}\n'
+                                                            f'Confirmation type: {request.confirmationType}', request.media)
+                    elif request.mediaType == 'Video':
+                        self.send_active_message_with_video(f'Request #{request.id}\n\n'
+                                                            f'User id: {request.userId}\n'
+                                                            f'State: {request.state}\n'
+                                                            f'Confirmation type: {request.confirmationType}', request.media)
+                    elif request.mediaType == 'VideoNote':
+                        self.send_video_note_as_additional_msg(request.media)
+                        self.send_active_message(f'Request #{request.id}\n\n'
+                                                            f'User id: {request.userId}\n'
+                                                            f'State: {request.state}\n'
+                                                            f'Confirmation type: {request.confirmationType}')
+                elif request.confirmationType == 'Partial':
+                    pass
+
     def callback_handler(self, call: CallbackQuery):
         if call.data == 'a':
             self.prev_menu()
@@ -140,7 +184,11 @@ class AdminModule(Personality_Bot):
             self.show_feedback(int(call.data))
         elif self.calldata_mode == 3:
             self.show_report(int(call.data))
+        elif self.calldata_mode == 4:
+            self.show_verif_request(call.data)
         elif call.data == '2':
             self.recent_reports_menu()
+        elif call.data == '3':
+            self.verification_requests_menu()
         else:
             self.send_error_message("This feature isn't ready")
