@@ -188,7 +188,8 @@ namespace WebApi.Repositories
         public async Task<entities.Admin.VerificationRequest> GetVerificationRequestAsync()
         {
             //Return any request if id wasnt supplied. (Method is used on the frontend)
-            var request = await _contx.TickRequests.Where(r => r.State == VerificationRequestStatus.ToView || r.State == VerificationRequestStatus.Aborted)
+            var request = await _contx.TickRequests.Where(r => r.State == null || r.State == VerificationRequestStatus.ToView 
+            || r.State == VerificationRequestStatus.Aborted)
                 .FirstOrDefaultAsync();
 
             if (request != null)
