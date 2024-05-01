@@ -1,5 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 using WebApi.Enums.Enums.Media;
+using WebApi.Enums.Enums.Messaging;
 
 namespace WebApi.Models.Models.Adventure;
 
@@ -23,27 +24,9 @@ public class ManageAdventure
     public MediaType MediaType { get; set; }
     [JsonPropertyName("description")]
     public string Description { get; set; }
-    [JsonPropertyName("experience")]
-    public string Experience { get; set; }
-    [JsonPropertyName("attendeesDescription")]
-    public string AttendeesDescription { get; set; }
-    [JsonPropertyName("unwantedAttendeesDescription")]
-    public string UnwantedAttendeesDescription { get; set; }
-    [JsonPropertyName("gratitude")]
-    public string Gratitude { get; set; }
-    [JsonPropertyName("date")]
-    public string Date { get; set; }
-    [JsonPropertyName("time")]
-    public string Time { get; set; }
-    [JsonPropertyName("duration")]
-    public string Duration { get; set; }
-    [JsonPropertyName("application")]
-    public string Application { get; set; }
-    [JsonPropertyName("address")]
-    public string Address { get; set; }
     //If is null -> auto reply is not present at all
-    [JsonPropertyName("isAutoReplyText")]
-    public bool? IsAutoReplyText { get; set; }
+    [JsonPropertyName("autoReplyType")]
+    public ReplyType? AutoReplyType { get; set; }
     [JsonPropertyName("autoReply")]
     public string AutoReply { get; set; }
     [JsonPropertyName("isAwaiting")]
@@ -65,16 +48,7 @@ public class ManageAdventure
         Media = adventure.Media;
         MediaType = adventure.MediaType;
         Description = adventure.Description;
-        Experience = adventure.Experience;
-        AttendeesDescription = adventure.AttendeesDescription;
-        UnwantedAttendeesDescription = adventure.UnwantedAttendeesDescription;
-        Gratitude = adventure.Gratitude;
-        Date = adventure.Date;
-        Time = adventure.Time;
-        Duration = adventure.Duration;
-        Application = adventure.Application;
-        Address = adventure.Address;
-        IsAutoReplyText = adventure.IsAutoReplyText;
+        AutoReplyType = adventure.AutoReplyType;
         AutoReply = adventure.AutoReply;
         IsAwaiting = adventure.IsAwaiting;
         GroupId = adventure.GroupId;

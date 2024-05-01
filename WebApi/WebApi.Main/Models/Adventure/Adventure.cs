@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using WebApi.Enums.Enums.Adventure;
 using WebApi.Enums.Enums.General;
 using WebApi.Enums.Enums.Media;
+using WebApi.Enums.Enums.Messaging;
 using WebApi.Main.Entities.Location;
 using models = WebApi.Models.Models.Adventure;
 
@@ -24,16 +25,7 @@ public class Adventure
     public string? Media { get; set; }
     public MediaType MediaType { get; set; }
     public string? Description { get; set; }
-    public string? Experience { get; set; }
-    public string? AttendeesDescription { get; set; }
-    public string? UnwantedAttendeesDescription { get; set; }
-    public string? Gratitude { get; set; }
-    public string? Date { get; set; }
-    public string? Time { get; set; }
-    public string? Duration { get; set; }
-    public string? Application { get; set; }
-    public string? Address { get; set; }
-    public bool? IsAutoReplyText { get; set; }
+    public ReplyType? AutoReplyType { get; set; }
     public string? AutoReply { get; set; }
     public string? UniqueLink { get; set; }
     //Indicates, whether if adventure awaits for the group id
@@ -59,31 +51,22 @@ public class Adventure
         {
             Id = adventure.Id,
             Status = adventure.Status,
-            Address = adventure.Address,
-            Application = adventure.Application,
-            AttendeesDescription = adventure.AttendeesDescription,
             AutoReply = adventure.AutoReply,
             CityId = adventure.CityId,
             CityCountryLang = adventure.CityCountryLang,
             CountryId = adventure.CountryId,
             CountryLang = adventure.CountryLang,
-            Date = adventure.Date,
             DeleteDate = adventure.DeleteDate,
             Description = adventure.Description,
-            Duration = adventure.Duration,
-            Experience = adventure.Experience,
-            Gratitude = adventure.Gratitude,
             GroupId = adventure.GroupId,
             GroupLink = adventure.GroupLink,
-            IsAutoReplyText = adventure.IsAutoReplyText,
+            AutoReplyType = adventure.AutoReplyType,
             IsAwaiting = adventure.IsAwaiting,
             IsOffline = adventure.IsOffline,
             Media = adventure.Media,
             MediaType = adventure.MediaType,
             Name = adventure.Name,
-            Time = adventure.Time,
             UniqueLink = adventure.UniqueLink,
-            UnwantedAttendeesDescription = adventure.UnwantedAttendeesDescription,
             UserId = adventure.UserId,
             AdminId = adventure.AdminId,
             City = (City)adventure.City!,
@@ -101,31 +84,22 @@ public class Adventure
         {
             Id = adventure.Id,
             Status = adventure.Status,
-            Address = adventure.Address,
-            Application = adventure.Application,
-            AttendeesDescription = adventure.AttendeesDescription,
             AutoReply = adventure.AutoReply,
             CityId = adventure.CityId,
             CityCountryLang = adventure.CityCountryLang,
             CountryId = adventure.CountryId,
             CountryLang = adventure.CountryLang,
-            Date = adventure.Date,
             DeleteDate = adventure.DeleteDate,
             Description = adventure.Description,
-            Duration = adventure.Duration,
-            Experience = adventure.Experience,
-            Gratitude = adventure.Gratitude,
             GroupId = adventure.GroupId,
             GroupLink = adventure.GroupLink,
-            IsAutoReplyText = adventure.IsAutoReplyText,
+            AutoReplyType = adventure.AutoReplyType,
             IsAwaiting = adventure.IsAwaiting,
             IsOffline = adventure.IsOffline,
             Media = adventure.Media,
             MediaType = adventure.MediaType,
             Name = adventure.Name,
-            Time = adventure.Time,
             UniqueLink = adventure.UniqueLink,
-            UnwantedAttendeesDescription = adventure.UnwantedAttendeesDescription,
             UserId = adventure.UserId,
             AdminId = adventure.AdminId,
             City = (City)adventure.City!,
