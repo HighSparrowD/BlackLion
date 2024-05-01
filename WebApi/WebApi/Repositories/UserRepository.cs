@@ -3723,23 +3723,14 @@ namespace WebApi.Repositories
             {
                 UserId = model.UserId,
                 Name = model.Name,
-                Address = model.Address,
-                Application = model.Application,
-                AttendeesDescription = model.AttendeesDescription,
                 CountryId = model.CountryId,
                 CityId = model.CityId,
                 CountryLang = userLang,
                 CityCountryLang = userLang,
-                Date = model.Date,
-                Time = model.Time,
                 Description = model.Description,
-                Duration = model.Duration,
-                Experience = model.Experience,
-                UnwantedAttendeesDescription = model.UnwantedAttendeesDescription,
-                Gratitude = model.Gratitude,
                 MediaType = model.MediaType,
                 Media = model.Media,
-                IsAutoReplyText = model.IsAutoReplyText,
+                AutoReplyType = model.AutoReplyType,
                 AutoReply = model.AutoReply,
                 IsOffline = model.IsOffline,
                 IsAwaiting = model.IsAwaiting,
@@ -3761,22 +3752,13 @@ namespace WebApi.Repositories
             if (adventure == null)
                 throw new InvalidOperationException($"Adventure with id #{model.Id} does not exist");
 
-            adventure.Duration = model.Duration;
             adventure.Name = model.Name;
-            adventure.Address = model.Address;
-            adventure.Application = model.Application;
-            adventure.Gratitude = model.Gratitude;
-            adventure.AttendeesDescription = model.AttendeesDescription;
-            adventure.UnwantedAttendeesDescription = model.UnwantedAttendeesDescription;
             adventure.Media = model.Media;
             adventure.MediaType = model.MediaType;
             adventure.CityId = model.CityId;
             adventure.CountryId = model.CountryId;
             adventure.Description = model.Description;
-            adventure.Experience = model.Experience;
-            adventure.Date = model.Date;
-            adventure.Time = model.Time;
-            adventure.IsAutoReplyText = model.IsAutoReplyText;
+            adventure.AutoReplyType = model.AutoReplyType;
             adventure.AutoReply = model.AutoReply;
             adventure.Status = AdventureStatus.Changed;
             adventure.IsAwaiting = model.IsAwaiting;
@@ -4394,7 +4376,7 @@ namespace WebApi.Repositories
                 Media = q.Media,
                 MediaType = q.MediaType,
                 AutoReply = q.AutoReply,
-                IsAutoReplyText = q.IsAutoReplyText
+                AutoReplyType = q.AutoReplyType
             }).ToListAsync();
 
             return new AdventureSearchResponse(adventures);
