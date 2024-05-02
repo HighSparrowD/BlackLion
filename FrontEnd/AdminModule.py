@@ -198,7 +198,9 @@ class AdminModule(Personality_Bot):
                                                                         chat_id=self.current_user, request=request,
                                                                         isDeclined=True)
             elif message.text == 'Go back':
-                self.api_service.post_verification_request(ResolveVerificationRequest(request.id, request.adminId, 'Aborted'))
+                for request_item in self.models_list:
+                    self.api_service.post_verification_request(ResolveVerificationRequest
+                                                               (request_item.id, request_item.adminId, 'Aborted'))
 
                 self.delete_secondary_message()
                 self.delete_additional_message()
