@@ -146,8 +146,7 @@ class AdminModule(Personality_Bot):
     def show_verif_request(self, request_id):
         for request in self.models_list:
             if request.id == request_id:
-                if True:
-                # if request.confirmationType == 'Full':
+                if request.confirmationType == 'Full':
 
                     user_media_list = self.api_service.get_user_media(request.userId)
                     if len(user_media_list) > 1:
@@ -187,21 +186,33 @@ class AdminModule(Personality_Bot):
         if not isDeclined:
             if message.text == 'Approve':
                 self.api_service.post_verification_request(ResolveVerificationRequest(request.id, request.adminId, 'Approved'))
+
+                self.delete_secondary_message()
+                self.delete_additional_message()
+
                 self.verification_requests_menu()
             elif message.text == 'Decline':
                 self.send_active_message(f'Tell the user why their request had been declined\n\n User`s language: '
-                                         f'{self.api_service.get_user_language(request.userId)}')
+                                         f'{self.api_service.get_user_language(request.userId)}', delete_msg=['s', 'a'])
                 self.next_handler = self.bot.register_next_step_handler(message, self.resolve_request,
                                                                         chat_id=self.current_user, request=request,
                                                                         isDeclined=True)
             elif message.text == 'Go back':
                 self.api_service.post_verification_request(ResolveVerificationRequest(request.id, request.adminId, 'Aborted'))
+
+                self.delete_secondary_message()
+                self.delete_additional_message()
+
                 self.start()
             else:
                 self.send_error_message('Something went wrong...')
         elif isDeclined:
             self.api_service.post_verification_request(
                 ResolveVerificationRequest(request.id, request.adminId, 'Declined', message.text))
+
+            self.delete_secondary_message()
+            self.delete_additional_message()
+
             self.verification_requests_menu()
 
     def callback_handler(self, call: CallbackQuery):
