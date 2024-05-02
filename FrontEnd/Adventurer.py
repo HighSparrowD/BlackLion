@@ -85,8 +85,8 @@ class Adventurer:
         self.countries = {}
         self.cities = {}
 
-        self.register_checkout_message = "1.Change name\n2.Change country\n3.Change city\n4.Change media\n5.Change description\n6.Change experience description\n7.Change attendees description \n8.Describe unwanted people\n9.Describe reward\n10.Change Date\n11.Change Time\n12.Change duration\n13.{commOption}\n14.Change Auto Reply\n15. ⭐Change Keywords (tags)⭐\n16. Use group management\n17.{action}\n18. Abort"
-        self.register_template_checkout_message = "1.Change name\n2.Change country\n3.Change city\n4.Change media\n5.Change description\n6.Change experience description\n7.Change attendees description \n8.Describe unwanted people\n9.Describe reward\n10.Change Date\n11.Change Time\n12.Change duration\n13.{commOption}\n14.Change Auto Reply\n15.{action}\n16. Abort"
+        self.register_checkout_message = "1.Change name\n2.Change country\n3.Change city\n4.Change media\n5.Change description\n6.Change Auto Reply\n7. ⭐Change Keywords (tags)⭐\n8. Use group management\n9.{action}\n10. Abort"
+        self.register_template_checkout_message = "1.Change name\n2.Change country\n3.Change city\n4.Change media\n5.Change description\n6.Change Auto Reply\n7.{action}\n8. Abort"
 
         self.start_markup = InlineKeyboardMarkup() \
             .add(InlineKeyboardButton("My adventures", callback_data="1a")) \
@@ -254,7 +254,7 @@ class Adventurer:
         self.current_section = self.register_state_step
 
         # self.registration_steps.insert(0, self.register_state_step)
-        self.send_active_message("What kind of adventure will it be?\nPlease note, that this parameter will be impossible to change after it had been chosen", markup=self.adventure_state_markup)
+        self.send_active_message("What kind of adventure will it be?\nPlease note, that this parameter will be impossible to change after it has been chosen", markup=self.adventure_state_markup)
 
     def register_verification_step(self, message, acceptMode=False):
         if not acceptMode:
@@ -538,7 +538,7 @@ class Adventurer:
         if not acceptMode:
             self.configure_registration_step(self.register_description_step, shouldInsert)
 
-            self.send_active_message("What do you propose to do? \nDescribe the activity, the place, what does other users have to have")
+            self.send_active_message("What do you propose to do? \nDescribe the activity, the place, what does other users have to have.\nWe also advice you to provide more information regarding these questions:\n\nHow are you connected to what you are proposing to do, and are you connected at all?\nHow long have you been doing this activity?\nHave you ever done it before?\nIs this your first time doing it?\n\nWho would you like / would not like to see?\nDescribe the attendees. Gender, age, hobbies.\nWhy should this person come?\nHow many people would you like to gather?\n\nWhat kind of thanks would you like to receive from attendees for organizing the adventure?\n*It could be a social media review, a donation, or just a simple \"thank you\"\n\nState the exact date and time of the adventure\n\nHow long is your adventure going to last?\n\nWhere will you meet with your attendees?")
             self.send_additional_actions_message("Additional actions", self.goBackInlineMarkup)
             self.next_handler = self.bot.register_next_step_handler(message, self.register_description_step, acceptMode=True, chat_id=self.current_user)
         else:
@@ -556,282 +556,6 @@ class Adventurer:
                     return
 
                 self.register_checkout(message)
-                return
-
-            self.register_experience_step(message)
-
-    def register_experience_step(self, message=None, acceptMode=False, shouldInsert=True):
-        self.delete_secondary_message()
-
-        if not acceptMode:
-            self.configure_registration_step(self.register_experience_step, shouldInsert)
-
-            self.send_active_message("How are you connected to what you are proposing to do, and are you connected at all?\nHow long have you been doing this activity?\nHave you ever done it before?\nIs this your first time doing it?", self.skipMarkup)
-            self.send_additional_actions_message("Additional actions", self.goBackInlineMarkup)
-            self.next_handler = self.bot.register_next_step_handler(message, self.register_experience_step, acceptMode=True, chat_id=self.current_user)
-        else:
-            self.delete_message(message)
-            if not message.text:
-                self.send_secondary_message("Empty message", self.skipMarkup)
-                self.next_handler = self.bot.register_next_step_handler(message, self.register_experience_step, acceptMode=acceptMode, chat_id=self.current_user)
-                return
-
-            elif not message.text or message.text == "Skip":
-                self.data["experience"] = ""
-                self.register_attendees_step(message)
-                return
-
-            self.data["experience"] = message.text
-
-            if self.editMode:
-                if self.isTemplate:
-                    self.register_template_checkout(message)
-                    return
-
-                self.register_checkout(message)
-                return
-
-            self.register_attendees_step(message)
-
-    def register_attendees_step(self, message=None, acceptMode=False, shouldInsert=True):
-        self.delete_secondary_message()
-
-        if not acceptMode:
-            self.configure_registration_step(self.register_attendees_step, shouldInsert)
-
-            self.send_active_message("Who would you like to see?\nDescribe the person you would like to see. Gender, age, hobbies.\nWhy should this person come?\nHow many people would you like to gather?", self.skipMarkup)
-            self.send_additional_actions_message("Additional actions", self.goBackInlineMarkup)
-            self.next_handler = self.bot.register_next_step_handler(message, self.register_attendees_step, acceptMode=True, chat_id=self.current_user)
-        else:
-            self.delete_message(message)
-            if not message.text:
-                self.send_secondary_message("Empty message", self.skipMarkup)
-                self.next_handler = self.bot.register_next_step_handler(message, self.register_attendees_step, acceptMode=acceptMode, chat_id=self.current_user)
-                return
-
-            elif not message.text or message.text == "Skip":
-                self.data["attendeesDescription"] = ""
-                self.register_unwanted_attendees_step(message)
-                return
-
-            self.data["attendeesDescription"] = message.text
-
-            if self.editMode:
-                if self.isTemplate:
-                    self.register_template_checkout(message)
-                    return
-
-                self.register_checkout(message)
-                return
-
-            self.register_unwanted_attendees_step(message)
-
-    def register_unwanted_attendees_step(self, message=None, acceptMode=False, shouldInsert=True):
-        self.delete_secondary_message()
-
-        if not acceptMode:
-            self.configure_registration_step(self.register_unwanted_attendees_step, shouldInsert)
-
-            self.send_active_message("Who would you NOT wish to see?\nDescribe the person you would NOT wish to see.", self.skipMarkup)
-            self.send_additional_actions_message("Additional actions", self.goBackInlineMarkup)
-            self.next_handler = self.bot.register_next_step_handler(message, self.register_unwanted_attendees_step, acceptMode=True, chat_id=self.current_user)
-        else:
-            self.delete_message(message)
-            if not message.text:
-                self.send_secondary_message("Empty message", self.skipMarkup)
-                self.next_handler = self.bot.register_next_step_handler(message, self.register_unwanted_attendees_step, acceptMode=acceptMode, chat_id=self.current_user)
-                return
-
-            elif not message.text or message.text == "Skip":
-                self.data["unwantedAttendeesDescription"] = ""
-                self.register_gratitude_step(message)
-                return
-
-            self.data["unwantedAttendeesDescription"] = message.text
-
-            if self.editMode:
-                if self.isTemplate:
-                    self.register_template_checkout(message)
-                    return
-
-                self.register_checkout(message)
-                return
-
-            self.register_gratitude_step(message)
-
-    def register_gratitude_step(self, message=None, acceptMode=False, shouldInsert=True):
-        self.delete_secondary_message()
-
-        if not acceptMode:
-            self.configure_registration_step(self.register_gratitude_step, shouldInsert)
-
-            self.send_active_message("What kind of thanks would you like to receive from attendees for organizing the adventure?\n*It could be a social media review, a donation, or just a simple 'thank you'", markup=self.skipMarkup)
-            self.send_additional_actions_message("Additional actions", self.goBackInlineMarkup)
-            self.next_handler = self.bot.register_next_step_handler(message, self.register_gratitude_step, acceptMode=True, chat_id=self.current_user)
-        else:
-            self.delete_message(message)
-            if not message.text or message.text == "Skip":
-                self.data["gratitude"] = ""
-                self.register_date_step(message)
-                return
-
-            self.data["gratitude"] = message.text
-
-            if self.editMode:
-                if self.isTemplate:
-                    self.register_template_checkout(message)
-                    return
-
-                self.register_checkout(message)
-                return
-
-            self.register_date_step(message)
-
-    def register_date_step(self, message=None, acceptMode=False, shouldInsert=True):
-        self.delete_secondary_message()
-
-        if not acceptMode:
-            self.configure_registration_step(self.register_date_step, shouldInsert)
-
-            self.send_active_message("State the exact date of the adventure.\n\nExample: 10.08.2024\n\n*Do not include time, it is gonna be the next step :)")
-            self.send_additional_actions_message("Additional actions", self.goBackInlineMarkup)
-            self.next_handler = self.bot.register_next_step_handler(message, self.register_date_step, acceptMode=True, chat_id=self.current_user)
-        else:
-            self.delete_message(message)
-            if not message.text:
-                self.send_secondary_message("Empty message")
-                self.next_handler = self.bot.register_next_step_handler(message, self.register_date_step, acceptMode=acceptMode, chat_id=self.current_user)
-                return
-
-            self.data["date"] = message.text
-
-            if self.editMode:
-                if self.isTemplate:
-                    self.register_template_checkout(message)
-                    return
-
-                self.register_checkout(message)
-                return
-
-            self.register_time_step(message)
-
-    def register_time_step(self, message=None, acceptMode=False, shouldInsert=True):
-        self.delete_secondary_message()
-
-        if not acceptMode:
-            self.configure_registration_step(self.register_time_step, shouldInsert)
-
-            self.send_active_message("State the time of the adventure.\n\nExample:\nWe gather at 11:00 a.m.\nWe start at 11:20")
-            self.send_additional_actions_message("Additional actions", self.goBackInlineMarkup)
-            self.next_handler = self.bot.register_next_step_handler(message, self.register_time_step, acceptMode=True, chat_id=self.current_user)
-        else:
-            self.delete_message(message)
-            if not message.text:
-                self.send_secondary_message("Empty message")
-                self.next_handler = self.bot.register_next_step_handler(message, self.register_time_step, acceptMode=acceptMode, chat_id=self.current_user)
-                return
-
-            self.data["time"] = message.text
-
-            if self.editMode:
-                if self.isTemplate:
-                    self.register_template_checkout(message)
-                    return
-
-                self.register_checkout(message)
-                return
-
-            self.register_duration_step(message)
-
-    def register_duration_step(self, message=None, acceptMode=False, shouldInsert=True):
-        self.delete_secondary_message()
-
-        if not acceptMode:
-            self.configure_registration_step(self.register_duration_step, shouldInsert)
-
-            self.send_active_message("How long is your adventure going to last?\n\nExample:\n'The event will last 4 hours'\nOR\n'The adventure will last from 2:00 p.m. to 7:00 p.m.'")
-            self.send_additional_actions_message("Additional actions", self.goBackInlineMarkup)
-            self.next_handler = self.bot.register_next_step_handler(message, self.register_duration_step, acceptMode=True, chat_id=self.current_user)
-        else:
-            self.delete_message(message)
-            if not message.text:
-                self.send_secondary_message("Empty message")
-                self.next_handler = self.bot.register_next_step_handler(message, self.register_duration_step, acceptMode=acceptMode, chat_id=self.current_user)
-                return
-
-            self.data["duration"] = message.text
-
-            if self.editMode:
-                if self.isTemplate:
-                    self.register_template_checkout(message)
-                    return
-
-                self.register_checkout(message)
-                return
-
-            if self.isOffline:
-                self.register_address_step(message)
-            else:
-                self.register_application_step(message)
-
-    def register_application_step(self, message=None, acceptMode=False, shouldInsert=True):
-        self.delete_secondary_message()
-
-        if not acceptMode:
-            self.configure_registration_step(self.register_application_step, shouldInsert)
-
-            self.send_active_message("What app will you use to communicate?")
-            self.send_additional_actions_message("Additional actions", self.goBackInlineMarkup)
-            self.next_handler = self.bot.register_next_step_handler(message, self.register_application_step, acceptMode=True, chat_id=self.current_user)
-        else:
-            self.delete_message(message)
-            if not message.text:
-                self.send_secondary_message("Empty message")
-                self.next_handler = self.bot.register_next_step_handler(message, self.register_application_step, acceptMode=acceptMode, chat_id=self.current_user)
-                return
-
-            self.data["address"] = ""
-            self.data["application"] = message.text
-
-            if self.editMode:
-                if self.isTemplate:
-                    self.register_template_checkout(message)
-                    return
-
-                self.register_checkout(message)
-                return
-
-            self.register_group_step(message)
-
-    def register_address_step(self, message=None, acceptMode=False, shouldInsert=True):
-        self.delete_secondary_message()
-
-        if not acceptMode:
-            self.configure_registration_step(self.register_address_step, shouldInsert)
-
-            self.send_active_message("State the address where you will meet")
-            self.send_additional_actions_message("Additional actions", self.goBackInlineMarkup)
-            self.next_handler = self.bot.register_next_step_handler(message, self.register_address_step, acceptMode=True, chat_id=self.current_user)
-        else:
-            self.delete_message(message)
-            if not message.text:
-                self.send_secondary_message("Empty message")
-                self.next_handler = self.bot.register_next_step_handler(message, self.register_address_step, acceptMode=acceptMode, chat_id=self.current_user)
-                return
-
-            self.data["application"] = ""
-            self.data["address"] = message.text
-
-            if self.editMode:
-                if self.isTemplate:
-                    self.register_template_checkout(message)
-                    return
-
-                self.register_checkout(message)
-                return
-
-            if self.isTemplate:
-                self.register_auto_reply_step(message)
                 return
 
             self.register_group_step(message)
@@ -865,18 +589,18 @@ class Adventurer:
             self.delete_message(message)
             if message.text == "Skip":
                 self.data["autoReply"] = None
-                self.data["isAutoReplyText"] = None
+                self.data["autoReplyType"] = None
                 self.register_branch_move_next(message)
             elif message.text:
                 #TODO: check length (discuss), add to data
                 self.data["autoReply"] = message.text
-                self.data["isAutoReplyText"] = True
+                self.data["autoReplyType"] = "Text"
 
                 self.register_branch_move_next(message)
             elif message.voice:
                 #TODO: check length (discuss)
                 self.data["autoReply"] = message.voice.file_id
-                self.data["isAutoReplyText"] = False
+                self.data["autoReplyType"] = "Voice"
 
                 self.register_branch_move_next(message)
             else:
@@ -922,16 +646,11 @@ class Adventurer:
         if not acceptMode:
             self.configure_registration_step(self.register_checkout, shouldInsert)
 
-            addition1 = "Change Address"
-            addition2 = "✨Create Adventure✨"
-
-            if not self.isOffline:
-                addition1 = "Change Application"
-
+            action = "✨Create Adventure✨"
             if self.doesExist:
-                addition2 = "✨Save Changes✨"
+                action = "✨Save Changes✨"
 
-            msg = self.register_checkout_message.format(commOption=addition1, action=addition2)
+            msg = self.register_checkout_message.format(action=action)
 
             if self.data["mediaType"] == "Photo":
                 self.send_active_message_with_photo(self.assemble_adventure_checkout_message(), self.data["media"], markup=self.registerCheckoutMarkup_E)
@@ -956,36 +675,16 @@ class Adventurer:
             elif message.text == "5":
                 self.register_description_step(message)
             elif message.text == "6":
-                self.register_experience_step(message)
-            elif message.text == "7":
-                self.register_attendees_step(message)
-            elif message.text == "8":
-                self.register_unwanted_attendees_step(message)
-            elif message.text == "9":
-                self.register_gratitude_step(message)
-            elif message.text == "10":
-                self.register_date_step(message)
-            elif message.text == "11":
-                self.register_time_step(message)
-            elif message.text == "12":
-                self.register_duration_step(message)
-            elif message.text == "13":
-                if not self.isOffline:
-                    self.register_application_step(message)
-                    return
-                self.register_address_step(message)
-            elif message.text == "14":
                 self.register_auto_reply_step(message)
-            elif message.text == "15":
+            elif message.text == "7":
                 if self.hasPremium:
                     self.registration_tags_step(message)
                 else:
-
                     self.send_simple_message("This functionality is available for premium users only", markup=self.registerCheckoutMarkup_E)
                     self.bot.register_next_step_handler(message, self.register_checkout, acceptMode=True, chat_id=self.current_user)
-            elif message.text == "16":
+            elif message.text == "8":
                 self.register_group_step(message)
-            elif message.text == "17":
+            elif message.text == "9":
                 if self.doesExist and not self.isCreatedFromTemplate:
                     Helpers.change_adventure(self.data)
                     self.send_secondary_message("Changes were saved successfully.\nThey will come into force after approval by the administration")
@@ -1003,7 +702,7 @@ class Adventurer:
                 else:
                     self.subscribe_callback_handler(self.start_callback_handler)
                     self.previous_section()
-            elif message.text == "18":
+            elif message.text == "10":
                 self.registration_discard_changes(message)
             else:
                 self.delete_message(message)
@@ -1012,17 +711,12 @@ class Adventurer:
     def register_template_checkout(self, message=None, acceptMode=False, shouldInsert=True):
         if not acceptMode:
             self.configure_registration_step(self.register_template_checkout, shouldInsert)
-
-            addition1 = "Change Address"
-            addition2 = "✨Create Template✨"
-
-            if not self.isOffline:
-                addition1 = "Change Application"
+            action = "✨Create Template✨"
 
             if self.doesExist:
-                addition2 = "✨Save Changes✨"
+                action = "✨Save Changes✨"
 
-            msg = self.register_template_checkout_message.format(commOption=addition1, action=addition2)
+            msg = self.register_template_checkout_message.format(action=action)
 
             if self.data["mediaType"] == "Photo":
                 self.send_active_message_with_photo(self.assemble_adventure_checkout_message(), self.data["media"], markup=self.registerTemplateCheckoutMarkup_E)
@@ -1047,27 +741,8 @@ class Adventurer:
             elif message.text == "5":
                 self.register_description_step(message)
             elif message.text == "6":
-                self.register_experience_step(message)
-            elif message.text == "7":
-                self.register_attendees_step(message)
-            elif message.text == "8":
-                self.register_unwanted_attendees_step(message)
-            elif message.text == "9":
-                self.register_gratitude_step(message)
-            elif message.text == "10":
-                self.register_date_step(message)
-            elif message.text == "11":
-                self.register_time_step(message)
-            elif message.text == "12":
-                self.register_duration_step(message)
-            elif message.text == "13":
-                if not self.isOffline:
-                    self.register_application_step(message)
-                    return
-                self.register_address_step(message)
-            elif message.text == "14":
                 self.register_auto_reply_step(message)
-            elif message.text == "15":
+            elif message.text == "7":
                 self.subscribe_callback_handler(self.start_callback_handler)
 
                 if self.doesExist:
@@ -1084,7 +759,7 @@ class Adventurer:
                     self.send_simple_message("Something went wrong! Please, contact the administration")
 
                 self.previous_section()
-            elif message.text == "16":
+            elif message.text == "8":
                 self.registration_discard_changes(message)
             else:
                 self.delete_message(message)
@@ -1265,8 +940,8 @@ class Adventurer:
             self.next_handler = self.bot.register_next_step_handler(self.message, self.show_adventure, acceptMode=True, chat_id=self.current_user)
         else:
             if message.text == "Yes":
-                if self.current_adventure_data["isAutoReplyText"] is not None:
-                    if self.current_adventure_data["isAutoReplyText"]:
+                if self.current_adventure_data["autoReplyType"] is not None:
+                    if self.current_adventure_data["autoReplyType"] == "Text":
                         self.bot.send_message(self.current_user, f"<b><l>⬆This adventure's creator has a message for you ;-)⬆</l></b>\n\n{self.current_adventure_data['autoReply']}")
                     else:
                         self.bot.send_voice(self.current_user, self.current_adventure_data["autoReply"], "<b><l>⬆This adventure's creator has a message for you ;-)⬆</l></b>")
@@ -1715,7 +1390,7 @@ class Adventurer:
         if "countryId" in self.data.keys() and self.data["countryId"] is not None:
             self.load_cities(self.data["countryId"])
 
-            message = f"{self.data['name']}\n*{self.countries[self.data['countryId']]}, {self.cities[self.data['cityId']]}*\n{self.data['description']}\n{self.data['experience']}\n\n{self.data['attendeesDescription']}\n{self.data['unwantedAttendeesDescription']}\n{self.data['gratitude']}\n\n{self.data['date']}\n{self.data['time']}\n{self.data['duration']}\n{self.data['application']}{self.data['address']}"
+            message = f"{self.data['name']}\n*{self.countries[self.data['countryId']]}, {self.cities[self.data['cityId']]}*\n{self.data['description']}"
             message = message.replace("\n\n\n", "\n")
             # message.replace("\n\n", "\n")
         else:

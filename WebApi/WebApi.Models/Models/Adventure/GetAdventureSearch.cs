@@ -1,5 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 using WebApi.Enums.Enums.Media;
+using WebApi.Enums.Enums.Messaging;
 
 namespace WebApi.Models.Models.Adventure;
 
@@ -15,11 +16,11 @@ public class GetAdventureSearch
     public MediaType MediaType { get; set; }
     [JsonPropertyName("autoReply")]
     public string AutoReply { get; set; }
-    [JsonPropertyName("isAutoReplyText")]
-    public bool? IsAutoReplyText { get; set; }
+    [JsonPropertyName("autoReplyType")]
+    public ReplyType? AutoReplyType { get; set; }
 
     public static string GenerateDescription(Adventure adventure)
     {
-        return $"{adventure.Name}\n{adventure.Country.CountryName} {adventure.City.CityName}\n\n{adventure.Description}\n{adventure.Experience}\n{adventure.AttendeesDescription}\n{adventure.UnwantedAttendeesDescription}\n{adventure.Gratitude}\n{adventure.Date} {adventure.Time}\n{adventure.Duration}\n{adventure.Application}{adventure.Address}".Replace("\n\n\n", "");
+        return $"{adventure.Name}\n{adventure.Country.CountryName} {adventure.City.CityName}\n\n{adventure.Description}\n".Replace("\n\n\n", "");
     }
 }

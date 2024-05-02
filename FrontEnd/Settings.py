@@ -900,7 +900,7 @@ class Settings:
             self.gesture += " " + random.choice(self.gestures)
 
             action = self.localization["ConfType1"].format(self.gesture)
-            if self.requestType == 2:
+            if self.requestType == 4:
                 action = self.localization["ConfType2"]
 
             if not self.requestStatus:
@@ -922,7 +922,7 @@ class Settings:
                 "gesture": self.gesture
             }
 
-            if self.requestType == 1:
+            if self.requestType == 3:
                 if message.video:
                     if message.video.duration > 15:
                         self.send_secondary_message(self.localization["ToLongVideoE"])
@@ -947,7 +947,7 @@ class Settings:
                     if bool(json.loads(requests.post(f"https://localhost:44381/SendTickRequest", d, headers={"Content-Type": "application/json"}, verify=False).text)):
                         self.send_message_with_confirmation(self.localization["RequestAcceptedM"])
                         return
-            elif self.requestType == 2:
+            elif self.requestType == 4:
                 if message.photo:
 
                     data["mediaType"] = "Photo"
@@ -1213,17 +1213,17 @@ class Settings:
             elif call.data == "234":
                 self.remove_user_story(call.message)
             elif call.data == "240":
-                if self.requestType != 1:
+                if self.requestType != 3:
                     self.delete_secondary_message()
-                    self.requestType = 1
+                    self.requestType = 3
 
                     self.remove_next_step_handler_local()
 
                     self.send_confirmation_request(call.message)
             elif call.data == "241":
-                if self.requestType != 2:
+                if self.requestType != 4:
                     self.delete_secondary_message()
-                    self.requestType = 2
+                    self.requestType = 4
 
                     self.remove_next_step_handler_local()
 
@@ -1239,10 +1239,10 @@ class Settings:
             elif call.data == "343":
                 self.comment_status_manager(True)
             elif call.data == "340":
-                self.requestType = 0
+                self.requestType = 3
                 self.send_secondary_message(self.localization["PartialConfirmationM"])
             elif call.data == "341":
-                self.requestType = 0
+                self.requestType = 4
                 self.send_secondary_message(self.localization["FullConfirmationM"])
             #TODO: Continue. Code below must be the last statement before 'else'
             elif call.data == "-20":

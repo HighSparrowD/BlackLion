@@ -2,6 +2,7 @@
 using WebApi.Enums.Enums.Adventure;
 using WebApi.Enums.Enums.General;
 using WebApi.Enums.Enums.Media;
+using WebApi.Enums.Enums.Messaging;
 using WebApi.Models.Models.Location;
 
 #nullable enable
@@ -42,35 +43,8 @@ public class Adventure
     [JsonPropertyName("description")]
     public string? Description { get; set; }
 
-    [JsonPropertyName("experience")]
-    public string? Experience { get; set; }
-
-    [JsonPropertyName("attendeesDescription")]
-    public string? AttendeesDescription { get; set; }
-
-    [JsonPropertyName("unwantedAttendeesDescription")]
-    public string? UnwantedAttendeesDescription { get; set; }
-
-    [JsonPropertyName("gratitude")]
-    public string? Gratitude { get; set; }
-
-    [JsonPropertyName("date")]
-    public string? Date { get; set; }
-
-    [JsonPropertyName("time")]
-    public string? Time { get; set; }
-
-    [JsonPropertyName("duration")]
-    public string? Duration { get; set; }
-
-    [JsonPropertyName("application")]
-    public string? Application { get; set; }
-
-    [JsonPropertyName("address")]
-    public string? Address { get; set; }
-
-    [JsonPropertyName("isAutoReplyText")]
-    public bool? IsAutoReplyText { get; set; }
+    [JsonPropertyName("autoReplyType")]
+    public ReplyType? AutoReplyType { get; set; }
 
     [JsonPropertyName("autoReply")]
     public string? AutoReply { get; set; }
