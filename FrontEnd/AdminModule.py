@@ -25,6 +25,7 @@ class AdminModule(Personality_Bot):
 
         self.recent_updates = self.api_service.get_recent_updates()
         self.models_list = None
+        self.verif_requests_list = None
 
         self.calldata_mode: int = 0
 
@@ -71,7 +72,7 @@ class AdminModule(Personality_Bot):
 
     def verification_request_markup(self):
         markup = InlineKeyboardMarkup([[InlineKeyboardButton(f'Request #{button_data.id}', callback_data=f'{button_data.id}')]
-                                       for button_data in self.models_list])
+                                       for button_data in self.verif_requests_list])
         markup.add(InlineKeyboardButton('Go back', callback_data='a'))
         return markup
 
@@ -139,13 +140,13 @@ class AdminModule(Personality_Bot):
         self.prev_func = self.start
 
         self.calldata_mode = 4
-        if not self.models_list:
-            self.models_list = self.api_service.get_verification_requests()
+        if not self.verif_requests_list:
+            self.verif_requests_list = self.api_service.get_verification_requests()
 
         self.send_active_message('Recent requests:', self.verification_request_markup())
 
     def show_verif_request(self, request_id):
-        for request in self.models_list:
+        for request in self.verif_requests_list:
             if request.id == request_id:
                 if request.confirmationType == 'Full':
 
@@ -187,7 +188,7 @@ class AdminModule(Personality_Bot):
         if not isDeclined:
             if message.text == 'Approve':
                 self.api_service.post_verification_request(ResolveVerificationRequest(request.id, request.adminId, 'Approved'))
-                self.models_list.remove(request)
+                self.verif_requests_list.remove(request)
 
                 self.delete_secondary_message()
                 self.delete_additional_message()
@@ -200,7 +201,7 @@ class AdminModule(Personality_Bot):
                                                                         chat_id=self.current_user, request=request,
                                                                         isDeclined=True)
             elif message.text == 'Go back':
-                for request_item in self.models_list:
+                for request_item in self.verif_requests_list:
                     self.api_service.post_verification_request(ResolveVerificationRequest
                                                                (request_item.id, request_item.adminId, 'Aborted'))
 
@@ -213,7 +214,7 @@ class AdminModule(Personality_Bot):
         elif isDeclined:
             self.api_service.post_verification_request(
                 ResolveVerificationRequest(request.id, request.adminId, 'Declined', message.text))
-            self.models_list.remove(request)
+            self.verif_requests_list.remove(request)
 
             self.delete_secondary_message()
             self.delete_additional_message()
@@ -242,7 +243,6 @@ class AdminModule(Personality_Bot):
         elif call.data == '2':
             self.recent_reports_menu()
         elif call.data == '3':
-            self.models_list = None
             self.verification_requests_menu()
         else:
             self.send_error_message("This feature isn't ready")
