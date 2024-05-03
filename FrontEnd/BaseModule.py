@@ -1,10 +1,11 @@
 from Core import HelpersMethodes as Helpers
 from Common.Menues import go_back_to_main_menu
+from telebot import TeleBot
 
 
 class Personality_Bot:
     def __init__(self, bot, message, hasVisited=False):
-        self.bot = bot
+        self.bot: TeleBot = bot
         self.message = message
         self.current_user = message.from_user.id
         self.user_info = Helpers.get_user_info(self.current_user)
@@ -96,6 +97,25 @@ class Personality_Bot:
         else:
             self.active_message = self.bot.send_video(self.current_user, video, text, reply_markup=markup).id
 
+    def send_secondary_message_with_photo(self, photo, text=None, markup=None):
+        if self.secondary_message:
+            self.delete_secondary_message()
+            self.secondary_message = self.bot.send_photo(self.current_user, photo, text, reply_markup=markup).id
+        else:
+            self.secondary_message = self.bot.send_photo(self.current_user, photo, text, reply_markup=markup).id
+
+    def send_secondary_message_with_video(self, video, text=None, markup=None):
+        if self.secondary_message:
+            self.delete_secondary_message()
+            self.secondary_message = self.bot.send_video(self.current_user, video, text, reply_markup=markup).id
+        else:
+            self.secondary_message = self.bot.send_video(self.current_user, video, text, reply_markup=markup).id
+
+    def send_video_note_as_additional_msg(self, videoNote, markup=None):
+        if self.additional_message:
+            self.delete_additional_message()
+        self.additional_message = self.bot.send_video_note(self.current_user, videoNote, reply_markup=markup).id
+
     def delete_active_message(self):
         if self.active_message:
             self.bot.delete_message(self.current_user, self.active_message)
@@ -115,6 +135,21 @@ class Personality_Bot:
         if self.error_message:
             self.bot.delete_message(self.current_user, self.error_message)
             self.error_message = None
+
+    def send_mediagroup_as_secondary_msg(self, media_list):
+        """
+        Use mediagroup if you want to send multiple Audio, Document, Photo and Video
+        :param media_list: A list of InputMediaAudio, InputMediaDocument, InputMediaPhoto or InputMediaVideo,
+            must include 2-10 items
+        :return: Sends media group (https://core.telegram.org/bots/api#sendmediagroup)
+        """
+        try:
+            if self.secondary_message:
+                self.delete_secondary_message()
+            self.secondary_message = self.bot.send_media_group(self.current_user, media_list)
+        except:
+            self.delete_secondary_message()
+            self.send_mediagroup_as_secondary_msg(media_list)
 
     def delete_message(self, message_id):
         self.bot.delete_message(self.current_user, message_id)
