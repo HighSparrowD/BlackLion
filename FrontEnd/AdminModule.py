@@ -139,7 +139,8 @@ class AdminModule(Personality_Bot):
         self.prev_func = self.start
 
         self.calldata_mode = 4
-        self.models_list = self.api_service.get_verification_requests()
+        if not self.models_list:
+            self.models_list = self.api_service.get_verification_requests()
 
         self.send_active_message('Recent requests:', self.verification_request_markup())
 
@@ -186,6 +187,7 @@ class AdminModule(Personality_Bot):
         if not isDeclined:
             if message.text == 'Approve':
                 self.api_service.post_verification_request(ResolveVerificationRequest(request.id, request.adminId, 'Approved'))
+                self.models_list.remove(request)
 
                 self.delete_secondary_message()
                 self.delete_additional_message()
@@ -211,6 +213,7 @@ class AdminModule(Personality_Bot):
         elif isDeclined:
             self.api_service.post_verification_request(
                 ResolveVerificationRequest(request.id, request.adminId, 'Declined', message.text))
+            self.models_list.remove(request)
 
             self.delete_secondary_message()
             self.delete_additional_message()
@@ -239,6 +242,7 @@ class AdminModule(Personality_Bot):
         elif call.data == '2':
             self.recent_reports_menu()
         elif call.data == '3':
+            self.models_list = None
             self.verification_requests_menu()
         else:
             self.send_error_message("This feature isn't ready")
