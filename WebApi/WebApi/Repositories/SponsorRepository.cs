@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using WebApi.Data;
 using WebApi.Enums.Enums.Sponsor;
 using WebApi.Interfaces;
+using WebApi.Main.Entities.Admin;
+using WebApi.Main.Models.Admin;
 using WebApi.Models.Models.Sponsor;
 using WebApi.Models.Models.User;
 using WebApi.Models.Utilities;
@@ -13,8 +15,8 @@ using entities = WebApi.Main.Entities.Sponsor;
 
 namespace WebApi.Repositories
 {
-    public class SponsorRepository : ISponsorRepository
-    {
+	public class SponsorRepository : ISponsorRepository
+	{
         private UserContext _contx { get; set; }
 
         public SponsorRepository(UserContext context)
@@ -22,7 +24,7 @@ namespace WebApi.Repositories
             _contx = context;
         }
 
-        public async Task<List<AdvertisementItem>> GetAdvertisementListAsync(int sponsorId)
+        public async Task<List<AdvertisementItem>> GetAdvertisementListAsync(long sponsorId)
         {
             var advertisements = await _contx.Advertisements.Where(a => a.UserId == sponsorId && a.Deleted == null)
                 .AsNoTracking()
@@ -32,17 +34,30 @@ namespace WebApi.Repositories
             return advertisements;
         }
 
-        public async Task<Models.Models.Sponsor.Advertisement> GetAdvertisementAsync(int advertisementId)
+        public async Task<entities.Advertisement> GetAdvertisementAsync(long advertisementId)
         {
-            var advertisement = await _contx.Advertisements.Where(a => a.Id == advertisementId && a.Deleted == null)
-                .AsNoTracking()
-                .Select(a => (Models.Models.Sponsor.Advertisement)a)
-                .FirstOrDefaultAsync();
+            var advertisement = await _contx.Advertisements
+                .FirstOrDefaultAsync(a => a.Id == advertisementId && a.Deleted == null);
 
             return advertisement;
         }
 
-        public async Task<Advertisement> AddAdvertisementAsync(AdvertisementNew model)
+		public async Task<entities.Advertisement> ResolveAdvertisement(ResolveAdvertisement model)
+		{
+			var advertisement = await GetAdvertisementAsync(model.Id);
+
+			if (advertisement == null)
+				throw new NullReferenceException("Advertisement was not found");
+
+			advertisement.Status = model.Status;
+			advertisement.AdminId = model.AdminId;
+
+			await _contx.SaveChangesAsync();
+
+			return advertisement;
+		}
+
+		public async Task<Advertisement> AddAdvertisementAsync(AdvertisementNew model)
         {
             var advertisement = new entities.Advertisement(model);
             await _contx.Advertisements.AddAsync(advertisement);
@@ -61,7 +76,7 @@ namespace WebApi.Repositories
             await _contx.SaveChangesAsync();
         }
 
-        public async Task DeleteAdvertisementAsync(int advertisementId)
+        public async Task DeleteAdvertisementAsync(long advertisementId)
         {
             var advertisement = await _contx.Advertisements.Where(a => a.Id == advertisementId && a.Deleted == null)
                 .FirstOrDefaultAsync();
@@ -86,7 +101,7 @@ namespace WebApi.Repositories
             return reasons;
         }
 
-        public async Task SetAdvertisementPriorityAsync(int advertisementId, AdvertisementPriority priority)
+        public async Task SetAdvertisementPriorityAsync(long advertisementId, AdvertisementPriority priority)
         {
             var advertisement = await _contx.Advertisements.Where(a => a.Id == advertisementId && a.Deleted == null)
                 .FirstOrDefaultAsync();
@@ -95,7 +110,7 @@ namespace WebApi.Repositories
             await _contx.SaveChangesAsync();
         }
 
-        public async Task SwitchShowStatusAsync(int advertisementId)
+        public async Task SwitchShowStatusAsync(long advertisementId)
         {
             var advertisement = await _contx.Advertisements.Where(a => a.Id == advertisementId && a.Deleted == null)
                 .FirstOrDefaultAsync();
@@ -182,5 +197,16 @@ namespace WebApi.Repositories
         {
             return query.Where(a => a.Created >= searchModel.From && a.Created <= searchModel.To);
         }
+
+		public async Task<ICollection<entities.Advertisement>> GetPendingAdvertisementsAsync()
+		{
+			var advertisements = await _contx.Advertisements.Where(a => a.Status == Enums.Enums.Advertisement.AdvertisementStatus.ToView)
+                .Take(3)
+                .ToListAsync();
+
+			// TODO: Set status = InProcess
+
+			return advertisements;
+		}
 	}
 }

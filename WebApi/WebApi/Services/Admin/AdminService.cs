@@ -3,27 +3,40 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using WebApi.Enums.Enums.Adventure;
+using WebApi.Enums.Enums.Advertisement;
+using WebApi.Enums.Enums.General;
+using WebApi.Enums.Enums.Notification;
+using WebApi.Enums.Enums.User;
 using WebApi.Interfaces;
 using WebApi.Interfaces.Services;
+using WebApi.Main.Entities.Admin;
+using WebApi.Main.Entities.User;
+using WebApi.Main.Models.Admin;
 using WebApi.Models.Models.Admin;
+using WebApi.Models.Models.Adventure;
 using WebApi.Models.Models.Report;
+using WebApi.Models.Models.Sponsor;
 using models = WebApi.Models.Models;
 
 namespace WebApi.Services.Admin
 {
-    public class AdminService : IAdminService
-    {
+	public class AdminService : IAdminService
+	{
         private IServiceProvider _serviceProvider { get; set; }
 
         private IUserRepository _userRepo { get; set; }
 
+        private ISponsorRepository _sponsorRepo { get; set; }
+
         private IAdminRepository _adminRepo { get; set; }
 
-        public AdminService(IServiceProvider serviceProvider, IUserRepository userRepo, IAdminRepository adminRepo)
+        public AdminService(IServiceProvider serviceProvider, IUserRepository userRepo, IAdminRepository adminRepo, ISponsorRepository sponsorRepo)
         {
             _serviceProvider = serviceProvider;
             _userRepo = userRepo;
             _adminRepo = adminRepo;
+            _sponsorRepo = sponsorRepo;
         }
 
         public async Task StartInDebug(List<long> userIds)
@@ -61,14 +74,40 @@ namespace WebApi.Services.Admin
                 .ToList();
         }
 
-        public async Task<List<VerificationRequest>> GetVerificationRequestsAsync()
+        public async Task<List<models.Admin.VerificationRequest>> GetVerificationRequestsAsync()
         {
             var request = await _adminRepo.GetVerificationRequestAsync();
 
-            return request.Select(r => (VerificationRequest)r).ToList();
+            return request.Select(r => (models.Admin.VerificationRequest)r).ToList();
         }
 
-        public async Task<RecentUpdates> GetRecentUpdates()
+		public async Task ResolveVerificationRequestAsync(ResolveVerificationRequest model)
+		{
+			var request = await _adminRepo.ResolveVerificationRequest(model);
+
+			if (model.Status == VerificationRequestStatus.Approved)
+			{
+				await _userRepo.AddUserNotificationAsync(new UserNotification
+				{
+					Description = $"Your identity confirmation request had been approved :)\n{model.Comment}",
+					UserId = request.UserId,
+					Type = NotificationType.VerificationRequest,
+					Section = Section.Neutral,
+				});
+			}
+			else if (model.Status == VerificationRequestStatus.Declined)
+			{
+				await _userRepo.AddUserNotificationAsync(new UserNotification
+				{
+					Description = $"Sorry, your identity confirmation request had been denied.\n{model.Comment}",
+					UserId = request.UserId,
+					Type = NotificationType.VerificationRequest,
+					Section = Section.Neutral,
+				});
+			}
+		}
+
+		public async Task<RecentUpdates> GetRecentUpdatesAsync()
         {
             var updates = new RecentUpdates
             {
@@ -81,5 +120,75 @@ namespace WebApi.Services.Admin
 
             return updates;
         }
-    }
+
+		public async Task<ICollection<Advertisement>> GetPendingtAdvertisementsAsync()
+		{
+			var request = await _sponsorRepo.GetPendingAdvertisementsAsync();
+
+			return request.Select(r => (models.Sponsor.Advertisement)r).ToList();
+		}
+
+		public async Task<Advertisement> ResolveAdvertisementsAsync(ResolveAdvertisement model)
+		{
+			var advertisement = await _sponsorRepo.ResolveAdvertisement(model);
+
+			if (model.Status == AdvertisementStatus.Approved)
+			{
+				await _userRepo.AddUserNotificationAsync(new UserNotification
+				{
+					Description = $"Your advertisement had been approved :)\n{model.Comment}",
+					UserId = advertisement.UserId,
+					Type = NotificationType.VerificationRequest,
+					Section = Section.Neutral,
+				});
+			}
+			else if (model.Status == AdvertisementStatus.Declined)
+			{
+				await _userRepo.AddUserNotificationAsync(new UserNotification
+				{
+					Description = $"Sorry, your advertisement had been denied.\n{model.Comment}",
+					UserId = advertisement.UserId,
+					Type = NotificationType.VerificationRequest,
+					Section = Section.Neutral,
+				});
+			}
+
+			return advertisement;
+		}
+
+		public async Task<ICollection<Adventure>> GetPendingAdventuresAsync()
+		{
+			var request = await _userRepo.GetPendingAdventuresAsync();
+
+			return request.Select(r => (models.Adventure.Adventure)r).ToList();
+		}
+
+		public async Task<Adventure> ResolveAdventureAsync(ResolveAdventure model)
+		{
+			var adventure = await _userRepo.ResolveAdventure(model);
+
+			if (model.Status == AdventureStatus.Active)
+			{
+				await _userRepo.AddUserNotificationAsync(new UserNotification
+				{
+					Description = $"Your adventure had been approved :)\n{model.Comment}",
+					UserId = adventure.UserId,
+					Type = NotificationType.Other,
+					Section = Section.Neutral,
+				});
+			}
+			else if (model.Status == AdventureStatus.Declined)
+			{
+				await _userRepo.AddUserNotificationAsync(new UserNotification
+				{
+					Description = $"Sorry, your adventure had been denied.\n{model.Comment}",
+					UserId = adventure.UserId,
+					Type = NotificationType.Other,
+					Section = Section.Neutral,
+				});
+			}
+
+			return (Adventure)adventure;
+		}
+	}
 }

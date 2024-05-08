@@ -20,6 +20,7 @@ using WebApi.Enums.Enums.Notification;
 using WebApi.Enums.Enums.Authentication;
 using entities = WebApi.Main.Entities;
 using models = WebApi.Models.Models.User;
+using WebApi.Main.Entities.Admin;
 
 namespace WebApi.Interfaces
 {
@@ -181,8 +182,10 @@ namespace WebApi.Interfaces
         Task<List<AttendeeInfo>> GetAdventureAttendeesAsync(long adventureId);
         Task<List<Models.Models.Adventure.Adventure>> GetUsersSubscribedAdventuresAsync(long userId);
         Task<List<GetAdventure>> GetUserAdventuresAsync(long userId);
-        Task<ManageAdventure> GetAdventureAsync(long id);
-        Task<AdventureSearchResponse> GetAdventuresAsync(long userId);
+        Task<entities.Adventure.Adventure> GetAdventureAsync(long id);
+        Task<entities.Adventure.Adventure> ResolveAdventure(ResolveAdventure model);
+
+		Task<AdventureSearchResponse> GetAdventuresAsync(long userId);
         Task<bool> SaveAdventureTemplateAsync(ManageTemplate model);
         Task<DeleteResult> DeleteAdventureTemplateAsync(long templateId);
         Task<DeleteResult> DeleteAdventureAttendeeAsync(long adventureId, long attendeeId);
@@ -206,5 +209,7 @@ namespace WebApi.Interfaces
         Task<int> CountPendingVerificationRequestsAsync();
         Task<int> CountPendingAdvertisementsAsync();
         Task<int> CountPendingAdventuresAsync();
+
+        Task<ICollection<entities.Adventure.Adventure>> GetPendingAdventuresAsync();
     }
 }

@@ -792,9 +792,11 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("/adventure/{id}")]
-        public async Task<ManageAdventure> GetAdventure(long id)
+        public async Task<ActionResult<ManageAdventure>> GetAdventure(long id)
         {
-            return await _repository.GetAdventureAsync(id);
+            var adventure = await _repository.GetAdventureAsync(id);
+
+            return Ok((ManageAdventure)adventure);
         }
 
         [HttpGet("/GetUsersSubscribedAdventures/{userId}")]
