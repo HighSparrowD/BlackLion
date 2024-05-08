@@ -18,7 +18,7 @@ public class VerificationRequest
 
     public long? AdminId { get; set; }
 
-    public VerificationRequestStatus? State { get; set; }
+    public VerificationRequestStatus? Status { get; set; }
 
     public string Media { get; set; } = default!;
 
@@ -40,7 +40,7 @@ public class VerificationRequest
             Id = request.Id,
             AdminId = request.AdminId,
             UserId = request.UserId,
-            State = request.State,
+            Status = request.Status,
             Media = request.Media,
             MediaType = request.MediaType,
             Gesture = request.Gesture,
@@ -59,7 +59,7 @@ public class VerificationRequest
             Media = request.Media,
             MediaType = request.MediaType,
             Gesture = request.Gesture,
-            State = null,
+            Status = null,
             AdminId = null,
             ConfirmationType = request.ConfirmationType,
         };
@@ -75,7 +75,7 @@ public class VerificationRequest
             Id = request.Id,
             AdminId = request.AdminId,
             UserId = request.UserId,
-            State = request.State,
+            Status = request.Status,
             Media = request.Media,
             MediaType = request.MediaType,
             Gesture = request.Gesture,

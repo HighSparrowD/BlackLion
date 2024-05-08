@@ -16,8 +16,8 @@ public class VerificationRequest
     [JsonPropertyName("adminId")]
     public long? AdminId { get; set; }
 
-    [JsonPropertyName("state")]
-    public VerificationRequestStatus? State { get; set; }
+    [JsonPropertyName("status")]
+    public VerificationRequestStatus? Status { get; set; }
 
     [JsonPropertyName("media")]
     public string Media { get; set; } = default!;

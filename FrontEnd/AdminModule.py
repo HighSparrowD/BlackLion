@@ -165,18 +165,18 @@ class AdminModule(Personality_Bot):
                 if request.mediaType == 'Photo':
                     self.send_active_message_with_photo(f'Request #{request.id}\n\n'
                                                         f'User id: {request.userId}\n'
-                                                        f'State: {request.state}\n', request.media,
+                                                        f'State: {request.status}\n', request.media,
                                                         markup=self.verif_request_approve_markup)
                 elif request.mediaType == 'Video':
                     self.send_active_message_with_video(f'Request #{request.id}\n\n'
                                                         f'User id: {request.userId}\n'
-                                                        f'State: {request.state}\n', request.media,
+                                                        f'State: {request.status}\n', request.media,
                                                         markup=self.verif_request_approve_markup)
                 elif request.mediaType == 'VideoNote':
                     self.send_video_note_as_additional_msg(request.media)
                     self.send_active_message(f'Request #{request.id}\n\n'
                                              f'User id: {request.userId}\n'
-                                             f'State: {request.state}\n',
+                                             f'State: {request.status}\n',
                                              markup=self.verif_request_approve_markup)
                 self.next_handler = self.bot.register_next_step_handler(None, self.resolve_request,
                                                                         chat_id=self.current_user, request=request)
@@ -203,7 +203,7 @@ class AdminModule(Personality_Bot):
             elif message.text == 'Go back':
                 for request_item in self.verif_requests_list:
                     self.api_service.post_verification_request(ResolveVerificationRequest
-                                                               (request_item.id, request_item.adminId, 'Aborted'))
+                                                               (request_item.id, request_item.adminId, 'ToView'))
 
                 self.delete_secondary_message()
                 self.delete_additional_message()

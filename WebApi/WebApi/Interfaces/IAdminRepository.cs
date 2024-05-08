@@ -5,6 +5,7 @@ using WebApi.Main.Entities.Admin;
 using WebApi.Main.Entities.Report;
 using WebApi.Models.Models.Admin;
 using entities = WebApi.Main.Entities;
+using WebApi.Enums.Enums.User;
 
 namespace WebApi.Interfaces
 {
@@ -19,9 +20,10 @@ namespace WebApi.Interfaces
         Task<int> DeleteAllUsers ();
         Task AddAchievementsAsync(List<UploadAchievement> achievements);
         Task<List<entities.Admin.VerificationRequest>> GetVerificationRequestAsync();
-        Task<entities.Admin.VerificationRequest> GetVerificationRequestByIdAsync(long requestId);
-        Task ResolveVerificationRequestAsync(ResolveVerificationRequest request);
-        Task<bool> AbortTickRequestAsync(long requestId);
+        Task<entities.Admin.VerificationRequest> GetVerificationRequestByIdAsync(long requestId, VerificationRequestStatus status = VerificationRequestStatus.ToView);
+        Task<entities.Admin.VerificationRequest> ResolveVerificationRequest(ResolveVerificationRequest model);
+
+		Task<bool> AbortTickRequestAsync(long requestId);
         Task<bool> NotifyFailierTickRequestAsync(long requestId, long adminId);
         Task<List<long>> GetRecentlyBannedUsersAsync();
     }

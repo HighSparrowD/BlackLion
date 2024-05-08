@@ -34,8 +34,8 @@ using WebApi.Enums.Enums.Authentication;
 
 namespace WebApi.Repositories
 {
-    public class UserRepository : IUserRepository
-    {
+	public class UserRepository : IUserRepository
+	{
         private UserContext _contx { get; set; }
 
         public UserRepository(UserContext context)
@@ -3214,7 +3214,7 @@ namespace WebApi.Repositories
                     existingRequest.MediaType = request.MediaType;
                     existingRequest.Gesture = request.Gesture;
                     existingRequest.ConfirmationType = request.ConfirmationType;
-                    existingRequest.State = VerificationRequestStatus.ToView;
+                    existingRequest.Status = VerificationRequestStatus.ToView;
                     existingRequest.User.IdentityType = IdentityConfirmationType.Awaiting;
 
                     _contx.TickRequests.Update(existingRequest);
@@ -3735,7 +3735,7 @@ namespace WebApi.Repositories
                 IsOffline = model.IsOffline,
                 IsAwaiting = model.IsAwaiting,
                 UniqueLink = Guid.NewGuid().ToString("N").Substring(0, 7).ToUpper(),
-                Status = AdventureStatus.New
+                Status = AdventureStatus.ToView
             };
 
             await _contx.Adventures.AddAsync(adventure);
@@ -3760,7 +3760,7 @@ namespace WebApi.Repositories
             adventure.Description = model.Description;
             adventure.AutoReplyType = model.AutoReplyType;
             adventure.AutoReply = model.AutoReply;
-            adventure.Status = AdventureStatus.Changed;
+            adventure.Status = AdventureStatus.ToView;
             adventure.IsAwaiting = model.IsAwaiting;
 
             await _contx.SaveChangesAsync();
@@ -3847,7 +3847,6 @@ namespace WebApi.Repositories
                 });
             }
 
-            adventure.Status = AdventureStatus.Deleted;
             adventure.DeleteDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
 
             _contx.AdventureAttendees.RemoveRange(attendees);
@@ -3915,7 +3914,7 @@ namespace WebApi.Repositories
         public async Task<List<GetAdventure>> GetUserAdventuresAsync(long userId)
         {
             return await _contx.Adventures.Where(a => a.UserId == userId)
-                .Where(a => a.Status != AdventureStatus.Deleted)
+                .Where(a => a.DeleteDate == null)
                 .Select(a => new GetAdventure
                 {
                     Id = a.Id,
@@ -3956,7 +3955,7 @@ namespace WebApi.Repositories
             if (user == null)
                 throw new NullReferenceException($"User {userId} does not exist");
 
-            tickRequest.State = VerificationRequestStatus.ToView;
+            tickRequest.Status = VerificationRequestStatus.ToView;
             user.IdentityType = IdentityConfirmationType.None;
 
             await _contx.SaveChangesAsync();
@@ -4124,12 +4123,26 @@ namespace WebApi.Repositories
             }).FirstOrDefaultAsync();
         }
 
-        public async Task<ManageAdventure> GetAdventureAsync(long id)
+        public async Task<entities.Adventure.Adventure> GetAdventureAsync(long id)
         {
-            return await _contx.Adventures.Where(a => a.Id == id)
-                .Select(a => new ManageAdventure(a))
-                .FirstOrDefaultAsync();
+            return await _contx.Adventures
+                .FirstOrDefaultAsync(a => a.Id == id);
         }
+
+        public async Task<entities.Adventure.Adventure> ResolveAdventure(ResolveAdventure model)
+        {
+			var adventure = await GetAdventureAsync(model.Id);
+
+			if (adventure == null)
+				throw new NullReferenceException("Adventure was not found");
+
+			adventure.Status = model.Status;
+			adventure.AdminId = model.AdminId;
+
+            await _contx.SaveChangesAsync();
+
+            return adventure;
+		}
 
         public async Task<bool> SaveAdventureTemplateAsync(ManageTemplate model)
         {
@@ -4347,7 +4360,7 @@ namespace WebApi.Repositories
 
             var adventuresCount = user.MaxAdventureSearchCount - user.AdventureSearchCount;
 
-            var query = _contx.Adventures.Where(q => q.Status != AdventureStatus.Deleted && q.UserId != userId)
+            var query = _contx.Adventures.Where(q => q.DeleteDate == null && q.UserId != userId)
                 .AsNoTracking();
 
             query = query.Where(q => q.Attendees.All(at => at.UserId != user.Id));
@@ -4562,8 +4575,7 @@ namespace WebApi.Repositories
         public async Task<int> CountPendingVerificationRequestsAsync()
         {
             var count = await _contx.TickRequests.
-                Where(r => r.State == VerificationRequestStatus.ToView || 
-                r.State == VerificationRequestStatus.Aborted)
+                Where(r => r.Status == VerificationRequestStatus.ToView)
                 .CountAsync();
 
             return count;
@@ -4601,5 +4613,16 @@ namespace WebApi.Repositories
             return await _contx.UserData.Where(d => d.Id == userId)
                 .Select(d => d.Language).FirstOrDefaultAsync();
         }
-    }
+
+		public async Task<ICollection<entities.Adventure.Adventure>> GetPendingAdventuresAsync()
+		{
+            var adventures = await _contx.Adventures.Where(a => a.Status == AdventureStatus.ToView || a.DeleteDate == null)
+                .Take(3)
+                .ToListAsync();
+
+            // TODO: Set status = InProcess
+
+            return adventures;
+		}
+	}
 }

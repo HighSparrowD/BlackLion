@@ -15,6 +15,9 @@ using WebApi.Models.Models.Identity.Attributes.Admin;
 using models = WebApi.Models.Models;
 using WebApi.Models.Models.Report;
 using WebApi.Services.Admin;
+using WebApi.Models.Models.Sponsor;
+using WebApi.Models.Models.Adventure;
+using WebApi.Main.Models.Admin;
 
 namespace WebApi.Controllers
 {
@@ -165,7 +168,7 @@ namespace WebApi.Controllers
         //[RequiresAdminOrCreator]
         public async Task<ActionResult<RecentUpdates>> GetUpdates([FromServices] IAdminService adminService)
         {
-            var updates = await adminService.GetRecentUpdates();
+            var updates = await adminService.GetRecentUpdatesAsync();
 
             return Ok(updates);
         }
@@ -183,9 +186,45 @@ namespace WebApi.Controllers
         //[RequiresAdminOrCreator]
         public async Task<ActionResult> ResolveVerificationRequest([FromBody] ResolveVerificationRequest request)
         {
-            await _repository.ResolveVerificationRequestAsync(request);
+            await _adminService.ResolveVerificationRequestAsync(request);
 
             return NoContent();
         }
-    }
+
+		[HttpGet("advertisements")]
+		//[RequiresAdminOrCreator]
+		public async Task<ActionResult<ICollection<Advertisement>>> GetAdvertisements()
+		{
+            var advertisements = await _adminService.GetPendingtAdvertisementsAsync();
+
+			return Ok(advertisements);
+		}
+
+		[HttpPost("advertisement")]
+		//[RequiresAdminOrCreator]
+		public async Task<ActionResult> ResolveAdvertisement([FromBody] ResolveAdvertisement request)
+		{
+			var advertisement = await _adminService.ResolveAdvertisementsAsync(request);
+
+			return Ok(advertisement);
+		}
+
+		[HttpGet("adventures")]
+		//[RequiresAdminOrCreator]
+		public async Task<ActionResult<ICollection<Adventure>>> GetAdventures()
+		{
+			var adventures = await _adminService.GetPendingAdventuresAsync();
+
+			return Ok(adventures);
+		}
+
+		[HttpPost("adventure")]
+		//[RequiresAdminOrCreator]
+		public async Task<ActionResult> ResolveAdventure([FromBody] ResolveAdventure request)
+		{
+			var advertisement = await _adminService.ResolveAdventureAsync(request);
+
+			return Ok(advertisement);
+		}
+	}
 }
