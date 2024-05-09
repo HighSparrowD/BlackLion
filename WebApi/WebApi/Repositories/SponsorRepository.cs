@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using WebApi.Data;
 using WebApi.Enums.Enums.Sponsor;
 using WebApi.Interfaces;
+using WebApi.Interfaces.Services;
 using WebApi.Main.Entities.Admin;
 using WebApi.Main.Models.Admin;
 using WebApi.Models.Models.Sponsor;
@@ -18,10 +19,12 @@ namespace WebApi.Repositories
 	public class SponsorRepository : ISponsorRepository
 	{
         private UserContext _contx { get; set; }
+        private readonly ITimestampService timestamp;
 
-        public SponsorRepository(UserContext context)
+        public SponsorRepository(UserContext context, ITimestampService timestampService)
         {
             _contx = context;
+            timestamp = timestampService;
         }
 
         public async Task<List<AdvertisementItem>> GetAdvertisementListAsync(long sponsorId)
@@ -81,7 +84,7 @@ namespace WebApi.Repositories
             var advertisement = await _contx.Advertisements.Where(a => a.Id == advertisementId && a.Deleted == null)
                 .FirstOrDefaultAsync();
 
-            advertisement.Deleted = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
+            advertisement.Deleted = timestamp.GetUtcNow();
             await _contx.SaveChangesAsync();
         }
 

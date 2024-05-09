@@ -4,10 +4,10 @@ namespace WebApi.Models.Models.Effect;
 
 public class TheValentine : ActiveEffect
 {
-    public TheValentine(long userId) : base(userId)
+    public TheValentine(long userId, DateTime dateTimeNowUtc) : base(userId)
     {
         Effect = Currency.TheValentine;
         Name = "TheValentine";
-        ExpirationTime = DateTime.SpecifyKind(DateTime.UtcNow.AddHours(1), DateTimeKind.Utc);
+        ExpirationTime = dateTimeNowUtc.AddHours(1);
     }
 }

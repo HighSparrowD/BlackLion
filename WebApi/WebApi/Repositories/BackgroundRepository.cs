@@ -6,12 +6,15 @@ using System.Linq;
 using System.Threading.Tasks;
 using System;
 using WebApi.Main.Entities.User;
+using WebApi.Interfaces.Services;
 
 namespace WebApi.Repositories
 {
     public class BackgroundRepository : IBackgroundRepository
     {
         private readonly UserContext _context;
+        private readonly ITimestampService timestamp;
+
         private const short _oldTransactionSpan = 30;
         private const short _oldEncountersSpan = 3;
         private const short _oldFeedbacksSpan = 30;
@@ -20,9 +23,10 @@ namespace WebApi.Repositories
         private const short _oldUsersSpan = 0;
         private const short _oldAdventuresSpan = 15;
 
-        public BackgroundRepository(UserContext context)
+        public BackgroundRepository(UserContext context, ITimestampService timestampService)
         {
             _context = context;
+            timestamp = timestampService;
         }
 
         public async Task<List<User>> GetBatchToUpdate(int batchSize)
@@ -78,7 +82,7 @@ namespace WebApi.Repositories
 
         public async Task DeleteOldUsersAsync()
         {
-            var oldUserIds = await _context.Users.Where(u => (u.DeleteDate - DateTime.UtcNow).Value.Days >= _oldUsersSpan)
+            var oldUserIds = await _context.Users.Where(u => (u.DeleteDate - timestamp.GetUtcNow()).Value.Days >= _oldUsersSpan)
                 .Select(u => u.Id)
                 .ToListAsync();
 
@@ -138,7 +142,7 @@ namespace WebApi.Repositories
 
         public async Task DeleteOldAdventuresWithReportsAsync()
         {
-            var oldAdventureIds = await _context.Adventures.Where(a => (a.DeleteDate - DateTime.UtcNow).Value.Days >= _oldAdventuresSpan)
+            var oldAdventureIds = await _context.Adventures.Where(a => (a.DeleteDate - timestamp.GetUtcNow()).Value.Days >= _oldAdventuresSpan)
                 .Select(u => u.Id)
                 .ToListAsync();
 

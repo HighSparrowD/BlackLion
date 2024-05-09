@@ -9,6 +9,8 @@ using WebApi.Models.App_GlobalResources;
 using WebApi.Enums.Enums.Notification;
 using WebApi.Enums.Enums.General;
 using Serilog;
+using WebApi.Interfaces.Services;
+using WebApi.Services.Common;
 
 namespace WebApi.Services.Background
 {
@@ -17,10 +19,12 @@ namespace WebApi.Services.Background
         private int BatchSize => 100;
 
         private readonly IServiceProvider _services;
+        private readonly ITimestampService timestamp;
 
         public BackgroundWorker(IServiceProvider serviceProvider)
         {
             _services = serviceProvider;
+            timestamp = new TimestampService();
         }
 
         protected async override Task ExecuteAsync(CancellationToken stoppingToken)
@@ -36,7 +40,7 @@ namespace WebApi.Services.Background
         //TODO: manage multipliers
         public async Task CorrectTimerAsync()
         {
-            var now = DateTime.UtcNow;
+            var now = timestamp.GetUtcNow();
 
             var differenceHours = 23 - now.Hour;
             var differenceMinutes = 59 - now.Minute;
@@ -62,7 +66,7 @@ namespace WebApi.Services.Background
             var backgroundRepo = scope.ServiceProvider.GetRequiredService<IBackgroundRepository>();
             var userRepo = scope.ServiceProvider.GetRequiredService<IUserRepository>();
 
-            var now = DateTime.UtcNow;
+            var now = timestamp.GetUtcNow();
 
             var isMoreToTake = true;
 
