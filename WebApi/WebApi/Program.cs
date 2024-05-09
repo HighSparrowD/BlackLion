@@ -17,11 +17,11 @@ using System.Text.Json.Serialization;
 using WebApi.Data;
 using WebApi.Interfaces;
 using WebApi.Interfaces.Services;
-using WebApi.Models.Models.Identity;
 using WebApi.Repositories;
 using WebApi.Services.Admin;
 using WebApi.Services.Authentication;
 using WebApi.Services.Background;
+using WebApi.Services.Common;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
@@ -52,8 +52,6 @@ Log.Logger = new LoggerConfiguration().MinimumLevel.Information()
 		rollingInterval: RollingInterval.Day, 
 		flushToDiskInterval: TimeSpan.FromDays(31) )
 	.CreateLogger();
-
-builder.Services.AddHostedService<BackgroundWorker>();
 
 var secret = configuration["Jwt:Key"];
 var key = Encoding.ASCII.GetBytes(secret);
@@ -110,6 +108,9 @@ builder.Services.AddScoped<IBackgroundRepository, BackgroundRepository>();
 builder.Services.AddScoped<IRegistrationRepository, RegistrationRepository>();
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddScoped<ITimestampService, TimestampService>();
+
+builder.Services.AddHostedService<BackgroundWorker>();
 
 // Configuration
 var app = builder.Build();

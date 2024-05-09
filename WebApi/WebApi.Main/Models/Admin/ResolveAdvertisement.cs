@@ -17,4 +17,7 @@ public class ResolveAdvertisement
 
 	[JsonPropertyName("comment")]
 	public string? Comment { get; set; }
+
+	[JsonPropertyName("tags")]
+    public string[]? Tags { get; set; }
 }

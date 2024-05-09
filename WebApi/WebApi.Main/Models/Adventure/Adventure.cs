@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using WebApi.Enums.Enums.Adventure;
 using WebApi.Enums.Enums.General;
@@ -34,6 +35,8 @@ public class Adventure
     public string? GroupLink { get; set; }
     public long? GroupId { get; set; }
     public AdventureStatus Status { get; set; }
+
+    public int[]? Tags { get; set; }
 
     public long? AdminId { get; set; }
 
