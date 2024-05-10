@@ -7,10 +7,13 @@ public class UserTag
 {
     [Key]
     public long TagId { get; set; }
+
     [Key]
     public long UserId { get; set; }
+
     [Key]
     public TagType TagType { get; set; }
+
     public virtual  Tag.Tag Tag { get; set; }
 
     public UserTag()

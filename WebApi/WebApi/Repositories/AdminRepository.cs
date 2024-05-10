@@ -6,20 +6,17 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.OpenApi.Validations;
 using WebApi.Main.Entities.Admin;
 using WebApi.Main.Entities.Achievement;
 using WebApi.Main.Entities.Location;
 using WebApi.Main.Entities.Language;
 using WebApi.Main.Entities.Report;
-using WebApi.Main.Entities.User;
 using WebApi.Main.Entities.Test;
 using WebApi.Models.Models.Admin;
 using WebApi.Enums.Enums.User;
-using WebApi.Enums.Enums.Notification;
-using WebApi.Enums.Enums.General;
 using WebApi.Enums.Enums.Tag;
 using entities = WebApi.Main.Entities;
+using WebApi.Main.Models.Admin;
 
 namespace WebApi.Repositories
 {
@@ -188,10 +185,10 @@ namespace WebApi.Repositories
         public async Task<List<entities.Admin.VerificationRequest>> GetVerificationRequestAsync()
         {
             //Return any request if id wasnt supplied. (Method is used on the frontend)
-            var request = await _contx.TickRequests.Where(r => r.State == null || r.State == VerificationRequestStatus.ToView 
-            || r.State == VerificationRequestStatus.Aborted)
+            var request = await _contx.TickRequests.Where(r => r.Status == null || r.Status == VerificationRequestStatus.ToView)
                 .Take(3).ToListAsync();
 
+            // TODO:
             //if (request != null)
             //{
             //    request.State = VerificationRequestStatus.InProcess;
@@ -201,55 +198,30 @@ namespace WebApi.Repositories
             return request;
         }
 
-        public async Task<entities.Admin.VerificationRequest> GetVerificationRequestByIdAsync(long requestId)
+        public async Task<entities.Admin.VerificationRequest> GetVerificationRequestByIdAsync(long requestId, VerificationRequestStatus status = VerificationRequestStatus.ToView)
         {
             //Returns only new, aborted, failed or changed requests
-            return await _contx.TickRequests.Where(r => r.Id == requestId && (r.State == VerificationRequestStatus.ToView
-            || r.State == VerificationRequestStatus.Aborted
-            || r.State == VerificationRequestStatus.Failed))
+            return await _contx.TickRequests.Where(r => r.Id == requestId && (r.Status == status))
                 .Include(r => r.User)
                 .FirstOrDefaultAsync();
         }
 
-        public async Task ResolveVerificationRequestAsync(ResolveVerificationRequest model)
-        {
-            var request = await _contx.TickRequests.Where(r => r.Id == model.Id && (r.State == VerificationRequestStatus.InProcess))
-                .Include(r => r.User)
-                .FirstOrDefaultAsync();
+		public async Task<entities.Admin.VerificationRequest> ResolveVerificationRequest(ResolveVerificationRequest model)
+		{
+			var request = await GetVerificationRequestByIdAsync(model.Id, status: VerificationRequestStatus.InProcess);
 
-            if (request == null)
-                throw new NullReferenceException("Request was not found");
+			if (request == null)
+				throw new NullReferenceException("Verification request was not found");
 
-            request.State = model.Status;
+			request.Status = model.Status;
+			request.AdminId = model.AdminId;
 
-            request.AdminId = model.AdminId;
-            request.User.IdentityType = request.ConfirmationType;
+			await _contx.SaveChangesAsync();
 
-            if (model.Status == VerificationRequestStatus.Approved)
-            {
-                await _userRep.AddUserNotificationAsync(new UserNotification
-                {
-                    Description = $"Your identity confirmation had been approved :)\n{model.Comment}",
-                    UserId = request.UserId,
-                    Type = NotificationType.VerificationRequest,
-                    Section = Section.Neutral,
-                });
-            }
-            else if (model.Status == VerificationRequestStatus.Declined)
-            {
-                await _userRep.AddUserNotificationAsync(new UserNotification
-                {
-                    Description = $"Sorry, your identity confirmation request had been denied.\n{model.Comment}",
-                    UserId = request.UserId,
-                    Type = NotificationType.VerificationRequest,
-                    Section = Section.Neutral,
-                });
-            }
+			return request;
+		}
 
-            await _contx.SaveChangesAsync();
-        }
-
-        public async Task<byte> UploadTestsAsync(List<UploadTest> tests)
+		public async Task<byte> UploadTestsAsync(List<UploadTest> tests)
         {
             try
             {
@@ -346,13 +318,13 @@ namespace WebApi.Repositories
             try
             {
                 //Get request if it was marked as processed
-                var request = await _contx.TickRequests.Where(r => r.Id == requestId && (r.State == VerificationRequestStatus.InProcess))
+                var request = await _contx.TickRequests.Where(r => r.Id == requestId && (r.Status == VerificationRequestStatus.InProcess))
                         .SingleOrDefaultAsync(); ;
 
                 if (request == null)
                     throw new NullReferenceException($"Request {requestId} is not in process rigt now");
 
-                request.State = VerificationRequestStatus.Aborted;
+                request.Status = VerificationRequestStatus.ToView;
                 await _contx.SaveChangesAsync();
 
                 return true;
@@ -370,7 +342,7 @@ namespace WebApi.Repositories
                 if (request == null)
                     throw new NullReferenceException($"Request {requestId} does not exist");
 
-                request.State = VerificationRequestStatus.Failed;
+                request.Status = VerificationRequestStatus.ToView;
                 request.AdminId = adminId;
 
                 await _contx.SaveChangesAsync();

@@ -19,10 +19,13 @@ namespace WebApi.Services.Authentication
     public class AuthenticationService : IAuthenticationService
     {
         public IServiceProvider ServiceProvider { get; set; }
+        private readonly ITimestampService timestamp;
 
-        public AuthenticationService(IServiceProvider serviceProvider)
+
+        public AuthenticationService(IServiceProvider serviceProvider, ITimestampService timestampService)
         {
             ServiceProvider = serviceProvider;
+            timestamp = timestampService;
         }
 
         public string AuthenticateMachine(string appSecret)
@@ -43,7 +46,7 @@ namespace WebApi.Services.Authentication
             {
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
                 Subject = new ClaimsIdentity(tokenRoles),
-                Expires = DateTime.UtcNow.AddDays(7)
+                Expires = timestamp.GetUtcNow().AddDays(7)
             };
 
             var token = tokenHandler.CreateToken(tokeDescriptor);
@@ -88,7 +91,7 @@ namespace WebApi.Services.Authentication
             {
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
                 Subject = new ClaimsIdentity(tokenRoles),
-                Expires = DateTime.UtcNow.AddDays(1)
+                Expires = timestamp.GetUtcNow().AddDays(1)
             };
 
             var token = tokenHandler.CreateToken(tokeDescriptor);

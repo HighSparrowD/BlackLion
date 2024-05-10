@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using WebApi.Enums.Enums.Adventure;
 using WebApi.Enums.Enums.General;
@@ -107,4 +108,27 @@ public class Adventure
             Creator = (User.User)adventure.Creator!
         };
     }
+
+	public static implicit operator models.ManageAdventure?(Adventure? adventure)
+	{
+		if (adventure == null)
+			return null;
+
+		return new models.ManageAdventure
+		{
+			Id = adventure.Id,
+			AutoReply = adventure.AutoReply,
+			CityId = adventure.CityId,
+			CountryId = adventure.CountryId,
+			Description = adventure.Description,
+			GroupId = adventure.GroupId,
+			AutoReplyType = adventure.AutoReplyType,
+			IsAwaiting = adventure.IsAwaiting,
+			IsOffline = adventure.IsOffline,
+			Media = adventure.Media,
+			MediaType = adventure.MediaType,
+			Name = adventure.Name,
+			UserId = adventure.UserId
+		};
+	}
 }

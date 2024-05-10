@@ -13,6 +13,7 @@ using WebApi.Main.Entities.Sponsor;
 using WebApi.Main.Entities.Tag;
 using WebApi.Main.Entities.Test;
 using WebApi.Main.Entities.User;
+using WebApi.Main.Models.Sponsor;
 
 namespace WebApi.Data
 {
@@ -52,6 +53,7 @@ namespace WebApi.Data
         //Sponsors
         public DbSet<Advertisement> Advertisements => Set<Advertisement>();
         public DbSet<AdvertisementStats> AdvertisementStatistics => Set<AdvertisementStats>();
+        public DbSet<AdvertisementTag> AdvertisementTags => Set<AdvertisementTag>();
         //public DbSet<Sponsor> Sponsors => Set<Sponsor>();
         //public DbSet<SponsorLanguage> SponsorLanguages => Set<SponsorLanguage>();
         //public DbSet<SponsorContactInfo> SponsorContactInfo => Set<SponsorContactInfo>();
@@ -71,6 +73,7 @@ namespace WebApi.Data
         public DbSet<Adventure> Adventures => Set<Adventure>();
         public DbSet<AdventureTemplate> AdventureTemplates => Set<AdventureTemplate>();
         public DbSet<AdventureAttendee> AdventureAttendees => Set<AdventureAttendee>();
+        public DbSet<AdventureTag> AdventureTags => Set<AdventureTag>();
         public DbSet<PromoCode> PromoCodes => Set<PromoCode>();
         public DbSet<Hint> Hints => Set<Hint>();
 
@@ -152,9 +155,11 @@ namespace WebApi.Data
             builder.Entity<Adventure>().HasOne(a => a.Creator);
             builder.Entity<Adventure>().HasMany(a => a.Attendees);
             builder.Entity<AdventureAttendee>().HasKey(t => new { t.UserId, t.AdventureId });
+            builder.Entity<AdventureTag>().HasKey(t => new {t.TagId, t.AdventureId, t.TagType});
 
             builder.Entity<Advertisement>().HasMany(a => a.AdvertisementStats);
             builder.Entity<AdvertisementStats>().HasOne(a => a.Advertisement);
+            builder.Entity<AdvertisementTag>().HasKey(t => new {t.TagId, t.AdvertisementId, t.TagType});
             //builder.Entity<Sponsor>().HasMany(s => s.SponsorLanguages);
             //builder.Entity<SponsorLanguage>().HasOne(s => s.Language);
 
@@ -202,6 +207,8 @@ namespace WebApi.Data
             builder.Entity<TestScale>().ToTable("tests_scales");
             builder.Entity<UserTest>().ToTable("user_tests");
             builder.Entity<UserTag>().ToTable("user_tags");
+            builder.Entity<AdventureTag>().ToTable("adventure_tags");
+            builder.Entity<AdvertisementTag>().ToTable("advertisement_tags");
             builder.Entity<Tag>().ToTable("tags");
             builder.Entity<Advertisement>().ToTable("advertisements");
             builder.Entity<AdvertisementStats>().ToTable("advertisement_statistics");

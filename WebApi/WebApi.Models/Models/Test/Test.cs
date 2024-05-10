@@ -1,6 +1,7 @@
 ﻿using WebApi.Enums.Enums.General;
 using WebApi.Enums.Enums.User;
 
+#nullable enable
 namespace WebApi.Models.Models.Test;
 
 public class Test
@@ -9,7 +10,7 @@ public class Test
 
     public AppLanguage Language { get; set; }
 
-    public string Name { get; set; }
+    public string Name { get; set; } = default!;
 
     public string? Description { get; set; }
 

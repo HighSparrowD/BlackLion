@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using System.Text.Json.Serialization;
+using WebApi.Enums.Enums.Advertisement;
 using WebApi.Enums.Enums.Media;
 using WebApi.Enums.Enums.Sponsor;
 
@@ -37,6 +38,12 @@ public class Advertisement
     [JsonPropertyName("mediaType")]
     public MediaType MediaType { get; set; }
 
-    [JsonPropertyName("adminId")]
+    [JsonPropertyName("status")]
+	public AdvertisementStatus Status { get; set; }
+
+	[JsonPropertyName("adminId")]
     public long? AdminId { get; set; }
+
+    [JsonPropertyName("tags")]
+    public string[]? Tags { get; set; }
 }

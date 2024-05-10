@@ -35,7 +35,7 @@ public class Report
 
     public virtual Adventure.Adventure? Adventure { get; set; }
 
-    public static explicit operator Report?(Models.Models.Report.Report? report)
+    public static explicit operator Report?(models.Report? report)
     {
         if (report == null)
             return null;
@@ -53,7 +53,7 @@ public class Report
         };
     }
 
-    public static implicit operator Models.Models.Report.Report?(Report? report)
+    public static implicit operator models.Report?(Report? report)
     {
         if (report == null)
             return null;

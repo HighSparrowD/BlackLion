@@ -4,10 +4,10 @@ namespace WebApi.Models.Models.Effect;
 
 public class TheDetector : ActiveEffect
 {
-    public TheDetector(long userId) : base(userId)
+    public TheDetector(long userId, DateTime dateTimeNowUtc) : base(userId)
     {
         Effect = Currency.TheDetector;
         Name = "TheDetector";
-        ExpirationTime = DateTime.SpecifyKind(DateTime.UtcNow.AddHours(1), DateTimeKind.Utc);
+        ExpirationTime = dateTimeNowUtc.AddHours(1);
     }
 }

@@ -31,16 +31,19 @@ using WebApi.Interfaces;
 using entities = WebApi.Main.Entities;
 using models = WebApi.Models.Models;
 using WebApi.Enums.Enums.Authentication;
+using WebApi.Interfaces.Services;
 
 namespace WebApi.Repositories
 {
-    public class UserRepository : IUserRepository
-    {
+	public class UserRepository : IUserRepository
+	{
         private UserContext _contx { get; set; }
+        private readonly ITimestampService timestamp;
 
-        public UserRepository(UserContext context)
+        public UserRepository(UserContext context, ITimestampService timestampService)
         {
             _contx = context;
+            timestamp = timestampService;
         }
 
         public async Task<long> RegisterUserAsync(UserRegistrationModel model, bool wasRegistered = false)
@@ -552,7 +555,7 @@ namespace WebApi.Repositories
                 UserId = request.UserId,
                 Reason = request.Reason,
                 Text = request.Text,
-                InsertedUtc = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc)
+                InsertedUtc = timestamp.GetUtcNow()
             };
 
             await _contx.Feedbacks.AddAsync(feedback);
@@ -617,7 +620,7 @@ namespace WebApi.Repositories
 
             //Ban user if dailly report count is too high
             if (reportedUser.ReportCount >= 5)
-                reportedUser.BanDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
+                reportedUser.BanDate = timestamp.GetUtcNow();
 
             var report = new entities.Report.Report
             {
@@ -625,7 +628,7 @@ namespace WebApi.Repositories
                 UserId = request.ReportedUser,
                 Text = request.Text,
                 Reason = request.Reason,
-                InsertedUtc = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc)
+                InsertedUtc = timestamp.GetUtcNow()
             };
 
             await _contx.UserReports.AddAsync(report);
@@ -643,7 +646,7 @@ namespace WebApi.Repositories
 
             //Ban user if dailly report count is too high
             if (reportedUser.ReportCount >= 5)
-                reportedUser.BanDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
+                reportedUser.BanDate = timestamp.GetUtcNow();
 
             var report = new entities.Report.Report
             {
@@ -651,7 +654,7 @@ namespace WebApi.Repositories
                 AdventureId = request.Adventure,
                 Text = request.Text,
                 Reason = request.Reason,
-                InsertedUtc = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc)
+                InsertedUtc = timestamp.GetUtcNow()
             };
 
             await _contx.UserReports.AddAsync(report);
@@ -734,7 +737,7 @@ namespace WebApi.Repositories
 
             if (user.BanDate != null)
             {
-                user.BanDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
+                user.BanDate = timestamp.GetUtcNow();
 
                 _contx.Users.Update(user);
                 await _contx.SaveChangesAsync();
@@ -996,7 +999,7 @@ namespace WebApi.Repositories
 
         public async Task<float> TopUpPointBalance(long userId, float points, string description = "")
         {
-            var time = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
+            var time = timestamp.GetUtcNow();
             var userBalance = await GetUserWalletBalance(userId);
 
             if (userBalance != null)
@@ -1051,7 +1054,7 @@ namespace WebApi.Repositories
 
         public async Task<int> TopUpOPBalance(long userId, int points, string description = "")
         {
-            var time = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
+            var time = timestamp.GetUtcNow();
             var userBalance = await GetUserWalletBalance(userId);
 
             if (userBalance != null)
@@ -1106,7 +1109,7 @@ namespace WebApi.Repositories
             var purchase = new Transaction
             {
                 UserId = userId,
-                PointInTime = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc),
+                PointInTime = timestamp.GetUtcNow(),
                 Amount = amount,
                 Description = description,
                 Currency = currency
@@ -1120,7 +1123,7 @@ namespace WebApi.Repositories
 
         public async Task<bool> CheckUserHasPremiumAsync(long userId)
         {
-            var timeNow = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
+            var timeNow = timestamp.GetUtcNow();
 
             var user = await _contx.Users.Where(u => u.Id == userId)
                 .FirstOrDefaultAsync();
@@ -1144,7 +1147,7 @@ namespace WebApi.Repositories
         public async Task<DateTime> GetPremiumExpirationDate(long userId)
         {
 
-            var timeNow = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
+            var timeNow = timestamp.GetUtcNow();
             var user = await GetUserWithPremium(userId, timeNow);
 
             if (user != null)
@@ -1159,8 +1162,8 @@ namespace WebApi.Repositories
 
         public async Task<DateTime> GrantPremiumToUser(long userId, float cost, int dayDuration, Currency currency)
         {
-            var timeNow = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
-            var premiumFutureExpirationDate = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(dayDuration), DateTimeKind.Utc);
+            var timeNow = timestamp.GetUtcNow();
+            var premiumFutureExpirationDate = timestamp.GetUtcNow().AddDays(dayDuration);
 
             var user = await _contx.Users
                 .Where(u => u.Id == userId)
@@ -1758,7 +1761,7 @@ namespace WebApi.Repositories
                 .FirstOrDefaultAsync();
 
             request.Answer = reaction;
-            request.AnsweredTimeStamp = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
+            request.AnsweredTimeStamp = timestamp.GetUtcNow();
             await _contx.SaveChangesAsync();
 
             switch (reaction)
@@ -1886,7 +1889,7 @@ namespace WebApi.Repositories
             else if (model.Section == Section.RT)
                 user.RTViewsCount++;
 
-            await _contx.Encounters.AddAsync(new Encounter(model));
+            await _contx.Encounters.AddAsync(new Encounter(model, timestamp.GetUtcNow()));
             
             await _contx.SaveChangesAsync();
         }
@@ -2167,7 +2170,7 @@ namespace WebApi.Repositories
                 {
                     InviterCredentialsId = invitationCreds.Id,
                     InvitedUserId = userId,
-                    InvitationTime = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc)
+                    InvitationTime = timestamp.GetUtcNow()
                 };
 
                 await _contx.Invitations.AddAsync(invitation);
@@ -2722,7 +2725,7 @@ namespace WebApi.Repositories
                     _contx.UserTags.RemoveRange(resultTags);
                 }
 
-                userTest.PassedOn = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
+                userTest.PassedOn = timestamp.GetUtcNow();
                 userTest.Result = testResult;
 
                 _contx.UserTests.Update(userTest);
@@ -2747,7 +2750,7 @@ namespace WebApi.Repositories
             return true;
         }
 
-        public async Task<List<UserTag>> GetTags(long userId)
+		public async Task<List<UserTag>> GetTags(long userId)
         {
             try
             {
@@ -2995,7 +2998,7 @@ namespace WebApi.Repositories
                     return value;
                 }
 
-                await CreateUserBalance(userId, 0, DateTime.UtcNow);
+                await CreateUserBalance(userId, 0, timestamp.GetUtcNow());
                 return false;
             }
             catch { return false; }
@@ -3021,7 +3024,7 @@ namespace WebApi.Repositories
                                 if (userBalance.Valentines > 0)
                                 {
                                     userBalance.Valentines--;
-                                    effect = new Main.Entities.Effect.TheValentine(userId);
+                                    effect = new Main.Entities.Effect.TheValentine(userId, timestamp.GetUtcNow());
                                     break;
                                 }
                                 return null;
@@ -3038,7 +3041,7 @@ namespace WebApi.Repositories
                         if (userBalance.Detectors > 0)
                         {
                             userBalance.Detectors--;
-                            effect = new Main.Entities.Effect.TheDetector(userId);
+                            effect = new Main.Entities.Effect.TheDetector(userId, timestamp.GetUtcNow());
                             break;
                         }
                         return null;
@@ -3139,7 +3142,7 @@ namespace WebApi.Repositories
 
                 foreach (var effect in activeEffects)
                 {
-                    if (effect.ExpirationTime.Value <= DateTime.UtcNow)
+                    if (effect.ExpirationTime.Value <= timestamp.GetUtcNow())
                         effectsToRemove.Add(effect);
                     else
                         effectsToReturn.Add(new GetActiveEffect((models.Effect.ActiveEffect)effect));
@@ -3214,7 +3217,7 @@ namespace WebApi.Repositories
                     existingRequest.MediaType = request.MediaType;
                     existingRequest.Gesture = request.Gesture;
                     existingRequest.ConfirmationType = request.ConfirmationType;
-                    existingRequest.State = VerificationRequestStatus.ToView;
+                    existingRequest.Status = VerificationRequestStatus.ToView;
                     existingRequest.User.IdentityType = IdentityConfirmationType.Awaiting;
 
                     _contx.TickRequests.Update(existingRequest);
@@ -3321,11 +3324,11 @@ namespace WebApi.Repositories
                 return 0;
 
             //Every test has its own passing range. If date of passing is out of it => Test can be passed again
-            if ((DateTime.UtcNow - test.PassedOn).Value.Days > test.Test.CanBePassedInDays)
+            if ((timestamp.GetUtcNow() - test.PassedOn).Value.Days > test.Test.CanBePassedInDays)
                 return 0;
 
             //Get number of days in which this test can be passed again
-            var result = (test.Test.CanBePassedInDays - (DateTime.UtcNow - test.PassedOn).Value.Days);
+            var result = (test.Test.CanBePassedInDays - (timestamp.GetUtcNow() - test.PassedOn).Value.Days);
             return result?? 0;
         }
 
@@ -3735,7 +3738,7 @@ namespace WebApi.Repositories
                 IsOffline = model.IsOffline,
                 IsAwaiting = model.IsAwaiting,
                 UniqueLink = Guid.NewGuid().ToString("N").Substring(0, 7).ToUpper(),
-                Status = AdventureStatus.New
+                Status = AdventureStatus.ToView
             };
 
             await _contx.Adventures.AddAsync(adventure);
@@ -3760,7 +3763,7 @@ namespace WebApi.Repositories
             adventure.Description = model.Description;
             adventure.AutoReplyType = model.AutoReplyType;
             adventure.AutoReply = model.AutoReply;
-            adventure.Status = AdventureStatus.Changed;
+            adventure.Status = AdventureStatus.ToView;
             adventure.IsAwaiting = model.IsAwaiting;
 
             await _contx.SaveChangesAsync();
@@ -3847,8 +3850,7 @@ namespace WebApi.Repositories
                 });
             }
 
-            adventure.Status = AdventureStatus.Deleted;
-            adventure.DeleteDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
+            adventure.DeleteDate = timestamp.GetUtcNow();
 
             _contx.AdventureAttendees.RemoveRange(attendees);
             await _contx.SaveChangesAsync();
@@ -3915,7 +3917,7 @@ namespace WebApi.Repositories
         public async Task<List<GetAdventure>> GetUserAdventuresAsync(long userId)
         {
             return await _contx.Adventures.Where(a => a.UserId == userId)
-                .Where(a => a.Status != AdventureStatus.Deleted)
+                .Where(a => a.DeleteDate == null)
                 .Select(a => new GetAdventure
                 {
                     Id = a.Id,
@@ -3956,7 +3958,7 @@ namespace WebApi.Repositories
             if (user == null)
                 throw new NullReferenceException($"User {userId} does not exist");
 
-            tickRequest.State = VerificationRequestStatus.ToView;
+            tickRequest.Status = VerificationRequestStatus.ToView;
             user.IdentityType = IdentityConfirmationType.None;
 
             await _contx.SaveChangesAsync();
@@ -4124,12 +4126,29 @@ namespace WebApi.Repositories
             }).FirstOrDefaultAsync();
         }
 
-        public async Task<ManageAdventure> GetAdventureAsync(long id)
+        public async Task<entities.Adventure.Adventure> GetAdventureAsync(long id)
         {
-            return await _contx.Adventures.Where(a => a.Id == id)
-                .Select(a => new ManageAdventure(a))
-                .FirstOrDefaultAsync();
+            return await _contx.Adventures
+                .FirstOrDefaultAsync(a => a.Id == id);
         }
+
+        public async Task<entities.Adventure.Adventure> ResolveAdventure(ResolveAdventure model)
+        {
+			var adventure = await GetAdventureAsync(model.Id);
+
+            await AddTagsAsync(model.Tags, TagType.Tags);
+
+			if (adventure == null)
+				throw new NullReferenceException("Adventure was not found");
+
+			adventure.Status = model.Status;
+			adventure.AdminId = model.AdminId;
+            //adventure.Tags = model.Tags;
+
+            await _contx.SaveChangesAsync();
+
+            return adventure;
+		}
 
         public async Task<bool> SaveAdventureTemplateAsync(ManageTemplate model)
         {
@@ -4304,7 +4323,7 @@ namespace WebApi.Repositories
             if (user == null)
                 return DeleteResult.DoesNotExist;
 
-            user.DeleteDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
+            user.DeleteDate = timestamp.GetUtcNow();
 
             await AddFeedbackAsync(new AddFeedback
             {
@@ -4347,7 +4366,7 @@ namespace WebApi.Repositories
 
             var adventuresCount = user.MaxAdventureSearchCount - user.AdventureSearchCount;
 
-            var query = _contx.Adventures.Where(q => q.Status != AdventureStatus.Deleted && q.UserId != userId)
+            var query = _contx.Adventures.Where(q => q.DeleteDate == null && q.UserId != userId)
                 .AsNoTracking();
 
             query = query.Where(q => q.Attendees.All(at => at.UserId != user.Id));
@@ -4425,7 +4444,6 @@ namespace WebApi.Repositories
 
                 if (existingTag == null)
                 {
-
                     var relatives = await _contx.Tags
                         .Select(t => new
                         {   
@@ -4562,8 +4580,7 @@ namespace WebApi.Repositories
         public async Task<int> CountPendingVerificationRequestsAsync()
         {
             var count = await _contx.TickRequests.
-                Where(r => r.State == VerificationRequestStatus.ToView || 
-                r.State == VerificationRequestStatus.Aborted)
+                Where(r => r.Status == VerificationRequestStatus.ToView)
                 .CountAsync();
 
             return count;
@@ -4601,5 +4618,16 @@ namespace WebApi.Repositories
             return await _contx.UserData.Where(d => d.Id == userId)
                 .Select(d => d.Language).FirstOrDefaultAsync();
         }
-    }
+
+		public async Task<ICollection<entities.Adventure.Adventure>> GetPendingAdventuresAsync()
+		{
+            var adventures = await _contx.Adventures.Where(a => a.Status == AdventureStatus.ToView || a.DeleteDate == null)
+                .Take(3)
+                .ToListAsync();
+
+            // TODO: Set status = InProcess
+
+            return adventures;
+		}
+	}
 }

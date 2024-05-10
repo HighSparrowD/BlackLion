@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WebApi.Data;
@@ -12,9 +13,11 @@ using WebApi.Data;
 namespace WebApi.Migrations
 {
     [DbContext(typeof(UserContext))]
-    partial class UserContextModelSnapshot : ModelSnapshot
+    [Migration("20240508193113_Statuses")]
+    partial class Statuses
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -252,24 +255,6 @@ namespace WebApi.Migrations
                     b.HasIndex("AdventureId");
 
                     b.ToTable("adventure_attendees", (string)null);
-                });
-
-            modelBuilder.Entity("WebApi.Main.Entities.Adventure.AdventureTag", b =>
-                {
-                    b.Property<long>("TagId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("AdventureId")
-                        .HasColumnType("bigint");
-
-                    b.Property<short>("TagType")
-                        .HasColumnType("smallint");
-
-                    b.HasKey("TagId", "AdventureId", "TagType");
-
-                    b.HasIndex("TagId", "TagType");
-
-                    b.ToTable("adventure_tags", (string)null);
                 });
 
             modelBuilder.Entity("WebApi.Main.Entities.Adventure.AdventureTemplate", b =>
@@ -1574,26 +1559,6 @@ namespace WebApi.Migrations
                     b.ToTable("user_visits", (string)null);
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.Sponsor.AdvertisementTag", b =>
-                {
-                    b.Property<long>("TagId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("AdvertisementId")
-                        .HasColumnType("bigint");
-
-                    b.Property<short>("TagType")
-                        .HasColumnType("smallint");
-
-                    b.HasKey("TagId", "AdvertisementId", "TagType");
-
-                    b.HasIndex("AdvertisementId");
-
-                    b.HasIndex("TagId", "TagType");
-
-                    b.ToTable("advertisement_tags", (string)null);
-                });
-
             modelBuilder.Entity("WebApi.Main.Entities.Achievement.UserAchievement", b =>
                 {
                     b.HasOne("WebApi.Main.Entities.User.User", "User")
@@ -1656,17 +1621,6 @@ namespace WebApi.Migrations
                         .IsRequired();
 
                     b.Navigation("Adventure");
-                });
-
-            modelBuilder.Entity("WebApi.Main.Entities.Adventure.AdventureTag", b =>
-                {
-                    b.HasOne("WebApi.Main.Entities.Tag.Tag", "Tag")
-                        .WithMany()
-                        .HasForeignKey("TagId", "TagType")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Tag");
                 });
 
             modelBuilder.Entity("WebApi.Main.Entities.Location.City", b =>
@@ -1955,23 +1909,6 @@ namespace WebApi.Migrations
                     b.Navigation("Test");
                 });
 
-            modelBuilder.Entity("WebApi.Main.Models.Sponsor.AdvertisementTag", b =>
-                {
-                    b.HasOne("WebApi.Main.Entities.Sponsor.Advertisement", null)
-                        .WithMany("Tags")
-                        .HasForeignKey("AdvertisementId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("WebApi.Main.Entities.Tag.Tag", "Tag")
-                        .WithMany()
-                        .HasForeignKey("TagId", "TagType")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Tag");
-                });
-
             modelBuilder.Entity("WebApi.Main.Entities.Adventure.Adventure", b =>
                 {
                     b.Navigation("Attendees");
@@ -1985,8 +1922,6 @@ namespace WebApi.Migrations
             modelBuilder.Entity("WebApi.Main.Entities.Sponsor.Advertisement", b =>
                 {
                     b.Navigation("AdvertisementStats");
-
-                    b.Navigation("Tags");
                 });
 
             modelBuilder.Entity("WebApi.Main.Entities.Test.Test", b =>

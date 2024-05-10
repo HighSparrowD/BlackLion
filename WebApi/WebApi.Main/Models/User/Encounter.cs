@@ -20,11 +20,11 @@ public class Encounter
     public Encounter()
     { }
 
-    public Encounter(RegisterEncounter model)
+    public Encounter(RegisterEncounter model, DateTime dateTimeNowUtc)
     {
         UserId = model.UserId;
         EncounteredUserId = model.EncounteredUserId;
         Section = model.Section;
-        EncounterDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
+        EncounterDate = dateTimeNowUtc;
     }
 }

@@ -51,7 +51,7 @@ class VerificationRequest(AdminModuleModel):
         self.id: int = data_dict['id']
         self.userId: int | None = data_dict['userId']
         self.adminId: int | None = data_dict['adminId']
-        self.state: str | None = data_dict['state']
+        self.status: str | None = data_dict['status']
         self.media: str = data_dict['media']
         self.mediaType: str = data_dict['mediaType']
         self.gesture: str | None = data_dict['gesture']

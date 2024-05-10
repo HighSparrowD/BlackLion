@@ -1,8 +1,10 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
+using WebApi.Enums.Enums.Advertisement;
 using WebApi.Enums.Enums.Media;
 using WebApi.Enums.Enums.Sponsor;
+using WebApi.Main.Models.Sponsor;
 using WebApi.Models.Models.Sponsor;
 using models = WebApi.Models.Models.Sponsor;
 
@@ -26,11 +28,15 @@ public class Advertisement
     public AdvertisementPriority Priority { get; set; }
     public MediaType MediaType { get; set; }
 
+    public AdvertisementStatus Status { get; set; }
+
     public long? AdminId { get; set; }
 
     public virtual User.User? User { get; set; }
     
     public virtual List<AdvertisementStats>? AdvertisementStats { get; set; }
+
+    public virtual List<AdvertisementTag>? Tags { get; set; }
 
     public Advertisement()
     {}
@@ -48,6 +54,7 @@ public class Advertisement
         Deleted = null;
         AdminId = null;
         Priority = model.Priority;
+        Status = AdvertisementStatus.ToView;
     }
 
     public void Update(AdvertisementUpdate model)
@@ -61,6 +68,7 @@ public class Advertisement
         Updated = true;
         AdminId = null;
         Priority = model.Priority;
+        Status = AdvertisementStatus.ToView;
     }
 
     public static explicit operator Advertisement?(models.Advertisement? advertisement)
@@ -80,7 +88,8 @@ public class Advertisement
             Priority = advertisement.Priority,
             TargetAudience = advertisement.TargetAudience,
             Updated = advertisement.Updated,
-            AdminId = advertisement.AdminId
+            AdminId = advertisement.AdminId,
+            Status = advertisement.Status
         };
     }
 
@@ -89,7 +98,7 @@ public class Advertisement
         if (advertisement == null)
             return null;
 
-        return new models.Advertisement
+        var model = new models.Advertisement
         {
             Id = advertisement.Id,
             UserId = advertisement.UserId,
@@ -101,8 +110,14 @@ public class Advertisement
             Priority = advertisement.Priority,
             TargetAudience = advertisement.TargetAudience,
             Updated = advertisement.Updated,
-            AdminId = advertisement.AdminId
+            AdminId = advertisement.AdminId,
+            Status = advertisement.Status
         };
+
+        if (advertisement.Tags != null)
+            model.Tags = advertisement.Tags.Select(t => t.Tag.Text).ToArray();
+
+        return model;
     }
 
     public static implicit operator models.AdvertisementItem?(Advertisement? advertisement)
