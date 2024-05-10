@@ -2750,7 +2750,7 @@ namespace WebApi.Repositories
             return true;
         }
 
-        public async Task<List<UserTag>> GetTags(long userId)
+		public async Task<List<UserTag>> GetTags(long userId)
         {
             try
             {

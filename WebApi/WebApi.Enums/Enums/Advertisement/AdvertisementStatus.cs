@@ -4,7 +4,6 @@ public enum AdvertisementStatus : byte
 {
 	ToView = 1,
 	InProcess = 2,
-	Declined = 3,
-	Approved = 4,
-	Failed = 5
+	Approved = 3,
+	Failed = 4
 }
