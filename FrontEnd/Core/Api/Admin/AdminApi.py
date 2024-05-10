@@ -75,4 +75,5 @@ class AdminApi:
 
     #TODO: get_pending_adventures
 
-    #TODO: get_pending_advertisements
+    def get_pending_advertisements(self) -> admin_models.Advertisement | None:
+        pass

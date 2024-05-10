@@ -71,3 +71,14 @@ class ResolveVerificationRequest(ApiModel):
         self.adminId = adminId
         self.status = status
         self.comment = comment
+
+
+class Advertisement(ApiModel):
+    def __init__(self, data_dict):
+        self.id: int = data_dict['id']
+        self.userId: int | None = data_dict['userId']
+        self.adminId: int | None = data_dict['adminId']
+        self.media: str = data_dict['media']
+        self.mediaType: str = data_dict['mediaType']
+        self.description: str | None = data_dict['description']
+        self.tags: list[str] | None = data_dict['tags']

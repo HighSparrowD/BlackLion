@@ -25,6 +25,7 @@ class AdminModule(Personality_Bot):
 
         self.recent_updates = self.api_service.get_recent_updates()
         self.models_list = None
+        self.model = None
         self.verif_requests_list = None
 
         self.calldata_mode: int = 0
@@ -45,7 +46,7 @@ class AdminModule(Personality_Bot):
                                                            [InlineKeyboardButton('All', callback_data='11')],
                                                            [InlineKeyboardButton('Go back', callback_data='a')]])
 
-        self.verif_request_approve_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).\
+        self.approve_decline_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).\
             add(KeyboardButton("Approve"), KeyboardButton('Decline'), KeyboardButton('Go back'))
 
         self.goback_markup = InlineKeyboardMarkup([[InlineKeyboardButton('Go back', callback_data='a')]])
@@ -166,18 +167,18 @@ class AdminModule(Personality_Bot):
                     self.send_active_message_with_photo(f'Request #{request.id}\n\n'
                                                         f'User id: {request.userId}\n'
                                                         f'State: {request.state}\n', request.media,
-                                                        markup=self.verif_request_approve_markup)
+                                                        markup=self.approve_decline_markup)
                 elif request.mediaType == 'Video':
                     self.send_active_message_with_video(f'Request #{request.id}\n\n'
                                                         f'User id: {request.userId}\n'
                                                         f'State: {request.state}\n', request.media,
-                                                        markup=self.verif_request_approve_markup)
+                                                        markup=self.approve_decline_markup)
                 elif request.mediaType == 'VideoNote':
                     self.send_video_note_as_additional_msg(request.media)
                     self.send_active_message(f'Request #{request.id}\n\n'
                                              f'User id: {request.userId}\n'
                                              f'State: {request.state}\n',
-                                             markup=self.verif_request_approve_markup)
+                                             markup=self.approve_decline_markup)
                 self.next_handler = self.bot.register_next_step_handler(None, self.resolve_request,
                                                                         chat_id=self.current_user, request=request)
                 return
@@ -221,6 +222,38 @@ class AdminModule(Personality_Bot):
 
             self.verification_requests_menu()
 
+    def show_pending_ad(self):
+        self.prev_func = self.start
+
+        self.model = self.api_service.get_pending_advertisements()
+
+        if self.model.mediaType == 'Photo':
+            self.send_active_message_with_photo(f'Advertisement id: {self.model.id}\n\n'
+                                                f'User id: <code>{self.model.userId}</code>\n'
+                                                f'Description: {self.model.description}\n'
+                                                f'Tags: {self.model.tags}', self.model.media, self.approve_decline_markup)
+        elif self.model.mediaType == 'Video':
+            self.send_active_message_with_video(f'Advertisement id: {self.model.id}\n\n'
+                                                f'User id: <code>{self.model.userId}</code>\n'
+                                                f'Description: {self.model.description}\n'
+                                                f'Tags: {self.model.tags}', self.model.media, self.approve_decline_markup)
+        elif self.model.mediaType == 'VideoNote':
+            self.send_video_note_as_additional_msg(self.model.media)
+            self.send_active_message(f'Advertisement id: {self.model.id}\n\n'
+                                     f'User id: <code>{self.model.userId}</code>\n'
+                                     f'Description: {self.model.description}\n'
+                                     f'Tags: {self.model.tags}', self.approve_decline_markup)
+        else:
+            self.send_error_message('Something went wrong...')
+
+        self.next_handler = self.bot.register_next_step_handler(None, self.resolve_pending_ad,
+                                                                chat_id=self.current_user)
+
+    def resolve_pending_ad(self, message: Message = None, isDeclined=False):
+        self.delete_message(message.id)
+
+        # Todo: complete
+
     def callback_handler(self, call: CallbackQuery):
         if call.data == 'a':
             self.prev_menu()
@@ -244,5 +277,7 @@ class AdminModule(Personality_Bot):
             self.recent_reports_menu()
         elif call.data == '3':
             self.verification_requests_menu()
+        elif call.data == '4':
+            self.show_pending_ad()
         else:
             self.send_error_message("This feature isn't ready")
