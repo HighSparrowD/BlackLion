@@ -33,5 +33,8 @@ namespace WebApi.Interfaces
         Task SetAdvertisementPriorityAsync(long advertisementId, AdvertisementPriority priority);
 
         Task SwitchShowStatusAsync(long advertisementId);
-    }
+
+        Task UpdateTags(long advertisementId, List<long> tags);
+
+	}
 }

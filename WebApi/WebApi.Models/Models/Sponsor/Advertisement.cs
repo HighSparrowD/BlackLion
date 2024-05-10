@@ -43,4 +43,7 @@ public class Advertisement
 
 	[JsonPropertyName("adminId")]
     public long? AdminId { get; set; }
+
+    [JsonPropertyName("tags")]
+    public string[]? Tags { get; set; }
 }

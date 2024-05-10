@@ -36,8 +36,6 @@ public class Adventure
     public long? GroupId { get; set; }
     public AdventureStatus Status { get; set; }
 
-    public int[]? Tags { get; set; }
-
     public long? AdminId { get; set; }
 
     public virtual User.User? Creator { get; set; }

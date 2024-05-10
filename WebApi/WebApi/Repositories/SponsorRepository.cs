@@ -5,10 +5,13 @@ using System.Linq;
 using System.Threading.Tasks;
 using WebApi.Data;
 using WebApi.Enums.Enums.Sponsor;
+using WebApi.Enums.Enums.Tag;
 using WebApi.Interfaces;
 using WebApi.Interfaces.Services;
 using WebApi.Main.Entities.Admin;
+using WebApi.Main.Entities.User;
 using WebApi.Main.Models.Admin;
+using WebApi.Main.Models.Sponsor;
 using WebApi.Models.Models.Sponsor;
 using WebApi.Models.Models.User;
 using WebApi.Models.Utilities;
@@ -205,11 +208,24 @@ namespace WebApi.Repositories
 		{
 			var advertisements = await _contx.Advertisements.Where(a => a.Status == Enums.Enums.Advertisement.AdvertisementStatus.ToView)
                 .Take(3)
+                .Include(a => a.Tags)
+                .ThenInclude(a => a.Tag)
                 .ToListAsync();
 
 			// TODO: Set status = InProcess
 
 			return advertisements;
+		}
+
+		public async Task UpdateTags(long advertisementId, List<long> tags)
+		{
+			_contx.AdvertisementTags.RemoveRange(_contx.AdvertisementTags.Where(t => t.AdvertisementId == advertisementId));
+
+			var newTags = tags.Select(t => new AdvertisementTag(t, advertisementId, TagType.Tags));
+
+			await _contx.AdvertisementTags.AddRangeAsync(newTags);
+
+			await _contx.SaveChangesAsync();
 		}
 	}
 }

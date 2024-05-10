@@ -132,23 +132,29 @@ namespace WebApi.Services.Admin
 		{
 			var advertisement = await _sponsorRepo.ResolveAdvertisement(model);
 
+			if (!string.IsNullOrEmpty(model.Tags))
+			{
+				var tags = await _userRepo.AddTagsAsync(model.Tags, Enums.Enums.Tag.TagType.Tags);
+				await _sponsorRepo.UpdateTags(model.Id, tags);
+			}
+
 			if (model.Status == AdvertisementStatus.Approved)
 			{
 				await _userRepo.AddUserNotificationAsync(new UserNotification
 				{
 					Description = $"Your advertisement had been approved :)\n{model.Comment}",
 					UserId = advertisement.UserId,
-					Type = NotificationType.VerificationRequest,
+					Type = NotificationType.Other,
 					Section = Section.Neutral,
 				});
 			}
-			else if (model.Status == AdvertisementStatus.Declined)
+			else if (model.Status == AdvertisementStatus.ToView)
 			{
 				await _userRepo.AddUserNotificationAsync(new UserNotification
 				{
-					Description = $"Sorry, your advertisement had been denied.\n{model.Comment}",
+					Description = $"Sorry, your advertisement had been denied.\n\n{model.Comment}",
 					UserId = advertisement.UserId,
-					Type = NotificationType.VerificationRequest,
+					Type = NotificationType.Other,
 					Section = Section.Neutral,
 				});
 			}
