@@ -184,18 +184,13 @@ namespace WebApi.Repositories
 
         public async Task<List<entities.Admin.VerificationRequest>> GetVerificationRequestAsync()
         {
-            //Return any request if id wasnt supplied. (Method is used on the frontend)
-            var request = await _contx.TickRequests.Where(r => r.Status == null || r.Status == VerificationRequestStatus.ToView)
-                .Take(3).ToListAsync();
+            var request = _contx.TickRequests.Where(r => r.Status == null || r.Status == VerificationRequestStatus.ToView)
+                .Take(3);
 
-            // TODO:
-            //if (request != null)
-            //{
-            //    request.State = VerificationRequestStatus.InProcess;
-            //    await _contx.SaveChangesAsync();
-            //}
+            // Set status = InProcess
+            await request.ExecuteUpdateAsync(r => r.SetProperty(re => re.Status, VerificationRequestStatus.InProcess));
 
-            return request;
+            return await request.ToListAsync();
         }
 
         public async Task<entities.Admin.VerificationRequest> GetVerificationRequestByIdAsync(long requestId, VerificationRequestStatus status = VerificationRequestStatus.ToView)

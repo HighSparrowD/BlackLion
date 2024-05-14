@@ -51,7 +51,7 @@ class AdvertisementItem:
 class Advertisement:
     def __init__(self, advertisement_dict):
         self.id: int = advertisement_dict["id"]
-        self.sponsorId: int = advertisement_dict["sponsorId"]
+        self.sponsorId: int = advertisement_dict["userId"]
         self.text: str = advertisement_dict["text"]
         self.name: str = advertisement_dict["name"]
         self.targetAudience: Union[str, None] = advertisement_dict["targetAudience"]

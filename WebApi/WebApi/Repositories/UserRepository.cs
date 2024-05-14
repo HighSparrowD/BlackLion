@@ -32,6 +32,7 @@ using entities = WebApi.Main.Entities;
 using models = WebApi.Models.Models;
 using WebApi.Enums.Enums.Authentication;
 using WebApi.Interfaces.Services;
+using WebApi.Main.Models.Sponsor;
 
 namespace WebApi.Repositories
 {
@@ -2750,7 +2751,18 @@ namespace WebApi.Repositories
             return true;
         }
 
-		public async Task<List<UserTag>> GetTags(long userId)
+        public async Task UpdateAdventureTagsAsync(long adventureId, List<long> tags)
+        {
+            // Remove old tags related to adventure
+            _contx.UserTags.RemoveRange(_contx.UserTags.Where(t => t.UserId == adventureId));
+
+            var newTags = tags.Select(t => new AdventureTag(t, adventureId, TagType.Tags));
+
+            await _contx.AdventureTags.AddRangeAsync(newTags);
+            await _contx.SaveChangesAsync();
+        }
+
+        public async Task<List<UserTag>> GetTags(long userId)
         {
             try
             {
@@ -4136,14 +4148,17 @@ namespace WebApi.Repositories
         {
 			var adventure = await GetAdventureAsync(model.Id);
 
-            await AddTagsAsync(model.Tags, TagType.Tags);
+            if (!string.IsNullOrEmpty(model.Tags))
+            {
+                var tags = await AddTagsAsync(model.Tags, TagType.Tags);
+                await UpdateAdventureTagsAsync(model.Id, tags);
+            }
 
 			if (adventure == null)
 				throw new NullReferenceException("Adventure was not found");
 
 			adventure.Status = model.Status;
 			adventure.AdminId = model.AdminId;
-            //adventure.Tags = model.Tags;
 
             await _contx.SaveChangesAsync();
 
@@ -4621,13 +4636,13 @@ namespace WebApi.Repositories
 
 		public async Task<ICollection<entities.Adventure.Adventure>> GetPendingAdventuresAsync()
 		{
-            var adventures = await _contx.Adventures.Where(a => a.Status == AdventureStatus.ToView || a.DeleteDate == null)
-                .Take(3)
-                .ToListAsync();
+            var adventures = _contx.Adventures.Where(a => a.Status == AdventureStatus.ToView || a.DeleteDate == null)
+                .Take(3);
 
-            // TODO: Set status = InProcess
+            // Set status = InProcess
+            await adventures.ExecuteUpdateAsync(a => a.SetProperty(ad => ad.Status, AdventureStatus.InProcess));
 
-            return adventures;
+            return await adventures.ToListAsync();
 		}
 	}
 }

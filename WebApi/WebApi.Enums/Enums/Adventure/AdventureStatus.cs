@@ -2,9 +2,8 @@
 
 public enum AdventureStatus : short
 {
-    Active = 1, // = Show
-	ToView = 3,
-	InProcess = 4,
-	Declined = 5,
-	Failed = 6
+    ToView = 1,
+    InProcess = 2,
+    Approved = 3,
+    Failed = 4
 }
