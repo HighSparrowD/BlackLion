@@ -184,13 +184,15 @@ namespace WebApi.Repositories
 
         public async Task<List<entities.Admin.VerificationRequest>> GetVerificationRequestAsync()
         {
-            var request = _contx.TickRequests.Where(r => r.Status == null || r.Status == VerificationRequestStatus.ToView)
+            var query = _contx.TickRequests.Where(r => r.Status == null || r.Status == VerificationRequestStatus.ToView)
                 .Take(3);
 
-            // Set status = InProcess
-            await request.ExecuteUpdateAsync(r => r.SetProperty(re => re.Status, VerificationRequestStatus.InProcess));
+            var request = await query.ToListAsync();
 
-            return await request.ToListAsync();
+            // Set status = InProcess
+            await query.ExecuteUpdateAsync(r => r.SetProperty(re => re.Status, VerificationRequestStatus.InProcess));
+
+            return request;
         }
 
         public async Task<entities.Admin.VerificationRequest> GetVerificationRequestByIdAsync(long requestId, VerificationRequestStatus status = VerificationRequestStatus.ToView)

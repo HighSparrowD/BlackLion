@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using WebApi.Enums.Enums.Adventure;
 using WebApi.Enums.Enums.General;
@@ -38,6 +37,8 @@ public class Adventure
 
     public long? AdminId { get; set; }
 
+    public virtual List<AdventureTag>? Tags { get; set; }
+
     public virtual User.User? Creator { get; set; }
     public virtual Country? Country { get; set; }
     public virtual City? City { get; set; }
@@ -71,8 +72,7 @@ public class Adventure
             UserId = adventure.UserId,
             AdminId = adventure.AdminId,
             City = (City)adventure.City!,
-            Country = (Country)adventure.Country!,
-            Creator = (User.User)adventure.Creator!
+            Country = (Country)adventure.Country!
         };
     }
 
@@ -81,7 +81,7 @@ public class Adventure
         if (adventure == null)
             return null;
 
-        return new models.Adventure
+        var model = new models.Adventure
         {
             Id = adventure.Id,
             Status = adventure.Status,
@@ -104,9 +104,13 @@ public class Adventure
             UserId = adventure.UserId,
             AdminId = adventure.AdminId,
             City = (City)adventure.City!,
-            Country = (Country)adventure.Country!,
-            Creator = (User.User)adventure.Creator!
+            Country = (Country)adventure.Country!
         };
+
+        if (adventure.Tags != null)
+            model.Tags = adventure.Tags.Select(t => t.Tag.Text).ToArray();
+
+        return model;
     }
 
 	public static implicit operator models.ManageAdventure?(Adventure? adventure)

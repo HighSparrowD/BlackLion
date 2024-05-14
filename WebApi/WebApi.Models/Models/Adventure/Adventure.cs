@@ -70,7 +70,9 @@ public class Adventure
     [JsonPropertyName("adminId")]
     public long? AdminId { get; set; }
 
-    public virtual User.User? Creator { get; set; }
+    [JsonPropertyName("tags")]
+    public string[]? Tags { get; set; }
+
     public virtual Country? Country { get; set; }
     public virtual City? City { get; set; }
 }

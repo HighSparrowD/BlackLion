@@ -4636,13 +4636,17 @@ namespace WebApi.Repositories
 
 		public async Task<ICollection<entities.Adventure.Adventure>> GetPendingAdventuresAsync()
 		{
-            var adventures = _contx.Adventures.Where(a => a.Status == AdventureStatus.ToView || a.DeleteDate == null)
+            var query = _contx.Adventures.Where(a => a.Status == AdventureStatus.ToView || a.DeleteDate == null)
                 .Take(3);
 
-            // Set status = InProcess
-            await adventures.ExecuteUpdateAsync(a => a.SetProperty(ad => ad.Status, AdventureStatus.InProcess));
+            var adventures = await query.Include(a => a.Tags) 
+                .ThenInclude(a => a.Tag)
+                .ToListAsync();
 
-            return await adventures.ToListAsync();
+            // Set status = InProcess
+            await query.ExecuteUpdateAsync(a => a.SetProperty(ad => ad.Status, AdventureStatus.InProcess));
+
+            return adventures;
 		}
 	}
 }

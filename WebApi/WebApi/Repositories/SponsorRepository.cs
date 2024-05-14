@@ -206,15 +206,17 @@ namespace WebApi.Repositories
 
 		public async Task<ICollection<entities.Advertisement>> GetPendingAdvertisementsAsync()
 		{
-			var advertisements = _contx.Advertisements.Where(a => a.Status == Enums.Enums.Advertisement.AdvertisementStatus.ToView)
+			var query = _contx.Advertisements.Where(a => a.Status == Enums.Enums.Advertisement.AdvertisementStatus.ToView && a.Deleted == null)
                 .Take(3);
 
-            // Set status = InProcess
-            await advertisements.ExecuteUpdateAsync(a => a.SetProperty(ad => ad.Status, Enums.Enums.Advertisement.AdvertisementStatus.InProcess));
-
-			return await advertisements.Include(a => a.Tags)
+            var advertisements = await query.Include(a => a.Tags)
                 .ThenInclude(a => a.Tag)
                 .ToListAsync();
+
+            // Set status = InProcess
+            await query.ExecuteUpdateAsync(a => a.SetProperty(ad => ad.Status, Enums.Enums.Advertisement.AdvertisementStatus.InProcess));
+
+            return advertisements;
 		}
 
 		public async Task UpdateTags(long advertisementId, List<long> tags)
