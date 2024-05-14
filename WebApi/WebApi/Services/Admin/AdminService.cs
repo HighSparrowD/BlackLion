@@ -95,7 +95,7 @@ namespace WebApi.Services.Admin
 					Section = Section.Neutral,
 				});
 			}
-			else if (model.Status == VerificationRequestStatus.Declined)
+			else if (model.Status == VerificationRequestStatus.ToView)
 			{
 				await _userRepo.AddUserNotificationAsync(new UserNotification
 				{
@@ -173,7 +173,7 @@ namespace WebApi.Services.Admin
 		{
 			var adventure = await _userRepo.ResolveAdventure(model);
 
-			if (model.Status == AdventureStatus.Active)
+			if (model.Status == AdventureStatus.Approved)
 			{
 				await _userRepo.AddUserNotificationAsync(new UserNotification
 				{
@@ -183,7 +183,7 @@ namespace WebApi.Services.Admin
 					Section = Section.Neutral,
 				});
 			}
-			else if (model.Status == AdventureStatus.Declined)
+			else if (model.Status == AdventureStatus.ToView)
 			{
 				await _userRepo.AddUserNotificationAsync(new UserNotification
 				{

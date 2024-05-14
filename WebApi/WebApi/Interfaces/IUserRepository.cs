@@ -120,6 +120,7 @@ namespace WebApi.Interfaces
         Task<bool?> CheckUserUsesPersonality(long userId);
         Task<bool> RegisterTestPassingAsync(TestPayload model, float testResult);
         Task<bool> UpdateTags(UpdateTags model);
+        Task UpdateAdventureTagsAsync(long adventureId, List<long> tags);
         Task<List<UserTag>> GetTags(long userId);
         Task<SearchResponse> GetUserByTagsAsync(GetUserByTags model);
         Task<bool> CheckEncounteredUserIsInBlackList(long userId, long encounteredUser);

@@ -160,8 +160,7 @@ class Adventurer:
         self.location_message = "Where will the adventure be shown?"
 
         self.statusDict = {
-            "New": "❓", # New
-            "Changed": "❓", # Changed
+            "ToView": "❓", # New # Changed
             "Accepted": "✅", # Accepted
             "Deleted": "❌", # Deleted
         }
