@@ -2,7 +2,7 @@ import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, Message, CallbackQuery, ReplyKeyboardMarkup, KeyboardButton
 from Common.Menues import go_back_to_main_menu
 from Core.Api.Admin.AdminApi import AdminApi
-from Models.Admin.Admin import ResolveVerificationRequest
+from Models.Admin.Admin import ResolveVerificationRequest, ResolveAdvertisement
 
 from BaseModule import Personality_Bot
 
@@ -229,19 +229,19 @@ class AdminModule(Personality_Bot):
 
         if self.model.mediaType == 'Photo':
             self.send_active_message_with_photo(f'Advertisement id: {self.model.id}\n\n'
-                                                f'User id: <code>{self.model.userId}</code>\n'
-                                                f'Description: {self.model.description}\n'
+                                                f'User id: <code>{self.model.sponsorId}</code>\n'
+                                                f'Description: {self.model.text}\n'
                                                 f'Tags: {self.model.tags}', self.model.media, self.approve_decline_markup)
         elif self.model.mediaType == 'Video':
             self.send_active_message_with_video(f'Advertisement id: {self.model.id}\n\n'
-                                                f'User id: <code>{self.model.userId}</code>\n'
-                                                f'Description: {self.model.description}\n'
+                                                f'User id: <code>{self.model.sponsorId}</code>\n'
+                                                f'Description: {self.model.text}\n'
                                                 f'Tags: {self.model.tags}', self.model.media, self.approve_decline_markup)
         elif self.model.mediaType == 'VideoNote':
             self.send_video_note_as_additional_msg(self.model.media)
             self.send_active_message(f'Advertisement id: {self.model.id}\n\n'
-                                     f'User id: <code>{self.model.userId}</code>\n'
-                                     f'Description: {self.model.description}\n'
+                                     f'User id: <code>{self.model.sponsorId}</code>\n'
+                                     f'Description: {self.model.text}\n'
                                      f'Tags: {self.model.tags}', self.approve_decline_markup)
         else:
             self.send_error_message('Something went wrong...')
@@ -249,10 +249,53 @@ class AdminModule(Personality_Bot):
         self.next_handler = self.bot.register_next_step_handler(None, self.resolve_pending_ad,
                                                                 chat_id=self.current_user)
 
-    def resolve_pending_ad(self, message: Message = None, isDeclined=False):
+    def resolve_pending_ad(self, message: Message = None):
         self.delete_message(message.id)
 
-        # Todo: complete
+        if message.text == 'Approve':
+            tags = 'No tags present yet'
+            if len(self.model.tags) > 0:
+                tags = self.model.tags
+            self.send_active_message(f'Ad description:\n{self.model.text}\n\n'
+                                     f'Target audience:\n{self.model.targetAudience}\n\n'
+                                     f'Tags:\n{tags}', delete_msg=['a'])
+
+            self.send_secondary_message('Please, correct tags according to the description\n\n'
+                                        'Validation Rules: Tags have to be written in a single message. '
+                                        'Separator - ",".\n\nNo special characters besides "," are allowed!')
+            self.next_handler = self.bot.register_next_step_handler(message, self.accept_ad,
+                                                                    chat_id=self.current_user)
+        elif message.text == 'Decline':
+            self.send_active_message(f'Tell the user why their ad had been declined\n\n User`s language: '
+                                     f'{self.api_service.get_user_language(self.model.sponsorId)}', delete_msg=['s', 'a'])
+            self.next_handler = self.bot.register_next_step_handler(message, self.decline_ad,
+                                                                    chat_id=self.current_user)
+        elif message.text == 'Go back':
+            self.api_service.post_advertisement(ResolveAdvertisement
+                                                (self.model.id, 'ToView', self.current_user))
+
+            self.start()
+        else:
+            self.send_error_message('Something went wrong...')
+
+    def accept_ad(self, message: Message = None):
+        self.api_service.post_advertisement(ResolveAdvertisement
+                                            (self.model.id, 'Approved', self.current_user, tags=message.text))
+        self.delete_message(message.id)
+
+        self.delete_active_message()
+        self.delete_secondary_message()
+
+        self.show_pending_ad()
+
+    def decline_ad(self, message: Message = None):
+        self.api_service.post_advertisement(ResolveAdvertisement
+                                            (self.model.id, 'ToView', self.current_user, message.text))
+        self.delete_message(message.id)
+
+        self.delete_active_message()
+
+        self.show_pending_ad()
 
     def callback_handler(self, call: CallbackQuery):
         if call.data == 'a':

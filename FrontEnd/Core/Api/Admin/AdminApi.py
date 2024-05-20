@@ -76,4 +76,14 @@ class AdminApi:
     #TODO: get_pending_adventures
 
     def get_pending_advertisements(self) -> admin_models.Advertisement | None:
-        pass
+        response = ApiBase.create_get_request('api/Admin/advertisements', authToken=self.auth_token)
+
+        data = response.json()
+
+        return admin_models.Advertisement.unpack_one(data[0])
+
+    def post_advertisement(self, resolved_advertisement: admin_models.ResolveAdvertisement):
+        response = ApiBase.create_post_request_with_api_model('api/Admin/advertisement',
+                                                              resolved_advertisement,
+                                                              authToken=self.auth_token)
+        return response
