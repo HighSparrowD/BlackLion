@@ -17,6 +17,10 @@ class AdminModuleModel(abc.ABC):
     def unpack(cls, datas) -> list[any] | None:
         return [cls(data_dict) for data_dict in datas]
 
+    @classmethod
+    def unpack_one(cls, data):
+        return cls(data)
+
 
 class RecentReports(AdminModuleModel):
     def __init__(self, data_dict):
@@ -71,3 +75,23 @@ class ResolveVerificationRequest(ApiModel):
         self.adminId = adminId
         self.status = status
         self.comment = comment
+
+
+class Advertisement(AdminModuleModel):
+    def __init__(self, data_dict):
+        self.id: int = data_dict['id']
+        self.sponsorId: int | None = data_dict['sponsorId']
+        self.adminId: int | None = data_dict['adminId']
+        self.media: str = data_dict['media']
+        self.mediaType: str = data_dict['mediaType']
+        self.text: str | None = data_dict['text']
+        self.tags: list[str] | None = data_dict['tags']
+        self.targetAudience: str = data_dict['targetAudience']
+
+class ResolveAdvertisement(AdminModuleModel):
+    def __init__(self, id: int, status: str, adminId: int = None, comment: str = None, tags: str = None):
+        self.id = id
+        self.adminId = adminId
+        self.status = status
+        self.comment = comment
+        self.tags = tags
