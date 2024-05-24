@@ -116,6 +116,11 @@ class Personality_Bot:
             self.delete_additional_message()
         self.additional_message = self.bot.send_video_note(self.current_user, videoNote, reply_markup=markup).id
 
+    def send_voice_as_additional_msg(self, voice, caption=None, markup=None):
+        if self.additional_message:
+            self.delete_additional_message()
+        self.additional_message = self.bot.send_voice(self.current_user, voice, caption=caption, reply_markup=markup).id
+
     def delete_active_message(self):
         if self.active_message:
             self.bot.delete_message(self.current_user, self.active_message)

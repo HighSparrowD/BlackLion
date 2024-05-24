@@ -95,3 +95,26 @@ class ResolveAdvertisement(AdminModuleModel):
         self.status = status
         self.comment = comment
         self.tags = tags
+
+
+class Adventure(AdminModuleModel):
+    def __init__(self, data_dict):
+        self.id: int = data_dict['id']
+        self.userId: int = data_dict['userId']
+        self.adminId: int = data_dict['adminId']
+        self.name: str = data_dict['name']
+        self.description: str = data_dict['description']
+        self.media: str = data_dict['media']
+        self.mediaType: str = data_dict['mediaType']
+        self.autoReply: str = data_dict['autoReply']
+        self.autoReplyType: str = data_dict['autoReplyType']
+        # self.tags: list[str] | None = data_dict['tags']
+
+
+class ResolveAdventure(AdminModuleModel):
+    def __init__(self, id: int, status: str, adminId: int = None, comment: str = None, tags: str = None):
+        self.id = id
+        self.adminId = adminId
+        self.status = status
+        self.comment = comment
+        self.tags = tags

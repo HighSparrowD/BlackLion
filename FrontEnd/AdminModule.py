@@ -2,7 +2,7 @@ import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, Message, CallbackQuery, ReplyKeyboardMarkup, KeyboardButton
 from Common.Menues import go_back_to_main_menu
 from Core.Api.Admin.AdminApi import AdminApi
-from Models.Admin.Admin import ResolveVerificationRequest, ResolveAdvertisement
+from Models.Admin.Admin import ResolveVerificationRequest, ResolveAdvertisement, ResolveAdventure
 
 from BaseModule import Personality_Bot
 
@@ -26,7 +26,12 @@ class AdminModule(Personality_Bot):
         self.recent_updates = self.api_service.get_recent_updates()
         self.models_list = None
         self.model = None
+
         self.verif_requests_list = None
+        self.ads_list = None
+        self.adventures_list = None
+
+        self.string = ''
 
         self.calldata_mode: int = 0
 
@@ -48,6 +53,9 @@ class AdminModule(Personality_Bot):
 
         self.approve_decline_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).\
             add(KeyboardButton("Approve"), KeyboardButton('Decline'), KeyboardButton('Go back'))
+
+        self.complete_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)\
+            .add(KeyboardButton("Complete"))
 
         self.goback_markup = InlineKeyboardMarkup([[InlineKeyboardButton('Go back', callback_data='a')]])
 
@@ -225,7 +233,10 @@ class AdminModule(Personality_Bot):
     def show_pending_ad(self):
         self.prev_func = self.start
 
-        self.model = self.api_service.get_pending_advertisements()
+        if not self.ads_list:
+            self.ads_list = self.api_service.get_pending_advertisements()
+        self.model = self.ads_list[0]
+        self.ads_list.pop(0)
 
         if self.model.mediaType == 'Photo':
             self.send_active_message_with_photo(f'Advertisement id: {self.model.id}\n\n'
@@ -244,7 +255,7 @@ class AdminModule(Personality_Bot):
                                      f'Description: {self.model.text}\n'
                                      f'Tags: {self.model.tags}', self.approve_decline_markup)
         else:
-            self.send_error_message('Something went wrong...')
+            self.send_error_message('Something went wrong...\n\n/admin')
 
         self.next_handler = self.bot.register_next_step_handler(None, self.resolve_pending_ad,
                                                                 chat_id=self.current_user)
@@ -266,7 +277,7 @@ class AdminModule(Personality_Bot):
             self.next_handler = self.bot.register_next_step_handler(message, self.accept_ad,
                                                                     chat_id=self.current_user)
         elif message.text == 'Decline':
-            self.send_active_message(f'Tell the user why their ad had been declined\n\n User`s language: '
+            self.send_active_message(f'Tell the user why their ad had been declined\n\nUser`s language: '
                                      f'{self.api_service.get_user_language(self.model.sponsorId)}', delete_msg=['s', 'a'])
             self.next_handler = self.bot.register_next_step_handler(message, self.decline_ad,
                                                                     chat_id=self.current_user)
@@ -276,7 +287,9 @@ class AdminModule(Personality_Bot):
 
             self.start()
         else:
-            self.send_error_message('Something went wrong...')
+            self.send_error_message('Answer with your keyboard please')
+            self.next_handler = self.bot.register_next_step_handler(message, self.resolve_pending_ad,
+                                                                    chat_id=self.current_user)
 
     def accept_ad(self, message: Message = None):
         self.api_service.post_advertisement(ResolveAdvertisement
@@ -296,6 +309,118 @@ class AdminModule(Personality_Bot):
         self.delete_active_message()
 
         self.show_pending_ad()
+
+    def show_pending_adventure(self):
+        self.prev_func = self.start
+
+        if not self.adventures_list:
+            self.adventures_list = self.api_service.get_pending_adventure()
+        self.model = self.adventures_list[0]
+        self.adventures_list.pop(0)
+
+        if self.model.mediaType == 'Photo':
+            self.send_active_message_with_photo(f'Adventure id: {self.model.id}\n\n'
+                                                f'Name: {self.model.name}\n'
+                                                f'User id: <code>{self.model.userId}</code>\n'
+                                                f'Description: {self.model.description}\n',
+                                                # f'Tags: {self.model.tags}',
+                                                self.model.media, self.approve_decline_markup)
+        elif self.model.mediaType == 'Video':
+            self.send_active_message_with_video(f'Adventure id: {self.model.id}\n\n'
+                                                f'Name: {self.model.name}\n'
+                                                f'User id: <code>{self.model.userId}</code>\n'
+                                                f'Description: {self.model.description}\n',
+                                                # f'Tags: {self.model.tags}',
+                                                self.model.media, self.approve_decline_markup)
+        elif self.model.mediaType == 'VideoNote':
+            self.send_video_note_as_additional_msg(self.model.media)
+            self.send_active_message(f'Adventure id: {self.model.id}\n\n'
+                                     f'Name: {self.model.name}\n'
+                                     f'User id: <code>{self.model.userId}</code>\n'
+                                     f'Description: {self.model.description}\n',
+                                     # f'Tags: {self.model.tags}',
+                                     self.approve_decline_markup)
+        else:
+            self.send_error_message('Something went wrong...\n\n/admin')
+
+        self.next_handler = self.bot.register_next_step_handler(None, self.resolve_pending_adventure,
+                                                                chat_id=self.current_user)
+
+    def resolve_pending_adventure(self, message: Message = None):
+        self.delete_message(message.id)
+
+        if message.text == 'Approve':
+            tags = 'No tags present yet'
+            # if len(self.model.tags) > 0:
+            #     tags = self.model.tags
+            if self.model.autoReplyType == 'Text':
+                self.send_active_message(f'Adventure description:\n{self.model.description}\n\n'
+                                         f'Auto Reply: {self.model.autoReply}',
+                                         # f'Tags:\n{tags}',
+                                         delete_msg=['a'])
+            elif self.model.autoReplyType == 'Voice':
+                self.send_voice_as_additional_msg(self.model.autoReply,
+                                                  f'Adventure description:\n{self.model.description}\n\n'
+                                                  f'Auto Reply: {self.model.autoReply}'
+                                                  f'Tags:\n{tags}')
+            else:
+                self.send_active_message(f'<b>Error with displaying adventure auto reply</b>\n\n'
+                                         f'Adventure description:\n{self.model.description}\n\n',
+                                         # f'Tags:\n{tags}',
+                                         delete_msg=['a'])
+
+            self.send_secondary_message('Please type some tags to the adventure if it needed\n\n'
+                                        'Send by one tag per message, if you over - press "Complete" button',
+                                        self.complete_markup)
+
+            self.next_handler = self.bot.register_next_step_handler(message, self.tags_input,
+                                                                    chat_id=self.current_user)
+        elif message.text == 'Decline':
+            self.send_active_message(f'Tell the user why their ad had been declined\n\nUser`s language: '
+                                     f'{self.api_service.get_user_language(self.model.userId)}',
+                                     delete_msg=['s', 'a'])
+            self.next_handler = self.bot.register_next_step_handler(message, self.decline_adventure,
+                                                                    chat_id=self.current_user)
+        elif message.text == 'Go back':
+            self.api_service.post_adventure(ResolveAdventure
+                                            (self.model.id, 'ToView', self.current_user))
+
+            self.start()
+        else:
+            self.send_error_message('Answer with your keyboard please')
+            self.next_handler = self.bot.register_next_step_handler(message, self.resolve_pending_adventure,
+                                                                    chat_id=self.current_user)
+
+    def accept_adventure(self):
+        self.api_service.post_adventure(ResolveAdventure
+                                        (self.model.id, 'Approved', self.current_user, tags=self.string.removesuffix(', ')))
+
+        self.delete_active_message()
+        self.delete_secondary_message()
+        self.delete_additional_message()
+
+        self.show_pending_adventure()
+
+    def decline_adventure(self, message: Message = None):
+        self.api_service.post_adventure(ResolveAdventure
+                                        (self.model.id, 'ToView', self.current_user, message.text))
+        self.delete_message(message.id)
+
+        self.delete_active_message()
+
+        self.show_pending_adventure()
+
+    def tags_input(self, message: Message = None):
+        self.delete_message(message.id)
+
+        if message.text == 'Complete':
+            self.accept_adventure()
+            return
+
+        self.string += f'{message.text}, '
+
+        self.next_handler = self.bot.register_next_step_handler(message, self.tags_input,
+                                                                chat_id=self.current_user)
 
     def callback_handler(self, call: CallbackQuery):
         if call.data == 'a':
@@ -322,5 +447,7 @@ class AdminModule(Personality_Bot):
             self.verification_requests_menu()
         elif call.data == '4':
             self.show_pending_ad()
+        elif call.data == '5':
+            self.show_pending_adventure()
         else:
             self.send_error_message("This feature isn't ready")

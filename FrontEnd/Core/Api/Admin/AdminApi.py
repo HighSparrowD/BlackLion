@@ -73,14 +73,25 @@ class AdminApi:
         except:
             return None
 
-    #TODO: get_pending_adventures
+    def get_pending_adventure(self) -> list[admin_models.Adventure] | None:
+        response = ApiBase.create_get_request('api/Admin/adventures', authToken=self.auth_token)
 
-    def get_pending_advertisements(self) -> admin_models.Advertisement | None:
+        data = response.json()
+
+        return list(admin_models.Adventure.unpack(data))
+
+    def post_adventure(self, resolved_advertisement: admin_models.ResolveAdventure):
+        response = ApiBase.create_post_request_with_api_model('api/Admin/adventure',
+                                                              resolved_advertisement,
+                                                              authToken=self.auth_token)
+        return response
+
+    def get_pending_advertisements(self) -> list[admin_models.Advertisement] | None:
         response = ApiBase.create_get_request('api/Admin/advertisements', authToken=self.auth_token)
 
         data = response.json()
 
-        return admin_models.Advertisement.unpack_one(data[0])
+        return list(admin_models.Advertisement.unpack(data))
 
     def post_advertisement(self, resolved_advertisement: admin_models.ResolveAdvertisement):
         response = ApiBase.create_post_request_with_api_model('api/Admin/advertisement',
